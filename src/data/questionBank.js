@@ -1136,6 +1136,200 @@ const createLogicExpansionQuestions = (total = 400) => {
   return questions;
 };
 
+const createMegaInternationalizedQuestions = (total = 10000, seedOffset = 30000) => {
+  const questions = [];
+  const percentages = [5, 10, 12, 15, 20, 25, 30, 35, 40, 45, 50, 60, 75];
+
+  for (let index = 0; index < total; index += 1) {
+    const seed = seedOffset + index + 1;
+    const type = index % 10;
+
+    if (type === 0) {
+      const a = 800 + seed * 2;
+      const b = 150 + (seed % 230);
+      const correct = a + b;
+      questions.push(
+        buildQuestion({
+          prompt: `Cuanto es ${a} + ${b}?`,
+          correct,
+          distractors: [correct + 9, correct - 7, correct + 13],
+          explanation: `${a} + ${b} = ${correct}.`,
+          topic: "Matematicas",
+          difficulty: getExpansionDifficulty(seed)
+        })
+      );
+      continue;
+    }
+
+    if (type === 1) {
+      const a = 5000 + seed * 3;
+      const b = 200 + (seed % 700);
+      const correct = a - b;
+      questions.push(
+        buildQuestion({
+          prompt: `Cuanto es ${a} - ${b}?`,
+          correct,
+          distractors: [correct + 11, correct - 8, correct + 17],
+          explanation: `${a} - ${b} = ${correct}.`,
+          topic: "Matematicas",
+          difficulty: getExpansionDifficulty(seed, 1)
+        })
+      );
+      continue;
+    }
+
+    if (type === 2) {
+      const a = 45 + seed;
+      const b = 2 + (seed % 8);
+      const correct = a * b;
+      questions.push(
+        buildQuestion({
+          prompt: `Cuanto es ${a} x ${b}?`,
+          correct,
+          distractors: [correct + a, Math.max(1, correct - b), correct + 21],
+          explanation: `${a} x ${b} = ${correct}.`,
+          topic: "Matematicas",
+          difficulty: getExpansionDifficulty(seed, 2)
+        })
+      );
+      continue;
+    }
+
+    if (type === 3) {
+      const divisor = 3 + (seed % 17);
+      const quotient = 80 + Math.floor(seed / 17);
+      const dividend = divisor * quotient;
+      questions.push(
+        buildQuestion({
+          prompt: `Cuanto es ${dividend} / ${divisor}?`,
+          correct: quotient,
+          distractors: [quotient + 5, Math.max(1, quotient - 4), quotient + 9],
+          explanation: `${dividend} / ${divisor} = ${quotient}.`,
+          topic: "Matematicas",
+          difficulty: getExpansionDifficulty(seed, 3)
+        })
+      );
+      continue;
+    }
+
+    if (type === 4) {
+      const base = (600 + seed) * 20;
+      const percentage = percentages[(seed + index) % percentages.length];
+      const correct = (base * percentage) / 100;
+      const step = Math.max(20, Math.floor(base / 25));
+
+      questions.push(
+        buildQuestion({
+          prompt: `Cuanto es el ${percentage}% de ${base}?`,
+          correct,
+          distractors: [correct + step, Math.max(1, correct - step), correct + step * 2],
+          explanation: `El ${percentage}% de ${base} es ${correct}.`,
+          topic: "Matematicas",
+          difficulty: getExpansionDifficulty(seed, 4)
+        })
+      );
+      continue;
+    }
+
+    if (type === 5) {
+      const value = 600 + seed;
+      const correct = value.toString(2);
+      questions.push(
+        buildQuestion({
+          prompt: `Que binario representa el decimal ${value}?`,
+          correct,
+          distractors: [
+            (value + 1).toString(2),
+            Math.max(1, value - 1).toString(2),
+            (value + 2).toString(2)
+          ],
+          explanation: `${value} en binario es ${correct}.`,
+          topic: "Tecnologia",
+          difficulty: getExpansionDifficulty(seed, 1)
+        })
+      );
+      continue;
+    }
+
+    if (type === 6) {
+      const value = 1200 + seed * 2;
+      const correct = value.toString(16).toUpperCase();
+      questions.push(
+        buildQuestion({
+          prompt: `Que hexadecimal corresponde a ${value} en decimal?`,
+          correct,
+          distractors: [
+            (value + 2).toString(16).toUpperCase(),
+            (value - 2).toString(16).toUpperCase(),
+            (value + 4).toString(16).toUpperCase()
+          ],
+          explanation: `${value} en hexadecimal es ${correct}.`,
+          topic: "Tecnologia",
+          difficulty: getExpansionDifficulty(seed, 2)
+        })
+      );
+      continue;
+    }
+
+    if (type === 7) {
+      const mb = 400 + seed;
+      const correct = mb * 1024;
+      questions.push(
+        buildQuestion({
+          prompt: `Cuantos KB son ${mb} MB si 1 MB = 1024 KB?`,
+          correct,
+          distractors: [correct + 1024, correct - 1024, correct + 2048],
+          explanation: `${mb} MB son ${correct} KB.`,
+          topic: "Tecnologia",
+          difficulty: getExpansionDifficulty(seed, 3)
+        })
+      );
+      continue;
+    }
+
+    if (type === 8) {
+      const start = 1000 + seed * 2;
+      const step = 3 + (seed % 14);
+      const n1 = start;
+      const n2 = n1 + step;
+      const n3 = n2 + step;
+      const n4 = n3 + step;
+      const correct = n4 + step;
+      questions.push(
+        buildQuestion({
+          prompt: `Completa la serie ${n1}, ${n2}, ${n3}, ${n4}, ?`,
+          correct,
+          distractors: [correct + 1, correct - step, correct + step],
+          explanation: `La serie aumenta de ${step} en ${step}, por eso sigue ${correct}.`,
+          topic: "Logica",
+          difficulty: getExpansionDifficulty(seed)
+        })
+      );
+      continue;
+    }
+
+    const start = 200 + seed;
+    const ratio = 2 + (seed % 4);
+    const n1 = start;
+    const n2 = n1 * ratio;
+    const n3 = n2 * ratio;
+    const n4 = n3 * ratio;
+    const correct = n4 * ratio;
+    questions.push(
+      buildQuestion({
+        prompt: `Completa la progresion ${n1}, ${n2}, ${n3}, ${n4}, ?`,
+        correct,
+        distractors: [correct + ratio, Math.max(1, correct - ratio), n4 + ratio],
+        explanation: `Cada termino se multiplica por ${ratio}; sigue ${correct}.`,
+        topic: "Logica",
+        difficulty: getExpansionDifficulty(seed, 1)
+      })
+    );
+  }
+
+  return questions;
+};
+
 const historyMilestones = [
   ["Revolucion Francesa", "1789"],
   ["Independencia de Estados Unidos", "1776"],
@@ -1240,6 +1434,8 @@ const gastronomyOriginPairs = [
   ["Biryani", "India"],
   ["Poutine", "Canada"]
 ];
+
+const megaInternationalizedQuestionSet = createMegaInternationalizedQuestions(10000, 30000);
 
 const expansionQuestionSet = [
   ...createMathExpansionQuestions(2500),
@@ -1359,7 +1555,8 @@ export const QUESTION_BANK = [
   ...programmingQuestions,
   ...economyQuestions,
   ...generatedQuestionSet,
-  ...expansionQuestionSet
+  ...expansionQuestionSet,
+  ...megaInternationalizedQuestionSet
 ];
 
 export const QUESTION_BANK_BY_TOPIC = QUESTION_BANK.reduce((accumulator, question) => {
@@ -1635,8 +1832,79 @@ const VALUE_TRANSLATIONS = Object.freeze({
   "Wellington": "Wellington",
   "Yakarta": "Jakarta",
   "Yodo": "Iodine",
+  "24 Horas de Le Mans": "24 Hours of Le Mans",
+  "Anio luz": "Light-year",
+  "Arancel": "Tariff",
+  "Asincronia": "Asynchrony",
+  "Aumentar micronutrientes": "Increase micronutrient intake",
+  "Batalla de Waterloo": "Battle of Waterloo",
+  "Cantidad que los consumidores desean comprar": "Amount consumers want to buy",
+  "Chequeos medicos periodicos": "Regular medical checkups",
+  "Comer frutas y verduras": "Eat fruits and vegetables",
+  "Controlar estres cronico": "Control chronic stress",
+  "Copa America": "Copa America",
+  "Creacion de la ONU": "Creation of the UN",
+  "Demanda": "Demand",
+  "Descubrimiento de America": "Discovery of the Americas",
+  "Detectar problemas temprano": "Detect problems early",
+  "Disolucion de la URSS": "Dissolution of the USSR",
+  "Dormir al menos 7 horas": "Sleep at least 7 hours",
+  "Ejecucion sin bloqueo de tareas": "Execution without blocking tasks",
+  "Fenomeno donde la Luna tapa al Sol": "Phenomenon where the Moon covers the Sun",
+  "Fenomeno donde la Tierra sombrea la Luna": "Phenomenon where Earth shadows the Moon",
+  "Favorecer recuperacion fisica y mental": "Promote physical and mental recovery",
+  "Galaxia donde vivimos": "Galaxy where we live",
+  "humedales": "wetlands",
+  "Independencia de Estados Unidos": "United States Independence",
+  "Inicio de la Primera Guerra Mundial": "Start of the First World War",
+  "Inicio de la Segunda Guerra Mundial": "Start of the Second World War",
+  "Invencion de la imprenta moderna": "Invention of modern printing press",
+  "Llegada a la Luna del Apollo 11": "Apollo 11 Moon landing",
+  "Luna": "Moon",
+  "Mision que llego a la Luna en 1969": "Mission that reached the Moon in 1969",
+  "montanas": "mountains",
+  "Mundial de futbol": "FIFA World Cup",
+  "Objeto helado con cola cerca del Sol": "Icy object with a tail near the Sun",
+  "oceano": "ocean",
+  "PIB": "GDP",
+  "Planeta famoso por sus anillos": "Planet famous for its rings",
+  "Planeta mas cercano al Sol": "Closest planet to the Sun",
+  "Planeta mas grande del sistema solar": "Largest planet in the solar system",
+  "Planeta mas lejano reconocido del Sol": "Most distant recognized planet from the Sun",
+  "Planeta rojo": "Red planet",
+  "Prevenir caries y enfermedad periodontal": "Prevent cavities and periodontal disease",
+  "Preservar masa muscular": "Preserve muscle mass",
+  "Precio del dinero prestado": "Price of borrowed money",
+  "Realizar ejercicio semanal": "Exercise weekly",
+  "Reducir dano por radiacion UV": "Reduce UV radiation damage",
+  "Reducir dano respiratorio": "Reduce respiratory damage",
+  "Reducir riesgo cardiovascular": "Reduce cardiovascular risk",
+  "Repositorio": "Repository",
+  "Revolucion Francesa": "French Revolution",
+  "Satelite natural de la Tierra": "Natural satellite of Earth",
+  "Seis Naciones": "Six Nations Championship",
+  "Tipo de interes": "Interest rate",
+  "Tour de Francia": "Tour de France",
+  "Unificacion de Alemania": "German unification",
+  "Usar protector solar": "Use sunscreen",
+  "Valor monetario de bienes y servicios finales": "Monetary value of final goods and services",
+  "aguila": "eagle",
+  "camello": "camel",
+  "delfin": "dolphin",
+  "flamenco": "flamingo",
+  "jaguar": "jaguar",
+  "koala": "koala",
+  "lemur": "lemur",
+  "lobo marino": "sea lion",
+  "pinguino": "penguin",
+  "rana arboricola": "tree frog",
+  "zorro rojo": "red fox",
   "Zinc": "Zinc"
 });
+
+const VALUE_TRANSLATIONS_LOWERCASE = new Map(
+  Object.entries(VALUE_TRANSLATIONS).map(([source, target]) => [source.toLowerCase(), target])
+);
 
 const CORE_PROMPT_TRANSLATIONS = Object.freeze({
   "Que planeta es conocido como el planeta rojo?": "Which planet is known as the red planet?",
@@ -2060,12 +2328,17 @@ export const normalizeKnowledgeLocale = (locale) => {
 };
 
 const translateValue = (value) => {
-  const text = String(value ?? "");
-  if (VALUE_TRANSLATIONS[text]) {
+  const text = String(value ?? "").trim();
+  if (Object.prototype.hasOwnProperty.call(VALUE_TRANSLATIONS, text)) {
     return VALUE_TRANSLATIONS[text];
   }
 
-  const optionMatch = /^Opcion (\d+)$/.exec(text);
+  const lowercaseTranslation = VALUE_TRANSLATIONS_LOWERCASE.get(text.toLowerCase());
+  if (lowercaseTranslation) {
+    return lowercaseTranslation;
+  }
+
+  const optionMatch = /^opcion (\d+)$/i.exec(text);
   if (optionMatch) {
     return `Option ${optionMatch[1]}`;
   }
