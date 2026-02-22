@@ -1,0 +1,16 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="paint0_linear" x1="140" y1="80" x2="1070" y2="605" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0D786F"/>
+      <stop offset="1" stop-color="#F4C067"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" rx="24" fill="url(#paint0_linear)"/>
+  <rect x="220" y="140" width="260" height="380" rx="18" transform="rotate(-8 220 140)" fill="#FFFBEA"/>
+  <rect x="490" y="120" width="260" height="380" rx="18" transform="rotate(3 490 120)" fill="#173A36"/>
+  <rect x="740" y="150" width="260" height="380" rx="18" transform="rotate(-6 740 150)" fill="#FFFBEA"/>
+  <circle cx="380" cy="330" r="45" fill="#F2B445"/>
+  <circle cx="625" cy="315" r="45" fill="#F2B445"/>
+  <circle cx="880" cy="335" r="45" fill="#F2B445"/>
+  <text x="135" y="608" fill="#FFFCEB" font-family="Verdana, sans-serif" font-size="74" font-weight="700">CARD TACTICS ARENA</text>
+</svg>

@@ -1,0 +1,16 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="paint0_linear" x1="130" y1="90" x2="1060" y2="610" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFBE55"/>
+      <stop offset="1" stop-color="#0C776F"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" rx="24" fill="url(#paint0_linear)"/>
+  <rect x="180" y="380" width="110" height="180" rx="12" fill="#FFF7DD"/>
+  <rect x="310" y="320" width="130" height="240" rx="12" fill="#FFF7DD"/>
+  <rect x="470" y="260" width="170" height="300" rx="14" fill="#143935"/>
+  <rect x="660" y="290" width="145" height="270" rx="12" fill="#FFF7DD"/>
+  <rect x="830" y="235" width="190" height="325" rx="14" fill="#143935"/>
+  <path d="M155 560H1040" stroke="#FFFCEB" stroke-width="18" stroke-linecap="round"/>
+  <text x="110" y="170" fill="#FFFCEB" font-family="Verdana, sans-serif" font-size="78" font-weight="700">COLONY ARCHITECT</text>
+</svg>

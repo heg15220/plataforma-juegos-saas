@@ -1,0 +1,15 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="paint0_linear" x1="160" y1="60" x2="1100" y2="615" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8C66B"/>
+      <stop offset="1" stop-color="#0E7A72"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" rx="24" fill="url(#paint0_linear)"/>
+  <rect x="150" y="145" width="250" height="210" rx="24" fill="#FFFCEB" fill-opacity="0.78"/>
+  <rect x="418" y="145" width="250" height="210" rx="24" fill="#173B38" fill-opacity="0.72"/>
+  <rect x="686" y="145" width="250" height="210" rx="24" fill="#FFFCEB" fill-opacity="0.78"/>
+  <rect x="284" y="372" width="250" height="210" rx="24" fill="#173B38" fill-opacity="0.72"/>
+  <rect x="552" y="372" width="250" height="210" rx="24" fill="#FFFCEB" fill-opacity="0.78"/>
+  <text x="130" y="610" fill="#173B38" font-family="Verdana, sans-serif" font-weight="700" font-size="78">PUZZLE VAULT</text>
+</svg>

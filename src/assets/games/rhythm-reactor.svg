@@ -1,0 +1,15 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="paint0_linear" x1="110" y1="60" x2="1080" y2="620" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0E8D85"/>
+      <stop offset="1" stop-color="#FBBF55"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" rx="24" fill="url(#paint0_linear)"/>
+  <path d="M80 368C172 368 172 208 264 208C356 208 356 468 448 468C540 468 540 266 632 266C724 266 724 430 816 430C908 430 908 298 1000 298C1058 298 1085 354 1120 354" stroke="#FFFCEB" stroke-width="24" stroke-linecap="round"/>
+  <circle cx="264" cy="208" r="25" fill="#FFFCEB"/>
+  <circle cx="448" cy="468" r="25" fill="#FFFCEB"/>
+  <circle cx="632" cy="266" r="25" fill="#FFFCEB"/>
+  <circle cx="816" cy="430" r="25" fill="#FFFCEB"/>
+  <text x="125" y="590" fill="#173C39" font-family="Verdana, sans-serif" font-size="80" font-weight="700">RHYTHM REACTOR</text>
+</svg>
