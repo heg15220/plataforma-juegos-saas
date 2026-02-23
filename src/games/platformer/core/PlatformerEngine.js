@@ -67,6 +67,7 @@ export default class PlatformerEngine {
       enemies: [],
       items: [],
       projectiles: [],
+      effects: [],
       camera: { x: 0, y: 0 },
       transitionTimer: 0,
       elapsedMs: 0
@@ -183,6 +184,7 @@ export default class PlatformerEngine {
     this.state.levelIndex = levelIndex;
     this.state.levelName = level.name;
     this.state.timeLeft = level.timeLimit;
+    this.state.timeLimit = level.timeLimit;
     this.state.coinsCollected = 0;
     this.state.coinsTotal = Math.max(0, level.coinTarget);
     this.state.goalRect = goalToWorldRect(level);
@@ -202,6 +204,7 @@ export default class PlatformerEngine {
       createItemFromSpawn(level, spawnData, `item-${level.id}-${itemIndex}`)
     );
     this.state.projectiles = [];
+    this.state.effects = [];
   }
 
   restartCurrentLevel() {
@@ -224,6 +227,56 @@ export default class PlatformerEngine {
     this.state.message = `Restarted ${this.state.level.name}.`;
   }
 
+  spawnBurst(x, y, options = {}) {
+    const count = Math.max(1, Math.floor(toNumber(options.count, 6)));
+    const size = Math.max(1, Math.floor(toNumber(options.size, 3)));
+    const speedMin = toNumber(options.speedMin, 70);
+    const speedMax = toNumber(options.speedMax, 180);
+    const lifeMin = toNumber(options.lifeMin, 0.18);
+    const lifeMax = toNumber(options.lifeMax, 0.46);
+    const gravity = toNumber(options.gravity, 520);
+    const color = options.color || "rgba(255,255,255,__ALPHA__)";
+    const upwardBias = toNumber(options.upwardBias, 0.4);
+
+    for (let i = 0; i < count; i += 1) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = speedMin + Math.random() * Math.max(0, speedMax - speedMin);
+      const vx = Math.cos(angle) * speed;
+      const vy = Math.sin(angle) * speed - speed * upwardBias;
+      const maxLife = lifeMin + Math.random() * Math.max(0, lifeMax - lifeMin);
+      this.state.effects.push({
+        x,
+        y,
+        vx,
+        vy,
+        gravity,
+        size: size + (Math.random() > 0.66 ? 1 : 0),
+        life: maxLife,
+        maxLife,
+        color
+      });
+    }
+  }
+
+  updateEffects(dt) {
+    if (!this.state.effects.length) {
+      return;
+    }
+
+    for (const effect of this.state.effects) {
+      effect.life -= dt;
+      if (effect.life <= 0) {
+        continue;
+      }
+      effect.vx *= 0.985;
+      effect.vy += effect.gravity * dt;
+      effect.x += effect.vx * dt;
+      effect.y += effect.vy * dt;
+    }
+
+    this.state.effects = this.state.effects.filter((effect) => effect.life > 0);
+  }
+
   handleQuestionBlockHit(tx, ty) {
     const level = this.state.level;
     if (!level) {
@@ -235,6 +288,8 @@ export default class PlatformerEngine {
       return;
     }
     block.used = true;
+    const burstX = tx * level.tileSize + level.tileSize * 0.5;
+    const burstY = ty * level.tileSize + level.tileSize * 0.4;
 
     if (block.reward === "mushroom") {
       const reward = createQuestionReward(level, tx, ty, block.reward);
@@ -244,6 +299,14 @@ export default class PlatformerEngine {
       this.state.score += SCORE_VALUES.questionPower;
       this.state.message = "Power-up released.";
       this.audio.play("powerup");
+      this.spawnBurst(burstX, burstY, {
+        count: 15,
+        color: "rgba(126,255,174,__ALPHA__)",
+        speedMin: 70,
+        speedMax: 180,
+        lifeMin: 0.2,
+        lifeMax: 0.52
+      });
       return;
     }
 
@@ -251,6 +314,14 @@ export default class PlatformerEngine {
     this.state.score += SCORE_VALUES.questionCoin;
     this.state.message = `Hidden coin found (${this.state.coinsCollected}/${this.state.coinsTotal}).`;
     this.audio.play("coin");
+    this.spawnBurst(burstX, burstY, {
+      count: 11,
+      color: "rgba(255,224,120,__ALPHA__)",
+      speedMin: 65,
+      speedMax: 160,
+      lifeMin: 0.16,
+      lifeMax: 0.42
+    });
   }
 
   collectItem(item) {
@@ -264,6 +335,14 @@ export default class PlatformerEngine {
       this.state.score += SCORE_VALUES.questionPower;
       this.state.message = "Power-up active. Fireballs enabled.";
       this.audio.play("powerup");
+      this.spawnBurst(item.x + item.w * 0.5, item.y + item.h * 0.4, {
+        count: 18,
+        color: "rgba(128,255,186,__ALPHA__)",
+        speedMin: 80,
+        speedMax: 210,
+        lifeMin: 0.2,
+        lifeMax: 0.54
+      });
       return;
     }
 
@@ -271,6 +350,14 @@ export default class PlatformerEngine {
     this.state.score += SCORE_VALUES.coin;
     this.state.message = `Coin collected (${this.state.coinsCollected}/${this.state.coinsTotal}).`;
     this.audio.play("coin");
+    this.spawnBurst(item.x + item.w * 0.5, item.y + item.h * 0.5, {
+      count: 10,
+      color: "rgba(255,227,122,__ALPHA__)",
+      speedMin: 60,
+      speedMax: 150,
+      lifeMin: 0.16,
+      lifeMax: 0.38
+    });
   }
 
   tryShootProjectile() {
@@ -281,6 +368,19 @@ export default class PlatformerEngine {
     markProjectileFired(this.state.player);
     this.state.message = "Fireball launched.";
     this.audio.play("fire");
+    this.spawnBurst(
+      this.state.player.x + this.state.player.w * (this.state.player.facing === "right" ? 0.95 : 0.05),
+      this.state.player.y + this.state.player.h * 0.54,
+      {
+        count: 9,
+        color: "rgba(255,138,84,__ALPHA__)",
+        speedMin: 70,
+        speedMax: 170,
+        lifeMin: 0.14,
+        lifeMax: 0.3,
+        gravity: 380
+      }
+    );
   }
 
   loseLife(reason) {
@@ -293,6 +393,18 @@ export default class PlatformerEngine {
 
     this.state.lives -= 1;
     this.audio.play("hurt");
+    this.spawnBurst(
+      this.state.player.x + this.state.player.w * 0.5,
+      this.state.player.y + this.state.player.h * 0.5,
+      {
+        count: 22,
+        color: "rgba(255,106,106,__ALPHA__)",
+        speedMin: 80,
+        speedMax: 220,
+        lifeMin: 0.18,
+        lifeMax: 0.45
+      }
+    );
     if (this.state.lives <= 0) {
       this.state.screen = SCREENS.GAME_OVER;
       this.state.message = `${reason} No lives left.`;
@@ -336,6 +448,16 @@ export default class PlatformerEngine {
       this.state.screen = SCREENS.GAME_COMPLETE;
       this.state.message = `All levels complete. Bonus +${stageBonus}. Press Enter to play again.`;
       this.audio.play("win");
+      this.spawnBurst(this.state.goalRect.x + this.state.goalRect.w * 0.5, this.state.goalRect.y + 20, {
+        count: 46,
+        color: "rgba(132,245,201,__ALPHA__)",
+        speedMin: 120,
+        speedMax: 260,
+        lifeMin: 0.28,
+        lifeMax: 0.7,
+        gravity: 360,
+        upwardBias: 0.62
+      });
       return;
     }
 
@@ -343,6 +465,15 @@ export default class PlatformerEngine {
     this.state.transitionTimer = 2.1;
     this.state.message = `Level clear! Bonus +${stageBonus}. Next map loading...`;
     this.audio.play("win");
+    this.spawnBurst(this.state.goalRect.x + this.state.goalRect.w * 0.5, this.state.goalRect.y + 20, {
+      count: 28,
+      color: "rgba(120,224,255,__ALPHA__)",
+      speedMin: 100,
+      speedMax: 220,
+      lifeMin: 0.22,
+      lifeMax: 0.58,
+      gravity: 380
+    });
   }
 
   updatePlayer(controls, dt) {
@@ -350,6 +481,7 @@ export default class PlatformerEngine {
     if (!level) {
       return;
     }
+    const wasGrounded = this.state.player.onGround;
 
     if (controls.jumpPressed) {
       queueJump(this.state.player);
@@ -360,13 +492,34 @@ export default class PlatformerEngine {
     const didJump = tryStartJump(this.state.player);
     if (didJump) {
       this.audio.play("jump");
+      this.spawnBurst(this.state.player.x + this.state.player.w * 0.5, this.state.player.y + this.state.player.h, {
+        count: 7,
+        color: "rgba(158,220,255,__ALPHA__)",
+        speedMin: 45,
+        speedMax: 135,
+        lifeMin: 0.14,
+        lifeMax: 0.3,
+        gravity: 420
+      });
     }
 
+    const preVerticalSpeed = this.state.player.vy;
     applyVerticalForces(this.state.player, controls.jumpHeld, dt);
     const collision = moveEntityWithWorldCollisions(this.state.player, level, dt, { allowOneWay: true });
     setPlayerGrounded(this.state.player, collision.landed);
     if (!collision.landed) {
       this.state.player.onGround = false;
+    }
+    if (!wasGrounded && collision.landed && preVerticalSpeed > 170) {
+      this.spawnBurst(this.state.player.x + this.state.player.w * 0.5, this.state.player.y + this.state.player.h, {
+        count: 8,
+        color: "rgba(210,240,255,__ALPHA__)",
+        speedMin: 35,
+        speedMax: 110,
+        lifeMin: 0.12,
+        lifeMax: 0.26,
+        gravity: 420
+      });
     }
 
     if (collision.hitCeiling && collision.ceilingTile?.type === TILE_TYPES.QUESTION) {
@@ -429,6 +582,14 @@ export default class PlatformerEngine {
         this.state.score += SCORE_VALUES.projectileEnemy;
         this.state.message = "Enemy eliminated with power shot.";
         this.audio.play("stomp");
+        this.spawnBurst(enemy.x + enemy.w * 0.5, enemy.y + enemy.h * 0.5, {
+          count: 16,
+          color: "rgba(255,143,117,__ALPHA__)",
+          speedMin: 80,
+          speedMax: 220,
+          lifeMin: 0.18,
+          lifeMax: 0.42
+        });
         break;
       }
     }
@@ -453,6 +614,14 @@ export default class PlatformerEngine {
         this.state.score += SCORE_VALUES.stomp;
         this.state.message = "Stomped enemy.";
         this.audio.play("stomp");
+        this.spawnBurst(enemy.x + enemy.w * 0.5, enemy.y + enemy.h * 0.5, {
+          count: 14,
+          color: "rgba(255,241,176,__ALPHA__)",
+          speedMin: 70,
+          speedMax: 190,
+          lifeMin: 0.16,
+          lifeMax: 0.36
+        });
         continue;
       }
 
@@ -479,6 +648,7 @@ export default class PlatformerEngine {
   step(dt) {
     this.state.elapsedMs += dt * 1000;
     const controls = this.input.consume();
+    this.updateEffects(dt);
 
     if (controls.restartPressed) {
       this.restartCurrentLevel();

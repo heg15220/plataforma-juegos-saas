@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700;800&family=Outfit:wght@400;500;600;700&family=Press+Start+2P&display=swap");
 
 :root {
   --bg: #f7f2df;
@@ -541,35 +541,156 @@ body {
 
 .platformer-game {
   background:
-    radial-gradient(circle at 12% -16%, rgba(103, 232, 249, 0.24), transparent 48%),
-    linear-gradient(165deg, #eefbff 0%, #ddf8ff 100%);
-  border-color: rgba(56, 189, 248, 0.3);
+    radial-gradient(circle at 9% -22%, rgba(99, 102, 241, 0.2), transparent 42%),
+    radial-gradient(circle at 90% -16%, rgba(45, 212, 191, 0.22), transparent 46%),
+    linear-gradient(165deg, #eaf7ff 0%, #daefff 100%);
+  border-color: rgba(37, 148, 190, 0.3);
+  box-shadow:
+    0 22px 36px rgba(20, 40, 74, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.56);
+}
+
+.platformer-game .mini-head h4 {
+  font-family: "Press Start 2P", "Bricolage Grotesque", sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  letter-spacing: 0.02em;
+  color: #103e57;
+}
+
+.platformer-game .mini-head p {
+  color: #2b5f77;
+  font-size: 0.81rem;
 }
 
 .platformer-game .phaser-canvas-shell {
   background:
-    linear-gradient(145deg, rgba(224, 242, 254, 0.8), rgba(186, 230, 253, 0.45));
-  border-color: rgba(14, 116, 144, 0.24);
+    radial-gradient(circle at 15% 8%, rgba(255, 255, 255, 0.4), transparent 56%),
+    linear-gradient(145deg, rgba(209, 237, 255, 0.82), rgba(163, 218, 251, 0.48));
+  border-color: rgba(10, 102, 128, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
 }
 
 .platformer-stage-shell canvas {
   image-rendering: pixelated;
+  outline: 1px solid rgba(5, 38, 56, 0.2);
 }
 
 .platformer-actions {
   display: flex;
-  gap: 0.42rem;
+  gap: 0.44rem;
+  flex-wrap: wrap;
+}
+
+.platformer-actions button {
+  background: linear-gradient(140deg, #0f6d8e, #1da1b5);
+  border: 1px solid rgba(23, 96, 116, 0.24);
+  border-radius: 10px;
+  font-weight: 700;
+  color: #f1fdff;
+  box-shadow: 0 10px 16px rgba(20, 111, 137, 0.2);
 }
 
 .platformer-actions button:disabled {
   opacity: 0.56;
   cursor: not-allowed;
+  box-shadow: none;
+}
+
+.platformer-game .status-row {
+  color: #1f5268;
+}
+
+.platformer-game .status-row span {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.16rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(13, 80, 110, 0.16);
+  background: rgba(244, 252, 255, 0.68);
+}
+
+.platformer-campaign-strip {
+  margin-top: 0.64rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.platformer-campaign-strip span {
+  border-radius: 9px;
+  border: 1px solid rgba(15, 90, 120, 0.18);
+  background: rgba(232, 248, 255, 0.82);
+  color: #174f66;
+  padding: 0.36rem 0.48rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.platformer-legend-grid {
+  margin-top: 0.68rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.38rem;
+}
+
+.platformer-legend-grid article {
+  border-radius: 10px;
+  border: 1px solid rgba(18, 90, 110, 0.18);
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.74), rgba(232, 247, 255, 0.72));
+  padding: 0.44rem 0.5rem;
+}
+
+.platformer-legend-grid p {
+  margin: 0;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #376077;
+}
+
+.platformer-legend-grid strong {
+  margin-top: 0.2rem;
+  display: block;
+  font-size: 0.76rem;
+  color: #133d51;
 }
 
 .platformer-game .game-message {
-  border-color: rgba(14, 116, 144, 0.22);
-  background: rgba(224, 242, 254, 0.8);
+  border-color: rgba(10, 102, 128, 0.23);
+  background:
+    linear-gradient(140deg, rgba(225, 246, 255, 0.9), rgba(197, 235, 255, 0.78));
   color: #0f3d52;
+}
+
+.platformer-game .meter-track {
+  border-color: rgba(21, 93, 120, 0.3);
+  background: rgba(224, 242, 252, 0.9);
+}
+
+.platformer-game .phaser-controls button.platformer-ctrl.move {
+  background: linear-gradient(140deg, #edf8ff, #d6edff);
+  border-color: #a7d5f2;
+  color: #1d5976;
+}
+
+.platformer-game .phaser-controls button.platformer-ctrl.jump {
+  background: linear-gradient(140deg, #f7edff, #ead8ff);
+  border-color: #cbb2ef;
+  color: #4a3678;
+}
+
+.platformer-game .phaser-controls button.platformer-ctrl.action {
+  background: linear-gradient(140deg, #fff5df, #ffe3a8);
+  border-color: #e5c583;
+  color: #744c0e;
+}
+
+.platformer-game .phaser-controls button.platformer-ctrl.system {
+  background: linear-gradient(140deg, #dffcf2, #baf5de);
+  border-color: #8fd9bb;
+  color: #14543c;
 }
 
 .fighter-game {
@@ -1913,6 +2034,14 @@ body {
   .detail-image {
     height: 290px;
   }
+
+  .platformer-campaign-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .platformer-legend-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (min-width: 960px) {
@@ -1973,5 +2102,10 @@ body {
 
   .detail-image {
     height: 220px;
+  }
+
+  .platformer-campaign-strip,
+  .platformer-legend-grid {
+    grid-template-columns: 1fr;
   }
 }

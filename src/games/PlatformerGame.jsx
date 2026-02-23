@@ -107,6 +107,7 @@ function PlatformerGame() {
   const timeProgress =
     snapshot.timeLimit > 0 ? snapshot.timeLeft / snapshot.timeLimit : 0;
   const playerPowerText = snapshot.player.powerLevel > 0 ? "Fire" : "Small";
+  const stageTitle = snapshot.levelName || `Stage ${snapshot.levelIndex + 1}`;
 
   const canRestart = useMemo(
     () => snapshot.screen !== "start",
@@ -118,7 +119,7 @@ function PlatformerGame() {
       <div className="mini-head">
         <div>
           <h4>Sky Runner DX - Arcade Platformer</h4>
-          <p>2D side-scroller with tile levels, patrol enemies, power-ups and precise controls.</p>
+          <p>Retro pixel campaign with polished visuals, layered parallax and high-feedback combat.</p>
         </div>
         <div className="platformer-actions">
           <button type="button" onClick={onStart}>
@@ -140,6 +141,12 @@ function PlatformerGame() {
         <span>Time: {Math.max(0, Math.ceil(snapshot.timeLeft))}s</span>
       </div>
 
+      <div className="platformer-campaign-strip">
+        <span>Campaign: 7 maps</span>
+        <span>Stage: {stageTitle}</span>
+        <span>Objective: reach the final flag (coins = bonus)</span>
+      </div>
+
       <div className="meter-stack">
         <div className="meter-line compact">
           <p>Coin progress</p>
@@ -157,6 +164,21 @@ function PlatformerGame() {
         </div>
       </div>
 
+      <div className="platformer-legend-grid">
+        <article>
+          <p>Movement Feel</p>
+          <strong>Smooth accel/decel + variable jump</strong>
+        </article>
+        <article>
+          <p>Combat Loop</p>
+          <strong>Stomp enemies or fire with power-up</strong>
+        </article>
+        <article>
+          <p>Progression</p>
+          <strong>Sequential stage unlock (1 to 7)</strong>
+        </article>
+      </div>
+
       <div className="phaser-canvas-shell platformer-stage-shell">
         <div className="phaser-canvas-host">
           <canvas ref={canvasRef} aria-label="Arcade platformer canvas" />
@@ -165,6 +187,7 @@ function PlatformerGame() {
 
       <div className="phaser-controls">
         <button
+          className="platformer-ctrl move"
           type="button"
           onMouseDown={onAxisPress(-1)}
           onMouseUp={onAxisRelease}
@@ -176,6 +199,7 @@ function PlatformerGame() {
           Left
         </button>
         <button
+          className="platformer-ctrl move"
           type="button"
           onMouseDown={onAxisPress(1)}
           onMouseUp={onAxisRelease}
@@ -187,6 +211,7 @@ function PlatformerGame() {
           Right
         </button>
         <button
+          className="platformer-ctrl jump"
           type="button"
           onMouseDown={onJumpDown}
           onMouseUp={onJumpUp}
@@ -197,10 +222,10 @@ function PlatformerGame() {
         >
           Jump
         </button>
-        <button type="button" onClick={onAction}>
+        <button className="platformer-ctrl action" type="button" onClick={onAction}>
           Action
         </button>
-        <button type="button" onClick={onStart}>
+        <button className="platformer-ctrl system" type="button" onClick={onStart}>
           Start
         </button>
       </div>
@@ -213,4 +238,3 @@ function PlatformerGame() {
 }
 
 export default PlatformerGame;
-
