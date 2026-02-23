@@ -53,22 +53,22 @@ export const games = [
   {
     id: "platformer-sky-runner",
     title: "Sky Runner DX",
-    tagline: "Plataformas 2D con salto tactico, pisotones y cierre de nivel por bandera.",
+    tagline: "Plataformas 2D arcade con tiles, patrullas enemigas, power-ups y scroll lateral.",
     category: "Aventura",
     image: skyRunnerImage,
     difficulty: "Media-Alta",
     sessionTime: "3-6 min",
     multiplayer: "Solo",
-    viability: "Alta: motor Phaser con fisica arcade y camara de seguimiento.",
-    visualStyle: "Plataformas side-scroller con personajes humanos animados y fondos multicapa.",
-    techFocus: "Movimiento continuo, colisiones por fisica, state machine de poses y audio contextual.",
+    viability: "Alta: motor modular Canvas con game loop fijo y colisiones por tiles.",
+    visualStyle: "Pixel-art retro con parallax, bloques, tuberias, bandera y HUD clasico.",
+    techFocus: "Arquitectura por modulos (input/fisicas/render/entidades/niveles/UI) y avance determinista.",
     description:
-      "Vertical slice inspirado en plataformas clasicos: corre, salta y elimina amenazas por pisoton mientras recoges monedas para desbloquear la bandera final.",
+      "Vertical slice inspirado en plataformas retro: acelera, frena, salta con altura variable y usa power-ups para superar enemigos en una campana de siete mapas side-scroller.",
     highlights: [
-      "Render en canvas con motor de juego dedicado (Phaser).",
-      "Fisica 2D, patrullas enemigas y sistema de vidas.",
-      "Camara de seguimiento con escenario horizontal extendido.",
-      "Audio sintetizado para salto, dash, impacto y fin de nivel.",
+      "Sistema de niveles por tiles cargados desde JSON.",
+      "Fisica arcade consistente con coyote time y jump buffer.",
+      "IA enemiga de patrulla con reaccion a paredes y bordes.",
+      "Power-up de fuego para derrotar enemigos a distancia.",
       "Estado QA exportado para automatizacion de pruebas."
     ]
   },

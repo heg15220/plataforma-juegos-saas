@@ -8,10 +8,10 @@ Frontend en React + JavaScript + CSS para una plataforma SaaS de juegos.
 - Vista de detalle con informacion y panel jugable por cada juego.
 - Juegos completos en categorias: aventura, accion, carreras, conocimiento y RPG.
 - Aventura, accion, carreras y RPG implementados con mapas 2D con sprites (personajes, coche, bosque, cielo y escenarios).
-- Nuevos vertical slices en Phaser:
-  - `Sky Runner DX` (plataformas estilo Mario).
+- Vertical slices arcade:
+  - `Sky Runner DX` (plataformas estilo Mario con motor Canvas modular por tiles).
   - `Neon Dojo Clash` (fighting 2D estilo Street Fighter).
-- Conocimiento con diseno visual mejorado y bolsa de 613 preguntas.
+- Conocimiento con diseno visual mejorado y banco masivo de preguntas (>10k).
 - Seleccion de quiz balanceada para mezclar categorias en cada ronda.
 - Direccion artistica por categoria inspirada en referencias arcade/plataformas, con HUD y telemetria mejorados.
 - Exposicion de estado de juego para QA (`window.render_game_to_text`) y avance temporal controlado (`window.advanceTime`).
@@ -28,6 +28,7 @@ Frontend en React + JavaScript + CSS para una plataforma SaaS de juegos.
 ## Roadmap tecnico
 
 - Ver `docs/2d-engine-roadmap.md` para la arquitectura objetivo y fases de migracion (fundacion, plataformas, fighting y produccion).
+- Ver `docs/platformer-arcade-architecture.md` para la arquitectura y extensibilidad del platformer.
 
 ## Arranque local
 
@@ -50,6 +51,7 @@ src/
   assets/games/        # Portadas SVG de juegos
   components/          # Tarjetas, grid y vista detalle
   games/               # Minijuegos jugables por categoria
+  games/platformer/    # Motor modular del platformer (input, fisicas, render, niveles)
   data/questionBank.js # Banco masivo de preguntas y topicos para conocimiento
   data/games.js        # Datos del catalogo
   App.jsx

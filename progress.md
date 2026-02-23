@@ -39,3 +39,27 @@ Original prompt: [Image #1] [Image #2] [Image #3] [Image #4] Utiliza estas image
 - Incluidas teclas alternativas para pruebas automáticas en fighting (`space` jab, `enter` heavy, `B` special).
 - Actualizados textos de control y fichas de juego para reflejar el nuevo enfoque audiovisual.
 - Pendiente: validar build y ejecutar bucles Playwright de plataforma y fighting con inspeccion de screenshots/estado.
+
+## 2026-02-23 - Rebuild completo de plataformas (motor modular)
+- Reemplazado `src/games/PlatformerGame.jsx` por una integracion Canvas propia (sin scene monolitica), con HUD, pantalla de inicio y controles tactiles/teclado.
+- Nueva arquitectura modular bajo `src/games/platformer/`:
+  - `core/PlatformerEngine.js` (game loop fijo, estados de partida, camara, progreso de niveles).
+  - `input/InputController.js` (teclado + gamepad + controles virtuales).
+  - `physics/collision.js` (colisiones por tiles, one-way platforms, AABB).
+  - `entities/*` (player, enemy, item, projectile).
+  - `levels/*` (carga de mapas JSON y runtime loader).
+  - `render/Renderer.js` (pixel-art retro, parallax, HUD y overlays de estado).
+  - `audio/ArcadeAudio.js` (FX sintetizados para salto, moneda, dano, disparo, victoria, derrota).
+  - `ui/hudModel.js` (snapshot para UI + `render_game_to_text`).
+- Anadidos dos niveles side-scroller (`level-1.json`, `level-2.json`) con tiles, bloques especiales, tuberias, enemigos patrulla, monedas y power-ups.
+- Actualizados metadatos/controles de la plataforma (`src/data/games.js`, `src/components/GamePlayground.jsx`) para reflejar nuevas mecanicas.
+- Documentacion nueva: `docs/platformer-arcade-architecture.md` (arquitectura, game loop, estructura y extension de niveles/enemigos).
+- Pendiente inmediato: ejecutar build y bucle Playwright del skill, revisar screenshots/estado y corregir defects.
+
+## 2026-02-23 - Ajuste de cierre por bandera + expansion de mapas
+- Confirmada logica de final de nivel por bandera: las monedas son opcionales y solo aportan bonus de puntuacion.
+- Anadido soporte explicito en loader/engine para `goalRequiresAllCoins` (default `false`) para evitar bloqueos por monedas.
+- Incorporados 5 mapas nuevos (`level-3.json` a `level-7.json`) y registrados en `levels/index.js`.
+- La campana ahora avanza de forma secuencial por 7 niveles; cada nivel se desbloquea al completar el anterior.
+- Actualizados textos de producto/render para reflejar la nueva duracion de campana.
+- Pendiente: build + Playwright de regresion tras expansion de niveles.

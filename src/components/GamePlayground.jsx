@@ -26,7 +26,7 @@ const CONTROL_HINTS = {
   "knowledge-quiz-nexus": "Selecciona respuesta por boton y avanza al bloquear la pregunta.",
   "knowledge-logic-vault": "Selecciona respuesta por boton y avanza al bloquear la pregunta.",
   "rpg-emberfall": "Explora con WASD/flechas y usa atacar, habilidad, defender, enfocar, invocar (U) y pocion.",
-  "platformer-sky-runner": "Movimiento con A/D o flechas, salto con W/arriba/espacio y dash con Shift.",
+  "platformer-sky-runner": "Movimiento con A/D o flechas, salto variable con W/arriba/espacio y accion con F.",
   "fighter-neon-dojo": "Combate con A/D o flechas, salto W/arriba, jab J/espacio, heavy K/enter, guardia L/abajo y special U/B."
 };
 

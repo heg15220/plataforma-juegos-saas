@@ -552,6 +552,20 @@ body {
   border-color: rgba(14, 116, 144, 0.24);
 }
 
+.platformer-stage-shell canvas {
+  image-rendering: pixelated;
+}
+
+.platformer-actions {
+  display: flex;
+  gap: 0.42rem;
+}
+
+.platformer-actions button:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+}
+
 .platformer-game .game-message {
   border-color: rgba(14, 116, 144, 0.22);
   background: rgba(224, 242, 254, 0.8);
@@ -668,6 +682,12 @@ body {
   color: #0e625a;
 }
 
+.status-pill.start {
+  border-color: rgba(14, 116, 144, 0.36);
+  background: rgba(14, 116, 144, 0.15);
+  color: #0f4d67;
+}
+
 .status-pill.won {
   border-color: rgba(16, 185, 129, 0.35);
   background: rgba(16, 185, 129, 0.14);
@@ -675,6 +695,24 @@ body {
 }
 
 .status-pill.lost {
+  border-color: rgba(239, 68, 68, 0.34);
+  background: rgba(239, 68, 68, 0.12);
+  color: #a33030;
+}
+
+.status-pill.level_complete {
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.14);
+  color: #0f6f4e;
+}
+
+.status-pill.game_complete {
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.14);
+  color: #0f6f4e;
+}
+
+.status-pill.game_over {
   border-color: rgba(239, 68, 68, 0.34);
   background: rgba(239, 68, 68, 0.12);
   color: #a33030;
