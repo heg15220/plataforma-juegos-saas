@@ -11,6 +11,7 @@ Frontend en React + JavaScript + CSS para una plataforma SaaS de juegos.
 - Vertical slices arcade:
   - `Sky Runner DX` (plataformas estilo Mario con motor Canvas modular por tiles).
   - `Neon Dojo Clash` (fighting 2D estilo Street Fighter).
+  - `Head Soccer Arena X` (futbol 1v1 arcade con habilidades y fisicas elasticas).
 - Conocimiento con diseno visual mejorado y banco masivo de preguntas (>10k).
 - Seleccion de quiz balanceada para mezclar categorias en cada ronda.
 - Direccion artistica por categoria inspirada en referencias arcade/plataformas, con HUD y telemetria mejorados.

@@ -1,0 +1,1 @@
+{"mode":"knowledge-arcade","variant":"ahorcado","coordinates":"ui_linear","locale":"es","match":{"current":8549,"total":10000},"status":"playing","attemptsLeft":3,"guessedLetters":["A","B","R"],"wrongLetters":["Q","S","E"],"clue":"Instrumento para orientarse con el norte magnetico.","maskedWord":"BR____A","message":"La letra R ya fue probada."}

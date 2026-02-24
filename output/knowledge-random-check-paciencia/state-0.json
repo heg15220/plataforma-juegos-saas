@@ -1,0 +1,1 @@
+{"mode":"knowledge-arcade","variant":"paciencia","coordinates":"tableau_columns_top_is_last","locale":"es","match":{"current":4713,"total":10000},"status":"playing","selected":null,"targetColumn":0,"stockSize":6,"wasteTop":null,"foundations":{"hearts":0,"spades":0},"tableauTop":["AS","3H","5H","7H"],"moves":0,"invalidMoves":0,"message":"Lleva cartas a las fundaciones de A a 7."}
