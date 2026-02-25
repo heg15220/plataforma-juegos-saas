@@ -6,13 +6,28 @@ import {
   getRandomKnowledgeMatchIdExcept,
   resolveKnowledgeArcadeLocale
 } from "./knowledgeArcadeUtils";
+import {
+  buildWordMaps,
+  createCrosswordMatch,
+  createEntries,
+  evaluateWordFeedback,
+  findFirstCell,
+  getWordKeysForCell,
+  isBlocked,
+  isComplete,
+  isSolved,
+  keyForCell,
+  moveSelection,
+  nextCellInRow
+} from "./crosswordGenerator";
 
 const COPY_BY_LOCALE = {
   es: {
-    title: "Crucigrama Mini",
-    subtitle: "Rellena la rejilla usando pistas horizontales y verticales.",
+    title: "Crucigrama Dinamico",
+    subtitle: "Rellena la rejilla usando pistas horizontales y verticales. El tamano cambia en cada partida.",
     restart: "Partida aleatoria",
     match: "Partida",
+    board: "Tablero",
     moves: "Movimientos",
     status: "Estado",
     statusWon: "Resuelto",
@@ -28,14 +43,29 @@ const COPY_BY_LOCALE = {
     letterSaved: (letter) => `Letra ${letter} registrada.`,
     cleared: "Celda limpiada.",
     backspace: "Retroceso aplicado.",
+    wordCorrect: (count) =>
+      count === 1
+        ? "La palabra seleccionada es correcta."
+        : "Las palabras seleccionadas son correctas.",
+    wordWrong: (count) =>
+      count === 1
+        ? "La palabra seleccionada tiene letras incorrectas."
+        : "Hay palabras seleccionadas con letras incorrectas.",
+    wordPending: (count) =>
+      count === 1
+        ? "Completa la palabra seleccionada antes de comprobar."
+        : "Completa todas las palabras seleccionadas antes de comprobar.",
+    acrossHint: (meta) => meta?.clue ?? "",
+    downHint: (meta) => meta?.clue ?? "",
     acrossClue: (id, text, start) => `${id}. (${start.row + 1},${start.col + 1}) ${text}`,
     downClue: (id, text, start) => `${id}. (${start.row + 1},${start.col + 1}) ${text}`
   },
   en: {
-    title: "Mini Crossword",
-    subtitle: "Fill the grid using across and down clues.",
+    title: "Dynamic Crossword",
+    subtitle: "Fill the grid using across and down clues. Board size changes every match.",
     restart: "Random match",
     match: "Match",
+    board: "Board",
     moves: "Moves",
     status: "Status",
     statusWon: "Solved",
@@ -51,260 +81,70 @@ const COPY_BY_LOCALE = {
     letterSaved: (letter) => `Letter ${letter} saved.`,
     cleared: "Cell cleared.",
     backspace: "Backspace applied.",
+    wordCorrect: (count) =>
+      count === 1
+        ? "The selected word is correct."
+        : "The selected words are correct.",
+    wordWrong: (count) =>
+      count === 1
+        ? "The selected word has incorrect letters."
+        : "Some selected words have incorrect letters.",
+    wordPending: (count) =>
+      count === 1
+        ? "Complete the selected word before checking."
+        : "Complete all selected words before checking.",
+    acrossHint: (meta) => meta?.clue ?? "",
+    downHint: (meta) => meta?.clue ?? "",
     acrossClue: (id, text, start) => `${id}. (${start.row + 1},${start.col + 1}) ${text}`,
     downClue: (id, text, start) => `${id}. (${start.row + 1},${start.col + 1}) ${text}`
   }
 };
 
 const normalizeLetter = (value) => value.trim().toUpperCase().slice(0, 1);
-const keyForCell = (row, col) => `${row}-${col}`;
 
-const CROSSWORD_BANK = {
-  es: [
-    {
-      across: [
-        { word: "HORAS", clue: "Unidad de tiempo de sesenta minutos." },
-        { word: "SEDAL", clue: "Hilo fino usado para pescar." },
-        { word: "CARAS", clue: "Rostros o partes frontales de algo." }
-      ],
-      down: [
-        { word: "RADAR", clue: "Sistema que detecta objetos con ondas." },
-        { word: "SALAS", clue: "Habitaciones amplias de una casa o edificio." }
-      ]
-    },
-    {
-      across: [
-        { word: "MARCO", clue: "Estructura que rodea una foto o puerta." },
-        { word: "NADIE", clue: "Ninguna persona." },
-        { word: "TARTA", clue: "Postre horneado, normalmente dulce." }
-      ],
-      down: [
-        { word: "RADAR", clue: "Sistema que detecta objetos con ondas." },
-        { word: "OVEJA", clue: "Animal domestico conocido por su lana." }
-      ]
-    },
-    {
-      across: [
-        { word: "PENAS", clue: "Tristezas o sufrimientos." },
-        { word: "SEDAL", clue: "Hilo fino usado para pescar." },
-        { word: "MIRAR", clue: "Dirigir la vista hacia algo." }
-      ],
-      down: [
-        { word: "NADAR", clue: "Desplazarse por el agua." },
-        { word: "SOLAR", clue: "Relativo al Sol." }
-      ]
-    }
-  ],
-  en: [
-    {
-      across: [
-        { word: "TURNS", clue: "Changes direction or rotates." },
-        { word: "MEDAL", clue: "Award given for achievement." },
-        { word: "CURED", clue: "Healed or preserved." }
-      ],
-      down: [
-        { word: "RADAR", clue: "System that detects objects with radio waves." },
-        { word: "SALAD", clue: "Cold dish with mixed vegetables." }
-      ]
-    },
-    {
-      across: [
-        { word: "TOOLS", clue: "Instruments used to do work." },
-        { word: "OPERA", clue: "Stage work sung with orchestral music." },
-        { word: "MINUS", clue: "Mathematical subtraction sign." }
-      ],
-      down: [
-        { word: "OCEAN", clue: "Very large body of salt water." },
-        { word: "STARS", clue: "Bright celestial objects seen at night." }
-      ]
-    },
-    {
-      across: [
-        { word: "ATTIC", clue: "Room located just below a roof." },
-        { word: "RHINO", clue: "Large mammal with a horn." },
-        { word: "RIGID", clue: "Stiff and not flexible." }
-      ],
-      down: [
-        { word: "THING", clue: "General name for an object." },
-        { word: "CLOUD", clue: "Visible mass of condensed water in the sky." }
-      ]
-    }
-  ]
+const filterWordKeysByDirection = (wordKeys, direction) =>
+  (wordKeys || []).filter((wordKey) => wordKey.startsWith(`${direction}-`));
+
+const resolveDirectionalWordKeys = (cellWordMap, row, col, direction) => {
+  const wordKeys = getWordKeysForCell(cellWordMap, row, col);
+  const directional = filterWordKeysByDirection(wordKeys, direction);
+  if (directional.length) return directional;
+  if (wordKeys.length) return [wordKeys[0]];
+  return [];
 };
 
-const isValidCrosswordTemplate = (template) => {
-  if (!template?.across || !template?.down) return false;
-  if (template.across.length !== 3 || template.down.length !== 2) return false;
-  const acrossWords = template.across.map((entry) => String(entry.word || "").toUpperCase());
-  const downWords = template.down.map((entry) => String(entry.word || "").toUpperCase());
-  if (!acrossWords.every((word) => /^[A-Z]{5}$/.test(word))) return false;
-  if (!downWords.every((word) => /^[A-Z]{5}$/.test(word))) return false;
-  return (
-    acrossWords[0][2] === downWords[0][0]
-    && acrossWords[1][2] === downWords[0][2]
-    && acrossWords[2][2] === downWords[0][4]
-    && acrossWords[0][4] === downWords[1][0]
-    && acrossWords[1][4] === downWords[1][2]
-    && acrossWords[2][4] === downWords[1][4]
-  );
-};
-
-const pickCrosswordTemplate = (matchId, locale) => {
-  const bank = CROSSWORD_BANK[locale] ?? CROSSWORD_BANK.en;
-  const safeBank = bank.filter(isValidCrosswordTemplate);
-  const fallback = CROSSWORD_BANK.en.find(isValidCrosswordTemplate);
-  const source = safeBank.length ? safeBank : fallback ? [fallback] : [];
-  if (!source.length) {
-    throw new Error("No valid crossword templates available.");
+const resolveNextSelection = (solution, selected, direction, step) => {
+  if (direction === "down") {
+    return moveSelection(solution, selected, step, 0);
   }
-  const safeId = Math.abs(Number(matchId) || 0);
-  return source[safeId % source.length];
-};
-
-const createCrosswordMatch = (matchId, locale, copy) => {
-  const template = pickCrosswordTemplate(matchId, locale);
-  const row1 = template.across[0].word.toUpperCase();
-  const row3 = template.across[1].word.toUpperCase();
-  const row5 = template.across[2].word.toUpperCase();
-  const down1 = template.down[0].word.toUpperCase();
-  const down2 = template.down[1].word.toUpperCase();
-
-  const middleA = down1[1];
-  const middleB = down1[3];
-  const middleC = down2[1];
-  const middleD = down2[3];
-
-  const solution = [
-    row1.split(""),
-    ["#", "#", middleA, "#", middleC],
-    row3.split(""),
-    ["#", "#", middleB, "#", middleD],
-    row5.split("")
-  ];
-
-  const acrossStarts = [
-    { row: 0, col: 0 },
-    { row: 2, col: 0 },
-    { row: 4, col: 0 }
-  ];
-  const downStarts = [
-    { row: 0, col: 2 },
-    { row: 0, col: 4 }
-  ];
-
-  return {
-    solution,
-    clues: {
-      across: template.across.map((entry, index) => ({
-        id: index + 1,
-        start: acrossStarts[index],
-        text: copy.acrossClue(index + 1, entry.clue, acrossStarts[index])
-      })),
-      down: template.down.map((entry, index) => ({
-        id: index + 1,
-        start: downStarts[index],
-        text: copy.downClue(index + 1, entry.clue, downStarts[index])
-      }))
-    }
-  };
-};
-
-const createEntries = (solution) => solution.map((row) => row.map((cell) => (cell === "#" ? "#" : "")));
-
-const findFirstCell = (solution) => {
-  for (let row = 0; row < solution.length; row += 1) {
-    for (let col = 0; col < solution[row].length; col += 1) {
-      if (solution[row][col] !== "#") {
-        return { row, col };
-      }
-    }
-  }
-  return { row: 0, col: 0 };
-};
-
-const inBounds = (solution, row, col) =>
-  row >= 0 && row < solution.length && col >= 0 && col < solution[0].length;
-
-const isBlocked = (solution, row, col) => solution[row][col] === "#";
-
-const buildCellNumbers = (solution) => {
-  let number = 1;
-  const map = {};
-  for (let row = 0; row < solution.length; row += 1) {
-    for (let col = 0; col < solution[row].length; col += 1) {
-      if (isBlocked(solution, row, col)) continue;
-      const startsAcross = col === 0 || isBlocked(solution, row, col - 1);
-      const startsDown = row === 0 || isBlocked(solution, row - 1, col);
-      if (startsAcross || startsDown) {
-        map[keyForCell(row, col)] = number;
-        number += 1;
-      }
-    }
-  }
-  return map;
-};
-
-const isComplete = (entries) => {
-  for (let row = 0; row < entries.length; row += 1) {
-    for (let col = 0; col < entries[row].length; col += 1) {
-      if (entries[row][col] === "#") continue;
-      if (!entries[row][col]) return false;
-    }
-  }
-  return true;
-};
-
-const isSolved = (entries, solution) => {
-  for (let row = 0; row < entries.length; row += 1) {
-    for (let col = 0; col < entries[row].length; col += 1) {
-      if (entries[row][col] === "#") continue;
-      if (entries[row][col] !== solution[row][col]) return false;
-    }
-  }
-  return true;
-};
-
-const moveSelection = (solution, selected, deltaRow, deltaCol) => {
-  let row = selected.row + deltaRow;
-  let col = selected.col + deltaCol;
-
-  while (inBounds(solution, row, col) && isBlocked(solution, row, col)) {
-    row += deltaRow;
-    col += deltaCol;
-  }
-
-  if (!inBounds(solution, row, col)) {
-    return selected;
-  }
-
-  return { row, col };
-};
-
-const nextCellInRow = (solution, selected, direction) => {
-  let col = selected.col + direction;
-  while (inBounds(solution, selected.row, col)) {
-    if (!isBlocked(solution, selected.row, col)) {
-      return { row: selected.row, col };
-    }
-    col += direction;
-  }
-  return selected;
+  return nextCellInRow(solution, selected, step);
 };
 
 const createInitialState = (matchId, locale, copy) => {
   const crossword = createCrosswordMatch(matchId, locale, copy);
+  const { wordByKey, cellWordMap } = buildWordMaps(crossword.clues);
   return {
     matchId,
+    puzzleKey: crossword.puzzleKey,
     solution: crossword.solution,
     clues: crossword.clues,
-    cellNumbers: buildCellNumbers(crossword.solution),
+    cellNumbers: crossword.cellNumbers,
+    grid: crossword.grid,
     entries: createEntries(crossword.solution),
     selected: findFirstCell(crossword.solution),
     moves: 0,
     status: "playing",
-    message: copy.startMessage
+    message: copy.startMessage,
+    activeDirection: "across",
+    wordByKey,
+    cellWordMap,
+    wordFeedback: {},
+    cellFeedback: {},
+    feedbackToken: 0
   };
 };
+
+const allWordKeys = (snapshot) => Object.keys(snapshot.wordByKey);
 
 function CrosswordKnowledgeGame() {
   const locale = useMemo(resolveKnowledgeArcadeLocale, []);
@@ -313,31 +153,22 @@ function CrosswordKnowledgeGame() {
     createInitialState(getRandomKnowledgeMatchId(), locale, copy)
   );
 
+  const selectedWordKeys = useMemo(() => (
+    new Set(
+      resolveDirectionalWordKeys(
+        state.cellWordMap,
+        state.selected.row,
+        state.selected.col,
+        state.activeDirection
+      )
+    )
+  ), [state.activeDirection, state.cellWordMap, state.selected.col, state.selected.row]);
+
   const restart = useCallback(() => {
     setState((previous) =>
       createInitialState(getRandomKnowledgeMatchIdExcept(previous.matchId), locale, copy)
     );
   }, [copy, locale]);
-
-  const checkState = useCallback((entries, solution) => {
-    const complete = isComplete(entries);
-    if (!complete) {
-      return {
-        status: "playing",
-        message: copy.pendingCells
-      };
-    }
-    if (!isSolved(entries, solution)) {
-      return {
-        status: "playing",
-        message: copy.wrongLetters
-      };
-    }
-    return {
-      status: "won",
-      message: copy.solved
-    };
-  }, [copy]);
 
   const writeLetter = useCallback((letter) => {
     setState((previous) => {
@@ -350,18 +181,68 @@ function CrosswordKnowledgeGame() {
 
       const nextEntries = previous.entries.map((entryRow) => [...entryRow]);
       nextEntries[row][col] = safeLetter;
-      const checked = checkState(nextEntries, previous.solution);
+      const complete = isComplete(nextEntries);
+      const solved = complete && isSolved(nextEntries, previous.solution);
+
+      let message = copy.letterSaved(safeLetter);
+      let wordFeedback = {};
+      let cellFeedback = {};
+      let feedbackToken = previous.feedbackToken;
+
+      const scopedWordKeys = resolveDirectionalWordKeys(
+        previous.cellWordMap,
+        row,
+        col,
+        previous.activeDirection
+      );
+      if (!solved && scopedWordKeys.length) {
+        const feedback = evaluateWordFeedback({
+          entries: nextEntries,
+          solution: previous.solution,
+          wordByKey: previous.wordByKey,
+          targetWordKeys: scopedWordKeys
+        });
+        if (feedback.summary.wrong > 0 || feedback.summary.correct > 0) {
+          wordFeedback = feedback.wordFeedback;
+          cellFeedback = feedback.cellFeedback;
+          feedbackToken = 1 - previous.feedbackToken;
+          message = feedback.summary.wrong > 0
+            ? copy.wordWrong(feedback.summary.wrong)
+            : copy.wordCorrect(feedback.summary.correct);
+        }
+      }
+
+      if (solved) {
+        const solvedFeedback = evaluateWordFeedback({
+          entries: nextEntries,
+          solution: previous.solution,
+          wordByKey: previous.wordByKey,
+          targetWordKeys: allWordKeys(previous)
+        });
+        wordFeedback = solvedFeedback.wordFeedback;
+        cellFeedback = solvedFeedback.cellFeedback;
+        feedbackToken = 1 - previous.feedbackToken;
+        message = copy.solved;
+      }
 
       return {
         ...previous,
         entries: nextEntries,
-        selected: nextCellInRow(previous.solution, previous.selected, 1),
+        selected: resolveNextSelection(
+          previous.solution,
+          previous.selected,
+          previous.activeDirection,
+          1
+        ),
         moves: previous.moves + 1,
-        status: checked.status,
-        message: checked.status === "won" ? checked.message : copy.letterSaved(safeLetter)
+        status: solved ? "won" : "playing",
+        message,
+        wordFeedback,
+        cellFeedback,
+        feedbackToken
       };
     });
-  }, [checkState, copy]);
+  }, [copy]);
 
   const clearCell = useCallback(() => {
     setState((previous) => {
@@ -376,11 +257,19 @@ function CrosswordKnowledgeGame() {
           ...previous,
           entries: nextEntries,
           moves: previous.moves + 1,
-          message: copy.cleared
+          status: "playing",
+          message: copy.cleared,
+          wordFeedback: {},
+          cellFeedback: {}
         };
       }
 
-      const previousCell = nextCellInRow(previous.solution, previous.selected, -1);
+      const previousCell = resolveNextSelection(
+        previous.solution,
+        previous.selected,
+        previous.activeDirection,
+        -1
+      );
       if (previousCell.row === row && previousCell.col === col) {
         return previous;
       }
@@ -390,21 +279,60 @@ function CrosswordKnowledgeGame() {
         entries: nextEntries,
         selected: previousCell,
         moves: previous.moves + 1,
-        message: copy.backspace
+        status: "playing",
+        message: copy.backspace,
+        wordFeedback: {},
+        cellFeedback: {}
       };
     });
   }, [copy]);
 
   const checkNow = useCallback(() => {
     setState((previous) => {
-      const checked = checkState(previous.entries, previous.solution);
+      const complete = isComplete(previous.entries);
+      const selectedKeys = resolveDirectionalWordKeys(
+        previous.cellWordMap,
+        previous.selected.row,
+        previous.selected.col,
+        previous.activeDirection
+      );
+      const targetWordKeys = complete
+        ? allWordKeys(previous)
+        : selectedKeys.length ? selectedKeys : allWordKeys(previous);
+
+      const feedback = evaluateWordFeedback({
+        entries: previous.entries,
+        solution: previous.solution,
+        wordByKey: previous.wordByKey,
+        targetWordKeys
+      });
+
+      const solved = complete && isSolved(previous.entries, previous.solution);
+      let message;
+      if (solved) {
+        message = copy.solved;
+      } else if (complete) {
+        message = copy.wrongLetters;
+      } else if (feedback.summary.wrong > 0) {
+        message = copy.wordWrong(feedback.summary.wrong);
+      } else if (feedback.summary.pending > 0) {
+        message = copy.wordPending(feedback.summary.pending);
+      } else if (feedback.summary.correct > 0) {
+        message = copy.wordCorrect(feedback.summary.correct);
+      } else {
+        message = copy.pendingCells;
+      }
+
       return {
         ...previous,
-        status: checked.status,
-        message: checked.message
+        status: solved ? "won" : "playing",
+        message,
+        wordFeedback: feedback.wordFeedback,
+        cellFeedback: feedback.cellFeedback,
+        feedbackToken: 1 - previous.feedbackToken
       };
     });
-  }, [checkState]);
+  }, [copy]);
 
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -414,7 +342,8 @@ function CrosswordKnowledgeGame() {
         event.preventDefault();
         setState((previous) => ({
           ...previous,
-          selected: moveSelection(previous.solution, previous.selected, -1, 0)
+          selected: moveSelection(previous.solution, previous.selected, -1, 0),
+          activeDirection: "down"
         }));
         return;
       }
@@ -422,7 +351,8 @@ function CrosswordKnowledgeGame() {
         event.preventDefault();
         setState((previous) => ({
           ...previous,
-          selected: moveSelection(previous.solution, previous.selected, 1, 0)
+          selected: moveSelection(previous.solution, previous.selected, 1, 0),
+          activeDirection: "down"
         }));
         return;
       }
@@ -430,7 +360,8 @@ function CrosswordKnowledgeGame() {
         event.preventDefault();
         setState((previous) => ({
           ...previous,
-          selected: moveSelection(previous.solution, previous.selected, 0, -1)
+          selected: moveSelection(previous.solution, previous.selected, 0, -1),
+          activeDirection: "across"
         }));
         return;
       }
@@ -438,7 +369,8 @@ function CrosswordKnowledgeGame() {
         event.preventDefault();
         setState((previous) => ({
           ...previous,
-          selected: moveSelection(previous.solution, previous.selected, 0, 1)
+          selected: moveSelection(previous.solution, previous.selected, 0, 1),
+          activeDirection: "across"
         }));
         return;
       }
@@ -453,7 +385,6 @@ function CrosswordKnowledgeGame() {
       }
       if (key === "Enter") {
         checkNow();
-        return;
       }
     };
 
@@ -471,10 +402,16 @@ function CrosswordKnowledgeGame() {
       total: KNOWLEDGE_ARCADE_MATCH_COUNT
     },
     status: snapshot.status,
+    activeDirection: snapshot.activeDirection,
     selected: snapshot.selected,
     moves: snapshot.moves,
     entries: snapshot.entries,
     clues: snapshot.clues,
+    grid: snapshot.grid,
+    feedback: {
+      words: snapshot.wordFeedback,
+      cells: snapshot.cellFeedback
+    },
     message: snapshot.message
   }), [locale]);
 
@@ -494,21 +431,33 @@ function CrosswordKnowledgeGame() {
       <section className="knowledge-mode-shell">
         <div className="knowledge-status-row">
           <span>{copy.match}: {state.matchId + 1}/{KNOWLEDGE_ARCADE_MATCH_COUNT}</span>
+          <span>{copy.board}: {state.grid.rows}x{state.grid.cols} ({state.grid.openCells})</span>
           <span>{copy.moves}: {state.moves}</span>
           <span>{copy.status}: {state.status === "won" ? copy.statusWon : copy.statusPlaying}</span>
         </div>
 
-        <div className="crossword-grid">
+        <div className="crossword-grid" style={{ "--crossword-cols": state.grid.cols }}>
           {state.entries.map((row, rowIndex) =>
             row.map((cell, colIndex) => {
               const blocked = cell === "#";
               const selected = state.selected.row === rowIndex && state.selected.col === colIndex;
-              const cellNumber = state.cellNumbers[keyForCell(rowIndex, colIndex)] ?? null;
+              const cellId = keyForCell(rowIndex, colIndex);
+              const cellNumber = state.cellNumbers[cellId] ?? null;
+              const feedback = state.cellFeedback[cellId] ?? null;
+              const feedbackClass = feedback ? `feedback-${feedback}` : "";
+              const tokenClass = feedback ? `feedback-token-${state.feedbackToken}` : "";
+
               return (
                 <button
-                  key={`${rowIndex}-${colIndex}`}
+                  key={`${state.puzzleKey}-${rowIndex}-${colIndex}`}
                   type="button"
-                  className={`crossword-cell ${blocked ? "blocked" : ""} ${selected ? "selected" : ""}`.trim()}
+                  className={[
+                    "crossword-cell",
+                    blocked ? "blocked" : "",
+                    selected ? "selected" : "",
+                    feedbackClass,
+                    tokenClass
+                  ].filter(Boolean).join(" ")}
                   disabled={blocked}
                   onClick={() => {
                     if (blocked) return;
@@ -535,17 +484,43 @@ function CrosswordKnowledgeGame() {
           <article>
             <h5>{copy.across}</h5>
             <ul>
-              {state.clues.across.map((clue) => (
-                <li key={`across-${clue.id}`}>{clue.text}</li>
-              ))}
+              {state.clues.across.map((clue) => {
+                const feedback = state.wordFeedback[clue.key] ?? null;
+                const isActive = selectedWordKeys.has(clue.key);
+                return (
+                  <li
+                    key={clue.key}
+                    className={[
+                      isActive ? "active-word" : "",
+                      feedback ? `feedback-${feedback}` : "",
+                      feedback ? `feedback-token-${state.feedbackToken}` : ""
+                    ].filter(Boolean).join(" ")}
+                  >
+                    {clue.text}
+                  </li>
+                );
+              })}
             </ul>
           </article>
           <article>
             <h5>{copy.down}</h5>
             <ul>
-              {state.clues.down.map((clue) => (
-                <li key={`down-${clue.id}`}>{clue.text}</li>
-              ))}
+              {state.clues.down.map((clue) => {
+                const feedback = state.wordFeedback[clue.key] ?? null;
+                const isActive = selectedWordKeys.has(clue.key);
+                return (
+                  <li
+                    key={clue.key}
+                    className={[
+                      isActive ? "active-word" : "",
+                      feedback ? `feedback-${feedback}` : "",
+                      feedback ? `feedback-token-${state.feedbackToken}` : ""
+                    ].filter(Boolean).join(" ")}
+                  >
+                    {clue.text}
+                  </li>
+                );
+              })}
             </ul>
           </article>
         </div>

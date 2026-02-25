@@ -83,6 +83,65 @@ const safeNumber = (value) => {
   return numeric;
 };
 
+const END_SCENE_PARTICLES = [
+  { x: -190, y: -120, rotate: -48, delay: "0s" },
+  { x: -128, y: -136, rotate: -32, delay: "0.08s" },
+  { x: -72, y: -152, rotate: -24, delay: "0.14s" },
+  { x: -16, y: -166, rotate: -12, delay: "0.2s" },
+  { x: 38, y: -154, rotate: 8, delay: "0.26s" },
+  { x: 92, y: -140, rotate: 18, delay: "0.34s" },
+  { x: 148, y: -126, rotate: 26, delay: "0.42s" },
+  { x: 196, y: -102, rotate: 40, delay: "0.5s" },
+  { x: -162, y: -44, rotate: -52, delay: "0.56s" },
+  { x: -84, y: -30, rotate: -36, delay: "0.62s" },
+  { x: -8, y: -18, rotate: -16, delay: "0.68s" },
+  { x: 66, y: -26, rotate: 16, delay: "0.74s" },
+  { x: 142, y: -34, rotate: 34, delay: "0.8s" },
+  { x: 210, y: -44, rotate: 52, delay: "0.88s" }
+];
+
+const DRAW_REASON_LABEL = {
+  stalemate: "tablas por ahogado",
+  insufficient_material: "tablas por material insuficiente",
+  threefold_repetition: "tablas por triple repeticion",
+  fivefold_repetition: "tablas por quintuple repeticion",
+  fifty_move_rule: "tablas por regla de 50 movimientos",
+  seventy_five_move_rule: "tablas por regla de 75 movimientos"
+};
+
+const resolveOutcomePresentation = (result, playerColor) => {
+  if (!result) return null;
+
+  if (result.type === "draw") {
+    return {
+      kind: "draw",
+      title: "Tablas",
+      subtitle: DRAW_REASON_LABEL[result.reason] || "partida empatada",
+      symbol: "1/2",
+      animationId: `draw-${result.reason || "generic"}`
+    };
+  }
+
+  const playerWon = result.winner === playerColor;
+  if (playerWon) {
+    return {
+      kind: "win",
+      title: "Victoria",
+      subtitle: "jaque mate a la IA",
+      symbol: "W",
+      animationId: `win-${result.reason || "mate"}`
+    };
+  }
+
+  return {
+    kind: "lose",
+    title: "Derrota",
+    subtitle: "la IA cierra la partida",
+    symbol: "L",
+    animationId: `lose-${result.reason || "mate"}`
+  };
+};
+
 function ChessGame() {
   const containerRef = useRef(null);
 
@@ -412,6 +471,15 @@ function ChessGame() {
   const capturedSummary = useMemo(() => getPieceSummary(gameState.board), [gameState.board]);
   const moveRows = useMemo(() => getMoveHistoryRows(gameState.moveHistory), [gameState.moveHistory]);
   const drawClaimAvailable = canClaimDraw(gameState);
+  const outcomePresentation = useMemo(
+    () => resolveOutcomePresentation(gameState.result, playerColor),
+    [gameState.result, playerColor]
+  );
+  const outcomeAnimationKey = useMemo(() => (
+    outcomePresentation
+      ? `${outcomePresentation.animationId}-${gameState.moveHistory.length}-${gameState.turn}`
+      : "none"
+  ), [gameState.moveHistory.length, gameState.turn, outcomePresentation]);
 
   const handleSquareClick = useCallback((square) => {
     if (!startedRef.current || gameStateRef.current.result || aiThinkingRef.current || pendingPromotion) {
@@ -648,6 +716,37 @@ function ChessGame() {
             })
           )}
         </div>
+
+        {outcomePresentation ? (
+          <div
+            key={outcomeAnimationKey}
+            className={`chess-end-overlay outcome-${outcomePresentation.kind}`}
+            role="status"
+            aria-live="polite"
+          >
+            <div className="chess-end-ribbon">
+              <span className="chess-end-symbol">{outcomePresentation.symbol}</span>
+              <div className="chess-end-copy">
+                <strong>{outcomePresentation.title}</strong>
+                <span>{outcomePresentation.subtitle}</span>
+              </div>
+            </div>
+            <div className="chess-end-particles" aria-hidden="true">
+              {END_SCENE_PARTICLES.map((particle, index) => (
+                <span
+                  // Particle map keeps the visual burst deterministic for QA captures.
+                  key={`${outcomePresentation.kind}-${index}`}
+                  style={{
+                    "--particle-x": `${particle.x}px`,
+                    "--particle-y": `${particle.y}px`,
+                    "--particle-rotate": `${particle.rotate}deg`,
+                    "--particle-delay": particle.delay
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {pendingPromotion ? (

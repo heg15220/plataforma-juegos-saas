@@ -351,3 +351,67 @@
 - Captura visual focalizada del gameplay real:
   - `output/strategy-domino-audit/shot-gameplay.png`
   - `output/strategy-domino-audit/state-gameplay.json`.
+## 2026-02-25 - Crucigrama: variacion de tamano + deduplicacion de pistas (implementacion)
+- `CrosswordKnowledgeGame.jsx` refactorizado para soportar layouts validos de distinto tamano (`compact5`, `expanded6`, `extended7`).
+- Banco de crucigramas ES/EN ampliado con plantillas 5x5, 6x6 y 7x7; ahora cada partida puede salir con tamano distinto de forma aleatoria.
+- Validacion de plantillas anadida:
+  - verifica longitud/alfabeto por layout,
+  - comprueba cruces coherentes,
+  - descarta plantillas con pistas repetidas o palabras repetidas dentro de la misma partida.
+- Reinicio aleatorio ajustado para evitar repetir inmediatamente la misma plantilla cuando hay alternativas.
+- Payload QA ampliado con `grid` (filas/columnas/casillas jugables).
+- `styles.css`: `crossword-grid` ahora usa columnas dinamicas (`--crossword-cols`) en lugar de 5 fijas.
+- Pendiente inmediato: build + validacion Playwright y revision de capturas/estado.
+## 2026-02-25 - Crucigrama: variacion de tamano + deduplicacion de pistas (validacion)
+- Build validado: `npm run build` OK (requiere ejecucion fuera de sandbox por `spawn EPERM` de esbuild en sandbox).
+- QA Playwright ejecutada con `web_game_playwright_client.mjs` en modo crucigrama con URL `#game=knowledge-crucigrama-mini`.
+- Muestreo de partidas aleatorias confirma presencia de 3 tamanos:
+  - 5x5 (`grid.openCells = 19`) en `output/knowledge-crucigrama-dynamic-run21/state-0.json`.
+  - 6x6 (`grid.openCells = 24`) en `output/knowledge-crucigrama-dynamic-run25/state-0.json`.
+  - 7x7 (`grid.openCells = 34`) en `output/knowledge-crucigrama-dynamic-run22/state-0.json`.
+- Capturas visuales in-game revisadas para 5x5/6x6/7x7 (`shot-0.png` en runs 21, 25 y 22 respectivamente).
+- Verificacion automatica adicional sobre estados generados: sin pistas duplicadas en la misma partida (`ok-no-duplicate-clues`).
+- Sin archivos `errors-*.json` generados en estas rondas.
+- Validacion adicional de reinicio consecutivo (`Partida aleatoria`): 12 rondas en la misma sesion sin repetir pistas de forma consecutiva (`repeatedConsecutively: false`).
+## 2026-02-25 - Ajedrez: animaciones de fin de partida (victoria/derrota/tablas)
+- `src/games/ChessGame.jsx`:
+  - anadido mapeo de resultado a presentacion visual (`win`, `lose`, `draw`) en funcion del `result` del motor y el color del jugador.
+  - anadido overlay animado de fin de partida sobre el tablero (`.chess-end-overlay`) con copy contextual:
+    - victoria del jugador,
+    - derrota frente a IA,
+    - tablas con motivo (ahogado, repeticion, 50/75 movimientos, material insuficiente, etc.).
+  - anadidos elementos visuales de particulas deterministas para asegurar consistencia en QA automatizado.
+- `src/styles.css`:
+  - nuevas capas y animaciones CSS para estados de cierre:
+    - `outcome-win`: glow positivo + burst de particulas,
+    - `outcome-lose`: pulso/temblor de derrota + particulas rojas,
+    - `outcome-draw`: anillos y transicion neutra + particulas frias.
+  - `chess-board-shell` ajustado a `position: relative` y `overflow: hidden` para contener overlay.
+
+### Validacion
+- Build: `npm run build` OK (fuera de sandbox por `spawn EPERM` en este host).
+- Playwright: corrida de humo en `output/chess-outcome-animations/` con `shot-0..1.png` y `state-0..1.json`.
+- Sin archivos `errors-*.json` en esa corrida.
+## 2026-02-25 - Rebuild crucigrama ES/EN (>10k terminos + pistas)
+- Rehecho el banco de terminos/pistas para crucigrama con script reproducible `scripts/build_crossword_term_bank.mjs`.
+- Fuente lexical: tesauros de LibreOffice (`dict-es/th_es_ANY_v2.dat`, `dict-en/th_en_US_v2.dat`).
+- Nuevo modulo generado: `src/games/knowledge/crosswordTermBank.js`.
+- Cobertura final por locale: ES=10.700 terminos, EN=12.000 terminos (longitudes 5-8).
+- Reemplazado generador sintetico por `src/games/knowledge/crosswordGenerator.js` basado en term bank real y cruces validos.
+- `CrosswordKnowledgeGame.jsx` actualizado para consumir pista real por termino (sin texto sintetico).
+- Test actualizado en `crosswordGenerator.test.js` para validar:
+  - cobertura >10k por locale,
+  - generacion en 10.000 partidas por locale,
+  - rejillas 5x5/6x6/7x7/8x8,
+  - correspondencia exacta palabra->pista con el banco.
+- Mejora UX de calidad en pistas:
+  - filtro anti-autorreferencia para impedir que la pista contenga la respuesta o derivados directos,
+  - fallback neutral cuando una pista potencial filtra la palabra.
+- Metricas QA post-regeneracion:
+  - duplicados de palabra: 0 en ES y EN,
+  - pistas con automenccion de la respuesta: 0 en ES y EN.
+- Validacion tecnica completada:
+  - `npm run test -- src/games/knowledge/crosswordGenerator.test.js` OK,
+  - `npm run build` OK,
+  - Playwright + inspeccion visual en `output/knowledge-crucigrama-rebuild-v4/` (captura y estado JSON coherentes).
+- Nota: build mantiene warning de chunk grande esperado por el tamano del term bank.

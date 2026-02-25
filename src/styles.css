@@ -2636,7 +2636,7 @@ body {
 .crossword-grid {
   margin-top: 0.72rem;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--crossword-cols, 5), minmax(0, 1fr));
   gap: 0.26rem;
   border-radius: 12px;
   border: 1px solid rgba(251, 146, 60, 0.34);
@@ -2668,6 +2668,30 @@ body {
 
 .crossword-cell.selected {
   outline: 2px solid #f97316;
+}
+
+.crossword-cell.feedback-correct {
+  border-color: rgba(16, 185, 129, 0.78);
+  box-shadow:
+    inset 0 0 0 2px rgba(16, 185, 129, 0.34),
+    0 0 0 1px rgba(5, 150, 105, 0.24);
+}
+
+.crossword-cell.feedback-wrong {
+  border-color: rgba(239, 68, 68, 0.82);
+  box-shadow:
+    inset 0 0 0 2px rgba(239, 68, 68, 0.32),
+    0 0 0 1px rgba(185, 28, 28, 0.22);
+}
+
+.crossword-cell.feedback-correct.feedback-token-0,
+.crossword-cell.feedback-correct.feedback-token-1 {
+  animation: crossword-cell-correct 480ms ease;
+}
+
+.crossword-cell.feedback-wrong.feedback-token-0,
+.crossword-cell.feedback-wrong.feedback-token-1 {
+  animation: crossword-cell-wrong 520ms ease;
 }
 
 .crossword-number {
@@ -2726,6 +2750,105 @@ body {
   color: #fff7ed;
   font-size: 0.74rem;
   line-height: 1.35;
+}
+
+.crossword-clues li {
+  border-radius: 8px;
+  padding: 0.14rem 0.22rem;
+  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.crossword-clues li.active-word {
+  background: rgba(255, 237, 213, 0.24);
+}
+
+.crossword-clues li.feedback-correct {
+  background: rgba(16, 185, 129, 0.24);
+  color: #f0fdf4;
+}
+
+.crossword-clues li.feedback-wrong {
+  background: rgba(239, 68, 68, 0.24);
+  color: #fff1f2;
+}
+
+.crossword-clues li.feedback-correct.feedback-token-0,
+.crossword-clues li.feedback-correct.feedback-token-1 {
+  animation: crossword-clue-correct 420ms ease;
+}
+
+.crossword-clues li.feedback-wrong.feedback-token-0,
+.crossword-clues li.feedback-wrong.feedback-token-1 {
+  animation: crossword-clue-wrong 520ms ease;
+}
+
+@keyframes crossword-cell-correct {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  45% {
+    transform: scale(1.08);
+    filter: brightness(1.07);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+@keyframes crossword-cell-wrong {
+  0% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes crossword-clue-correct {
+  0% {
+    transform: translateX(0);
+    opacity: 0.88;
+  }
+  50% {
+    transform: translateX(2px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes crossword-clue-wrong {
+  0% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-3px);
+  }
+  45% {
+    transform: translateX(3px);
+  }
+  70% {
+    transform: translateX(-2px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 .adventure-grid {
@@ -3508,11 +3631,13 @@ body {
 }
 
 .chess-board-shell {
+  position: relative;
   margin-top: 0.72rem;
   border: 1px solid rgba(101, 75, 45, 0.42);
   border-radius: 14px;
   padding: 0.58rem;
   background: linear-gradient(140deg, rgba(61, 47, 35, 0.95), rgba(42, 32, 24, 0.95));
+  overflow: hidden;
 }
 
 .chess-board-grid {
@@ -3651,6 +3776,140 @@ body {
   -webkit-text-stroke: 0.45px rgba(220, 220, 220, 0.28);
 }
 
+.chess-end-overlay {
+  position: absolute;
+  inset: 0.58rem;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 6;
+  opacity: 0;
+  animation: chess-end-fade-in 380ms ease forwards;
+}
+
+.chess-end-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
+}
+
+.chess-end-overlay.outcome-win::before {
+  background:
+    radial-gradient(circle at 50% 60%, rgba(34, 197, 94, 0.38), rgba(22, 101, 52, 0.1) 54%, transparent 78%),
+    linear-gradient(145deg, rgba(15, 118, 110, 0.46), rgba(245, 158, 11, 0.2));
+  animation: chess-end-win-glow 1.9s ease-in-out infinite;
+}
+
+.chess-end-overlay.outcome-lose::before {
+  background:
+    radial-gradient(circle at 50% 38%, rgba(248, 113, 113, 0.34), rgba(127, 29, 29, 0.12) 56%, transparent 80%),
+    linear-gradient(145deg, rgba(127, 29, 29, 0.44), rgba(24, 24, 27, 0.28));
+  animation: chess-end-lose-shake 1.45s ease-in-out infinite;
+}
+
+.chess-end-overlay.outcome-draw::before {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(251, 191, 36, 0.2), rgba(59, 130, 246, 0.12) 55%, transparent 82%),
+    repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.18) 0 8px, rgba(255, 255, 255, 0) 10px 18px);
+  animation: chess-end-draw-rings 2.3s linear infinite;
+}
+
+.chess-end-ribbon {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  padding: 0.48rem 0.74rem;
+  backdrop-filter: blur(2px);
+  transform: translateY(8px) scale(0.96);
+  animation: chess-end-ribbon-in 560ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.chess-end-overlay.outcome-win .chess-end-ribbon {
+  background: linear-gradient(145deg, rgba(5, 150, 105, 0.88), rgba(13, 148, 136, 0.88));
+  box-shadow: 0 10px 28px rgba(4, 120, 87, 0.35);
+}
+
+.chess-end-overlay.outcome-lose .chess-end-ribbon {
+  background: linear-gradient(145deg, rgba(185, 28, 28, 0.9), rgba(120, 26, 26, 0.88));
+  box-shadow: 0 10px 28px rgba(127, 29, 29, 0.36);
+}
+
+.chess-end-overlay.outcome-draw .chess-end-ribbon {
+  background: linear-gradient(145deg, rgba(59, 130, 246, 0.88), rgba(148, 163, 184, 0.9));
+  box-shadow: 0 10px 28px rgba(30, 64, 175, 0.28);
+}
+
+.chess-end-symbol {
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.16);
+  color: #f8fafc;
+  display: grid;
+  place-items: center;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  animation: chess-end-symbol-pulse 1.35s ease-in-out infinite;
+}
+
+.chess-end-copy {
+  display: grid;
+  gap: 0.05rem;
+  color: #fff7ed;
+}
+
+.chess-end-copy strong {
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.chess-end-copy span {
+  font-size: 0.68rem;
+  line-height: 1.15;
+  opacity: 0.93;
+}
+
+.chess-end-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.chess-end-particles span {
+  position: absolute;
+  left: 50%;
+  top: 74%;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.32) rotate(0deg);
+  animation: chess-end-particle-burst 1.6s ease-out infinite;
+  animation-delay: var(--particle-delay);
+}
+
+.chess-end-overlay.outcome-win .chess-end-particles span {
+  background: linear-gradient(160deg, #34d399, #fbbf24);
+}
+
+.chess-end-overlay.outcome-lose .chess-end-particles span {
+  background: linear-gradient(160deg, #fca5a5, #ef4444);
+}
+
+.chess-end-overlay.outcome-draw .chess-end-particles span {
+  background: linear-gradient(160deg, #bfdbfe, #facc15);
+}
+
 .chess-promotion-overlay {
   margin-top: 0.64rem;
   border: 1px solid rgba(98, 74, 44, 0.45);
@@ -3785,6 +4044,87 @@ body {
   50% {
     transform: translate(-50%, -50%) scale(1.03);
     opacity: 1;
+  }
+}
+
+@keyframes chess-end-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes chess-end-ribbon-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes chess-end-symbol-pulse {
+  0%,
+  100% {
+    transform: scale(0.96);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes chess-end-particle-burst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.32) rotate(0deg);
+  }
+  16% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(
+      calc(-50% + var(--particle-x)),
+      calc(-50% + var(--particle-y))
+    ) scale(1.06) rotate(var(--particle-rotate));
+  }
+}
+
+@keyframes chess-end-win-glow {
+  0%,
+  100% {
+    filter: saturate(1) brightness(0.94);
+  }
+  50% {
+    filter: saturate(1.16) brightness(1.06);
+  }
+}
+
+@keyframes chess-end-lose-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+    filter: brightness(0.92);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+    filter: brightness(1.04);
+  }
+}
+
+@keyframes chess-end-draw-rings {
+  from {
+    background-position: 0 0, 0 0;
+  }
+  to {
+    background-position: 0 0, 0 -18px;
   }
 }
 
