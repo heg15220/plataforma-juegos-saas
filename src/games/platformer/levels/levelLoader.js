@@ -38,19 +38,93 @@ const numberOrFallback = (value, fallback) => {
   return numeric;
 };
 
+const clampInt = (value, min, max) => Math.max(min, Math.min(max, Math.floor(value)));
+
+const VISUAL_STYLES = new Set(["classic", "ice", "lava", "fortress", "boss_arena"]);
+
+const placeSafetyPlatform = (tiles, width, height, centerX, y, radius = 1) => {
+  const safeY = clampInt(y, 1, height - 2);
+  for (let x = centerX - radius; x <= centerX + radius; x += 1) {
+    if (x < 0 || x >= width) {
+      continue;
+    }
+    if (tiles[safeY][x] === TILE_TYPES.EMPTY) {
+      tiles[safeY][x] = TILE_TYPES.PLATFORM;
+    }
+  }
+};
+
+const injectSafetyRoute = (tiles, width, height, playerSpawn, goal) => {
+  const maxStepX = 4;
+  const maxStepUp = 3;
+  const maxStepDown = 4;
+  const routeLimit = width + height + 40;
+
+  let currentX = clampInt(playerSpawn.x, 0, width - 1);
+  let currentY = clampInt(playerSpawn.y + 1, 1, height - 2);
+  const targetX = clampInt(goal.x, 0, width - 1);
+  const targetY = clampInt(goal.y + 1, 1, height - 2);
+
+  placeSafetyPlatform(tiles, width, height, currentX, currentY, 2);
+
+  let guard = 0;
+  while (guard < routeLimit) {
+    guard += 1;
+    const deltaX = targetX - currentX;
+    const deltaY = targetY - currentY;
+    const closeEnough = Math.abs(deltaX) <= maxStepX && Math.abs(deltaY) <= 1;
+    if (closeEnough) {
+      break;
+    }
+
+    const stepX = Math.abs(deltaX) <= maxStepX
+      ? deltaX
+      : Math.sign(deltaX) * maxStepX;
+    let stepY = 0;
+    if (deltaY < -1) {
+      stepY = Math.max(-maxStepUp, deltaY);
+    } else if (deltaY > 1) {
+      stepY = Math.min(maxStepDown, deltaY);
+    }
+
+    currentX = clampInt(currentX + stepX, 0, width - 1);
+    currentY = clampInt(currentY + stepY, 1, height - 2);
+    placeSafetyPlatform(tiles, width, height, currentX, currentY, 2);
+  }
+
+  placeSafetyPlatform(tiles, width, height, targetX, targetY, 2);
+
+  if (tiles[targetY][targetX] === TILE_TYPES.EMPTY) {
+    tiles[targetY][targetX] = TILE_TYPES.PLATFORM;
+  }
+};
+
 const normalizeSpawnList = (list, fallbackType) => {
   if (!Array.isArray(list)) {
     return [];
   }
-  return list.map((entry) => ({
-    type: String(entry.type || fallbackType),
-    x: Math.max(0, Math.floor(numberOrFallback(entry.x, 0))),
-    y: Math.max(0, Math.floor(numberOrFallback(entry.y, 0))),
-    patrol: Math.max(1, Math.floor(numberOrFallback(entry.patrol, 4)))
-  }));
+  return list.map((entry) => {
+    const normalized = {
+      type: String(entry.type || fallbackType),
+      x: Math.max(0, Math.floor(numberOrFallback(entry.x, 0))),
+      y: Math.max(0, Math.floor(numberOrFallback(entry.y, 0))),
+      patrol: Math.max(1, Math.floor(numberOrFallback(entry.patrol, 4)))
+    };
+
+    if (fallbackType === "walker") {
+      normalized.health = Math.max(1, Math.floor(numberOrFallback(entry.health, 1)));
+      const speed = numberOrFallback(entry.speed, 0);
+      if (speed > 0) {
+        normalized.speed = Math.max(20, speed);
+      }
+      normalized.name = String(entry.name || "");
+    }
+
+    return normalized;
+  });
 };
 
-const normalizeLevel = (rawLevel) => {
+const normalizeLevel = (rawLevel, levelIndex = 0) => {
   const mapRows = Array.isArray(rawLevel.map) ? rawLevel.map.map((row) => String(row)) : [];
   const height = Math.max(1, mapRows.length);
   const width = Math.max(1, ...mapRows.map((row) => row.length));
@@ -73,6 +147,20 @@ const normalizeLevel = (rawLevel) => {
     rewardMap.set(tileKey(tx, ty), rewardType);
   }
 
+  const playerSpawn = {
+    x: Math.max(0, Math.floor(numberOrFallback(rawLevel.playerSpawn?.x, 2))),
+    y: Math.max(0, Math.floor(numberOrFallback(rawLevel.playerSpawn?.y, Math.max(0, height - 3))))
+  };
+
+  const goal = {
+    x: Math.max(0, Math.floor(numberOrFallback(rawLevel.goal?.x, Math.max(0, width - 3)))),
+    y: Math.max(0, Math.floor(numberOrFallback(rawLevel.goal?.y, Math.max(0, height - 4))))
+  };
+
+  if (levelIndex >= 2) {
+    injectSafetyRoute(tiles, width, height, playerSpawn, goal);
+  }
+
   const questionBlocks = [];
   for (let ty = 0; ty < height; ty += 1) {
     for (let tx = 0; tx < width; tx += 1) {
@@ -88,18 +176,28 @@ const normalizeLevel = (rawLevel) => {
     }
   }
 
-  const playerSpawn = {
-    x: Math.max(0, Math.floor(numberOrFallback(rawLevel.playerSpawn?.x, 2))),
-    y: Math.max(0, Math.floor(numberOrFallback(rawLevel.playerSpawn?.y, Math.max(0, height - 3))))
-  };
-
-  const goal = {
-    x: Math.max(0, Math.floor(numberOrFallback(rawLevel.goal?.x, Math.max(0, width - 3)))),
-    y: Math.max(0, Math.floor(numberOrFallback(rawLevel.goal?.y, Math.max(0, height - 4))))
-  };
-
   const itemSpawns = normalizeSpawnList(rawLevel.itemSpawns, "coin");
   const enemySpawns = normalizeSpawnList(rawLevel.enemySpawns, "walker");
+
+  const layoutType = ["horizontal", "vertical", "hybrid"].includes(rawLevel.layoutType)
+    ? rawLevel.layoutType
+    : "horizontal";
+  const visualStyle = VISUAL_STYLES.has(rawLevel.visualStyle)
+    ? rawLevel.visualStyle
+    : "classic";
+
+  const rawBoss = rawLevel.boss && typeof rawLevel.boss === "object" ? rawLevel.boss : null;
+  const boss = rawBoss
+    ? {
+      enabled: true,
+      name: String(rawBoss.name || "Arena Warden"),
+      maxHealth: Math.max(4, Math.floor(numberOrFallback(rawBoss.maxHealth, 16))),
+      contactDamage: Math.max(1, Math.floor(numberOrFallback(rawBoss.contactDamage, 1))),
+      projectileDamage: Math.max(1, Math.floor(numberOrFallback(rawBoss.projectileDamage, 1))),
+      stompDamage: Math.max(1, Math.floor(numberOrFallback(rawBoss.stompDamage, 2))),
+      finalBoss: Boolean(rawBoss.finalBoss)
+    }
+    : null;
 
   const coinFromItems = itemSpawns.filter((item) => item.type === "coin").length;
   const coinFromQuestionBlocks = questionBlocks.filter((block) => block.reward === "coin").length;
@@ -108,6 +206,11 @@ const normalizeLevel = (rawLevel) => {
     id: String(rawLevel.id || "platformer-level"),
     name: String(rawLevel.name || "Arcade Level"),
     theme: rawLevel.theme === "dusk" ? "dusk" : "day",
+    visualStyle,
+    layoutType,
+    isBossLevel: Boolean(boss),
+    isFinalBossLevel: Boolean(boss?.finalBoss),
+    boss,
     timeLimit: Math.max(30, Math.floor(numberOrFallback(rawLevel.timeLimit, 120))),
     goalRequiresAllCoins: Boolean(rawLevel.goalRequiresAllCoins),
     tileSize,
@@ -123,7 +226,7 @@ const normalizeLevel = (rawLevel) => {
   };
 };
 
-const LEVEL_TEMPLATES = LEVELS.map((level) => normalizeLevel(level));
+const LEVEL_TEMPLATES = LEVELS.map((level, index) => normalizeLevel(level, index));
 
 export const getLevelCount = () => LEVEL_TEMPLATES.length;
 
@@ -142,6 +245,11 @@ export const createLevelRuntime = (index) => {
     id: template.id,
     name: template.name,
     theme: template.theme,
+    visualStyle: template.visualStyle,
+    layoutType: template.layoutType,
+    isBossLevel: template.isBossLevel,
+    isFinalBossLevel: template.isFinalBossLevel,
+    boss: template.boss ? { ...template.boss } : null,
     timeLimit: template.timeLimit,
     goalRequiresAllCoins: template.goalRequiresAllCoins,
     tileSize: template.tileSize,
@@ -156,6 +264,17 @@ export const createLevelRuntime = (index) => {
     coinTarget: template.coinTarget
   };
 };
+
+export const getLevelCatalog = () =>
+  LEVEL_TEMPLATES.map((template, index) => ({
+    index,
+    id: template.id,
+    name: template.name,
+    visualStyle: template.visualStyle,
+    layoutType: template.layoutType,
+    isBossLevel: template.isBossLevel,
+    isFinalBossLevel: template.isFinalBossLevel
+  }));
 
 export const getTileType = (level, tx, ty) => {
   if (!level || tx < 0 || ty < 0 || tx >= level.width || ty >= level.height) {

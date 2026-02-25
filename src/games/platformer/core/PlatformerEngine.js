@@ -9,10 +9,17 @@ import {
   SCORE_VALUES,
   SCREENS,
   SNAPSHOT_INTERVAL_MS,
+  VIEWPORT_HEIGHT,
   VIEWPORT_WIDTH
 } from "../config";
 import ArcadeAudio from "../audio/ArcadeAudio";
-import { createEnemyFromSpawn, defeatEnemy, updateEnemy } from "../entities/enemy";
+import {
+  applyEnemyDamage,
+  createEnemyFromSpawn,
+  defeatEnemy,
+  isBossEnemy,
+  updateEnemy
+} from "../entities/enemy";
 import { createItemFromSpawn, createQuestionReward, updateItem } from "../entities/item";
 import {
   applyHorizontalInput,
@@ -32,7 +39,8 @@ import InputController from "../input/InputController";
 import {
   TILE_TYPES,
   createLevelRuntime,
-  getLevelCount,
+  getLevelCatalog,
+  getWorldHeight,
   getWorldWidth,
   goalToWorldRect,
   spawnToWorldPosition,
@@ -50,6 +58,27 @@ const toNumber = (value, fallback = 0) => {
   return numeric;
 };
 
+const RUN_LEVEL_COUNT = 5;
+
+export const shouldGrantBossEntryPower = (level, player) =>
+  Boolean(level?.isBossLevel && (player?.powerLevel || 0) <= 0);
+
+const pickRandom = (list) => {
+  if (!Array.isArray(list) || !list.length) {
+    return null;
+  }
+  return list[Math.floor(Math.random() * list.length)];
+};
+
+const shuffle = (list) => {
+  const copy = [...list];
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+  }
+  return copy;
+};
+
 export default class PlatformerEngine {
   constructor(canvas, options = {}) {
     this.canvas = canvas;
@@ -57,11 +86,15 @@ export default class PlatformerEngine {
     this.renderer = new Renderer(canvas);
     this.input = new InputController();
     this.audio = new ArcadeAudio();
+    this.levelCatalog = getLevelCatalog();
+    this.runCounter = 0;
+
+    const initialRun = this.buildRunPlan();
 
     this.state = {
       ...createInitialSnapshot(),
       level: null,
-      levelCount: Math.max(1, getLevelCount()),
+      levelCount: Math.max(1, initialRun.length),
       goalRect: { x: 0, y: 0, w: 26, h: 66 },
       player: createPlayer({ x: 0, y: 0 }),
       enemies: [],
@@ -69,6 +102,14 @@ export default class PlatformerEngine {
       projectiles: [],
       effects: [],
       camera: { x: 0, y: 0 },
+      runLevelIndices: initialRun,
+      runLevelIds: initialRun.map((levelIndex) => this.levelCatalog[levelIndex]?.id || `level-${levelIndex}`),
+      runBossLevelCount: initialRun.filter((levelIndex) => this.levelCatalog[levelIndex]?.isBossLevel).length,
+      levelTemplateIndex: initialRun[0] ?? 0,
+      levelLayout: "horizontal",
+      isBossLevel: false,
+      bossEntryPowerGranted: false,
+      activeBoss: null,
       transitionTimer: 0,
       elapsedMs: 0
     };
@@ -161,15 +202,109 @@ export default class PlatformerEngine {
     this.rafId = requestAnimationFrame(this.loop);
   }
 
+  buildRunPlan() {
+    const catalog = Array.isArray(this.levelCatalog) ? this.levelCatalog : [];
+    if (!catalog.length) {
+      return [0];
+    }
+
+    const finalBossLevel = catalog.find((level) => level.isFinalBossLevel) ||
+      catalog.find((level) => level.isBossLevel) ||
+      catalog[catalog.length - 1];
+
+    const nonFinalLevels = catalog.filter((level) => level.index !== finalBossLevel.index);
+    const earlyBossCandidates = nonFinalLevels.filter((level) => level.isBossLevel);
+    const pureVerticalCandidates = nonFinalLevels.filter((level) => level.layoutType === "vertical");
+    const verticalCandidates = pureVerticalCandidates.length
+      ? pureVerticalCandidates
+      : nonFinalLevels.filter((level) => level.layoutType === "vertical" || level.layoutType === "hybrid");
+
+    const prefixTarget = Math.max(1, RUN_LEVEL_COUNT - 1);
+    const selected = [];
+
+    const earlyBoss = pickRandom(earlyBossCandidates);
+    if (earlyBoss) {
+      selected.push(earlyBoss.index);
+    }
+
+    const verticalLevel = pickRandom(
+      verticalCandidates.filter((level) => !selected.includes(level.index))
+    );
+    if (verticalLevel) {
+      selected.push(verticalLevel.index);
+    }
+
+    const fallbackOrder = shuffle(nonFinalLevels).map((level) => level.index);
+    for (const index of fallbackOrder) {
+      if (selected.length >= prefixTarget) {
+        break;
+      }
+      if (!selected.includes(index)) {
+        selected.push(index);
+      }
+    }
+
+    if (!selected.length) {
+      selected.push(finalBossLevel.index);
+    }
+
+    const prefix = shuffle(selected).slice(0, prefixTarget);
+    while (prefix.length < prefixTarget) {
+      prefix.push(prefix[prefix.length - 1] ?? finalBossLevel.index);
+    }
+
+    return [...prefix, finalBossLevel.index].slice(0, RUN_LEVEL_COUNT);
+  }
+
+  applyRunPlan(runLevelIndices) {
+    const normalized = Array.isArray(runLevelIndices) && runLevelIndices.length
+      ? [...runLevelIndices]
+      : [0];
+
+    this.state.runLevelIndices = normalized;
+    this.state.levelCount = normalized.length;
+    this.state.runLevelIds = normalized.map(
+      (levelIndex) => this.levelCatalog[levelIndex]?.id || `level-${levelIndex}`
+    );
+    this.state.runBossLevelCount = normalized.filter(
+      (levelIndex) => this.levelCatalog[levelIndex]?.isBossLevel
+    ).length;
+  }
+
+  resolveTemplateIndex(runLevelIndex) {
+    const safeRunIndex = (
+      (Math.floor(runLevelIndex) % this.state.levelCount) + this.state.levelCount
+    ) % this.state.levelCount;
+    return this.state.runLevelIndices[safeRunIndex] ?? safeRunIndex;
+  }
+
+  refreshActiveBoss() {
+    const activeBoss = this.state.enemies.find((enemy) => isBossEnemy(enemy)) || null;
+    this.state.activeBoss = activeBoss
+      ? {
+        id: activeBoss.id,
+        name: activeBoss.name || "Boss",
+        health: Math.max(0, Math.floor(activeBoss.health || 0)),
+        maxHealth: Math.max(1, Math.floor(activeBoss.maxHealth || 1))
+      }
+      : null;
+  }
+
   beginNewRun() {
+    this.runCounter += 1;
+    this.applyRunPlan(this.buildRunPlan());
     this.loadLevel(0, { resetRun: true, keepPower: false, preserveLives: false });
     this.state.screen = SCREENS.PLAYING;
-    this.state.message = "Run started. Reach the flag and survive.";
+    const bossHint = this.state.bossEntryPowerGranted
+      ? " Auto fire power granted for this boss stage."
+      : "";
+    this.state.message = `Run started. Clear ${this.state.levelCount} random maps and defeat both bosses.${bossHint}`;
   }
 
   loadLevel(index, options = {}) {
     const levelIndex = ((Math.floor(index) % this.state.levelCount) + this.state.levelCount) % this.state.levelCount;
-    const level = createLevelRuntime(levelIndex);
+    const templateIndex = this.resolveTemplateIndex(levelIndex);
+    const level = createLevelRuntime(templateIndex);
     const shouldResetRun = Boolean(options.resetRun);
     const shouldPreserveLives = Boolean(options.preserveLives);
 
@@ -182,7 +317,10 @@ export default class PlatformerEngine {
 
     this.state.level = level;
     this.state.levelIndex = levelIndex;
+    this.state.levelTemplateIndex = templateIndex;
     this.state.levelName = level.name;
+    this.state.levelLayout = level.layoutType || "horizontal";
+    this.state.isBossLevel = Boolean(level.isBossLevel);
     this.state.timeLeft = level.timeLimit;
     this.state.timeLimit = level.timeLimit;
     this.state.coinsCollected = 0;
@@ -196,6 +334,11 @@ export default class PlatformerEngine {
       keepPower: Boolean(options.keepPower),
       invulnerable: false
     });
+    this.state.bossEntryPowerGranted = false;
+    if (shouldGrantBossEntryPower(level, this.state.player)) {
+      this.state.player.powerLevel = 1;
+      this.state.bossEntryPowerGranted = true;
+    }
 
     this.state.enemies = level.enemySpawns.map((spawnData, enemyIndex) =>
       createEnemyFromSpawn(level, spawnData, `enemy-${level.id}-${enemyIndex}`)
@@ -203,8 +346,24 @@ export default class PlatformerEngine {
     this.state.items = level.itemSpawns.map((spawnData, itemIndex) =>
       createItemFromSpawn(level, spawnData, `item-${level.id}-${itemIndex}`)
     );
+
+    if (level.isBossLevel && !this.state.enemies.some((enemy) => enemy.type === "boss")) {
+      const fallbackSpawn = {
+        type: "boss",
+        x: Math.max(3, level.goal.x - 6),
+        y: Math.max(2, level.goal.y),
+        patrol: 6,
+        health: level.boss?.maxHealth,
+        name: level.boss?.name || "Arena Warden"
+      };
+      this.state.enemies.push(
+        createEnemyFromSpawn(level, fallbackSpawn, `enemy-${level.id}-boss-fallback`)
+      );
+    }
+
     this.state.projectiles = [];
     this.state.effects = [];
+    this.refreshActiveBoss();
   }
 
   restartCurrentLevel() {
@@ -224,7 +383,10 @@ export default class PlatformerEngine {
       preserveLives: true
     });
     this.state.screen = SCREENS.PLAYING;
-    this.state.message = `Restarted ${this.state.level.name}.`;
+    const bossHint = this.state.bossEntryPowerGranted
+      ? " Auto fire power granted for this boss stage."
+      : "";
+    this.state.message = `Restarted ${this.state.level.name}.${bossHint}`;
   }
 
   spawnBurst(x, y, options = {}) {
@@ -428,6 +590,11 @@ export default class PlatformerEngine {
       0,
       Math.max(0, getWorldWidth(this.state.level) - VIEWPORT_WIDTH)
     );
+    this.state.camera.y = clamp(
+      spawn.y - VIEWPORT_HEIGHT * 0.5,
+      0,
+      Math.max(0, getWorldHeight(this.state.level) - VIEWPORT_HEIGHT)
+    );
     this.state.message = `${reason} Lives left: ${this.state.lives}.`;
   }
 
@@ -446,7 +613,7 @@ export default class PlatformerEngine {
 
     if (this.state.levelIndex >= this.state.levelCount - 1) {
       this.state.screen = SCREENS.GAME_COMPLETE;
-      this.state.message = `All levels complete. Bonus +${stageBonus}. Press Enter to play again.`;
+      this.state.message = `Run complete (${this.state.levelCount}/${this.state.levelCount}). Bonus +${stageBonus}. Press Enter for a new random route.`;
       this.audio.play("win");
       this.spawnBurst(this.state.goalRect.x + this.state.goalRect.w * 0.5, this.state.goalRect.y + 20, {
         count: 46,
@@ -463,7 +630,7 @@ export default class PlatformerEngine {
 
     this.state.screen = SCREENS.LEVEL_COMPLETE;
     this.state.transitionTimer = 2.1;
-    this.state.message = `Level clear! Bonus +${stageBonus}. Next map loading...`;
+    this.state.message = `Map clear! Bonus +${stageBonus}. Loading next random stage...`;
     this.audio.play("win");
     this.spawnBurst(this.state.goalRect.x + this.state.goalRect.w * 0.5, this.state.goalRect.y + 20, {
       count: 28,
@@ -535,7 +702,9 @@ export default class PlatformerEngine {
 
   updateEnemies(dt) {
     for (const enemy of this.state.enemies) {
-      updateEnemy(enemy, dt, this.state.level, moveEntityWithWorldCollisions);
+      updateEnemy(enemy, dt, this.state.level, moveEntityWithWorldCollisions, {
+        player: this.state.player
+      });
     }
   }
 
@@ -578,18 +747,55 @@ export default class PlatformerEngine {
           continue;
         }
         projectile.active = false;
-        defeatEnemy(enemy);
-        this.state.score += SCORE_VALUES.projectileEnemy;
-        this.state.message = "Enemy eliminated with power shot.";
-        this.audio.play("stomp");
-        this.spawnBurst(enemy.x + enemy.w * 0.5, enemy.y + enemy.h * 0.5, {
-          count: 16,
-          color: "rgba(255,143,117,__ALPHA__)",
-          speedMin: 80,
-          speedMax: 220,
-          lifeMin: 0.18,
-          lifeMax: 0.42
-        });
+
+        if (enemy.type === "boss") {
+          const bossDamage = this.state.level?.boss?.projectileDamage ?? 1;
+          const hit = applyEnemyDamage(enemy, bossDamage);
+          if (!hit.applied) {
+            this.state.message = "Boss armor absorbed the hit.";
+            break;
+          }
+
+          if (hit.defeated) {
+            this.state.score += SCORE_VALUES.bossDefeat;
+            this.state.message = `${enemy.name || "Boss"} defeated. Reach the flag.`;
+            this.audio.play("win");
+            this.spawnBurst(enemy.x + enemy.w * 0.5, enemy.y + enemy.h * 0.5, {
+              count: 34,
+              color: "rgba(255,114,126,__ALPHA__)",
+              speedMin: 110,
+              speedMax: 260,
+              lifeMin: 0.24,
+              lifeMax: 0.62
+            });
+          } else {
+            this.state.score += SCORE_VALUES.bossHit;
+            this.state.message = `${enemy.name || "Boss"} hit (${hit.remainingHealth}/${enemy.maxHealth}).`;
+            this.audio.play("hurt");
+            this.spawnBurst(enemy.x + enemy.w * 0.5, enemy.y + enemy.h * 0.5, {
+              count: 12,
+              color: "rgba(255,164,136,__ALPHA__)",
+              speedMin: 70,
+              speedMax: 180,
+              lifeMin: 0.16,
+              lifeMax: 0.35
+            });
+          }
+        } else {
+          defeatEnemy(enemy);
+          this.state.score += SCORE_VALUES.projectileEnemy;
+          this.state.message = "Enemy eliminated with power shot.";
+          this.audio.play("stomp");
+          this.spawnBurst(enemy.x + enemy.w * 0.5, enemy.y + enemy.h * 0.5, {
+            count: 16,
+            color: "rgba(255,143,117,__ALPHA__)",
+            speedMin: 80,
+            speedMax: 220,
+            lifeMin: 0.18,
+            lifeMax: 0.42
+          });
+        }
+
         break;
       }
     }
@@ -609,40 +815,82 @@ export default class PlatformerEngine {
         player.y + player.h * 0.3 < enemy.y;
 
       if (stomp) {
-        defeatEnemy(enemy);
         player.vy = PLAYER_SETTINGS.stompBounceVelocity;
-        this.state.score += SCORE_VALUES.stomp;
-        this.state.message = "Stomped enemy.";
-        this.audio.play("stomp");
-        this.spawnBurst(enemy.x + enemy.w * 0.5, enemy.y + enemy.h * 0.5, {
-          count: 14,
-          color: "rgba(255,241,176,__ALPHA__)",
-          speedMin: 70,
-          speedMax: 190,
-          lifeMin: 0.16,
-          lifeMax: 0.36
-        });
+
+        if (enemy.type === "boss") {
+          const stompDamage = this.state.level?.boss?.stompDamage ?? 2;
+          const hit = applyEnemyDamage(enemy, stompDamage);
+          if (hit.applied && hit.defeated) {
+            this.state.score += SCORE_VALUES.bossDefeat;
+            this.state.message = `${enemy.name || "Boss"} defeated. Reach the flag.`;
+            this.audio.play("win");
+            this.spawnBurst(enemy.x + enemy.w * 0.5, enemy.y + enemy.h * 0.5, {
+              count: 32,
+              color: "rgba(255,135,113,__ALPHA__)",
+              speedMin: 100,
+              speedMax: 235,
+              lifeMin: 0.2,
+              lifeMax: 0.55
+            });
+          } else if (hit.applied) {
+            this.state.score += SCORE_VALUES.bossHit;
+            this.state.message = `${enemy.name || "Boss"} staggered (${hit.remainingHealth}/${enemy.maxHealth}).`;
+            this.audio.play("stomp");
+            this.spawnBurst(enemy.x + enemy.w * 0.5, enemy.y + enemy.h * 0.5, {
+              count: 14,
+              color: "rgba(255,224,171,__ALPHA__)",
+              speedMin: 70,
+              speedMax: 180,
+              lifeMin: 0.16,
+              lifeMax: 0.36
+            });
+          } else {
+            this.state.message = "Boss armor resisted the stomp.";
+          }
+        } else {
+          defeatEnemy(enemy);
+          this.state.score += SCORE_VALUES.stomp;
+          this.state.message = "Stomped enemy.";
+          this.audio.play("stomp");
+          this.spawnBurst(enemy.x + enemy.w * 0.5, enemy.y + enemy.h * 0.5, {
+            count: 14,
+            color: "rgba(255,241,176,__ALPHA__)",
+            speedMin: 70,
+            speedMax: 190,
+            lifeMin: 0.16,
+            lifeMax: 0.36
+          });
+        }
         continue;
       }
 
-      this.loseLife("Enemy collision.");
+      this.loseLife(enemy.type === "boss" ? `${enemy.name || "Boss"} collision.` : "Enemy collision.");
       break;
     }
+
+    this.refreshActiveBoss();
   }
 
   cleanupEntities() {
     this.state.items = this.state.items.filter((item) => item.active);
     this.state.enemies = this.state.enemies.filter((enemy) => enemy.active);
     this.state.projectiles = this.state.projectiles.filter((projectile) => projectile.active);
+    this.refreshActiveBoss();
   }
 
   updateCamera() {
     const worldWidth = getWorldWidth(this.state.level);
+    const worldHeight = getWorldHeight(this.state.level);
     const lead = this.state.player.facing === "right" ? CAMERA_SETTINGS.leadPixels : -CAMERA_SETTINGS.leadPixels;
     const targetX = this.state.player.x + this.state.player.w * 0.5 - VIEWPORT_WIDTH * 0.5 + lead;
     const clampedTarget = clamp(targetX, 0, Math.max(0, worldWidth - VIEWPORT_WIDTH));
     this.state.camera.x += (clampedTarget - this.state.camera.x) * CAMERA_SETTINGS.followLerp;
     this.state.camera.x = clamp(this.state.camera.x, 0, Math.max(0, worldWidth - VIEWPORT_WIDTH));
+
+    const targetY = this.state.player.y + this.state.player.h * 0.5 - VIEWPORT_HEIGHT * 0.5 - CAMERA_SETTINGS.verticalLeadPixels;
+    const clampedY = clamp(targetY, 0, Math.max(0, worldHeight - VIEWPORT_HEIGHT));
+    this.state.camera.y += (clampedY - this.state.camera.y) * CAMERA_SETTINGS.followLerpY;
+    this.state.camera.y = clamp(this.state.camera.y, 0, Math.max(0, worldHeight - VIEWPORT_HEIGHT));
   }
 
   step(dt) {
@@ -678,7 +926,10 @@ export default class PlatformerEngine {
           preserveLives: true
         });
         this.state.screen = SCREENS.PLAYING;
-        this.state.message = `Level ${this.state.levelIndex + 1}: ${this.state.level.name}`;
+        const bossHint = this.state.bossEntryPowerGranted
+          ? " Auto fire power granted for this boss stage."
+          : "";
+        this.state.message = `Stage ${this.state.levelIndex + 1}/${this.state.levelCount}: ${this.state.level.name}.${bossHint}`;
       }
       return;
     }
@@ -713,7 +964,9 @@ export default class PlatformerEngine {
 
     if (aabbIntersects(this.state.player, this.state.goalRect)) {
       const requiresAllCoins = Boolean(this.state.level.goalRequiresAllCoins);
-      if (requiresAllCoins && this.state.coinsCollected < this.state.coinsTotal) {
+      if (this.state.level.isBossLevel && this.state.activeBoss) {
+        this.state.message = `Defeat ${this.state.activeBoss.name} before taking the flag.`;
+      } else if (requiresAllCoins && this.state.coinsCollected < this.state.coinsTotal) {
         this.state.message = `Find all coins first (${this.state.coinsCollected}/${this.state.coinsTotal}).`;
       } else {
         this.completeLevel();

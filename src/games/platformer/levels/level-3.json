@@ -2,6 +2,7 @@
   "id": "frozen-foundry-3",
   "name": "Frozen Foundry III",
   "theme": "dusk",
+  "visualStyle": "ice",
   "timeLimit": 135,
   "goalRequiresAllCoins": false,
   "map": [
@@ -57,4 +58,3 @@
     { "x": 97, "y": 9, "type": "coin" }
   ]
 }
-

@@ -2,6 +2,7 @@
   "id": "sky-bridges-4",
   "name": "Sky Bridges IV",
   "theme": "day",
+  "visualStyle": "fortress",
   "timeLimit": 140,
   "goalRequiresAllCoins": false,
   "map": [
@@ -58,4 +59,3 @@
     { "x": 92, "y": 10, "type": "coin" }
   ]
 }
-

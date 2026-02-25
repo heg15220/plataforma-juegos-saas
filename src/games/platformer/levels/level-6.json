@@ -2,6 +2,7 @@
   "id": "night-metro-6",
   "name": "Night Metro VI",
   "theme": "dusk",
+  "visualStyle": "fortress",
   "timeLimit": 150,
   "goalRequiresAllCoins": false,
   "map": [
@@ -60,4 +61,3 @@
     { "x": 95, "y": 10, "type": "coin" }
   ]
 }
-

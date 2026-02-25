@@ -76,8 +76,17 @@ function PlatformerGame() {
       level: {
         index: currentSnapshot.levelIndex + 1,
         total: currentSnapshot.levelCount,
+        id: currentSnapshot.levelId,
         name: currentSnapshot.levelName
       },
+      campaign: {
+        route: currentSnapshot.runLevelIds,
+        bossLevels: currentSnapshot.runBossLevelCount
+      },
+      layout: currentSnapshot.levelLayout,
+      visualStyle: currentSnapshot.levelVisualStyle,
+      isBossLevel: currentSnapshot.isBossLevel,
+      boss: currentSnapshot.activeBoss,
       score: currentSnapshot.score,
       lives: currentSnapshot.lives,
       timeLeft: currentSnapshot.timeLeft,
@@ -108,6 +117,11 @@ function PlatformerGame() {
     snapshot.timeLimit > 0 ? snapshot.timeLeft / snapshot.timeLimit : 0;
   const playerPowerText = snapshot.player.powerLevel > 0 ? "Fire" : "Small";
   const stageTitle = snapshot.levelName || `Stage ${snapshot.levelIndex + 1}`;
+  const layoutLabel = snapshot.levelLayout === "vertical"
+    ? "Vertical"
+    : snapshot.levelLayout === "hybrid"
+      ? "Hybrid"
+      : "Horizontal";
 
   const canRestart = useMemo(
     () => snapshot.screen !== "start",
@@ -119,7 +133,7 @@ function PlatformerGame() {
       <div className="mini-head">
         <div>
           <h4>Sky Runner DX - Arcade Platformer</h4>
-          <p>Retro pixel campaign with polished visuals, layered parallax and high-feedback combat.</p>
+          <p>Random 5-map runs with mixed horizontal/vertical routes and multi-boss encounters.</p>
         </div>
         <div className="platformer-actions">
           <button type="button" onClick={onStart}>
@@ -136,15 +150,19 @@ function PlatformerGame() {
         <span>Score: {snapshot.score}</span>
         <span>Lives: {snapshot.lives}</span>
         <span>Level: {snapshot.levelIndex + 1}/{snapshot.levelCount}</span>
+        <span>Layout: {layoutLabel}</span>
+        <span>Boss maps: {snapshot.runBossLevelCount}</span>
         <span>Coins: {snapshot.coinsCollected}/{snapshot.coinsTotal}</span>
         <span>Power: {playerPowerText}</span>
         <span>Time: {Math.max(0, Math.ceil(snapshot.timeLeft))}s</span>
       </div>
 
       <div className="platformer-campaign-strip">
-        <span>Campaign: 7 maps</span>
+        <span>Campaign: random 5-map route</span>
         <span>Stage: {stageTitle}</span>
-        <span>Objective: reach the final flag (coins = bonus)</span>
+        <span>
+          Objective: {snapshot.activeBoss ? `defeat ${snapshot.activeBoss.name} then reach the flag` : "reach the flag (coins = bonus)"}
+        </span>
       </div>
 
       <div className="meter-stack">
@@ -175,7 +193,7 @@ function PlatformerGame() {
         </article>
         <article>
           <p>Progression</p>
-          <strong>Sequential stage unlock (1 to 7)</strong>
+          <strong>Randomized 5-map route with guaranteed final boss</strong>
         </article>
       </div>
 

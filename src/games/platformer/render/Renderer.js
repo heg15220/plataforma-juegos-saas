@@ -72,6 +72,106 @@ const THEMES = {
   }
 };
 
+const STYLE_OVERRIDES = {
+  classic: {},
+  ice: {
+    skyTop: "#9ed8f7",
+    skyMid: "#d6f2ff",
+    skyBottom: "#eaf7ff",
+    haze: "rgba(217, 244, 255, 0.4)",
+    cloud: "#f4fbff",
+    farMount: "#9bc6df",
+    nearMount: "#6ea0c3",
+    ridge: "#335a74",
+    groundTop: "#b7e5ff",
+    groundMain: "#6f8ba0",
+    brickMain: "#9eb4c4",
+    brickDark: "#667988",
+    pipeMain: "#6bb6df",
+    pipeDark: "#3f7898",
+    platformMain: "#d6ecff",
+    platformDark: "#8ea6ba",
+    questionMain: "#e2f6ff",
+    questionDark: "#7f9bb0",
+    questionUsed: "#7b8f9f",
+    hudBg: "rgba(6, 23, 37, 0.62)",
+    hudBorder: "rgba(165, 228, 255, 0.42)",
+    text: "#f4fbff"
+  },
+  lava: {
+    skyTop: "#2d0d04",
+    skyMid: "#6d210d",
+    skyBottom: "#ff8737",
+    haze: "rgba(255, 146, 74, 0.28)",
+    cloud: "#ffd7b6",
+    farMount: "#5f2d20",
+    nearMount: "#492016",
+    ridge: "#3a180f",
+    groundTop: "#8f4f22",
+    groundMain: "#4f2617",
+    brickMain: "#8b4525",
+    brickDark: "#572614",
+    pipeMain: "#7a3c2a",
+    pipeDark: "#4a2418",
+    platformMain: "#bb6c33",
+    platformDark: "#6c3d1f",
+    questionMain: "#ffb24d",
+    questionDark: "#7d4317",
+    questionUsed: "#6e4e3e",
+    hudBg: "rgba(17, 6, 4, 0.72)",
+    hudBorder: "rgba(255, 157, 115, 0.42)",
+    text: "#fff2ea"
+  },
+  fortress: {
+    skyTop: "#121621",
+    skyMid: "#2a3242",
+    skyBottom: "#65534c",
+    haze: "rgba(153, 129, 114, 0.2)",
+    cloud: "#d8d9dd",
+    farMount: "#353d4b",
+    nearMount: "#262d39",
+    ridge: "#1f222a",
+    groundTop: "#8e8f9a",
+    groundMain: "#4b4d5a",
+    brickMain: "#72707d",
+    brickDark: "#454350",
+    pipeMain: "#5e6673",
+    pipeDark: "#3b434f",
+    platformMain: "#8c8477",
+    platformDark: "#5b5449",
+    questionMain: "#d3bc8e",
+    questionDark: "#6b5a3f",
+    questionUsed: "#6a655b",
+    hudBg: "rgba(10, 12, 18, 0.74)",
+    hudBorder: "rgba(166, 173, 193, 0.38)",
+    text: "#f0f2fb"
+  },
+  boss_arena: {
+    skyTop: "#06070d",
+    skyMid: "#101421",
+    skyBottom: "#3a1713",
+    haze: "rgba(255, 83, 63, 0.16)",
+    cloud: "#cbcad7",
+    farMount: "#23212b",
+    nearMount: "#1a1821",
+    ridge: "#17131a",
+    groundTop: "#8b4340",
+    groundMain: "#381a1a",
+    brickMain: "#5d3535",
+    brickDark: "#2f1a1a",
+    pipeMain: "#4a3541",
+    pipeDark: "#2b1d25",
+    platformMain: "#8f5848",
+    platformDark: "#543227",
+    questionMain: "#d1934e",
+    questionDark: "#5f3a1d",
+    questionUsed: "#5c4943",
+    hudBg: "rgba(7, 6, 10, 0.78)",
+    hudBorder: "rgba(255, 115, 115, 0.45)",
+    text: "#fff1f0"
+  }
+};
+
 const drawText = (ctx, text, x, y, options = {}) => {
   ctx.save();
   ctx.font = options.font || "14px monospace";
@@ -127,6 +227,55 @@ const drawStars = (ctx, timeSeconds) => {
     ctx.fillStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
     const size = i % 8 === 0 ? 2 : 1;
     ctx.fillRect(x, y, size, size);
+  }
+};
+
+const drawSnowDrift = (ctx, timeSeconds) => {
+  for (let i = 0; i < 70; i += 1) {
+    const baseX = (i * 53.1) % VIEWPORT_WIDTH;
+    const drift = Math.sin(timeSeconds * 1.7 + i * 0.45) * 9;
+    const fall = (timeSeconds * (18 + (i % 7) * 2) + i * 13.7) % (VIEWPORT_HEIGHT + 40);
+    const x = round((baseX + drift + VIEWPORT_WIDTH) % VIEWPORT_WIDTH);
+    const y = round(fall - 20);
+    const size = i % 5 === 0 ? 2 : 1;
+    const alpha = i % 3 === 0 ? 0.82 : 0.64;
+    ctx.fillStyle = `rgba(245,250,255,${alpha.toFixed(2)})`;
+    ctx.fillRect(x, y, size, size);
+  }
+};
+
+const drawFortressBackdrop = (ctx, colorPrimary, colorSecondary) => {
+  ctx.fillStyle = colorPrimary;
+  for (let i = -1; i < 7; i += 1) {
+    const x = i * 128 + 20;
+    const h = 90 + (i % 3) * 24;
+    ctx.fillRect(x, VIEWPORT_HEIGHT - 164 - h, 76, h);
+    ctx.fillRect(x + 20, VIEWPORT_HEIGHT - 178 - h, 36, 14);
+  }
+  ctx.fillStyle = colorSecondary;
+  for (let i = -1; i < 8; i += 1) {
+    const x = i * 102 + 6;
+    const h = 55 + (i % 4) * 15;
+    ctx.fillRect(x, VIEWPORT_HEIGHT - 128 - h, 58, h);
+  }
+};
+
+const drawLavaSea = (ctx, timeSeconds, y, baseColor, glowColor) => {
+  ctx.fillStyle = baseColor;
+  ctx.fillRect(0, y, VIEWPORT_WIDTH, VIEWPORT_HEIGHT - y);
+
+  for (let x = 0; x < VIEWPORT_WIDTH; x += 14) {
+    const wave = Math.sin(timeSeconds * 3.2 + x * 0.08) * 3;
+    ctx.fillStyle = glowColor;
+    ctx.fillRect(x, y - 2 + wave, 10, 4);
+  }
+
+  for (let i = 0; i < 24; i += 1) {
+    const bubbleX = (i * 39 + (timeSeconds * (20 + i)) % VIEWPORT_WIDTH) % VIEWPORT_WIDTH;
+    const bubbleY = y + ((timeSeconds * 38 + i * 11) % Math.max(18, VIEWPORT_HEIGHT - y));
+    const alpha = 0.16 + (i % 4) * 0.06;
+    ctx.fillStyle = `rgba(255,214,140,${alpha.toFixed(2)})`;
+    ctx.fillRect(round(bubbleX), round(bubbleY), 2, 2);
   }
 };
 
@@ -237,7 +386,7 @@ const drawTile = (ctx, tileType, screenX, screenY, size, options) => {
   }
 };
 
-const drawPlayer = (ctx, player, cameraX, accent, timeSeconds) => {
+const drawPlayer = (ctx, player, cameraX, cameraY, accent, timeSeconds) => {
   if (!player) {
     return;
   }
@@ -246,7 +395,7 @@ const drawPlayer = (ctx, player, cameraX, accent, timeSeconds) => {
   }
 
   const x = round(player.x - cameraX);
-  const y = round(player.y);
+  const y = round(player.y - cameraY);
   const running = player.animation === "run";
   const runFrame = running ? Math.floor(player.animationTimer * 12) % 2 : 0;
   const legOffset = running ? (runFrame === 0 ? -2 : 2) : 0;
@@ -301,12 +450,12 @@ const drawPlayer = (ctx, player, cameraX, accent, timeSeconds) => {
   ctx.restore();
 };
 
-const drawEnemy = (ctx, enemy, cameraX) => {
+const drawEnemy = (ctx, enemy, cameraX, cameraY) => {
   if (!enemy?.active) {
     return;
   }
   const x = round(enemy.x - cameraX);
-  const y = round(enemy.y);
+  const y = round(enemy.y - cameraY);
   const step = enemy.animationFrame === 0 ? 0 : 1;
 
   ctx.fillStyle = "rgba(0,0,0,0.22)";
@@ -337,13 +486,53 @@ const drawEnemy = (ctx, enemy, cameraX) => {
   ctx.restore();
 };
 
-const drawItem = (ctx, item, cameraX) => {
+const drawBoss = (ctx, enemy, cameraX, cameraY, timeSeconds) => {
+  if (!enemy?.active) {
+    return;
+  }
+
+  const x = round(enemy.x - cameraX);
+  const y = round(enemy.y - cameraY);
+  const flash = enemy.flashTimer > 0 && Math.floor(enemy.flashTimer * 22) % 2 === 0;
+  const pulse = 0.18 + (Math.sin(timeSeconds * 6.8) * 0.5 + 0.5) * 0.22;
+
+  ctx.fillStyle = "rgba(0,0,0,0.24)";
+  ctx.fillRect(x + 5, y + enemy.h - 2, enemy.w - 10, 4);
+
+  if (!flash) {
+    ctx.fillStyle = `rgba(255,94,87,${pulse.toFixed(3)})`;
+    ctx.fillRect(x - 3, y - 3, enemy.w + 6, enemy.h + 6);
+  }
+
+  ctx.fillStyle = flash ? "#ffe5d9" : "#bb393d";
+  ctx.fillRect(x + 2, y + 9, enemy.w - 4, enemy.h - 10);
+  ctx.fillStyle = "#8c2228";
+  ctx.fillRect(x + 4, y + 11, enemy.w - 8, 4);
+
+  ctx.fillStyle = "#f2c3a0";
+  ctx.fillRect(x + 10, y + 2, enemy.w - 20, 11);
+  ctx.fillStyle = "#1b1c24";
+  ctx.fillRect(x + 14, y + 6, 2, 2);
+  ctx.fillRect(x + enemy.w - 16, y + 6, 2, 2);
+
+  ctx.fillStyle = "#f8e58f";
+  ctx.fillRect(x + 11, y - 2, enemy.w - 22, 3);
+  ctx.fillRect(x + 7, y - 1, 3, 4);
+  ctx.fillRect(x + enemy.w - 10, y - 1, 3, 4);
+
+  const step = enemy.animationFrame === 0 ? 0 : 2;
+  ctx.fillStyle = "#33131b";
+  ctx.fillRect(x + 8 + step, y + enemy.h - 8, 7, 8);
+  ctx.fillRect(x + enemy.w - 15 - step, y + enemy.h - 8, 7, 8);
+};
+
+const drawItem = (ctx, item, cameraX, cameraY) => {
   if (!item?.active) {
     return;
   }
 
   const x = round(item.x - cameraX);
-  const y = round(item.y);
+  const y = round(item.y - cameraY);
   if (item.type === "coin") {
     const pulse = Math.sin(item.animationTimer * 9);
     const width = round(item.w * (0.45 + Math.abs(pulse) * 0.5));
@@ -368,12 +557,12 @@ const drawItem = (ctx, item, cameraX) => {
   ctx.fillRect(x + 3, y + 9, 18, 1);
 };
 
-const drawProjectile = (ctx, projectile, cameraX, timeSeconds) => {
+const drawProjectile = (ctx, projectile, cameraX, cameraY, timeSeconds) => {
   if (!projectile?.active) {
     return;
   }
   const x = round(projectile.x - cameraX);
-  const y = round(projectile.y);
+  const y = round(projectile.y - cameraY);
   const glow = 0.45 + (Math.sin(timeSeconds * 22 + projectile.x * 0.04) * 0.5 + 0.5) * 0.4;
   ctx.fillStyle = `rgba(255,128,54,${glow.toFixed(3)})`;
   ctx.fillRect(x - 1, y - 1, projectile.w + 2, projectile.h + 2);
@@ -383,12 +572,12 @@ const drawProjectile = (ctx, projectile, cameraX, timeSeconds) => {
   ctx.fillRect(x + 2, y + 2, projectile.w - 4, projectile.h - 4);
 };
 
-const drawGoal = (ctx, goalRect, cameraX, accent, timeSeconds) => {
+const drawGoal = (ctx, goalRect, cameraX, cameraY, accent, timeSeconds) => {
   if (!goalRect) {
     return;
   }
   const x = round(goalRect.x - cameraX);
-  const y = round(goalRect.y);
+  const y = round(goalRect.y - cameraY);
   const wave = Math.sin(timeSeconds * 6) * 2.8;
   ctx.fillStyle = "#75737a";
   ctx.fillRect(x + 10, y, 3, goalRect.h);
@@ -400,14 +589,14 @@ const drawGoal = (ctx, goalRect, cameraX, accent, timeSeconds) => {
   ctx.fillRect(x + 8, y + goalRect.h - 6, 8, 3);
 };
 
-const drawEffects = (ctx, effects, cameraX) => {
+const drawEffects = (ctx, effects, cameraX, cameraY) => {
   for (const effect of effects || []) {
     if (!effect || effect.life <= 0) {
       continue;
     }
     const alpha = clamp(effect.life / effect.maxLife, 0, 1);
     const x = round(effect.x - cameraX);
-    const y = round(effect.y);
+    const y = round(effect.y - cameraY);
     ctx.fillStyle = effect.color.replace("__ALPHA__", alpha.toFixed(3));
     ctx.fillRect(x, y, effect.size, effect.size);
   }
@@ -438,9 +627,15 @@ const drawScanlines = (ctx) => {
 
 const resolvePalette = (state) => {
   const themeKey = state.level?.theme === "dusk" ? "dusk" : "day";
-  const palette = THEMES[themeKey];
-  const accent = ACCENTS[state.levelIndex % ACCENTS.length];
-  return { palette, accent, themeKey };
+  const visualStyle = STYLE_OVERRIDES[state.level?.visualStyle]
+    ? state.level.visualStyle
+    : "classic";
+  const palette = {
+    ...THEMES[themeKey],
+    ...STYLE_OVERRIDES[visualStyle]
+  };
+  const accent = ACCENTS[(state.levelTemplateIndex ?? state.levelIndex ?? 0) % ACCENTS.length];
+  return { palette, accent, themeKey, visualStyle };
 };
 
 export default class Renderer {
@@ -456,7 +651,7 @@ export default class Renderer {
 
   drawBackground(state, paletteData, timeSeconds) {
     const ctx = this.ctx;
-    const { palette, themeKey } = paletteData;
+    const { palette, themeKey, visualStyle } = paletteData;
     const cameraX = state.camera.x || 0;
 
     const gradient = ctx.createLinearGradient(0, 0, 0, VIEWPORT_HEIGHT);
@@ -469,7 +664,7 @@ export default class Renderer {
     ctx.fillStyle = palette.haze;
     ctx.fillRect(0, VIEWPORT_HEIGHT * 0.58, VIEWPORT_WIDTH, VIEWPORT_HEIGHT * 0.42);
 
-    if (themeKey === "dusk") {
+    if (themeKey === "dusk" || visualStyle === "boss_arena") {
       drawStars(ctx, timeSeconds);
       ctx.fillStyle = "rgba(255,248,223,0.82)";
       ctx.fillRect(600, 54, 20, 20);
@@ -479,10 +674,12 @@ export default class Renderer {
     }
 
     const cloudOffset = (cameraX * 0.2 + timeSeconds * 10) % (VIEWPORT_WIDTH + 120);
-    drawCloud(ctx, 95 - cloudOffset, 72, 0.58, palette.cloud);
-    drawCloud(ctx, 350 - cloudOffset, 94, 0.46, palette.cloud);
-    drawCloud(ctx, 620 - cloudOffset, 66, 0.52, palette.cloud);
-    drawCloud(ctx, 880 - cloudOffset, 86, 0.45, palette.cloud);
+    if (visualStyle !== "boss_arena") {
+      drawCloud(ctx, 95 - cloudOffset, 72, 0.58, palette.cloud);
+      drawCloud(ctx, 350 - cloudOffset, 94, 0.46, palette.cloud);
+      drawCloud(ctx, 620 - cloudOffset, 66, 0.52, palette.cloud);
+      drawCloud(ctx, 880 - cloudOffset, 86, 0.45, palette.cloud);
+    }
 
     const farOffset = (cameraX * 0.32) % 260;
     for (let i = -1; i < 6; i += 1) {
@@ -494,8 +691,21 @@ export default class Renderer {
       drawMountain(ctx, i * 180 - nearOffset, 365, 180, 114, palette.nearMount);
     }
 
+    if (visualStyle === "fortress" || visualStyle === "boss_arena") {
+      drawFortressBackdrop(ctx, "rgba(18, 22, 32, 0.58)", "rgba(11, 14, 21, 0.72)");
+    }
+    if (visualStyle === "ice") {
+      drawSnowDrift(ctx, timeSeconds);
+    }
+
     ctx.fillStyle = palette.ridge;
     ctx.fillRect(0, 364, VIEWPORT_WIDTH, VIEWPORT_HEIGHT - 364);
+
+    if (visualStyle === "lava") {
+      drawLavaSea(ctx, timeSeconds, 382, "rgba(152, 46, 20, 0.92)", "rgba(255, 197, 114, 0.72)");
+    } else if (visualStyle === "boss_arena") {
+      drawLavaSea(ctx, timeSeconds, 374, "rgba(121, 35, 30, 0.95)", "rgba(255, 144, 95, 0.78)");
+    }
   }
 
   drawLevel(state, paletteData, timeSeconds) {
@@ -505,11 +715,14 @@ export default class Renderer {
     }
     const ctx = this.ctx;
     const cameraX = state.camera.x || 0;
+    const cameraY = state.camera.y || 0;
     const tileSize = level.tileSize;
     const startTx = Math.max(0, Math.floor(cameraX / tileSize) - 1);
     const endTx = Math.min(level.width - 1, Math.ceil((cameraX + VIEWPORT_WIDTH) / tileSize) + 1);
+    const startTy = Math.max(0, Math.floor(cameraY / tileSize) - 1);
+    const endTy = Math.min(level.height - 1, Math.ceil((cameraY + VIEWPORT_HEIGHT) / tileSize) + 1);
 
-    for (let ty = 0; ty < level.height; ty += 1) {
+    for (let ty = startTy; ty <= endTy; ty += 1) {
       for (let tx = startTx; tx <= endTx; tx += 1) {
         const tileType = level.tiles[ty][tx];
         if (tileType === TILE_TYPES.EMPTY) {
@@ -517,7 +730,7 @@ export default class Renderer {
         }
 
         const screenX = round(tx * tileSize - cameraX);
-        const screenY = round(ty * tileSize);
+        const screenY = round(ty * tileSize - cameraY);
         const block = level.questionBlocks.get(tileKey(tx, ty));
 
         drawTile(ctx, tileType, screenX, screenY, tileSize, {
@@ -534,23 +747,33 @@ export default class Renderer {
 
   drawWorldObjects(state, paletteData, timeSeconds) {
     const cameraX = state.camera.x || 0;
-    drawGoal(this.ctx, state.goalRect, cameraX, paletteData.accent, timeSeconds);
+    const cameraY = state.camera.y || 0;
+    drawGoal(this.ctx, state.goalRect, cameraX, cameraY, paletteData.accent, timeSeconds);
     for (const item of state.items) {
-      drawItem(this.ctx, item, cameraX);
+      drawItem(this.ctx, item, cameraX, cameraY);
     }
     for (const projectile of state.projectiles) {
-      drawProjectile(this.ctx, projectile, cameraX, timeSeconds);
+      drawProjectile(this.ctx, projectile, cameraX, cameraY, timeSeconds);
     }
     for (const enemy of state.enemies) {
-      drawEnemy(this.ctx, enemy, cameraX);
+      if (enemy.type === "boss") {
+        drawBoss(this.ctx, enemy, cameraX, cameraY, timeSeconds);
+      } else {
+        drawEnemy(this.ctx, enemy, cameraX, cameraY);
+      }
     }
-    drawPlayer(this.ctx, state.player, cameraX, paletteData.accent, timeSeconds);
-    drawEffects(this.ctx, state.effects, cameraX);
+    drawPlayer(this.ctx, state.player, cameraX, cameraY, paletteData.accent, timeSeconds);
+    drawEffects(this.ctx, state.effects, cameraX, cameraY);
   }
 
   drawHud(state, paletteData) {
     const ctx = this.ctx;
-    const stageLabel = state.level?.name || `Stage ${state.levelIndex + 1}`;
+    const layoutLabel = state.level?.layoutType === "vertical"
+      ? "VERTICAL"
+      : state.level?.layoutType === "hybrid"
+        ? "HYBRID"
+        : "HORIZONTAL";
+    const stageLabel = `${state.level?.name || `Stage ${state.levelIndex + 1}`} - ${layoutLabel}`;
     const coinProgress = state.coinsTotal > 0 ? state.coinsCollected / state.coinsTotal : 0;
     const timeProgress = state.timeLimit > 0 ? state.timeLeft / state.timeLimit : 0;
 
@@ -588,6 +811,28 @@ export default class Renderer {
     ctx.fillRect(224, 40, round(180 * clamp(coinProgress, 0, 1)), 6);
     ctx.fillStyle = "#f7be68";
     ctx.fillRect(480, 40, round(180 * clamp(timeProgress, 0, 1)), 6);
+
+    if (state.activeBoss) {
+      const bossRatio = state.activeBoss.maxHealth > 0
+        ? clamp(state.activeBoss.health / state.activeBoss.maxHealth, 0, 1)
+        : 0;
+      drawPanel(ctx, 174, 62, 420, 24, "rgba(30, 7, 9, 0.72)", "rgba(255, 131, 131, 0.45)");
+      drawText(
+        ctx,
+        `BOSS ${state.activeBoss.name.toUpperCase()} ${state.activeBoss.health}/${state.activeBoss.maxHealth}`,
+        384,
+        78,
+        {
+          align: "center",
+          font: "bold 12px monospace",
+          color: "#ffd9d9"
+        }
+      );
+      ctx.fillStyle = "rgba(255,255,255,0.18)";
+      ctx.fillRect(188, 67, 392, 5);
+      ctx.fillStyle = "#ff5f61";
+      ctx.fillRect(188, 67, round(392 * bossRatio), 5);
+    }
   }
 
   drawMessage(state) {
@@ -632,11 +877,11 @@ export default class Renderer {
 
     const subtitle =
       state.screen === SCREENS.START
-        ? "Retro pixel campaign with 7 sequential maps."
+        ? "Random 5-map route with horizontal, hybrid and vertical stages."
         : state.screen === SCREENS.LEVEL_COMPLETE
           ? "Prepare for the next stage."
           : state.screen === SCREENS.GAME_COMPLETE
-            ? "All maps cleared. Press Enter to restart."
+            ? "Run completed. Press Enter for a new randomized route."
             : "No lives left. Press Enter to try again.";
 
     drawText(ctx, subtitle, VIEWPORT_WIDTH / 2, 154, {
@@ -661,7 +906,7 @@ export default class Renderer {
         font: "14px monospace",
         color: "#97efc0"
       });
-      drawText(ctx, "Goal: reach the flag (coins are optional bonus)", VIEWPORT_WIDTH / 2, 267, {
+      drawText(ctx, "Goal: defeat bosses and capture the final flag", VIEWPORT_WIDTH / 2, 267, {
         align: "center",
         font: "14px monospace",
         color: "#ffe49d"
@@ -691,4 +936,3 @@ export default class Renderer {
     drawScanlines(this.ctx);
   }
 }
-

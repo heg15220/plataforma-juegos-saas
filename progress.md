@@ -415,3 +415,36 @@
   - `npm run build` OK,
   - Playwright + inspeccion visual en `output/knowledge-crucigrama-rebuild-v4/` (captura y estado JSON coherentes).
 - Nota: build mantiene warning de chunk grande esperado por el tamano del term bank.
+## 2026-02-25 - Plataforma Aventura: campaña aleatoria 5 mapas + verticales + jefes
+- Rehecho el flujo de campana en `PlatformerEngine` para generar una ruta aleatoria de 5 mapas por partida.
+- Regla de run implementada:
+  - 4 mapas aleatorios iniciales,
+  - 1 mapa de jefe final fijo siempre en la posicion 5/5,
+  - inclusion garantizada de un segundo mapa de jefe antes del final,
+  - inclusion garantizada de al menos un mapa vertical por run.
+- Añadido soporte de metadata de nivel en loader (`layoutType`, `boss`, `isBossLevel`, `isFinalBossLevel`) y catalogo (`getLevelCatalog`).
+- Integrado sistema de jefes:
+  - nuevo tipo de enemigo `boss` (vida, dano progresivo, cooldown de dano, IA de carga/salto),
+  - barra de vida de jefe en HUD canvas,
+  - bloqueo de bandera en mapas de jefe hasta derrotarlo.
+- Camara ampliada a seguimiento en X/Y para habilitar mapas verticales jugables.
+- Render actualizado:
+  - desplazamiento por `camera.y` para tiles/entidades/proyectiles/objetivo/efectos,
+  - nuevo render de sprite de jefe estilo arcade scratch-like.
+- UI actualizada en `PlatformerGame`, `GamePlayground` y `games.js` para reflejar rutas aleatorias, layouts mixtos y combates contra jefes.
+- Catalogo de niveles ampliado de 7 a 12 mapas:
+  - nuevos: `level-8.json`, `level-9.json` (verticales),
+  - `level-10.json` (boss),
+  - `level-11.json` (hybrid),
+  - `level-12.json` (final boss marcado con `boss.finalBoss=true`).
+- Test nuevo: `src/games/platformer/levels/levelCatalog.test.js` validando diversidad y presencia de jefes/final boss.
+- Validacion ejecutada:
+  - `npm run test -- src/games/platformer/levels/levelCatalog.test.js` OK,
+  - `npm run build` OK,
+  - Playwright + inspeccion visual/estado:
+    - `output/platformer-random-boss-run-v1/` (run 5 mapas, vertical en inicio, ruta y bosses en JSON),
+    - `output/platformer-random-boss-canvas-attempt-3/` (mapa de jefe con barra de vida visible en canvas).
+- Evidencia de requisitos en estado runtime:
+  - `campaign.route` de longitud 5,
+  - `campaign.bossLevels = 2`,
+  - ultimo mapa de ruta `citadel-heart-12` (final boss).

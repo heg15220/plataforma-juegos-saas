@@ -5,5 +5,23 @@ import level4 from "./level-4.json";
 import level5 from "./level-5.json";
 import level6 from "./level-6.json";
 import level7 from "./level-7.json";
+import level8 from "./level-8.json";
+import level9 from "./level-9.json";
+import level10 from "./level-10.json";
+import level11 from "./level-11.json";
+import level12 from "./level-12.json";
 
-export const LEVELS = [level1, level2, level3, level4, level5, level6, level7];
+export const LEVELS = [
+  level1,
+  level2,
+  level3,
+  level4,
+  level5,
+  level6,
+  level7,
+  level8,
+  level9,
+  level10,
+  level11,
+  level12
+];

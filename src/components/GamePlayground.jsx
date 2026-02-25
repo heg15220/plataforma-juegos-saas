@@ -54,7 +54,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-crucigrama-mini": "Flechas para navegar, letras para escribir, Backspace para borrar, Enter para comprobar y boton de partida aleatoria.",
     "strategy-chess-grandmaster": "Clic para mover, promocion al coronar, U deshace, D reclama tablas y F alterna pantalla completa.",
     "rpg-emberfall": "Explora con WASD/flechas y usa atacar, habilidad, defender, enfocar, invocar (U) y pocion.",
-    "platformer-sky-runner": "Movimiento con A/D o flechas, salto variable con W/arriba/espacio y accion con F.",
+    "platformer-sky-runner": "Movimiento con A/D o flechas, salto variable con W/arriba/espacio y accion con F en rutas aleatorias de 5 mapas con jefes.",
     "fighter-neon-dojo": "Combate con A/D o flechas, salto W/arriba, jab J/espacio, heavy K/enter, guardia L/abajo y special U/B.",
     "sports-head-soccer-arena": "Flechas izquierda/derecha para mover, arriba para salto, Space para disparo y B para habilidad.",
     "arcade-pacman-maze-protocol": "WASD o flechas para mover, Enter/Espacio para empezar, P/Esc para pausa, R reinicia, M sonido y G debug."
@@ -73,7 +73,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-crucigrama-mini": "Arrows navigate, letters write, Backspace clears, Enter checks, and the random-match button changes puzzle.",
     "strategy-chess-grandmaster": "Click pieces to move, choose promotion on last rank, U undo, D claim draw, and F toggles fullscreen.",
     "rpg-emberfall": "Explore with WASD/arrows and use attack, skill, defend, focus, summon (U) and potion.",
-    "platformer-sky-runner": "Move with A/D or arrows, variable jump with W/up/space and action with F.",
+    "platformer-sky-runner": "Move with A/D or arrows, use variable jump with W/up/space and F action in randomized 5-map runs with boss fights.",
     "fighter-neon-dojo": "Fight with A/D or arrows, jump W/up, jab J/space, heavy K/enter, guard L/down and special U/B.",
     "sports-head-soccer-arena": "Left/right arrows move, up jumps, Space shoots and B triggers skill.",
     "arcade-pacman-maze-protocol": "Use arrows or WASD to move, Enter/Space to start, P/Esc to pause, R restart, M sound and G debug."

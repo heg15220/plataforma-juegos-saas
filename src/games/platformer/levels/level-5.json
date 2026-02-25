@@ -2,6 +2,7 @@
   "id": "desert-ruins-5",
   "name": "Desert Ruins V",
   "theme": "day",
+  "visualStyle": "lava",
   "timeLimit": 145,
   "goalRequiresAllCoins": false,
   "map": [
@@ -61,4 +62,3 @@
     { "x": 87, "y": 10, "type": "coin" }
   ]
 }
-

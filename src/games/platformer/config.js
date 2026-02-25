@@ -47,6 +47,21 @@ export const ENEMY_SETTINGS = {
   maxFallSpeed: 680
 };
 
+export const BOSS_SETTINGS = {
+  width: 44,
+  height: 40,
+  gravity: 1750,
+  walkSpeed: 44,
+  chargeSpeed: 118,
+  jumpVelocity: -470,
+  maxFallSpeed: 730,
+  maxHealth: 16,
+  hurtCooldownSeconds: 0.18,
+  aiDecisionSecondsMin: 1.1,
+  aiDecisionSecondsMax: 2.1,
+  jumpCooldownSeconds: 2.2
+};
+
 export const ITEM_SETTINGS = {
   coinSize: 18,
   mushroomWidth: 24,
@@ -65,17 +80,20 @@ export const PROJECTILE_SETTINGS = {
 
 export const CAMERA_SETTINGS = {
   followLerp: 0.2,
-  leadPixels: 36
+  followLerpY: 0.16,
+  leadPixels: 36,
+  verticalLeadPixels: 26
 };
 
 export const SCORE_VALUES = {
   coin: 100,
   stomp: 220,
   projectileEnemy: 260,
+  bossHit: 180,
+  bossDefeat: 1400,
   questionCoin: 120,
   questionPower: 180,
   levelClearBase: 450,
   timeBonusMultiplier: 8,
   allCoinsBonus: 350
 };
-

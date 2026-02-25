@@ -2,6 +2,7 @@
   "id": "final-gauntlet-7",
   "name": "Final Gauntlet VII",
   "theme": "dusk",
+  "visualStyle": "fortress",
   "timeLimit": 155,
   "goalRequiresAllCoins": false,
   "map": [
@@ -66,4 +67,3 @@
     { "x": 95, "y": 10, "type": "coin" }
   ]
 }
-

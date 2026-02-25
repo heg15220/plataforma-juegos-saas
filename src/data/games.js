@@ -62,21 +62,23 @@ export const games = [
   {
     id: "platformer-sky-runner",
     title: "Sky Runner DX",
-    tagline: "Plataformas 2D arcade con tiles, patrullas enemigas, power-ups y scroll lateral.",
+    tagline: "Plataformas 2D arcade con rutas aleatorias, mapas verticales y jefes con barra de vida.",
     category: "Aventura",
     image: skyRunnerImage,
     difficulty: "Media-Alta",
     sessionTime: "3-6 min",
     multiplayer: "Solo",
     viability: "Alta: motor modular Canvas con game loop fijo y colisiones por tiles.",
-    visualStyle: "Pixel-art retro con parallax, bloques, tuberias, bandera y HUD clasico.",
-    techFocus: "Arquitectura por modulos (input/fisicas/render/entidades/niveles/UI) y avance determinista.",
+    visualStyle: "Pixel-art retro con direccion scratch-like, parallax multicapa y HUD de jefe en combate.",
+    techFocus: "Arquitectura modular con campaña aleatoria de 5 mapas, layouts mixtos y sistema de boss fight.",
     description:
-      "Vertical slice inspirado en plataformas retro: acelera, frena, salta con altura variable y usa power-ups para superar enemigos en una campana de siete mapas side-scroller.",
+      "Run arcade inspirado en plataformas retro: cada partida mezcla 5 mapas aleatorios (horizontales, verticales e hibridos), incluye al menos dos encuentros contra jefe y cierra siempre con un jefe final.",
     highlights: [
-      "Sistema de niveles por tiles cargados desde JSON.",
+      "Campana procedural corta: 5 mapas por run con orden aleatorio.",
+      "Mapas de escalada vertical y rutas hibridas ademas de side-scroll clasico.",
+      "Dos encuentros de jefe por partida con barra de vida y fases de dano.",
       "Fisica arcade consistente con coyote time y jump buffer.",
-      "IA enemiga de patrulla con reaccion a paredes y bordes.",
+      "IA enemiga de patrulla + jefe con comportamiento ofensivo.",
       "Power-up de fuego para derrotar enemigos a distancia.",
       "Estado QA exportado para automatizacion de pruebas."
     ]
