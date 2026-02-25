@@ -18,6 +18,7 @@ const KnowledgeAhorcadoGame = () => <KnowledgeArcadeGame variant="ahorcado" />;
 const KnowledgePacienciaGame = () => <KnowledgeArcadeGame variant="paciencia" />;
 const KnowledgePuzleGame = () => <KnowledgeArcadeGame variant="puzle" />;
 const KnowledgeCrucigramaGame = () => <KnowledgeArcadeGame variant="crucigrama" />;
+const KnowledgeSopaLetrasGame = () => <KnowledgeArcadeGame variant="sopa-letras" />;
 
 const GAME_COMPONENTS = {
   "adventure-echoes": AdventureGame,
@@ -31,6 +32,7 @@ const GAME_COMPONENTS = {
   "knowledge-paciencia-lite": KnowledgePacienciaGame,
   "knowledge-puzle-deslizante": KnowledgePuzleGame,
   "knowledge-crucigrama-mini": KnowledgeCrucigramaGame,
+  "knowledge-sopa-letras-mega": KnowledgeSopaLetrasGame,
   "strategy-chess-grandmaster": ChessGame,
   "rpg-emberfall": RpgGame,
   "platformer-sky-runner": PlatformerGame,
@@ -52,6 +54,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-paciencia-lite": "D roba, A selecciona descarte, Q/W/E/R columnas, flechas cambian destino, Enter/Espacio mueven y P lanza partida aleatoria.",
     "knowledge-puzle-deslizante": "Usa flechas para mover el hueco o pulsa fichas adyacentes. R carga partida aleatoria.",
     "knowledge-crucigrama-mini": "Flechas para navegar, letras para escribir, Backspace para borrar, Enter para comprobar y boton de partida aleatoria.",
+    "knowledge-sopa-letras-mega": "Arrastra o marca inicio-fin para seleccionar palabras en horizontal, vertical o diagonal (tambien al reves). R carga partida aleatoria.",
     "strategy-chess-grandmaster": "Clic para mover, promocion al coronar, U deshace, D reclama tablas y F alterna pantalla completa.",
     "rpg-emberfall": "Explora con WASD/flechas y usa atacar, habilidad, defender, enfocar, invocar (U) y pocion.",
     "platformer-sky-runner": "Movimiento con A/D o flechas, salto variable con W/arriba/espacio y accion con F en rutas aleatorias de 5 mapas con jefes.",
@@ -71,6 +74,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-paciencia-lite": "D draws, A selects waste, Q/W/E/R selects columns, arrows change target, Enter/Space moves, and P loads a random match.",
     "knowledge-puzle-deslizante": "Use arrows to move the blank or click adjacent tiles. Press R for a random match.",
     "knowledge-crucigrama-mini": "Arrows navigate, letters write, Backspace clears, Enter checks, and the random-match button changes puzzle.",
+    "knowledge-sopa-letras-mega": "Drag or click start-end to select words horizontally, vertically, or diagonally (reverse also works). Press R for a random match.",
     "strategy-chess-grandmaster": "Click pieces to move, choose promotion on last rank, U undo, D claim draw, and F toggles fullscreen.",
     "rpg-emberfall": "Explore with WASD/arrows and use attack, skill, defend, focus, summon (U) and potion.",
     "platformer-sky-runner": "Move with A/D or arrows, use variable jump with W/up/space and F action in randomized 5-map runs with boss fights.",

@@ -14,6 +14,7 @@ import knowledgeAhorcadoImage from "../assets/games/knowledge-ahorcado.svg";
 import knowledgePacienciaImage from "../assets/games/knowledge-paciencia.svg";
 import knowledgePuzleImage from "../assets/games/knowledge-puzle.svg";
 import knowledgeCrucigramaImage from "../assets/games/knowledge-crucigrama.svg";
+import knowledgeSopaLetrasImage from "../assets/games/knowledge-sopa-letras.svg";
 import chessGrandmasterArenaImage from "../assets/games/chess-grandmaster-arena.svg";
 
 export const games = [
@@ -316,6 +317,28 @@ export const games = [
       "Escritura por teclado con retroceso y desplazamiento.",
       "Boton de comprobacion para detectar errores.",
       "Bridge QA con rejilla editable completa."
+    ]
+  },
+  {
+    id: "knowledge-sopa-letras-mega",
+    title: "Sopa de Letras Mega",
+    tagline: "Tablero grande 20x20 con 10.000 partidas ES/EN y palabras en 8 direcciones.",
+    category: "Conocimiento",
+    image: knowledgeSopaLetrasImage,
+    difficulty: "Media",
+    sessionTime: "4-10 min",
+    multiplayer: "Solo",
+    viability: "Alta: generador determinista por semilla, estado ligero y validacion directa por trazado.",
+    visualStyle: "Panel premium de letras con rejilla amplia, trazado en vivo y listado de objetivos.",
+    techFocus: "Generacion procedural bilingue de 10k partidas + deteccion de lineas (horizontal/reversa/vertical/diagonal).",
+    description:
+      "Encuentra palabras de conocimiento general dentro de una rejilla grande. Cada partida cambia de forma determinista y permite localizar palabras en horizontal, vertical o diagonal, tanto en sentido normal como al reves.",
+    highlights: [
+      "Tablero grande 20x20 para sesiones de busqueda mas largas.",
+      "10.000 combinaciones por idioma (es/en) segun locale del navegador.",
+      "Seleccion por arrastre o click inicio-fin con soporte de direccion inversa.",
+      "Palabras reales de ciencia, historia, lenguaje, salud y cultura.",
+      "Bridge QA con estado serializado de progreso y palabras pendientes."
     ]
   },
   {

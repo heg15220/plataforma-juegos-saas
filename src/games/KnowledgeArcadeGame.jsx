@@ -5,6 +5,7 @@ import HangmanKnowledgeGame from "./knowledge/HangmanKnowledgeGame";
 import SolitaireKnowledgeGame from "./knowledge/SolitaireKnowledgeGame";
 import PuzzleKnowledgeGame from "./knowledge/PuzzleKnowledgeGame";
 import CrosswordKnowledgeGame from "./knowledge/CrosswordKnowledgeGame";
+import WordSearchKnowledgeGame from "./knowledge/WordSearchKnowledgeGame";
 
 function KnowledgeArcadeGame({ variant }) {
   if (variant === "sudoku") {
@@ -24,6 +25,9 @@ function KnowledgeArcadeGame({ variant }) {
   }
   if (variant === "crucigrama") {
     return <CrosswordKnowledgeGame />;
+  }
+  if (variant === "sopa-letras") {
+    return <WordSearchKnowledgeGame />;
   }
 
   return <SudokuKnowledgeGame />;
