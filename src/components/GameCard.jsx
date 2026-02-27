@@ -1,33 +1,41 @@
 import React from "react";
+import { getLocalizedGame } from "../i18n";
 
-function GameCard({ game, index, isActive, onSelect }) {
+function GameCard({ game, index, locale, onLaunch, t }) {
+  const lg = getLocalizedGame(game, locale);
+
   return (
     <article
-      className={`game-card ${isActive ? "active" : ""}`.trim()}
-      style={{ "--delay": `${index * 85}ms` }}
+      className="game-card"
+      style={{ "--delay": `${index * 60}ms` }}
     >
-      <img className="card-image" src={game.image} alt={`Portada de ${game.title}`} />
+      <img
+        className="card-image"
+        src={game.image}
+        alt={lg.title}
+        loading="lazy"
+      />
 
       <div className="card-body">
         <div className="card-topline">
-          <span className="tag">{game.category}</span>
+          <span className="tag">{lg.category}</span>
           <span className="chip">{game.sessionTime}</span>
         </div>
 
-        <h3>{game.title}</h3>
-        <p className="tagline">{game.tagline}</p>
+        <h3>{lg.title}</h3>
+        <p className="tagline">{lg.tagline}</p>
 
         <div className="card-meta">
-          <span>Dificultad: {game.difficulty}</span>
-          <span>{game.multiplayer}</span>
+          <span>{t("difficulty")}: {lg.difficulty}</span>
+          <span>{lg.multiplayer}</span>
         </div>
 
         <button
           type="button"
           className="enter-btn"
-          onClick={() => onSelect(game.id)}
+          onClick={() => onLaunch(game.id)}
         >
-          Entrar al juego
+          {t("startGame")}
         </button>
       </div>
     </article>
