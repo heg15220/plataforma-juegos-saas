@@ -27,6 +27,8 @@ const STRINGS = {
     loading: "Cargando motor del juego…",
     unsupported: "Este juego todavía no tiene motor jugable asignado.",
     back: "← Volver al catálogo",
+    showInfo: "? Instrucciones",
+    hideInfo: "✕ Ocultar",
     sessionLabel: "Sesión",
     modeLabel: "Modo",
     // Footer
@@ -57,6 +59,8 @@ const STRINGS = {
     loading: "Loading game engine…",
     unsupported: "This game does not have a playable engine assigned yet.",
     back: "← Back to catalog",
+    showInfo: "? Instructions",
+    hideInfo: "✕ Hide",
     sessionLabel: "Session",
     modeLabel: "Mode",
     // Footer

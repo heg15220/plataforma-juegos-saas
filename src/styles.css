@@ -960,15 +960,12 @@ body {
     radial-gradient(circle at 10% 5%, #ffe2a4 0%, transparent 30%),
     radial-gradient(circle at 90% 5%, #afe9e0 0%, transparent 28%),
     linear-gradient(180deg, #fffdf6 0%, var(--bg) 100%);
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow: hidden;
 }
 
 /* ── Sticky top-bar ──────────────────────────────────────────────────────── */
 .launch-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 0.85rem;
@@ -999,6 +996,33 @@ body {
   color: #fff;
 }
 
+/* ── Info toggle button ──────────────────────────────────────────────────── */
+.launch-info-toggle {
+  flex-shrink: 0;
+  background: none;
+  border: 1.5px solid var(--line);
+  color: var(--ink-soft);
+  border-radius: 9px;
+  padding: 0.32rem 0.85rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+  white-space: nowrap;
+}
+
+.launch-info-toggle:hover {
+  border-color: var(--teal-600);
+  color: var(--teal-600);
+}
+
+.launch-info-toggle.active {
+  background: var(--surface-2);
+  border-color: var(--teal-600);
+  color: var(--teal-600);
+}
+
 .launch-topbar-meta {
   display: flex;
   align-items: center;
@@ -1023,11 +1047,33 @@ body {
   flex-shrink: 0;
 }
 
+/* ── Scrollable body (inner scroll container) ────────────────────────────── */
+/*
+ * This div sits between the topbar and the content (info + game).
+ * flex: 1 + min-height: 0 makes it fill exactly the remaining viewport
+ * height after the topbar. overflow-y: auto adds a real scrollbar only
+ * when the content is taller than the available space.
+ * Because it reaches the right edge of the screen, its scrollbar appears
+ * in the same position as a regular browser scrollbar.
+ */
+.launch-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+  overscroll-behavior: contain;
+}
+
 /* ── Compact info strip ──────────────────────────────────────────────────── */
 .launch-info {
+  flex-shrink: 0;
   padding: 0.6rem clamp(1rem, 4vw, 2rem) 0.7rem;
   background: linear-gradient(120deg, var(--surface) 0%, var(--surface-2) 100%);
   border-bottom: 1px solid var(--line);
+  max-height: 28vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .launch-tagline {
@@ -1077,13 +1123,11 @@ body {
 
 /* ── Game area ───────────────────────────────────────────────────────────── */
 .launch-game-area {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
   padding: 1rem clamp(0.5rem, 2vw, 1.25rem) 2rem;
-  min-height: 72vh;
 }
 
 /* Give game root elements the full available width */
@@ -1167,12 +1211,12 @@ body {
 }
 
 /* ── Canvas games: Phaser / custom engine (Platformer, Racing, Fighter, HeadSoccer)
-   Set an explicit aspect-ratio on the host so it always renders as 16:9,
-   and cap height so it never pushes content off-screen on short viewports.  ── */
+   Aspect-ratio 16:9 adapts the width automatically when max-height is the
+   binding constraint, so reducing max-height also narrows the canvas.       ── */
 .launch-game-area .phaser-canvas-host {
   width: 100%;
   aspect-ratio: 16 / 9;
-  max-height: 62vh;
+  max-height: 44vh;
 }
 /* Fill the aspect-ratio container exactly; override the global height:auto */
 .launch-game-area .phaser-canvas-host canvas {
@@ -1180,14 +1224,14 @@ body {
   height: 100% !important;
 }
 
-/* ── Pac-Man: increase the fixed cap from 460 → 600 px ── */
+/* ── Pac-Man: proportional to canvas-host reduction ── */
 .launch-game-area .pacman-stage-shell {
-  width: min(100%, 600px);
+  width: min(100%, 430px);
 }
 
-/* ── Chess: widen the board from 520 → 640 px (80 px per square, cleaner) ── */
+/* ── Chess: proportional reduction ── */
 .launch-game-area .chess-board-grid {
-  width: min(100%, 640px);
+  width: min(100%, 460px);
 }
 
 /* ── Word Search: fluid cells instead of fixed 28 px

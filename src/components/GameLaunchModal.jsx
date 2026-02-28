@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useTranslations, getLocalizedGame } from "../i18n";
 import { getGameComponent, CONTROL_HINTS_BY_LOCALE } from "../games/registry.jsx";
 
@@ -7,6 +7,16 @@ function GameLaunchModal({ game, onClose }) {
   const lg = getLocalizedGame(game, locale);
   const ActiveGame = getGameComponent(game.id);
   const controlHint = CONTROL_HINTS_BY_LOCALE[locale]?.[game.id];
+
+  const [infoOpen, setInfoOpen] = useState(false);
+
+  // Lock body scroll while the modal is open so the body scrollbar
+  // doesn't compete with the overlay's own scrollbar.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
 
   // Close on Escape key
   useEffect(() => {
@@ -24,7 +34,7 @@ function GameLaunchModal({ game, onClose }) {
       aria-modal="true"
       aria-label={lg.title}
     >
-      {/* ── Sticky top-bar ─────────────────────────────────────────────── */}
+      {/* ── Top-bar ─────────────────────────────────────────────────────── */}
       <div className="launch-topbar">
         <button
           type="button"
@@ -44,55 +54,71 @@ function GameLaunchModal({ game, onClose }) {
           <span className="chip">{game.sessionTime}</span>
           <span className="chip">{lg.difficulty}</span>
         </div>
+
+        <button
+          type="button"
+          className={`launch-info-toggle${infoOpen ? " active" : ""}`}
+          onClick={() => setInfoOpen((o) => !o)}
+          aria-expanded={infoOpen}
+        >
+          {infoOpen ? t("hideInfo") : t("showInfo")}
+        </button>
       </div>
 
-      {/* ── Compact info strip ──────────────────────────────────────────── */}
-      <header className="launch-info">
-        <p className="launch-tagline">{lg.tagline}</p>
+      {/* ── Scrollable body: info strip + game area ─────────────────────── */}
+      <div className="launch-body">
 
-        <dl className="launch-facts">
-          {lg.objective && (
-            <div className="launch-fact">
-              <dt>{t("objective")}</dt>
-              <dd>{lg.objective}</dd>
-            </div>
-          )}
+        {/* Info strip (colapsable) */}
+        {infoOpen && (
+          <header className="launch-info">
+            <p className="launch-tagline">{lg.tagline}</p>
 
-          {lg.howToPlay && (
-            <div className="launch-fact">
-              <dt>{t("howToPlay")}</dt>
-              <dd>{lg.howToPlay}</dd>
-            </div>
-          )}
+            <dl className="launch-facts">
+              {lg.objective && (
+                <div className="launch-fact">
+                  <dt>{t("objective")}</dt>
+                  <dd>{lg.objective}</dd>
+                </div>
+              )}
 
-          {controlHint && (
-            <div className="launch-fact">
-              <dt>{t("controls")}</dt>
-              <dd>{controlHint}</dd>
-            </div>
-          )}
-        </dl>
-      </header>
+              {lg.howToPlay && (
+                <div className="launch-fact">
+                  <dt>{t("howToPlay")}</dt>
+                  <dd>{lg.howToPlay}</dd>
+                </div>
+              )}
 
-      {/* ── Game area (large, centered) ─────────────────────────────────── */}
-      <section className="launch-game-area" aria-label={t("playNow")}>
-        {ActiveGame ? (
-          <Suspense
-            fallback={
-              <div className="launch-loading">
-                <span className="launch-loading-dot" />
-                <span className="launch-loading-dot" />
-                <span className="launch-loading-dot" />
-                <p>{t("loading")}</p>
-              </div>
-            }
-          >
-            <ActiveGame />
-          </Suspense>
-        ) : (
-          <p className="launch-unsupported">{t("unsupported")}</p>
+              {controlHint && (
+                <div className="launch-fact">
+                  <dt>{t("controls")}</dt>
+                  <dd>{controlHint}</dd>
+                </div>
+              )}
+            </dl>
+          </header>
         )}
-      </section>
+
+        {/* Game area */}
+        <section className="launch-game-area" aria-label={t("playNow")}>
+          {ActiveGame ? (
+            <Suspense
+              fallback={
+                <div className="launch-loading">
+                  <span className="launch-loading-dot" />
+                  <span className="launch-loading-dot" />
+                  <span className="launch-loading-dot" />
+                  <p>{t("loading")}</p>
+                </div>
+              }
+            >
+              <ActiveGame />
+            </Suspense>
+          ) : (
+            <p className="launch-unsupported">{t("unsupported")}</p>
+          )}
+        </section>
+
+      </div>
     </div>
   );
 }
