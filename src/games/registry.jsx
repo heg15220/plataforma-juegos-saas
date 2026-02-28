@@ -28,6 +28,7 @@ import KnowledgeArcadeGame from "./KnowledgeArcadeGame";
 import RpgGame from "./RpgGame";
 import HeadSoccerGame from "./HeadSoccerGame";
 import PacmanGame from "./PacmanGame";
+import PongGame from "./PongGame";
 import ChessGame from "./ChessGame";
 import DominoStrategyGame from "./DominoStrategyGame";
 
@@ -63,6 +64,7 @@ export const GAME_REGISTRY = {
   "fighter-neon-dojo":           FighterGame,
   "sports-head-soccer-arena":    HeadSoccerGame,
   "arcade-pacman-maze-protocol": PacmanGame,
+  "arcade-pong-neon-arena":      PongGame,
 };
 
 export function getGameComponent(gameId) {
@@ -90,6 +92,7 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "fighter-neon-dojo":           "A/D moverse, W saltar, J jab, K heavy, L guardia, U/B especial.",
     "sports-head-soccer-arena":    "Izq/der mover, arriba saltar, Espacio disparar, B habilidad.",
     "arcade-pacman-maze-protocol": "WASD/flechas mover, Enter/Espacio empezar, P/Esc pausa, R reinicia, M sonido.",
+    "arcade-pong-neon-arena":      "W/S o flechas arriba/abajo para mover vertical. A/D o flechas izq/der para avanzar o retroceder (sin cruzar el centro). Ratón también controla vertical. Enter/Espacio empezar, P pausa, R reinicia, M sonido, F pantalla completa.",
   },
   en: {
     "adventure-echoes":            "WASD/arrows to move. Search, scan, rations, beacon and tactical jump (B).",
@@ -110,5 +113,6 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "fighter-neon-dojo":           "A/D move, W jump, J jab, K heavy, L guard, U/B special.",
     "sports-head-soccer-arena":    "Left/right move, up jump, Space shoot, B ability.",
     "arcade-pacman-maze-protocol": "WASD/arrows move, Enter/Space start, P/Esc pause, R restart, M sound.",
+    "arcade-pong-neon-arena":      "W/S or up/down arrows for vertical. A/D or left/right arrows to advance or retreat (cannot cross centre line). Mouse also controls vertical. Enter/Space start, P pause, R restart, M sound, F fullscreen.",
   },
 };

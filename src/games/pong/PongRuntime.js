@@ -119,6 +119,8 @@ export default class PongRuntime {
     this.input = {
       up: false,
       down: false,
+      left: false,
+      right: false,
       virtualAxis: 0,
       mouseY: null,
       lastMouseAt: -999,
@@ -136,13 +138,18 @@ export default class PongRuntime {
     this.bestRally = readStoredNumber(STORAGE_KEYS.bestRally, 0);
     this.totalWins = readStoredNumber(STORAGE_KEYS.wins, 0);
 
+    const halfPadW = PADDLE_CONFIG.width * 0.5;
+
     this.playerPaddle = {
       x: PADDLE_CONFIG.margin,
       y: CENTER_Y,
       width: PADDLE_CONFIG.width,
       halfHeight: PADDLE_CONFIG.height * 0.5,
+      vx: 0,
       vy: 0,
-      targetY: CENTER_Y
+      targetY: CENTER_Y,
+      xMin: halfPadW,
+      xMax: CENTER_X - halfPadW
     };
 
     this.aiPaddle = {
@@ -150,8 +157,11 @@ export default class PongRuntime {
       y: CENTER_Y,
       width: PADDLE_CONFIG.width,
       halfHeight: PADDLE_CONFIG.height * 0.5,
+      vx: 0,
       vy: 0,
       targetY: CENTER_Y,
+      xMin: CENTER_X + halfPadW,
+      xMax: this.width - halfPadW,
       speedCap: DIFFICULTY_PRESETS[this.difficultyKey].aiBaseSpeed,
       personality: AI_PERSONALITIES.balanced
     };
@@ -254,7 +264,6 @@ export default class PongRuntime {
     this.accumulator = 0;
     this.rafId = window.requestAnimationFrame(this.loop);
   }
-
   stop() {
     this.running = false;
     if (this.rafId) {
@@ -281,7 +290,7 @@ export default class PongRuntime {
   handleKeyDown(event) {
     const { code } = event;
 
-    if (["ArrowUp", "ArrowDown", "Space"].includes(code)) {
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(code)) {
       event.preventDefault();
     }
 
@@ -292,6 +301,16 @@ export default class PongRuntime {
 
     if (code === "ArrowDown" || code === "KeyS") {
       this.input.down = true;
+      return;
+    }
+
+    if (code === "ArrowLeft" || code === "KeyA") {
+      this.input.left = true;
+      return;
+    }
+
+    if (code === "ArrowRight" || code === "KeyD") {
+      this.input.right = true;
       return;
     }
 
@@ -354,6 +373,16 @@ export default class PongRuntime {
 
     if (code === "ArrowDown" || code === "KeyS") {
       this.input.down = false;
+      return;
+    }
+
+    if (code === "ArrowLeft" || code === "KeyA") {
+      this.input.left = false;
+      return;
+    }
+
+    if (code === "ArrowRight" || code === "KeyD") {
+      this.input.right = false;
     }
   }
 
@@ -545,10 +574,14 @@ export default class PongRuntime {
     this.state.roundBreak = 0;
     this.state.winner = null;
 
+    this.playerPaddle.x = PADDLE_CONFIG.margin;
     this.playerPaddle.y = CENTER_Y;
+    this.playerPaddle.vx = 0;
     this.playerPaddle.vy = 0;
 
+    this.aiPaddle.x = this.width - PADDLE_CONFIG.margin;
     this.aiPaddle.y = CENTER_Y;
+    this.aiPaddle.vx = 0;
     this.aiPaddle.vy = 0;
 
     this.ball.trail.length = 0;
@@ -771,6 +804,17 @@ export default class PongRuntime {
       paddle.y = this.height - paddle.halfHeight;
       paddle.vy = Math.min(0, paddle.vy);
     }
+
+    // Horizontal movement (A/D or ArrowLeft/ArrowRight), constrained to left half
+    const hAxis = (this.input.right ? 1 : 0) - (this.input.left ? 1 : 0);
+    const desiredVx = hAxis !== 0
+      ? clamp(hAxis * PADDLE_CONFIG.keyboardHMaxSpeed, -PADDLE_CONFIG.keyboardHMaxSpeed, PADDLE_CONFIG.keyboardHMaxSpeed)
+      : 0;
+    paddle.vx = approach(paddle.vx, desiredVx, PADDLE_CONFIG.keyboardHAcceleration * dt);
+    if (hAxis === 0) {
+      paddle.vx = approach(paddle.vx, 0, PADDLE_CONFIG.keyboardHDrag * dt);
+    }
+    paddle.x = clamp(paddle.x + paddle.vx * dt, paddle.xMin, paddle.xMax);
   }
 
   updateAiPaddle(dt) {
@@ -821,6 +865,20 @@ export default class PongRuntime {
       paddle.y = this.height - paddle.halfHeight;
       paddle.vy = Math.min(0, paddle.vy);
     }
+
+    // Horizontal movement — AI advances when ball is incoming, retreats otherwise
+    const defaultAiX = this.width - PADDLE_CONFIG.margin;
+    let targetAiX = defaultAiX;
+    if (this.state.mode === "playing" && this.ball.vx > 0) {
+      const maxAdvance = (defaultAiX - paddle.xMin) * 0.38 * aiParams.personality.aggression;
+      targetAiX = clamp(defaultAiX - maxAdvance, paddle.xMin, defaultAiX);
+    }
+    const desiredVx = clamp((targetAiX - paddle.x) * 5, -PADDLE_CONFIG.aiHMaxSpeed, PADDLE_CONFIG.aiHMaxSpeed);
+    paddle.vx = approach(paddle.vx, desiredVx, PADDLE_CONFIG.aiHAcceleration * dt);
+    if (Math.abs(desiredVx) < 0.8) {
+      paddle.vx = approach(paddle.vx, 0, PADDLE_CONFIG.aiHDrag * dt);
+    }
+    paddle.x = clamp(paddle.x + paddle.vx * dt, paddle.xMin, paddle.xMax);
   }
 
   updatePaddles(dt) {
@@ -1054,3 +1112,195 @@ export default class PongRuntime {
 
     this.rafId = window.requestAnimationFrame(this.loop);
   }
+
+  // ─── Snapshot ────────────────────────────────────────────────────────────
+
+  publishSnapshot(force = false) {
+    if (!this.onSnapshot) {
+      return;
+    }
+
+    this.onSnapshot({
+      variant:          this.state.variant,
+      mode:             this.state.mode,
+      message:          this.state.message,
+      playerScore:      this.state.playerScore,
+      aiScore:          this.state.aiScore,
+      targetScore:      this.state.targetScore,
+      secondsRemaining: this.state.secondsRemaining,
+      timerLabel:       this.state.timerLabel,
+      rallyHits:        this.state.rallyHits,
+      longestRally:     this.state.longestRally,
+      bestRally:        this.state.bestRally,
+      playerWins:       this.state.playerWins,
+      winner:           this.state.winner,
+      difficultyKey:    this.state.difficultyKey,
+      difficultyLabel:  this.state.difficultyLabel,
+      aiProfile:        this.state.aiProfile,
+      soundEnabled:     this.state.soundEnabled,
+      playerControlMode: this.state.playerControlMode,
+      fullscreen:       this.state.fullscreen,
+      fps:              Math.round(this.state.fps),
+    });
+  }
+
+  // ─── Render ──────────────────────────────────────────────────────────────
+
+  render() {
+    const ctx = this.ctx;
+    const W = this.width;
+    const H = this.height;
+
+    ctx.fillStyle = "#070b12";
+    ctx.fillRect(0, 0, W, H);
+
+    if (this.wallPulse > 0) {
+      const alpha = this.wallPulse * 0.35;
+      ctx.fillStyle = `rgba(34,211,238,${alpha})`;
+      ctx.fillRect(0, 0, W, 4);
+      ctx.fillRect(0, H - 4, W, 4);
+    }
+
+    ctx.setLineDash([10, 8]);
+    ctx.strokeStyle = "rgba(51,65,85,0.9)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.5, 0);
+    ctx.lineTo(W * 0.5, H);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.strokeStyle = "rgba(30,58,74,0.9)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(W * 0.5, H * 0.5, 56, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const trail = this.ball.trail;
+    for (let i = trail.length - 1; i >= 1; i -= 1) {
+      const t = i / trail.length;
+      const trailAlpha = (1 - t) * 0.42;
+      const trailR = this.ball.radius * (1 - t * 0.55);
+      ctx.beginPath();
+      ctx.arc(trail[i].x, trail[i].y, Math.max(1, trailR), 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(248,250,252,${trailAlpha})`;
+      ctx.fill();
+    }
+
+    const gGlow = ctx.createRadialGradient(
+      this.ball.x, this.ball.y, 0,
+      this.ball.x, this.ball.y, this.ball.radius * 2.2
+    );
+    gGlow.addColorStop(0, "rgba(248,250,252,0.22)");
+    gGlow.addColorStop(1, "rgba(248,250,252,0)");
+    ctx.beginPath();
+    ctx.arc(this.ball.x, this.ball.y, this.ball.radius * 2.2, 0, Math.PI * 2);
+    ctx.fillStyle = gGlow;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(this.ball.x, this.ball.y, this.ball.radius, 0, Math.PI * 2);
+    ctx.fillStyle = "#f8fafc";
+    ctx.fill();
+
+    this._drawPaddle(ctx, this.playerPaddle, "#22d3ee");
+    this._drawPaddle(ctx, this.aiPaddle, "#f59e0b");
+
+    for (let i = 0; i < this.particles.length; i += 1) {
+      const p = this.particles[i];
+      const pAlpha = Math.max(0, p.life / 0.56);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `${p.color}${Math.round(pAlpha * 255).toString(16).padStart(2, "0")}`;
+      ctx.fill();
+    }
+
+    if (this.statusFlash > 0 && this.state.message) {
+      const flashAlpha = Math.min(1, this.statusFlash * 2.4);
+      ctx.save();
+      ctx.globalAlpha = flashAlpha;
+      ctx.font = "bold 22px monospace";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillText(this.state.message, W * 0.5, H - 26);
+      ctx.restore();
+    }
+
+    if (this.state.mode === "menu") {
+      this._drawOverlay(ctx, W, H, "PONG NEON ARENA", "Pulsa START para jugar", "#22d3ee");
+    } else if (this.state.mode === "paused") {
+      this._drawOverlay(ctx, W, H, "PAUSA", "Pulsa P o CONTINUAR para reanudar", "#94a3b8");
+    } else if (this.state.mode === "finished") {
+      const won = this.state.winner === "player";
+      this._drawOverlay(
+        ctx, W, H,
+        won ? "VICTORIA" : "DERROTA",
+        won ? "Ganaste la partida!" : "COM gana. Vuelve a intentarlo!",
+        won ? "#22d3ee" : "#f59e0b"
+      );
+    } else if (this.state.mode === "countdown") {
+      const secs = Math.ceil(this.state.serveCountdown);
+      if (secs > 0) {
+        ctx.save();
+        ctx.font = "bold 64px monospace";
+        ctx.textAlign = "center";
+        ctx.fillStyle = `rgba(248,250,252,${0.55 + Math.sin(this.elapsed * 9) * 0.12})`;
+        ctx.fillText(String(secs), W * 0.5, H * 0.5 + 22);
+        ctx.restore();
+      }
+    }
+  }
+
+  _drawPaddle(ctx, paddle, color) {
+    const hw = paddle.width * 0.5;
+    const hh = paddle.halfHeight;
+    const x = paddle.x - hw;
+    const y = paddle.y - hh;
+    const w = paddle.width;
+    const h = hh * 2;
+
+    const gGlow = ctx.createRadialGradient(paddle.x, paddle.y, 0, paddle.x, paddle.y, hh * 1.1);
+    gGlow.addColorStop(0, `${color}44`);
+    gGlow.addColorStop(1, `${color}00`);
+    ctx.beginPath();
+    ctx.roundRect(x - 6, y - 6, w + 12, h + 12, 10);
+    ctx.fillStyle = gGlow;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, 7);
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.92;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  _drawOverlay(ctx, W, H, title, subtitle, accentColor) {
+    const panelW = 320;
+    const panelH = 90;
+    const px = (W - panelW) * 0.5;
+    const py = (H - panelH) * 0.5;
+
+    ctx.save();
+    ctx.globalAlpha = 0.88;
+    ctx.fillStyle = "#0f1a2a";
+    ctx.beginPath();
+    ctx.roundRect(px, py, panelW, panelH, 12);
+    ctx.fill();
+    ctx.strokeStyle = accentColor;
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = 0.55;
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.font = "bold 28px monospace";
+    ctx.fillStyle = accentColor;
+    ctx.fillText(title, W * 0.5, py + 38);
+    ctx.font = "13px sans-serif";
+    ctx.fillStyle = "#94a3b8";
+    ctx.fillText(subtitle, W * 0.5, py + 62);
+    ctx.restore();
+  }
+}

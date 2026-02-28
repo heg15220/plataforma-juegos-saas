@@ -8,6 +8,7 @@ import skyRunnerImage from "../assets/games/sky-runner.svg";
 import neonDojoImage from "../assets/games/neon-dojo.svg";
 import headSoccerArenaImage from "../assets/games/head-soccer-arena.svg";
 import pacmanMazeProtocolImage from "../assets/games/pacman-maze-protocol.svg";
+import pongNeonArenaImage from "../assets/games/pong-neon-arena.svg";
 import knowledgeSudokuImage from "../assets/games/knowledge-sudoku.svg";
 import knowledgeDominoImage from "../assets/games/knowledge-domino.svg";
 import knowledgeAhorcadoImage from "../assets/games/knowledge-ahorcado.svg";
@@ -272,6 +273,51 @@ export const games = [
     viability_en: "High: decoupled 2D Canvas engine with FSM AI and BFS pathfinding.",
     visualStyle_en: "Dark neon maze with clear route, pellet and ghost-state readability.",
     techFocus_en: "Modular engine/world/entities/ai/state architecture + decoupled React HUD.",
+  },
+
+  {
+    id: "arcade-pong-neon-arena",
+    image: pongNeonArenaImage,
+    sessionTime: "3-8 min",
+
+    title: "Pong Neon Arena",
+    category: "Arcade",
+    tagline: "Pong clásico 1 vs IA con física de english, dificultad adaptativa y audio Web.",
+    description:
+      "Versión avanzada del Pong original con física realista de spin (english), IA adaptativa con tres perfiles de juego, sistema de puntuación por tiempo o marcador, efectos de partículas y audio generado por Web Audio API.",
+    objective_es: "Alcanza 9 puntos antes que la IA o consigue la mayor puntuación cuando expire el tiempo. Usa el ángulo de golpe para engañar a la CPU.",
+    howToPlay_es: "W/S o flechas arriba/abajo para mover la raqueta. Ratón sobre el canvas también funciona. Enter/Espacio para empezar, P pausa, R reinicia, M sonido, F pantalla completa. Pulsa el botón de dificultad para ciclar entre Rookie, Arcade y Pro.",
+    highlights: [
+      "Física de english (spin) según zona de impacto en la raqueta.",
+      "IA con tres perfiles: BAL (equilibrado), AGR (agresivo), DEF (defensivo).",
+      "Loop de física a 120 Hz desacoplado del render para precisión máxima.",
+      "Audio procedural con Web Audio API: golpes, paredes, goles y victoria.",
+      "Rally tracker, récord persistente y sistema de victorias acumulado.",
+    ],
+    difficulty: "Media",
+    multiplayer: "Solo vs IA",
+    viability: "Alta: motor Canvas 2D puro con física determinista y sin dependencias externas.",
+    visualStyle: "Neón oscuro con raquetas cyan/ámbar, partículas de impacto y trail de balón.",
+    techFocus: "Loop fijo 120Hz + render RAF, IA con dificultad dinámica y Web Audio API procedural.",
+
+    category_en: "Arcade",
+    tagline_en: "Classic Pong 1 vs AI with english physics, adaptive difficulty and Web Audio.",
+    description_en:
+      "An advanced take on the original Pong featuring realistic spin physics, adaptive AI with three play profiles, score-by-time or scorecard system, particle effects and procedural audio via Web Audio API.",
+    objective_en: "Reach 9 points before the AI or score the most when time runs out. Use shot angle to trick the CPU.",
+    howToPlay_en: "W/S or up/down arrows move your paddle. Mouse over the canvas also works. Enter/Space to start, P pause, R restart, M sound, F fullscreen. Click the difficulty button to cycle through Rookie, Arcade and Pro.",
+    highlights_en: [
+      "English (spin) physics based on paddle impact zone.",
+      "AI with three profiles: BAL (balanced), AGR (aggressive), DEF (defensive).",
+      "120 Hz physics loop decoupled from render for maximum precision.",
+      "Procedural audio with Web Audio API: hits, walls, goals and victory.",
+      "Rally tracker, persistent record and cumulative win counter.",
+    ],
+    difficulty_en: "Medium",
+    multiplayer_en: "Solo vs AI",
+    viability_en: "High: pure 2D Canvas engine with deterministic physics and no external dependencies.",
+    visualStyle_en: "Dark neon with cyan/amber paddles, impact particles and ball trail.",
+    techFocus_en: "Fixed 120Hz loop + RAF render, dynamic difficulty AI and procedural Web Audio API.",
   },
 
   // ── Sports ─────────────────────────────────────────────────────────────────

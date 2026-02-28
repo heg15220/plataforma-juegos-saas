@@ -15,7 +15,13 @@ export const PADDLE_CONFIG = {
   mouseMaxSpeed: 920,
   aiAcceleration: 4200,
   aiDrag: 2800,
-  aiCenterPull: 0.16
+  aiCenterPull: 0.16,
+  keyboardHMaxSpeed: 380,
+  keyboardHAcceleration: 3200,
+  keyboardHDrag: 2600,
+  aiHMaxSpeed: 260,
+  aiHAcceleration: 1800,
+  aiHDrag: 1400
 };
 
 export const BALL_CONFIG = {
