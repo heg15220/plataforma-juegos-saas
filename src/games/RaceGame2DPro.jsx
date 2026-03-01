@@ -1542,7 +1542,8 @@ export default function RaceGame2DPro() {
         }
       }
       if (e.code === "KeyR") startRace();
-      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) {
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+           "Numpad8", "Numpad2", "Numpad4", "Numpad6"].includes(e.code)) {
         e.preventDefault();
       }
     };
@@ -1611,10 +1612,10 @@ export default function RaceGame2DPro() {
         brake = clamp(joy.dy / 42, 0, 1);
         steer = clamp(joy.dx / 42, -1, 1);
       } else {
-        if (keys.has("ArrowUp") || keys.has("KeyW")) throttle = 1;
-        if (keys.has("ArrowDown") || keys.has("KeyS")) brake = 1;
-        if (keys.has("ArrowLeft") || keys.has("KeyA")) steer = -1;
-        if (keys.has("ArrowRight") || keys.has("KeyD")) steer = 1;
+        if (keys.has("ArrowUp") || keys.has("KeyW") || keys.has("Numpad8")) throttle = 1;
+        if (keys.has("ArrowDown") || keys.has("KeyS") || keys.has("Numpad2")) brake = 1;
+        if (keys.has("ArrowLeft") || keys.has("KeyA") || keys.has("Numpad4")) steer = -1;
+        if (keys.has("ArrowRight") || keys.has("KeyD") || keys.has("Numpad6")) steer = 1;
       }
 
       if (inp.touchThrottle) throttle = 1;
