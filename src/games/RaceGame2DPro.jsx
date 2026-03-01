@@ -494,8 +494,9 @@ function closestS(track, x, y) {
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function createCar(id, isPlayer, color, aiDifficulty) {
+  const livery = CAR_LIVERIES[id % CAR_LIVERIES.length];
   return {
-    id, isPlayer, color,
+    id, isPlayer, color: livery.primary, livery,
     x: 0, y: 0, a: 0, vx: 0, vy: 0, speed: 0, s: 0,
     lap: 1, finished: false, finishTime: null, finishOrder: null,
     turbo: 0, turboActive: false, turboCooldown: 0, turboTimeLeft: 0,
@@ -1011,87 +1012,179 @@ function renderStartGrid(ctx, cars, phase, phaseTimer, env) {
 
 function renderCar(ctx, car, isPlayer) {
   if (!car) return;
+  const livery = car.livery || { primary: car.color, secondary: "#ffffff", helmet: "#ffffff", number: "#ffffff" };
 
-  // Trail
+  // ── Trail ──
   for (let i = 0; i < car.trail.length; i++) {
     const t = car.trail[i];
-    const alpha = (1 - i / car.trail.length) * (isPlayer ? 0.40 : 0.25);
-    const rx = Math.max(0.1, 8 - i * 0.25);
-    const ry = Math.max(0.1, 4.5 - i * 0.1);
+    const alpha = (1 - i / car.trail.length) * (isPlayer ? 0.35 : 0.18);
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.translate(t.x, t.y); ctx.rotate(t.a);
-    ctx.fillStyle = car.color;
+    ctx.fillStyle = livery.primary;
     ctx.beginPath();
-    ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, Math.max(0.1, 7 - i * 0.2), Math.max(0.1, 3.5 - i * 0.08), 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
 
-  // Turbo extra trail
+  // ── Turbo flame ──
   if (car.turboActive) {
     ctx.save();
     ctx.translate(car.x, car.y); ctx.rotate(car.a);
-    ctx.globalAlpha = 0.65;
-    ctx.shadowBlur = 22; ctx.shadowColor = car.color;
-    ctx.fillStyle = car.color;
-    ctx.beginPath();
-    ctx.ellipse(-18, 0, 14, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
+    for (let f = 0; f < 3; f++) {
+      const fScale = 1 - f * 0.25;
+      ctx.globalAlpha = 0.55 * fScale;
+      ctx.fillStyle = f === 0 ? "#ffffff" : f === 1 ? "#ffe060" : "#ff6020";
+      ctx.beginPath();
+      ctx.ellipse(-16 - f * 5, 0, (12 - f * 3) * fScale, (5 - f) * fScale, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.restore();
   }
 
-  // Car body
+  // ── Dust particles ──
+  if (car.dustParticles) {
+    for (const dp of car.dustParticles) {
+      const alpha = (dp.life / dp.maxLife) * 0.55;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = "rgba(180,160,120,0.8)";
+      ctx.beginPath();
+      ctx.arc(dp.x, dp.y, 4 * (dp.life / dp.maxLife), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // ── Car body ──
   ctx.save();
-  ctx.translate(car.x, car.y); ctx.rotate(car.a);
-  if (isPlayer) { ctx.shadowBlur = 18; ctx.shadowColor = car.color; }
+  ctx.translate(car.x, car.y);
+  ctx.rotate(car.a);
 
-  // Main body
-  ctx.fillStyle = car.color;
+  if (isPlayer) {
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = livery.primary;
+  }
+
+  // 1. Drop shadow
+  ctx.save();
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = "rgba(0,0,0,0.8)";
   ctx.beginPath();
-  if (ctx.roundRect) ctx.roundRect(-13, -7.5, 26, 15, 4);
-  else ctx.rect(-13, -7.5, 26, 15);
+  ctx.ellipse(3, 3, 16, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // 2. Rear tires
+  ctx.fillStyle = "#111111";
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(6, -10, 8, 5, 2);
+  else ctx.rect(6, -10, 8, 5);
+  ctx.fill();
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(6, 5, 8, 5, 2);
+  else ctx.rect(6, 5, 8, 5);
   ctx.fill();
 
-  // Cabin
-  ctx.fillStyle = "rgba(0,0,0,0.60)";
+  // 3. Main body (trapezoid)
+  ctx.fillStyle = livery.primary;
   ctx.beginPath();
-  if (ctx.roundRect) ctx.roundRect(-4, -5, 13, 10, 3);
-  else ctx.rect(-4, -5, 13, 10);
+  ctx.moveTo(-14, -6);
+  ctx.lineTo(14, -8);
+  ctx.lineTo(14, 8);
+  ctx.lineTo(-14, 6);
+  ctx.closePath();
   ctx.fill();
 
-  // Wheels
+  // Secondary stripe
+  ctx.fillStyle = livery.secondary;
+  ctx.beginPath();
+  ctx.moveTo(-6, -4.5);
+  ctx.lineTo(10, -5.5);
+  ctx.lineTo(10, -3.5);
+  ctx.lineTo(-6, -2.5);
+  ctx.closePath();
+  ctx.fill();
+
+  // 4. Front wing
+  ctx.fillStyle = livery.secondary;
+  ctx.beginPath();
+  ctx.moveTo(-14, -12);
+  ctx.lineTo(-10, -8);
+  ctx.lineTo(-10, 8);
+  ctx.lineTo(-14, 12);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = livery.primary;
+  ctx.fillRect(-15, -13, 3, 4);
+  ctx.fillRect(-15, 9, 3, 4);
+
+  // 5. Rear wing
+  ctx.fillStyle = livery.secondary;
+  ctx.fillRect(11, -10, 5, 20);
+  ctx.fillStyle = "rgba(0,0,0,0.4)";
+  ctx.fillRect(13, -5, 1, 10);
+
+  // 6. Front tires
+  ctx.fillStyle = "#111111";
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(-14, -10, 8, 5, 2);
+  else ctx.rect(-14, -10, 8, 5);
+  ctx.fill();
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(-14, 5, 8, 5, 2);
+  else ctx.rect(-14, 5, 8, 5);
+  ctx.fill();
+
+  // Tire shine
+  ctx.fillStyle = "rgba(255,255,255,0.1)";
+  ctx.fillRect(-13, -10, 3, 2);
+  ctx.fillRect(-13, 5, 3, 2);
+  ctx.fillRect(7, -10, 3, 2);
+  ctx.fillRect(7, 5, 3, 2);
+
+  // 7. Cockpit opening
   ctx.fillStyle = "rgba(0,0,0,0.75)";
-  ctx.fillRect(-10, -9, 5, 3);
-  ctx.fillRect(-10, 6, 5, 3);
-  ctx.fillRect(6, -9, 5, 3);
-  ctx.fillRect(6, 6, 5, 3);
-
-  // Headlights
-  ctx.fillStyle = isPlayer ? "#ffffff" : "rgba(255,255,200,0.85)";
   ctx.beginPath();
-  ctx.ellipse(13, -4.5, 2.5, 2, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(13, 4.5, 2.5, 2, 0, 0, Math.PI * 2);
+  if (ctx.roundRect) ctx.roundRect(-2, -4, 10, 8, 4);
+  else ctx.rect(-2, -4, 10, 8);
   ctx.fill();
 
-  // Number on roof
-  ctx.fillStyle = "rgba(255,255,255,0.5)";
-  ctx.font = "bold 7px sans-serif";
+  // 8. Halo
+  ctx.strokeStyle = "rgba(200,200,200,0.5)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(2, 0, 5, Math.PI, 0);
+  ctx.stroke();
+
+  // 9. Pilot helmet
+  ctx.fillStyle = livery.helmet;
+  ctx.beginPath();
+  ctx.arc(1, 0, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(0,180,255,0.7)";
+  ctx.beginPath();
+  ctx.arc(2, 0, 2, -0.8, 0.8);
+  ctx.fill();
+
+  // 10. Car number
+  ctx.fillStyle = livery.number;
+  ctx.font = "bold 6px sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText(car.id === 0 ? "P" : String(car.id), 1, 2.5);
+  ctx.textBaseline = "middle";
+  ctx.fillText(car.id === 0 ? "P1" : String(car.id), 7, 0);
 
   ctx.restore();
 
-  // Sparks
+  // ── Sparks ──
   for (const s of car.sparks) {
     const alpha = s.life / s.maxLife;
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = s.color;
-    ctx.shadowBlur = 8; ctx.shadowColor = s.color;
-    ctx.beginPath(); ctx.arc(s.x, s.y, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#ffcc40";
+    ctx.shadowBlur = 6; ctx.shadowColor = "#ffaa00";
+    ctx.beginPath(); ctx.arc(s.x, s.y, 2.0, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 }
@@ -1179,10 +1272,17 @@ function TrackPreviewCanvas({ track, active }) {
 // SECTION 9: Main RaceGame2DPro component
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-const CAR_COLORS = [
-  "#00f5ff", "#ff4500", "#39ff14", "#ffd700",
-  "#bf00ff", "#ff69b4", "#00bfff", "#ff8c00",
+const CAR_LIVERIES = [
+  { primary: "#e8001e", secondary: "#ffffff", helmet: "#ffff00", number: "#ffffff" }, // Ferrari red (Player)
+  { primary: "#1e41ff", secondary: "#ffdd00", helmet: "#ffffff", number: "#ffdd00" }, // Blue/Yellow
+  { primary: "#ff8000", secondary: "#000000", helmet: "#ffffff", number: "#000000" }, // McLaren orange
+  { primary: "#00d2be", secondary: "#c0c0c0", helmet: "#000000", number: "#000000" }, // Mercedes teal
+  { primary: "#3671c6", secondary: "#ff0000", helmet: "#ffffff", number: "#ff0000" }, // Alpine blue
+  { primary: "#900000", secondary: "#ffd700", helmet: "#ffffff", number: "#ffd700" }, // Burgundy
+  { primary: "#005aff", secondary: "#ffffff", helmet: "#ff0000", number: "#ffffff" }, // Williams blue
+  { primary: "#2d826d", secondary: "#cedc00", helmet: "#000000", number: "#cedc00" }, // Aston green
 ];
+const CAR_COLORS = CAR_LIVERIES.map(l => l.primary);
 
 export default function RaceGame2DPro() {
   const lang = navigator.language?.startsWith("es") ? "es" : "en";
