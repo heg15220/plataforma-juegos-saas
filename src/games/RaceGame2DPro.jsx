@@ -597,38 +597,67 @@ function updateCar(car, dt, input, track, weatherProfile, allCars, startLocked) 
   if (car.trail.length > 28) car.trail.pop();
 }
 
-function computeAiInput(car, track, weatherProfile) {
+function computeAiInput(car, track, weatherProfile, allCars) {
   const prof = car.aiProfile;
   const ai = car.ai;
   ai.t += 0.016;
 
-  const lookahead = 0.025 + (car.speed / PHYS.MAX_SPEED) * 0.055;
-  const targetS = wrap01(car.s + lookahead);
-  const target = sampleTrackAt(track, targetS);
+  // Short lookahead for steering, long for braking
+  const speedRatio = car.speed / PHYS.MAX_SPEED;
+  const shortLook = 0.020 + speedRatio * 0.030;
+  const longLook = 0.060 + speedRatio * 0.040;
 
-  // Racing line offset
+  const targetS = wrap01(car.s + shortLook);
+  const target = sampleTrackAt(track, targetS);
+  const longTarget = sampleTrackAt(track, wrap01(car.s + longLook));
+
+  // Compute corner type at short lookahead
+  const curvatureAhead = target.curvature;
+  const isCorner = curvatureAhead > 0.018;
+
+  // Racing line: outside → apex → outside
   const nx = -Math.sin(target.ang), ny = Math.cos(target.ang);
-  const lateralOff = (Math.sin(ai.t * 0.35 + ai.noiseSeed) * 0.5 + ai.lineOffset) * prof.lineOffset * track.trackWidth;
-  const tx = target.x + nx * lateralOff;
-  const ty = target.y + ny * lateralOff;
+  let apexOffset = 0;
+  if (isCorner) {
+    // Check which side is inside by sampling angle change
+    const prev = sampleTrackAt(track, wrap01(targetS - 0.005));
+    const angleChange = angNorm(target.ang - prev.ang);
+    // Positive angle change = turning left → inside is left
+    apexOffset = Math.sign(angleChange) * track.trackWidth * 0.28 * prof.apexPrecision;
+  }
+
+  // Add small oscillating error + personal line offset
+  const noiseOffset = Math.sin(ai.t * 0.35 + ai.noiseSeed) * track.trackWidth * prof.lineOffset * 0.4;
+  const lateralOff = apexOffset + noiseOffset + ai.lineOffset * prof.lineOffset * track.trackWidth * 0.15;
+
+  // Overtake awareness: check nearby cars
+  let overtakeShift = 0;
+  for (const other of allCars) {
+    if (other.id === car.id) continue;
+    const rdx = other.x - car.x, rdy = other.y - car.y;
+    const along = rdx * Math.cos(car.a) + rdy * Math.sin(car.a);
+    const lateral = -rdx * Math.sin(car.a) + rdy * Math.cos(car.a);
+    if (along > 0 && along < 60 && Math.abs(lateral) < 24) {
+      overtakeShift = lateral < 0 ? 10 : -10;
+    }
+  }
+
+  const tx = target.x + nx * (lateralOff + overtakeShift);
+  const ty = target.y + ny * (lateralOff + overtakeShift);
 
   let angleDiff = angNorm(Math.atan2(ty - car.y, tx - car.x) - car.a);
   if (Math.random() < prof.errorRate) angleDiff += (Math.random() - 0.5) * prof.errorMag * 2;
   const steer = clamp(angleDiff * 2.8, -1, 1);
 
-  // Target speed
-  const curveLook = sampleTrackAt(track, wrap01(car.s + 0.05));
-  const targetSpeed = curveLook.speedLimit * prof.speedFactor * weatherProfile.gripMult;
-  const brakeThreshold = targetSpeed * prof.brakeMargin;
-
-  let throttle = 0, brake = 0;
-  if (car.speed < targetSpeed - 8) throttle = 1;
-  else if (car.speed > brakeThreshold) brake = 1;
-  else throttle = 0.5;
+  // Proportional braking (not binary)
+  const targetSpeed = longTarget.speedLimit * prof.speedFactor * weatherProfile.gripMult;
+  const speedDiff = car.speed - targetSpeed;
+  const throttle = speedDiff < -10 ? clamp((targetSpeed - car.speed) / 60, 0, 1) : 0.3;
+  const brake = speedDiff > 0 ? clamp(speedDiff / 80, 0, 1) : 0;
 
   const useTurbo = Math.random() < prof.turboUse &&
     car.turbo > 0.75 &&
-    curveLook.curvature < 0.018 &&
+    longTarget.curvature < 0.016 &&
     !car.turboActive &&
     car.turboCooldown <= 0;
 
@@ -1358,7 +1387,7 @@ export default function RaceGame2DPro() {
           carInput = startLocked ? { throttle: 0, brake: 0, steer: 0 } : playerInput;
         } else {
           if (g.startPhase === "racing") {
-            const aiIn = computeAiInput(car, g.track, g.weather);
+            const aiIn = computeAiInput(car, g.track, g.weather, g.cars);
             carInput = aiIn;
             if (aiIn.useTurbo) {
               car.turboActive = true;
