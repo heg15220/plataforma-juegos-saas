@@ -1,0 +1,18 @@
+
+> plataforma-juegos-saas@0.1.0 dev
+> vite --host 127.0.0.1 --port 4177
+
+
+  [32m[1mVITE[22m v4.5.14[39m  [2mready in [0m[1m319[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m4177[22m/[39m
+[2m22:45:29[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/games/PokerTexasHoldemGame.jsx[22m
+[2m22:54:55[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/games/PokerTexasHoldemGame.jsx[22m
+[2m22:59:40[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/games/PokerTexasHoldemGame.jsx[22m
+[2m23:00:20[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/games/PokerTexasHoldemGame.jsx[22m
+[2m23:01:24[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/games/PokerTexasHoldemGame.jsx[22m
+[2m23:02:05[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/games/PokerTexasHoldemGame.jsx[22m
+[2m23:03:15[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/games/PokerTexasHoldemGame.jsx[22m
+[2m23:03:28[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m23:04:04[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/data/games.js[22m
+[2m23:04:12[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/games/registry.jsx[22m

@@ -17,6 +17,7 @@ import knowledgePuzleImage from "../assets/games/knowledge-puzle.svg";
 import knowledgeCrucigramaImage from "../assets/games/knowledge-crucigrama.svg";
 import knowledgeSopaLetrasImage from "../assets/games/knowledge-sopa-letras.svg";
 import chessGrandmasterArenaImage from "../assets/games/chess-grandmaster-arena.svg";
+import strategyPokerNoBetImage from "../assets/games/strategy-poker-no-bet.svg";
 import race2dproImage from "../assets/games/race2dpro.svg";
 
 /**
@@ -804,6 +805,55 @@ export const games = [
   },
 
   // ── Strategy (chess) ───────────────────────────────────────────────────────
+  {
+    id: "strategy-poker-holdem-no-bet",
+    image: strategyPokerNoBetImage,
+    sessionTime: "4-10 min",
+
+    title: "Poker Clasico Draw Con Apuestas",
+    category: "Estrategia",
+    tagline: "Poker clasico de 5 cartas contra 1 a 8 IAs, con ciegas, bote real y apuestas de fichas.",
+    description:
+      "Version estrategica de poker clasico (baraja de 52, sin comodin) para la plataforma: cada jugador recibe 5 cartas, juega ronda de apuesta inicial, realiza un descarte unico de 0 a 5 cartas, disputa una ronda final y cierra en showdown. Hay ciega pequena/grande, bote real y acciones de igualar, subir, all-in o retirarse.",
+    objective_es: "Alcanza primero la meta de fichas ganando botes en rondas con apuestas reales.",
+    howToPlay_es: "Configura stack inicial, nivel de ciegas y meta en el panel. Enter para pasar/igualar segun contexto, U para subir, A all-in, F retirarse, 1-5 marcar cartas, D descartar, S servirse, N siguiente mano y R reiniciar.",
+    highlights: [
+      "Poker con apuestas reales: bote, ciegas y decisiones de call/raise/fold/all-in.",
+      "Descarte tactico de 0 a 5 cartas entre dos rondas de apuesta.",
+      "Configuracion de stack inicial, nivel de ciegas y meta de fichas.",
+      "Soporte de mesa configurable para 2 a 9 jugadores (Tu + 1 a 8 IAs).",
+      "Evaluador real de manos de poker clasico (de carta mayor a escalera real).",
+      "Dealer rotativo por mano y reparto de bote en showdown o por retirada general.",
+      "Bridge QA con render_game_to_text y avance temporal determinista.",
+    ],
+    difficulty: "Variable",
+    multiplayer: "Solo vs IA (1 a 8)",
+    viability: "Alta: motor determinista de cartas con estado compacto y trazabilidad completa.",
+    visualStyle: "Mesa de poker estilo casino verde con HUD tactico y lectura clara de fases.",
+    techFocus: "Pipeline de poker clasico 5-card draw con economia de apuesta (pot/blinds/raise/call/all-in) e IA orientada a gestion de riesgo por mano.",
+
+    category_en: "Strategy",
+    tagline_en: "Classic 5-card poker versus 1 to 8 AIs, with blinds, real pot play and chip betting.",
+    description_en:
+      "Strategy-focused classic poker (52-card deck, no jokers): each player gets 5 private cards, plays an opening betting round, performs a single 0-5 card draw, plays a final betting round, and resolves the hand at showdown. The table includes small/big blinds and a real shared pot.",
+    objective_en: "Reach the chip target first by winning pots in real betting rounds.",
+    howToPlay_en: "Set starting stack, blind level and chip target in the panel. Enter to check/call by context, U to raise, A all-in, F fold, 1-5 mark cards, D discard, S stand pat, N next hand, and R restart.",
+    highlights_en: [
+      "Real betting flow: blinds, pot, call/raise/fold/all-in decisions.",
+      "Single 0-5 card draw between two betting rounds.",
+      "Configurable starting stack, blind level and chip target.",
+      "Table setup supports 2 to 9 players (you plus 1 to 8 AIs), configurable in-game.",
+      "True classic poker hand evaluator (high card through royal flush).",
+      "Rotating dealer with pot resolution via showdown or full-table foldout.",
+      "QA bridge with render_game_to_text and deterministic time stepping.",
+    ],
+    difficulty_en: "Variable",
+    multiplayer_en: "Solo vs AI (1 to 8)",
+    viability_en: "High: deterministic card engine with compact state and full traceability.",
+    visualStyle_en: "Casino-inspired green poker table with tactical HUD and clear phase readability.",
+    techFocus_en: "Classic 5-card draw pipeline with betting economy (pot/blinds/raise/call/all-in) and AI tuned for per-hand risk management.",
+  },
+
   {
     id: "strategy-chess-grandmaster",
     image: chessGrandmasterArenaImage,

@@ -1,0 +1,102 @@
+[
+  {
+    "tag": "after_config",
+    "hand": 1,
+    "phase": "pre-discard",
+    "turn": 1,
+    "aiThinking": true,
+    "opponents": 5,
+    "stateMode": "playing",
+    "message": "Mano 1: reparte Tu. Comienza IA 1."
+  },
+  {
+    "tag": "loop_0_after_enter",
+    "hand": 1,
+    "phase": "pre-discard",
+    "turn": 1,
+    "aiThinking": true,
+    "opponents": 5,
+    "stateMode": "playing",
+    "message": "Espera a que llegue tu turno."
+  },
+  {
+    "tag": "loop_0_after_s",
+    "hand": 1,
+    "phase": "pre-discard",
+    "turn": 2,
+    "aiThinking": true,
+    "opponents": 5,
+    "stateMode": "playing",
+    "message": "IA 1 actua. Turno para IA 2."
+  },
+  {
+    "tag": "loop_0_after_post_enter",
+    "hand": 1,
+    "phase": "pre-discard",
+    "turn": 2,
+    "aiThinking": true,
+    "opponents": 5,
+    "stateMode": "playing",
+    "message": "Espera a que llegue tu turno."
+  },
+  {
+    "tag": "loop_1_after_enter",
+    "hand": 1,
+    "phase": "pre-discard",
+    "turn": 3,
+    "aiThinking": true,
+    "opponents": 5,
+    "stateMode": "playing",
+    "message": "IA 2 actua. Turno para IA 3."
+  },
+  {
+    "tag": "loop_1_after_s",
+    "hand": 1,
+    "phase": "pre-discard",
+    "turn": 4,
+    "aiThinking": true,
+    "opponents": 5,
+    "stateMode": "playing",
+    "message": "IA 3 actua. Turno para IA 4."
+  },
+  {
+    "tag": "loop_1_after_post_enter",
+    "hand": 1,
+    "phase": "pre-discard",
+    "turn": 4,
+    "aiThinking": true,
+    "opponents": 5,
+    "stateMode": "playing",
+    "message": "Espera a que llegue tu turno."
+  },
+  {
+    "tag": "loop_2_after_enter",
+    "hand": 1,
+    "phase": "pre-discard",
+    "turn": 5,
+    "aiThinking": true,
+    "opponents": 5,
+    "stateMode": "playing",
+    "message": "IA 4 actua. Turno para IA 5."
+  },
+  {
+    "tag": "loop_2_after_s",
+    "hand": 1,
+    "phase": "pre-discard",
+    "turn": 5,
+    "aiThinking": true,
+    "opponents": 5,
+    "stateMode": "playing",
+    "message": "Espera a que llegue tu turno."
+  },
+  {
+    "tag": "loop_2_after_post_enter",
+    "hand": 1,
+    "phase": "pre-discard",
+    "turn": 0,
+    "aiThinking": false,
+    "opponents": 5,
+    "stateMode": "playing",
+    "message": "IA 5 actua. Turno para Tu."
+  }
+]

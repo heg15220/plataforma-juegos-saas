@@ -31,6 +31,7 @@ import PacmanGame from "./PacmanGame";
 import PongGame from "./PongGame";
 import ChessGame from "./ChessGame";
 import DominoStrategyGame from "./DominoStrategyGame";
+import PokerTexasHoldemGame from "./PokerTexasHoldemGame";
 import RaceGame2DPro from "./RaceGame2DPro";
 
 // Heavy engines use lazy() to keep initial bundle small
@@ -60,6 +61,7 @@ export const GAME_REGISTRY = {
   "knowledge-crucigrama-mini":   KnowledgeCrucigramaGame,
   "knowledge-sopa-letras-mega":  KnowledgeSopaLetrasGame,
   "strategy-chess-grandmaster":  ChessGame,
+  "strategy-poker-holdem-no-bet": PokerTexasHoldemGame,
   "rpg-emberfall":               RpgGame,
   "platformer-sky-runner":       PlatformerGame,
   "fighter-neon-dojo":           FighterGame,
@@ -89,6 +91,7 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-crucigrama-mini":   "Flechas navegan, letras escriben, Backspace borra, Enter comprueba, botón nueva partida.",
     "knowledge-sopa-letras-mega":  "Arrastra o marca inicio-fin en horizontal, vertical o diagonal (también al revés). R nueva partida.",
     "strategy-chess-grandmaster":  "Clic para mover, U deshace, D reclama tablas, F pantalla completa.",
+    "strategy-poker-holdem-no-bet": "Poker clasico 5 cartas con apuestas: ciegas, bote y acciones de pasar/igualar/subir/all-in/retirarse. Enter resolver accion principal, U subir, A all-in, F retirarse, 1-5 seleccionar descarte, D descartar, S servirse, N siguiente mano, R reiniciar.",
     "rpg-emberfall":               "WASD/flechas para explorar. Atacar, habilidad, defender, enfocar, invocar (U) y poción.",
     "platformer-sky-runner":       "A/D o flechas para moverse, W/arriba/espacio para saltar, F acción.",
     "fighter-neon-dojo":           "A/D moverse, W saltar, J jab, K heavy, L guardia, U/B especial.",
@@ -111,6 +114,7 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-crucigrama-mini":   "Arrows navigate, letters type, Backspace clears, Enter checks, button for new puzzle.",
     "knowledge-sopa-letras-mega":  "Drag or click start-end horizontally, vertically or diagonally (reverse also works). R new match.",
     "strategy-chess-grandmaster":  "Click to move, U undo, D claim draw, F fullscreen.",
+    "strategy-poker-holdem-no-bet": "Classic 5-card draw with betting: blinds, real pot and check/call/raise/all-in/fold decisions. Enter resolves main action, U raise, A all-in, F fold, 1-5 select discard, D discard, S stand pat, N next hand, R restart.",
     "rpg-emberfall":               "WASD/arrows to explore. Attack, skill, defend, focus, summon (U) and potion.",
     "platformer-sky-runner":       "A/D or arrows to move, W/up/space to jump, F action.",
     "fighter-neon-dojo":           "A/D move, W jump, J jab, K heavy, L guard, U/B special.",

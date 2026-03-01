@@ -590,3 +590,265 @@
   - `output/strategy-domino-rules-ux-check/shot-0.png..shot-2.png`
   - `state-0..2.json` con `variant: domino-7-plus-7` y `nextStarter`.
   - sin `errors-*.json`.
+## 2026-03-01 - Estrategia: Texas Hold'em sin apuestas (1 IA / 3 IA)
+- Nuevo juego implementado: `strategy-poker-holdem-no-bet` con motor propio en `src/games/PokerTexasHoldemGame.jsx`.
+- Reglas aplicadas:
+  - flujo Hold'em por fases (`preflop`, `flop`, `turn`, `river`, showdown),
+  - dealer rotativo por mano,
+  - evaluador real de manos de poker (carta alta -> escalera de color),
+  - sin apuestas bajo ningun concepto (sin bote, sin fichas, sin ciegas economicas).
+- Mecanicas de decision:
+  - acciones `pasar`, `retirarse` y `cambio tactico` (1 vez por mano),
+  - IA configurable por perfil y partida configurable contra `1 IA` o `3 IA`.
+- UX/UI:
+  - nueva mesa visual de poker con fases destacadas, score por victorias de mano, chips de turno/dealer, estados de cartas ocultas/reveladas y panel de reglas.
+  - estilos nuevos en `src/styles.css` para bloque `poker-holdem-game`.
+- Integracion de catalogo/plataforma:
+  - nueva portada `src/assets/games/strategy-poker-no-bet.svg`.
+  - metadata bilingue en `src/data/games.js` dentro de categoria `Estrategia`.
+  - registro de componente + hints en `src/components/GamePlayground.jsx` y `src/games/registry.jsx`.
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por `spawn EPERM` de esbuild dentro de sandbox).
+- Playwright skill client:
+  - URL: `#game=strategy-poker-holdem-no-bet`
+  - output: `output/strategy-poker-audit/shot-0..2.png` y `state-0..2.json`
+  - sin archivos `errors-*.json`.
+- Verificacion adicional modo `3 IA`:
+  - script Playwright cambiando selector `#poker-opponents` a `3` y aplicando configuracion.
+  - evidencia en estado serializado (`opponents: 3` con 4 asientos) y captura `output/strategy-poker-audit/shot-3ai.png`.
+## 2026-03-01 - Poker: rediseño visual estilo mesa de casino (referencia Full Tilt)
+- Rediseñado el layout de `PokerTexasHoldemGame` para representar una mesa oval de poker con asientos alrededor:
+  - IA en posiciones superiores (izq/centro/der cuando hay 3 IA),
+  - jugador en posicion inferior central,
+  - board comunitario centrado dentro del fieltro.
+- `src/games/PokerTexasHoldemGame.jsx`:
+  - anadido helper `aiSeatPositionClass(...)` para distribuir asientos IA en geometria de mesa.
+  - migrado bloque JSX de mesa a estructura `poker-round-table` con `poker-table-seat` posicionales.
+- `src/styles.css`:
+  - nuevo look inspirado en referencia adjunta (fondo burdeos, rail madera, fieltro verde, placas azul oscuro, botones azules).
+  - correccion de posicion de dealer/asientos: `poker-seat` ahora mantiene posicion relativa sin romper asientos absolutos.
+  - ajuste de escala para evitar recorte en modal: mesa compactada (`height: clamp(360px, 46vh, 460px)`) y asientos/cartas redimensionados.
+  - fallback responsive movil mantiene legibilidad en columna.
+
+### Validacion visual
+- Build OK: `npm run build` (fuera de sandbox por `spawn EPERM` de esbuild en sandbox).
+- Playwright QA estilo mesa:
+  - `output/strategy-poker-style-roundtable-v3/shot-0.png` (1 IA, distribucion correcta jugador abajo / IA arriba).
+  - `output/strategy-poker-style-roundtable-v3/shot-3ai.png` (3 IA distribuidas alrededor de la mesa + jugador abajo).
+- Estado serializado en modo 3 IA confirmado con `opponents: 3` en payload `render_game_to_text`.
+
+## 2026-03-01 - Poker: reglas clasicas 5 cartas + opcion 5 IAs + nuevo contexto IA
+- `src/games/PokerTexasHoldemGame.jsx` rehecho para pasar de Hold'em a poker clasico de 5 cartas (sin apuestas), alineado con el prompt base compartido:
+  - fases nuevas: `Antes del descarte` -> `Descarte` -> `Despues del descarte` -> showdown;
+  - descarte real de `0..5` cartas (una vez por mano);
+  - lectura/evaluacion de mano clasica (carta mayor a escalera de color);
+  - dealer rotativo por mano y cierre por victoria de objetivo.
+- Configuracion de rivales ampliada de `1/3` a `1/3/5` IAs:
+  - selector `#poker-opponents` ahora incluye `5`;
+  - payload QA confirma `opponents: 5` y `6` asientos activos.
+- Bases IA actualizadas al nuevo contexto:
+  - nuevo `RULES_PROMPT` con reglas de poker clasico basado en el prompt entregado;
+  - decisiones IA adaptadas por fase (pre-descarte, descarte, post-descarte);
+  - logica de descarte tactico y estimacion de win-rate por simulacion.
+- UX/controles actualizados:
+  - acciones de descarte del jugador (`1-5` seleccionar, `D` descartar, `S` servirse);
+  - textos de ayuda actualizados en `src/components/GamePlayground.jsx` y `src/games/registry.jsx`;
+  - metadata del catalogo actualizada en `src/data/games.js` (descripcion/objetivo/highlights/multiplayer para 1-3-5 IAs).
+- CSS de mesa actualizada en `src/styles.css`:
+  - nuevas posiciones `seat-pos-mid-left` y `seat-pos-mid-right` para soportar 5 IAs;
+  - ajuste de tamano de asientos/cartas y responsive;
+  - anadida lista central de estado de descarte por jugador (`.poker-discard-status`).
+
+### Validacion
+- Build: `npm run build` OK (ejecutado fuera de sandbox por `spawn EPERM` de esbuild dentro de sandbox).
+- Playwright skill client (web_game_playwright_client.mjs):
+  - URL `#game=strategy-poker-holdem-no-bet`
+  - output `output/strategy-poker-classic-rules/shot-0..2.png` + `state-0..2.json`
+  - sin `errors-*.json`.
+- Verificacion especifica 5 IAs (Playwright adicional):
+  - aplicando selector `#poker-opponents = 5` + `Aplicar y reiniciar`;
+  - evidencia en `output/strategy-poker-classic-rules/shot-5ai.png`;
+  - estado `output/strategy-poker-classic-rules/state-5ai.json` con `opponents: 5` y asientos `IA 1..IA 5`.
+
+## 2026-03-01 - Poker: fix de distribucion de asientos/mazos en mesa redonda
+- Corregida la distribucion visual de jugadores en `src/games/PokerTexasHoldemGame.jsx`:
+  - eliminada rejilla fija de clases `seat-pos-*`;
+  - nuevo calculo dinamico por arco ovalado para asientos IA (`seatPosition`) en funcion del total de jugadores;
+  - jugador humano fijado en posicion inferior central para legibilidad.
+- Ajustes de estilo en `src/styles.css`:
+  - `poker-table-seat` ahora usa coordenadas CSS variables (`--seat-x`, `--seat-y`) para posicionado real en mesa;
+  - ancho diferenciado por tipo de asiento (`poker-player-seat` mas ancho, `poker-ai-seat` compacto);
+  - mazos ocultos IA compactados en abanico horizontal (`.hidden-hand`) para evitar solapes entre asientos;
+  - `poker-board-zone` compactado para dejar margen a los asientos.
+- Responsive actualizado:
+  - en <=860px se reajustan anchos de asientos;
+  - en <=560px se mantiene stack vertical existente sin posicionamiento absoluto.
+
+### Validacion visual
+- Build OK: `npm run build` (fuera de sandbox por `spawn EPERM` en sandbox).
+- Playwright QA:
+  - `output/strategy-poker-layout-fix/shot-0.png` (mesa 1 IA sin solapes de mazos),
+  - `output/strategy-poker-layout-fix/shot-5ai-layout.png` (mesa 5 IAs repartidas en arco sin recortes laterales).
+- Estado serializado 5 IAs confirmado:
+  - `output/strategy-poker-layout-fix/state-5ai-layout.json` con `opponents: 5` y 6 asientos activos.
+
+## 2026-03-01 - Auditoria de cumplimiento (prompt Fournier poker clasico)
+- Revisado `src/games/PokerTexasHoldemGame.jsx` frente al prompt Fournier completo compartido por usuario.
+- Validacion runtime realizada:
+  - Playwright: `output/strategy-poker-review/shot-0..2.png` + `state-0..2.json` (sin `errors-*.json`).
+  - Build: `npm run build` OK (fuera de sandbox por `spawn EPERM` dentro de sandbox).
+  - Tests: `npm test` OK (10 files, 29 tests, fuera de sandbox por `spawn EPERM` dentro de sandbox).
+- Resultado de cumplimiento:
+  - El juego funciona como variante "draw 5 cartas sin apuestas", pero **no cumple el prompt Fournier completo**.
+  - Faltan reglas clave del prompt: envites/apuestas (fichar/envidar/reenvidar), Pot/Jack Pot, ley de apertura (pareja de jotas), gestion de bote/reparto, y fases completas de envite clasico.
+  - No se implementa comodin ni `repoker`; ranking actual llega hasta escalera de color.
+  - Configuracion de jugadores limitada a 1/3/5 IAs (2/4/6 total), no rango completo configurable 2..7.
+  - En empates se suman victorias a todos los empatados (score por manos), en lugar de mecanica de bote repartido del prompt.
+- Recomendacion siguiente agente:
+  - Si se exige cumplimiento total del prompt, migrar de "no-bet draw poker" a motor de envites clasico con estado de pote y reglas de apertura.
+
+## 2026-03-01 - Poker: ajuste de mesa redonda + watchdog anti-bloqueo IA
+- `src/games/PokerTexasHoldemGame.jsx`:
+  - reajustada geometria de asientos (`seatPosition`) para desplazar IAs al arco superior y bajar al jugador humano;
+  - anadido visor central `Cartas de ronda` (slots en mano activa y cartas del ganador al cerrar mano) para mantener referencia visual en el centro;
+  - anadido watchdog de turno IA (`setTimeout` 2600ms) que fuerza accion IA si por cualquier causa no dispara el timer principal, evitando bloqueos en descarte/turno.
+- `src/styles.css` (bloque poker):
+  - reducida huella del mazo del jugador (cartas mas pequenas y abanico mas compacto);
+  - compactadas manos IA ocultas y mostradas para evitar invadir el centro;
+  - ampliada zona central (`poker-board-zone`) y ajustado oval de fieltro/asientos para reservar espacio visible a cartas de ronda;
+  - responsive reajustado para desktop/tablet sin perder legibilidad.
+
+### Validacion
+- Playwright baseline (flujo largo): `output/strategy-poker-layout-watchdog/shot-0..5.png` + `state-0..5.json`, sin `errors-*.json`.
+- Playwright v2 (post-fix de solape en showdown): `output/strategy-poker-layout-watchdog-v2/shot-0..5.png` + `state-0..5.json`, sin `errors-*.json`.
+- Verificacion especifica 5 IAs:
+  - captura `output/strategy-poker-layout-watchdog-v2/shot-5ai-watchdog.png`;
+  - timeline `output/strategy-poker-layout-watchdog-v2/state-5ai-watchdog.json` con avance de turnos IA `1 -> 2 -> 3 -> 4 -> 5 -> 0` sin bloqueo.
+- Build OK: `npm run build` (fuera de sandbox por restriccion EPERM en sandbox).
+## 2026-03-01 - Poker: cumplimiento de prompt sin apuestas (reglas + IA + contexto)
+- `src/games/PokerTexasHoldemGame.jsx` ajustado para alinearse con el prompt de poker clasico sin economia:
+  - ranking de manos ampliado con `Escalera real` explicita por encima de `Escalera de color`;
+  - `RULES_PROMPT` rehecho con reglas claras de 5 cartas, showdown y prohibicion explicita de bote/fichas/ciegas/all-in/apuestas;
+  - rivales IA ampliados de `1/3/5` a `1..8` (mesa total de `2..9` jugadores);
+  - acciones de mesa sin retirada por apuesta: en rondas de decision solo `pasar`; descarte unico `0..5` cartas y resolucion por showdown.
+- IA actualizada para mantener flujo de no-apuesta:
+  - eliminadas ramas de `fold`/farol en decision IA;
+  - la IA prioriza evaluacion de mano + descarte tactico y llega a showdown.
+- UI y contenido sincronizados con reglas nuevas:
+  - ayudas de control actualizadas en `src/components/GamePlayground.jsx` y `src/games/registry.jsx` (sin tecla de retirarse);
+  - metadata de producto en `src/data/games.js` actualizada (2..9 jugadores, escalera real, objetivo por manos);
+  - portada `src/assets/games/strategy-poker-no-bet.svg` actualizada para eliminar referencia a Texas Hold'em y reflejar 1..8 IA.
+
+### Validacion
+- Build: `npm run build` OK (fuera de sandbox por `spawn EPERM` en sandbox).
+- Playwright skill client (`web_game_playwright_client.mjs`):
+  - corrida en `#game=strategy-poker-holdem-no-bet` con `playwright-actions-strategy-poker-classic.json`;
+  - evidencias en `output/web-game/shot-0..3.png` y `output/web-game/state-0..3.json`;
+  - sin `errors-*.json`.
+- Verificacion extra 8 IA:
+  - captura `output/strategy-poker-prompt-rules/shot-8ai.png`;
+  - estado `output/strategy-poker-prompt-rules/state-8ai.json` con `opponents: 8` y `seats` de `IA 1..IA 8`.
+- Playwright final adicional guardado en carpeta dedicada del cambio:
+  - `output/strategy-poker-prompt-rules/shot-0..2.png` + `state-0..2.json`.
+  - sin `errors-*.json` en esa carpeta.
+## 2026-03-01 - Poker: nuevo paradigma con fichas sin apuestas
+- `src/games/PokerTexasHoldemGame.jsx` actualizado para usar fichas como progreso de partida (sin economia de apuesta):
+  - objetivo de partida migrado de `victorias` a `meta de fichas` (`15/25/35`), configurable en UI;
+  - cada jugador ahora mantiene `chips` y `handsWon`;
+  - reparto de fichas por jugada en showdown:
+    - carta mayor +1, pareja +2, dobles +3, trio +4, escalera +5, color +6, full +7, poker +8, escalera color +10, escalera real +12;
+  - empate de showdown: cada ganador recibe la recompensa completa;
+  - contexto IA (`RULES_PROMPT`) reescrito para dejar explicito que hay fichas de progreso pero nunca apuestas/bote/ciegas/all-in.
+- Integracion UI/estado:
+  - marcador superior muestra fichas y manos ganadas por jugador;
+  - estado serializado (`render_game_to_text`) expone `targetChips`, `scores[].chips`, `scores[].handsWon` y `score` alineado a fichas.
+- Copy actualizado para reflejar "fichas sin apuestas":
+  - `src/data/games.js`,
+  - `src/components/GamePlayground.jsx`,
+  - `src/games/registry.jsx`.
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por `spawn EPERM` dentro de sandbox).
+- Playwright skill client OK en `#game=strategy-poker-holdem-no-bet`:
+  - output: `output/strategy-poker-chips-no-bet/shot-0..3.png` + `state-0..3.json`.
+  - sin `errors-*.json`.
+  - comprobado en estado: incremento real de `chips` por jugada ganadora y `targetChips` activo.
+## 2026-03-01 - Poker: selector de ritmo de fichas (Rapido/Equilibrado/Maraton)
+- `src/games/PokerTexasHoldemGame.jsx` ampliado con presets de ritmo de fichas:
+  - `rapid` (metas 10/15/20 + recompensas mas altas),
+  - `balanced` (metas 15/25/35),
+  - `marathon` (metas 25/40/60 + recompensas mas contenidas).
+- Nuevo selector UI `Ritmo de fichas` en configuracion de mesa; la `Meta de fichas` ahora depende del ritmo activo.
+- Estado de partida extiende:
+  - `chipPaceId`,
+  - `chipRewards` (tabla activa por jugada),
+  - payload QA con `chipPace` y `chipRewards`.
+- Marcador/hud actualizado:
+  - etiqueta de ritmo activa en status row,
+  - tabla de recompensas visible en mesa (`Tabla activa (...)`).
+- Contexto IA/reglas actualizado para indicar que la tabla exacta depende del ritmo seleccionado, manteniendo prohibicion total de apuestas.
+- Copy sincronizado con nuevo control en:
+  - `src/data/games.js`,
+  - `src/components/GamePlayground.jsx`,
+  - `src/games/registry.jsx`.
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por `spawn EPERM` dentro del sandbox).
+- Playwright escenario de ritmos:
+  - output `output/strategy-poker-chip-pace-check/` con `shot-balanced-default.png`, `shot-rapid.png`, `shot-marathon.png` y `state-*.json`.
+  - verificado en estados:
+    - `balanced`: `targetChips=25`, `chipRewards=[1,2,3,4,5,6,7,8,10,12]`.
+    - `rapid`: `targetChips=15`, `chipRewards=[1,3,4,6,8,10,12,15,20,25]`.
+    - `marathon`: `targetChips=40`, `chipRewards=[1,1,2,3,4,5,6,7,9,11]`.
+  - sin `errors-*.json`.
+## 2026-03-01 - Poker: habilitadas apuestas con fichas (ciegas + bote real)
+- `src/games/PokerTexasHoldemGame.jsx` rehecho para cambiar de enfoque sin apuestas a enfoque con economia real de mano:
+  - ciega pequena/grande por mano,
+  - bote (`pot`) y apuesta actual (`currentBet`),
+  - acciones de apuesta: pasar, igualar, subir, all-in y retirarse,
+  - descarte unico (0..5 cartas) entre dos rondas de apuesta,
+  - cierre por showdown o por retirada general,
+  - reparto de bote en empate y control de stacks por jugador.
+- IA adaptada a nuevo flujo de apuestas (decision pre/post descarte + descarte tactico).
+- Payload de `render_game_to_text` actualizado al nuevo modo:
+  - `mode: strategy-poker-clasico-bet`,
+  - `variant: draw_poker_five_card_with_betting`,
+  - datos de `pot`, `currentBet`, `smallBlind`, `bigBlind`, `toCall`, stacks y commits por asiento.
+- CSS poker actualizado en `src/styles.css` para reflejar el nuevo enfoque:
+  - nuevo panel central de bote (`.poker-pot-panel`),
+  - metadata de stack/commit por asiento (`.seat-chip-row`),
+  - nota de apuesta (`.poker-bet-note`),
+  - grid de acciones flexible para 3-5 botones.
+- Copy sincronizado con apuestas reales en:
+  - `src/data/games.js` (tagline/descripcion/highlights/how-to-play ES/EN),
+  - `src/games/registry.jsx` (hints ES/EN),
+  - `src/components/GamePlayground.jsx` (hints ES/EN).
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por `spawn EPERM` de esbuild en sandbox).
+- Playwright QA ejecutada con `web_game_playwright_client.mjs` del repo (la version del skill en `...\scripts\web_game_playwright_client.js` falla por contexto ESM/CJS).
+- Evidencias nuevas en `output/web-game/`:
+  - `shot-0.png..shot-3.png`
+  - `state-0.json..state-3.json`
+- Verificado en estado serializado:
+  - modo/variante nuevos de apuestas,
+  - `pot`, `currentBet`, `toCall`, `smallBlind/bigBlind`,
+  - cambios reales en `chips/currentBet/totalCommitted`.
+- Sin archivos `errors-*.json` en la corrida.
+
+### TODO sugerido
+- Ejecutar una pasada Playwright adicional de layout con `3` y `5` IAs para validar distribucion visual multi-asiento en el nuevo flujo de apuestas.
+## 2026-03-01 - Poker apuestas: QA layout multi-asiento (3 IA / 5 IA)
+- Ejecutada validacion adicional enfocada a distribucion visual de asientos con el nuevo modo de apuestas.
+- Escenarios verificados:
+  - `3` IAs (`4` asientos totales),
+  - `5` IAs (`6` asientos totales).
+- Evidencias generadas en `output/strategy-poker-betting-layout-check/`:
+  - `shot-3ai.png`, `state-3ai.json`
+  - `shot-5ai.png`, `state-5ai.json`
+- Confirmado en estado serializado:
+  - `opponents: 3` y `opponents: 5` respectivamente,
+  - modo `strategy-poker-clasico-bet` con `pot/currentBet/blinds` presentes,
+  - controles de accion disponibles (`fold/call/raise/all-in`).
+- Sin errores de consola/pageerror en esta pasada (no se genero `errors.json`).

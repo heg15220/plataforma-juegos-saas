@@ -1,0 +1,204 @@
+{
+  "mode": "strategy-poker-clasico-no-bet",
+  "variant": "draw_poker_five_card_no_bet",
+  "coordinates": "seat_index_clockwise_start_player_0",
+  "stateMode": "playing",
+  "hand": 1,
+  "phase": "pre-discard",
+  "dealer": 0,
+  "turn": 3,
+  "opponents": 8,
+  "profile": "tactical",
+  "target": 5,
+  "aiThinking": true,
+  "rulesPrompt": "POKER CLASICO 5 CARTAS - CONTEXTO IA (SIN APUESTAS)\n- Baraja inglesa de 52 cartas y sin comodin.\n- Participan entre 2 y 9 jugadores; en esta mesa puedes jugar contra 1 a 8 IAs.\n- Cada jugador recibe 5 cartas privadas.\n- Orden de jugadas (mayor a menor): escalera real, escalera de color, poker, full, color, escalera, trio, dobles parejas, pareja, carta mayor.\n- Objetivo: ganar manos por comparacion de jugadas en showdown.\n- Fases de la mesa:\n  1) Reparto de 5 cartas privadas.\n  2) Ronda previa al descarte (solo pasar).\n  3) Descarte unico de 0 a 5 cartas.\n  4) Ronda final (solo pasar).\n  5) Showdown para resolver la mano.\n- Empates: cada jugador empatado suma una victoria de mano.\n- Sin economia: no existe bote, fichas, ciegas, all-in ni apuestas.\n- El dealer rota en cada mano.\n- Criterios IA:\n  - Valorar fuerza de mano y probabilidad de victoria.\n  - Elegir descarte tactico segun pares/proyectos/estructura de mano.\n  - Priorizar decisiones consistentes con reglas clasicas sin apuesta.",
+  "scores": [
+    {
+      "seatIndex": 0,
+      "name": "Tu",
+      "score": 0
+    },
+    {
+      "seatIndex": 1,
+      "name": "IA 1",
+      "score": 0
+    },
+    {
+      "seatIndex": 2,
+      "name": "IA 2",
+      "score": 0
+    },
+    {
+      "seatIndex": 3,
+      "name": "IA 3",
+      "score": 0
+    },
+    {
+      "seatIndex": 4,
+      "name": "IA 4",
+      "score": 0
+    },
+    {
+      "seatIndex": 5,
+      "name": "IA 5",
+      "score": 0
+    },
+    {
+      "seatIndex": 6,
+      "name": "IA 6",
+      "score": 0
+    },
+    {
+      "seatIndex": 7,
+      "name": "IA 7",
+      "score": 0
+    },
+    {
+      "seatIndex": 8,
+      "name": "IA 8",
+      "score": 0
+    }
+  ],
+  "seats": [
+    {
+      "seatIndex": 0,
+      "name": "Tu",
+      "folded": false,
+      "discarded": false,
+      "discardCount": 0,
+      "holeVisible": true,
+      "hole": [
+        "J♥",
+        "K♦",
+        "2♣",
+        "10♠",
+        "5♠"
+      ]
+    },
+    {
+      "seatIndex": 1,
+      "name": "IA 1",
+      "folded": false,
+      "discarded": false,
+      "discardCount": 0,
+      "holeVisible": false,
+      "hole": [
+        "hidden",
+        "hidden",
+        "hidden",
+        "hidden",
+        "hidden"
+      ]
+    },
+    {
+      "seatIndex": 2,
+      "name": "IA 2",
+      "folded": false,
+      "discarded": false,
+      "discardCount": 0,
+      "holeVisible": false,
+      "hole": [
+        "hidden",
+        "hidden",
+        "hidden",
+        "hidden",
+        "hidden"
+      ]
+    },
+    {
+      "seatIndex": 3,
+      "name": "IA 3",
+      "folded": false,
+      "discarded": false,
+      "discardCount": 0,
+      "holeVisible": false,
+      "hole": [
+        "hidden",
+        "hidden",
+        "hidden",
+        "hidden",
+        "hidden"
+      ]
+    },
+    {
+      "seatIndex": 4,
+      "name": "IA 4",
+      "folded": false,
+      "discarded": false,
+      "discardCount": 0,
+      "holeVisible": false,
+      "hole": [
+        "hidden",
+        "hidden",
+        "hidden",
+        "hidden",
+        "hidden"
+      ]
+    },
+    {
+      "seatIndex": 5,
+      "name": "IA 5",
+      "folded": false,
+      "discarded": false,
+      "discardCount": 0,
+      "holeVisible": false,
+      "hole": [
+        "hidden",
+        "hidden",
+        "hidden",
+        "hidden",
+        "hidden"
+      ]
+    },
+    {
+      "seatIndex": 6,
+      "name": "IA 6",
+      "folded": false,
+      "discarded": false,
+      "discardCount": 0,
+      "holeVisible": false,
+      "hole": [
+        "hidden",
+        "hidden",
+        "hidden",
+        "hidden",
+        "hidden"
+      ]
+    },
+    {
+      "seatIndex": 7,
+      "name": "IA 7",
+      "folded": false,
+      "discarded": false,
+      "discardCount": 0,
+      "holeVisible": false,
+      "hole": [
+        "hidden",
+        "hidden",
+        "hidden",
+        "hidden",
+        "hidden"
+      ]
+    },
+    {
+      "seatIndex": 8,
+      "name": "IA 8",
+      "folded": false,
+      "discarded": false,
+      "discardCount": 0,
+      "holeVisible": false,
+      "hole": [
+        "hidden",
+        "hidden",
+        "hidden",
+        "hidden",
+        "hidden"
+      ]
+    }
+  ],
+  "selectedDiscards": [],
+  "playerActions": [],
+  "lastResult": null,
+  "overlay": null,
+  "message": "IA 2 actua. Turno para IA 3."
+}
