@@ -414,14 +414,24 @@ function sampleTrackAt(track, s) {
 }
 
 function closestS(track, x, y) {
-  let bestDist = Infinity, bestS = 0;
-  const step = Math.max(1, Math.floor(track.samples.length / 80));
-  for (let i = 0; i < track.samples.length; i += step) {
+  const N = track.samples.length;
+  let bestDist = Infinity, bestI = 0;
+  // Phase 1: coarse sweep
+  const step = Math.max(1, Math.floor(N / 80));
+  for (let i = 0; i < N; i += step) {
     const s = track.samples[i];
     const d = Math.hypot(s.x - x, s.y - y);
-    if (d < bestDist) { bestDist = d; bestS = i / track.samples.length; }
+    if (d < bestDist) { bestDist = d; bestI = i; }
   }
-  return bestS;
+  // Phase 2: fine search ±20 samples around best
+  const lo = bestI - 20, hi = bestI + 20;
+  for (let i = lo; i <= hi; i++) {
+    const idx = ((i % N) + N) % N;
+    const s = track.samples[idx];
+    const d = Math.hypot(s.x - x, s.y - y);
+    if (d < bestDist) { bestDist = d; bestI = idx; }
+  }
+  return bestI / N;
 }
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
