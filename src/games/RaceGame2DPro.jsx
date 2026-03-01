@@ -1183,7 +1183,7 @@ export default function RaceGame2DPro() {
     joyRef.current = { active: false, pointerId: null, cx: 0, cy: 0, dx: 0, dy: 0 };
 
     setEndData(null);
-    setSemaphore({ phase: "countdown", lights: [false, false, false] });
+    setSemaphore({ phase: "countdown", lights: [false, false, false, false, false] });
     return true;
   }, [selectedTrackId, aiDifficulty, weatherKey, laps, rivals]);
 
