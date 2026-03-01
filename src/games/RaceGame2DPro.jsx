@@ -344,10 +344,13 @@ const WEATHER_PROFILES = {
 
 const PHYS = {
   MAX_SPEED: 420, ACCEL: 340, BRAKE_DECEL: 700, NATURAL_DECEL: 60,
-  STEER_RATE: 3.2, GRIP_BASE: 9.5,
+  STEER_RATE: 3.8, GRIP_BASE: 11.0,
   TURBO_BOOST: 190, TURBO_DURATION: 1.8, TURBO_COOLDOWN: 6.0,
   TURBO_FILL_RATE: 0.13, NEAR_MISS_BONUS: 0.20,
-  CAR_RADIUS: 14,
+  CAR_RADIUS: 12,
+  OFF_TRACK_GRIP: 0.40,
+  OFF_TRACK_MAX_SPEED_FACTOR: 0.65,
+  OFF_TRACK_RECOVERY: 0.5,
 };
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -445,7 +448,8 @@ function createCar(id, isPlayer, color, aiDifficulty) {
     lap: 1, finished: false, finishTime: null, finishOrder: null,
     turbo: 0, turboActive: false, turboCooldown: 0, turboTimeLeft: 0,
     spawnGrace: 1.5,
-    trail: [], sparks: [],
+    trail: [], sparks: [], dustParticles: [],
+    offTrack: false, offTrackRecovery: 1.0,
     aiProfile: isPlayer ? null : AI_PROFILES[aiDifficulty],
     ai: isPlayer ? null : {
       t: 0, noiseSeed: Math.random() * 9999,
@@ -481,7 +485,8 @@ function updateCar(car, dt, input, track, weatherProfile, allCars, startLocked) 
   if (startLocked && car.isPlayer) return;
   car.collided = false;
 
-  const grip = PHYS.GRIP_BASE * weatherProfile.gripMult;
+  const offTrackMult = car.offTrack ? lerp(PHYS.OFF_TRACK_GRIP, 1.0, car.offTrackRecovery) : 1.0;
+  const grip = PHYS.GRIP_BASE * weatherProfile.gripMult * offTrackMult;
   let turboBonus = 0;
   if (car.turboActive) {
     car.turboTimeLeft -= dt;
@@ -493,11 +498,13 @@ function updateCar(car, dt, input, track, weatherProfile, allCars, startLocked) 
   }
   if (car.turboCooldown > 0) car.turboCooldown -= dt;
 
-  const maxSpeed = (PHYS.MAX_SPEED + turboBonus) * (car.aiProfile ? car.aiProfile.speedFactor : 1);
+  const offTrackSpeedFactor = car.offTrack ? lerp(PHYS.OFF_TRACK_MAX_SPEED_FACTOR, 1.0, car.offTrackRecovery) : 1.0;
+  const maxSpeed = (PHYS.MAX_SPEED + turboBonus) * (car.aiProfile ? car.aiProfile.speedFactor : 1) * offTrackSpeedFactor;
 
   if (input.throttle > 0) car.speed += PHYS.ACCEL * dt * input.throttle;
-  else if (input.brake > 0) car.speed -= PHYS.BRAKE_DECEL * dt * input.brake;
-  else car.speed -= PHYS.NATURAL_DECEL * dt;
+  else if (input.brake > 0) {
+    car.speed -= PHYS.BRAKE_DECEL * dt * input.brake;
+  } else car.speed -= PHYS.NATURAL_DECEL * dt;
   car.speed = clamp(car.speed, 0, maxSpeed);
 
   const steerEffect = input.steer * PHYS.STEER_RATE * clamp(car.speed / PHYS.MAX_SPEED, 0.1, 1);
@@ -509,17 +516,43 @@ function updateCar(car, dt, input, track, weatherProfile, allCars, startLocked) 
   car.y += car.vy * dt;
   car.speed = Math.hypot(car.vx, car.vy);
 
-  // Constrain to track
-  const tw = track.trackWidth / 2 + 6;
+  // Constrain to track + off-track penalty
+  const tw = track.trackWidth / 2;
   const cs = closestS(track, car.x, car.y);
   const closest = sampleTrackAt(track, cs);
   const dx = car.x - closest.x, dy = car.y - closest.y;
   const dist = Math.hypot(dx, dy);
-  if (dist > tw) {
-    const over = dist - tw;
-    car.x -= (dx / dist) * over * 0.88;
-    car.y -= (dy / dist) * over * 0.88;
-    car.speed *= 0.86; car.vx *= 0.86; car.vy *= 0.86;
+
+  if (dist > tw + 4) {
+    car.offTrack = true;
+    car.offTrackRecovery = Math.max(0, car.offTrackRecovery - dt / PHYS.OFF_TRACK_RECOVERY);
+    // Soft boundary push
+    const over = dist - (tw + 4);
+    car.x -= (dx / dist) * over * 0.7;
+    car.y -= (dy / dist) * over * 0.7;
+    // Emit dust particles (max 3 per frame)
+    if (car.dustParticles.length < 60 && Math.random() < 0.4) {
+      const ang = Math.random() * Math.PI * 2;
+      car.dustParticles.push({
+        x: car.x, y: car.y,
+        vx: Math.cos(ang) * (20 + Math.random() * 30),
+        vy: Math.sin(ang) * (20 + Math.random() * 30),
+        life: 0.6 + Math.random() * 0.4, maxLife: 1.0,
+      });
+    }
+  } else {
+    car.offTrack = false;
+    car.offTrackRecovery = Math.min(1, car.offTrackRecovery + dt / PHYS.OFF_TRACK_RECOVERY);
+  }
+
+  // Update dust particles
+  for (let i = car.dustParticles.length - 1; i >= 0; i--) {
+    car.dustParticles[i].x += car.dustParticles[i].vx * dt;
+    car.dustParticles[i].y += car.dustParticles[i].vy * dt;
+    car.dustParticles[i].vx *= 0.92;
+    car.dustParticles[i].vy *= 0.92;
+    car.dustParticles[i].life -= dt;
+    if (car.dustParticles[i].life <= 0) car.dustParticles.splice(i, 1);
   }
 
   // Car-car collisions
