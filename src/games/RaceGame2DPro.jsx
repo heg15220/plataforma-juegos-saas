@@ -748,30 +748,66 @@ function renderTrack(ctx, track, env) {
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
-  // Runoff area around the asphalt.
+  // ── Layer 1: Wide runoff band ──────────────────────────────────────────
+  const runoffW = track.trackWidth + 70;
+  let runoffColor = env.runoffColor;
+  if (env.runoffType === "grass") runoffColor = env.grassColor || "#2a6030";
+  else if (env.runoffType === "sand") runoffColor = env.runoffColor || "#c8a058";
+  else if (env.runoffType === "snow") runoffColor = "#dce8f0";
+  else if (env.runoffType === "gravel") runoffColor = "#8a7860";
+
   ctx.beginPath();
-  ctx.strokeStyle = env.runoffColor || "rgba(86, 92, 102, 0.95)";
-  ctx.lineWidth = track.trackWidth + 30;
+  ctx.strokeStyle = runoffColor;
+  ctx.lineWidth = runoffW;
   for (let i = 0; i <= N; i++) {
     const s = samples[i % N];
     i === 0 ? ctx.moveTo(s.x, s.y) : ctx.lineTo(s.x, s.y);
   }
   ctx.stroke();
 
-  // Main asphalt.
+  // ── Layer 2: Barriers (colored walls) ──────────────────────────────────
+  const barrierOffset = hw + 36;
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = env.barrierColor || "#1e5eff";
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    for (let i = 0; i <= N; i++) {
+      const s = samples[i % N];
+      const nx = -Math.sin(s.ang) * barrierOffset * side;
+      const ny = Math.cos(s.ang) * barrierOffset * side;
+      i === 0 ? ctx.moveTo(s.x + nx, s.y + ny) : ctx.lineTo(s.x + nx, s.y + ny);
+    }
+    ctx.stroke();
+  }
+
+  // ── Layer 3: Asphalt ────────────────────────────────────────────────────
   ctx.beginPath();
   ctx.strokeStyle = env.roadColor;
-  ctx.lineWidth = track.trackWidth + 4;
+  ctx.lineWidth = track.trackWidth + 2;
   for (let i = 0; i <= N; i++) {
     const s = samples[i % N];
     i === 0 ? ctx.moveTo(s.x, s.y) : ctx.lineTo(s.x, s.y);
   }
   ctx.stroke();
 
-  // Dashed center line.
-  ctx.setLineDash([18, 14]);
+  // Lighter center strip for depth
+  const rc = env.roadColor.replace(/#/, "");
+  const rr = parseInt(rc.substring(0, 2), 16);
+  const rg = parseInt(rc.substring(2, 4), 16);
+  const rb = parseInt(rc.substring(4, 6), 16);
+  ctx.beginPath();
+  ctx.strokeStyle = `rgba(${Math.min(255, rr + 18)},${Math.min(255, rg + 18)},${Math.min(255, rb + 18)},0.5)`;
+  ctx.lineWidth = track.trackWidth * 0.5;
+  for (let i = 0; i <= N; i++) {
+    const s = samples[i % N];
+    i === 0 ? ctx.moveTo(s.x, s.y) : ctx.lineTo(s.x, s.y);
+  }
+  ctx.stroke();
+
+  // ── Layer 4a: Dashed center line ───────────────────────────────────────
+  ctx.setLineDash([20, 15]);
   ctx.strokeStyle = env.centerLineColor;
-  ctx.lineWidth = 1.8;
+  ctx.lineWidth = 2.0;
   ctx.beginPath();
   for (let i = 0; i <= N; i++) {
     const s = samples[i % N];
@@ -780,54 +816,56 @@ function renderTrack(ctx, track, env) {
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // White limits on both sides.
+  // ── Layer 4b: Finish line (full checker rectangle) ──────────────────────
+  const finIdx = Math.floor(0.03 * N);
+  const fs = samples[finIdx];
+  const sqW = Math.max(6, track.trackWidth / 8);
+  const sqH = 10;
+  const numSq = Math.round(track.trackWidth / sqW);
+
   ctx.save();
-  ctx.shadowBlur = 20;
-  ctx.shadowColor = env.glowColor;
-  ctx.strokeStyle = env.borderColor;
-  ctx.lineWidth = 2.5;
-
-  ctx.beginPath();
-  for (let i = 0; i <= N; i++) {
-    const s = samples[i % N];
-    const nx = -Math.sin(s.ang) * hw;
-    const ny = Math.cos(s.ang) * hw;
-    i === 0 ? ctx.moveTo(s.x + nx, s.y + ny) : ctx.lineTo(s.x + nx, s.y + ny);
+  ctx.translate(fs.x, fs.y);
+  ctx.rotate(fs.ang);
+  for (let col = 0; col < numSq; col++) {
+    for (let row = 0; row < 2; row++) {
+      const isWhite = (col + row) % 2 === 0;
+      ctx.fillStyle = isWhite ? "#ffffff" : "#1a1a1a";
+      const fx = -sqH / 2 + row * sqH;
+      const fy = -track.trackWidth / 2 + col * sqW;
+      ctx.fillRect(fx, fy, sqH, sqW);
+    }
   }
-  ctx.stroke();
-
-  ctx.beginPath();
-  for (let i = 0; i <= N; i++) {
-    const s = samples[i % N];
-    const nx = Math.sin(s.ang) * hw;
-    const ny = -Math.cos(s.ang) * hw;
-    i === 0 ? ctx.moveTo(s.x + nx, s.y + ny) : ctx.lineTo(s.x + nx, s.y + ny);
-  }
-  ctx.stroke();
   ctx.restore();
 
-  // Curb paint on high-curvature zones.
-  const kerbStep = 3;
-  const kerbThreshold = 0.022;
-  ctx.lineWidth = 4.2;
-  for (let i = 0; i < N; i += kerbStep) {
-    const a = samples[i % N];
-    const b = samples[(i + kerbStep) % N];
-    const curvature = (a.curvature + b.curvature) * 0.5;
-    if (curvature < kerbThreshold) continue;
+  // ── Layer 5: Kerbs (wide, on all significant corners) ──────────────────
+  const kerbWidth = 8;
+  const kerbThreshold = 0.015;
+  const kerbSegLen = 14;
 
-    const anX = -Math.sin(a.ang);
-    const anY = Math.cos(a.ang);
-    const bnX = -Math.sin(b.ang);
-    const bnY = Math.cos(b.ang);
+  let kerbAccum = 0;
+  let kerbColorIdx = 0;
+  ctx.lineWidth = kerbWidth;
+
+  for (let i = 0; i < N - 1; i++) {
+    const a = samples[i];
+    const b = samples[i + 1];
+    const curvature = (a.curvature + b.curvature) * 0.5;
+    if (curvature < kerbThreshold) { kerbAccum = 0; continue; }
+
+    const segPx = Math.hypot(b.x - a.x, b.y - a.y);
+    kerbAccum += segPx;
+    if (kerbAccum > kerbSegLen) { kerbColorIdx++; kerbAccum = 0; }
+
+    const anX = -Math.sin(a.ang), anY = Math.cos(a.ang);
+    const bnX = -Math.sin(b.ang), bnY = Math.cos(b.ang);
 
     for (const side of [-1, 1]) {
       const ax = a.x + anX * hw * side;
       const ay = a.y + anY * hw * side;
       const bx = b.x + bnX * hw * side;
       const by = b.y + bnY * hw * side;
-      const paintIndex = Math.floor(i / kerbStep) + (side === 1 ? 0 : 1);
-      ctx.strokeStyle = paintIndex % 2 === 0 ? (env.kerbRed || "#d94848") : (env.kerbWhite || "#f5f5f5");
+      const colorFlip = (kerbColorIdx + (side === 1 ? 0 : 1)) % 2 === 0;
+      ctx.strokeStyle = colorFlip ? (env.kerbRed || "#e03030") : (env.kerbWhite || "#f3f3f3");
       ctx.beginPath();
       ctx.moveTo(ax, ay);
       ctx.lineTo(bx, by);
@@ -835,16 +873,22 @@ function renderTrack(ctx, track, env) {
     }
   }
 
-  // Finish line (checkerboard dots) at startS
-  const finIdx = Math.floor(0.03 * N);
-  const fs = samples[finIdx];
+  // ── Layer 6: White track edge lines ────────────────────────────────────
   ctx.save();
-  for (let i = 0; i < 10; i++) {
-    const t = i / 10 - 0.5;
-    ctx.fillStyle = i % 2 === 0 ? "#fff" : "#222";
-    const fx = fs.x + (-Math.sin(fs.ang) * hw) * (2 * t + 0.1);
-    const fy = fs.y + (Math.cos(fs.ang) * hw) * (2 * t + 0.1);
-    ctx.beginPath(); ctx.arc(fx, fy, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 8;
+  ctx.shadowColor = "rgba(255,255,255,0.3)";
+  ctx.strokeStyle = env.borderColor;
+  ctx.lineWidth = 2.5;
+
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    for (let i = 0; i <= N; i++) {
+      const s = samples[i % N];
+      const nx = -Math.sin(s.ang) * hw * side;
+      const ny = Math.cos(s.ang) * hw * side;
+      i === 0 ? ctx.moveTo(s.x + nx, s.y + ny) : ctx.lineTo(s.x + nx, s.y + ny);
+    }
+    ctx.stroke();
   }
   ctx.restore();
 }
