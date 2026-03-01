@@ -852,3 +852,42 @@
   - modo `strategy-poker-clasico-bet` con `pot/currentBet/blinds` presentes,
   - controles de accion disponibles (`fold/call/raise/all-in`).
 - Sin errores de consola/pageerror en esta pasada (no se genero `errors.json`).
+## 2026-03-01 - Poker apuestas: stacks laterales + flujo central de fichas sin solapes
+- `src/games/PokerTexasHoldemGame.jsx`:
+  - anadido rail lateral de stack por asiento junto a las cartas (`seat-hand-shell`, `seat-stack-rail`, `seat-stack-visual`).
+  - anadido flujo central de contribuciones por jugador en mesa (`poker-center-chip-flow`) mostrando nombre + cantidad aportada en ronda.
+  - reestructurado el layout de mesa para evitar solapes del centro:
+    - nueva geometria de asientos IA en arco superior (`seatPosition`) y jugador humano mas abajo,
+    - movido bloque informativo de descartes/notas de apuesta fuera de `poker-board-zone` a `poker-table-meta`.
+- `src/styles.css`:
+  - nuevas capas visuales para stacks laterales y mini-pilas de fichas en el centro.
+  - ajuste de escala/posicion de asientos y tablero central para liberar zona de juego.
+  - compactacion de cartas ocultas IA y reajuste responsive en breakpoints `860px` y `560px`.
+  - `poker-table-meta` separado para estado de descartes y notas, evitando invadir el tablero central.
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por `spawn EPERM` de esbuild dentro del sandbox).
+- Playwright (cliente del juego + escenarios dirigidos 3/5 IA):
+  - carpeta: `output/strategy-poker-chipflow-layout-check/`
+  - capturas generales: `shot-0..2.png`, `shot-3ai.png`, `shot-5ai.png`
+  - capturas de tablero central: `shot-board-3ai-desktop.png`, `shot-board-5ai-desktop.png`, `shot-board-3ai-mobile.png`, `shot-board-5ai-mobile.png`
+  - capturas responsive viewport: `shot-3ai-mobile-viewport.png`, `shot-5ai-mobile-viewport.png`
+  - estados: `state-0..2.json`, `state-3ai.json`, `state-5ai.json`
+  - sin errores de consola/pageerror (`errors-layout.json` no generado).
+## 2026-03-01 - Poker: i18n ES/EN por locale de navegador
+- `src/games/PokerTexasHoldemGame.jsx` internacionalizado para modo dual:
+  - deteccion de idioma por `navigator.language` (`es*` => espanol, resto => ingles),
+  - textos estaticos del componente migrados a `UI_COPY` (cabecera, configuracion, status, botones, paneles, ayudas, showdown, reglas),
+  - etiquetas de fases por locale (`PHASE_LABELS`) y reglas de mesa por locale (`RULES_PROMPT` ES/EN),
+  - perfiles IA localizados por locale (`AI_LEVEL_LABELS`),
+  - acciones visibles localizadas (`ACTION_LABELS`),
+  - nombres de jugador localizados en render (`Tu/IA n` -> `You/AI n` en ingles),
+  - traduccion de mensajes dinamicos/logs/overlay/estado via `localizeRuntimeText(...)` para mantener coherencia de idioma,
+  - marca de carta oculta adaptada (`IA`/`AI`) mediante prop `hiddenMark` en `PokerCard`.
+- `render_game_to_text` actualizado para exponer nombres y `rulesPrompt` en el idioma activo.
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por `spawn EPERM` de esbuild dentro de sandbox).
+- Verificacion visual i18n forzando locale `en-US`:
+  - `output/strategy-poker-i18n-check/shot-en-us.png`
+  - UI del componente en ingles (controles, estado de mesa, acciones, panel central y textos de asiento).
