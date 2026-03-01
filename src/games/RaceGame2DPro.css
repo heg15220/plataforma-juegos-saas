@@ -1,0 +1,617 @@
+/* RaceGame2DPro.css */
+
+/* Root container */
+.race2dpro{
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 95px);
+  background: #0b0f14;
+  overflow: hidden;
+  touch-action: none;
+  color: rgba(255,255,255,0.92);
+}
+
+@media (max-width: 768px){
+  .race2dpro{ height: calc(100vh - 70px); }
+}
+@media (max-width: 520px){
+  .race2dpro{ height: calc(100vh - 60px); }
+}
+
+/* =========================
+   Setup screen
+========================= */
+.race2dpro--setup{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px 14px;
+}
+
+.race2dpro__setupCard{
+  width: min(940px, 96vw);
+  background: rgba(10,12,16,0.72);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 18px 18px 16px 18px;
+}
+
+.race2dpro__setupTop{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+
+.race2dpro__setupTitle{
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.2px;
+  line-height: 1.1;
+}
+
+.race2dpro__setupSub{
+  margin-top: 6px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.70);
+}
+
+.race2dpro__setupBack{
+  pointer-events: auto;
+  appearance: none;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.90);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+.race2dpro__setupBack:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.18);
+}
+
+.race2dpro__setupBlock{
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.22);
+}
+
+.race2dpro__setupBlockTitle{
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  color: rgba(255,255,255,0.72);
+  margin-bottom: 10px;
+}
+
+.race2dpro__select{
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(8,10,14,0.85);
+  color: rgba(255,255,255,0.92);
+  outline: none;
+  font-weight: 700;
+}
+.race2dpro__select:focus{
+  border-color: rgba(255,255,255,0.24);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.06);
+}
+
+.race2dpro__grid2{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 820px){
+  .race2dpro__grid2{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 520px){
+  .race2dpro__grid2{
+    grid-template-columns: 1fr;
+  }
+}
+
+.race2dpro__choiceCard{
+  appearance: none;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.92);
+  border-radius: 16px;
+  padding: 12px 12px;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+  text-align: left;
+  min-height: 84px;
+}
+.race2dpro__choiceCard:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.18);
+}
+.race2dpro__choiceCard.isActive{
+  border-color: rgba(255,255,255,0.32);
+  background: rgba(255,255,255,0.085);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+}
+
+.race2dpro__choiceBig{
+  font-size: 26px;
+  font-weight: 950;
+  line-height: 1;
+}
+.race2dpro__choiceSmall{
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.72);
+}
+.race2dpro__choiceMeta{
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.82);
+  opacity: 0.9;
+}
+
+/* AI cards */
+.race2dpro__choiceCard--ai{
+  min-height: 98px;
+  padding: 12px 12px 12px 12px;
+}
+.race2dpro__choiceHeader{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.race2dpro__choiceTag{
+  font-size: 14px;
+  font-weight: 950;
+}
+.race2dpro__choicePill{
+  width: 28px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  display: grid;
+  place-items: center;
+  font-weight: 950;
+  background: rgba(0,0,0,0.25);
+  color: rgba(255,255,255,0.92);
+}
+.race2dpro__choiceDesc{
+  font-size: 12px;
+  color: rgba(255,255,255,0.72);
+  line-height: 1.35;
+}
+
+/* Opponents row */
+.race2dpro__row{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.race2dpro__range{
+  width: 100%;
+  accent-color: #ffffff;
+}
+.race2dpro__pill{
+  min-width: 44px;
+  text-align: center;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  font-weight: 900;
+}
+
+.race2dpro__hint{
+  margin-top: 10px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.64);
+}
+
+.race2dpro__setupFooter{
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.race2dpro__start{
+  appearance: none;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.95);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-weight: 950;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+.race2dpro__start:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.16);
+  border-color: rgba(255,255,255,0.28);
+}
+
+/* =========================
+   Gameplay UI / HUD
+========================= */
+.race2dpro__canvas{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Overlay UI wrapper */
+.race2dpro__ui{
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Top HUD */
+.race2dpro__hudTop{
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: min(980px, 94vw);
+  pointer-events: none;
+}
+
+.race2dpro__hudTitle{
+  background: rgba(0,0,0,0.48);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  padding: 10px 12px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.race2dpro__titleMain{
+  font-size: 14px;
+  font-weight: 950;
+  line-height: 1.1;
+}
+.race2dpro__titleSub{
+  margin-top: 3px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.72);
+}
+
+.race2dpro__trackPill{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0,0,0,0.46);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 850;
+  color: rgba(255,255,255,0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.race2dpro__trackDot{
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.55);
+  box-shadow: 0 0 0 4px rgba(255,255,255,0.08);
+}
+
+/* Bottom strip */
+.race2dpro__hudStrip{
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  pointer-events: none;
+}
+
+.race2dpro__hudBottom{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 10px;
+  border-radius: 16px;
+  background: rgba(0,0,0,0.48);
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.race2dpro__chips{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.race2dpro__chip{
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+}
+
+.race2dpro__chipLabel{
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(255,255,255,0.62);
+}
+
+.race2dpro__chipValue{
+  font-size: 13px;
+  font-weight: 950;
+  color: rgba(255,255,255,0.92);
+}
+
+/* Info pill */
+.race2dpro__statusPill{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.78);
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+.race2dpro__statusPill strong{
+  font-weight: 950;
+  color: rgba(255,255,255,0.92);
+}
+.race2dpro__statusPill.isVisible{
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Controls buttons (need pointer events) */
+.race2dpro__controls{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+.race2dpro__btn{
+  appearance: none;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.95);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 950;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+.race2dpro__btn:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.16);
+  border-color: rgba(255,255,255,0.28);
+}
+
+.race2dpro__btn--ghost{
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.88);
+}
+.race2dpro__btn--ghost:hover{
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.18);
+}
+
+/* Make bottom UI stack on small widths */
+@media (max-width: 820px){
+  .race2dpro__hudBottom{
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .race2dpro__controls{
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+/* =========================
+   Mobile Leaderboard (DOM)
+========================= */
+.race2dpro__leaderboard{
+  position: absolute;
+  top: 86px;
+  right: 12px;
+  width: 220px;
+  z-index: 11;
+  background: rgba(0,0,0,0.48);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  padding: 10px 10px 8px 10px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: none;
+  display: none; /* desktop uses canvas leaderboard */
+}
+
+.race2dpro__leaderboardTitle{
+  font-size: 12px;
+  font-weight: 950;
+  color: rgba(255,255,255,0.90);
+  margin-bottom: 8px;
+}
+
+.race2dpro__leaderboardRow{
+  display: grid;
+  grid-template-columns: 28px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px;
+  border-radius: 10px;
+  color: rgba(255,255,255,0.86);
+}
+
+.race2dpro__leaderboardRow.isPlayer{
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+.race2dpro__leaderboardPos{
+  font-weight: 950;
+  color: rgba(255,255,255,0.72);
+  font-size: 12px;
+}
+
+.race2dpro__leaderboardName{
+  font-weight: 900;
+  font-size: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.race2dpro__leaderboardLap{
+  font-size: 11px;
+  text-align: right;
+  color: rgba(255,255,255,0.65);
+  font-weight: 900;
+}
+
+@media (max-width: 520px){
+  .race2dpro__leaderboard{
+    display: block;
+    top: 78px;
+    width: 210px;
+  }
+}
+
+/* =========================
+   Touch controls (mobile only)
+========================= */
+.race2dpro__touch{
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 84px; /* leave space for hudStrip */
+  height: 170px;
+  z-index: 12;
+  pointer-events: none;
+  display: none;
+}
+
+.race2dpro__joy{
+  position: absolute;
+  left: 14px;
+  bottom: 0;
+  width: 140px;
+  height: 140px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: auto;
+}
+
+.race2dpro__joyKnob{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.16);
+  box-shadow: 0 14px 26px rgba(0,0,0,0.35);
+  transition: background 140ms ease, transform 140ms ease;
+}
+.race2dpro__joyKnob.isActive{
+  background: rgba(255,255,255,0.14);
+  transform: translate(-50%, -50%) scale(0.98);
+}
+
+.race2dpro__touchRight{
+  position: absolute;
+  right: 14px;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+.race2dpro__touchBtn{
+  width: 74px;
+  height: 64px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.40);
+  color: rgba(255,255,255,0.92);
+  font-weight: 950;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 16px 30px rgba(0,0,0,0.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+.race2dpro__touchBtn:active{
+  transform: translateY(1px) scale(0.99);
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.22);
+}
+
+/* Only show touch controls on mobile/coarse pointer */
+@media (max-width: 520px), (pointer: coarse){
+  .race2dpro__touch{ display: block; }
+}
+
+/* Reduce overlays a bit on tiny screens */
+@media (max-width: 420px){
+  .race2dpro__hudTop{ left: 10px; top: 10px; }
+  .race2dpro__hudStrip{ left: 10px; right: 10px; bottom: 10px; }
+  .race2dpro__touch{ bottom: 76px; height: 160px; }
+  .race2dpro__touchBtn{ width: 70px; height: 60px; }
+  .race2dpro__joy{ width: 132px; height: 132px; }
+}
+
+/* Optional: disable text selection */
+.race2dpro, .race2dpro *{
+  -webkit-user-select: none;
+  user-select: none;
+}
