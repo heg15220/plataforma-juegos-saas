@@ -17,6 +17,7 @@ import knowledgePuzleImage from "../assets/games/knowledge-puzle.svg";
 import knowledgeCrucigramaImage from "../assets/games/knowledge-crucigrama.svg";
 import knowledgeSopaLetrasImage from "../assets/games/knowledge-sopa-letras.svg";
 import chessGrandmasterArenaImage from "../assets/games/chess-grandmaster-arena.svg";
+import race2dproImage from "../assets/games/race2dpro.svg";
 
 /**
  * Game catalog
@@ -410,6 +411,50 @@ export const games = [
     viability_en: "High: Phaser canvas engine with deterministic loop and QA telemetry.",
     visualStyle_en: "Arcade racing with competitive HUD, track scroll and visible weather states.",
     techFocus_en: "Tick-based Phaser loop, near-miss chain and offensive/defensive item system.",
+  },
+  {
+    id: "racing-race2dpro",
+    image: race2dproImage,
+    sessionTime: "5-15 min",
+
+    title: "Race 2D Pro",
+    category: "Carreras",
+    tagline: "18 circuitos, IA por dificultad, parrilla de salida y colisiones reales.",
+    description:
+      "Juego de carreras 2D con motor Canvas nativo. Elige entre 18 circuitos de distintos entornos, configura la dificultad de la IA, el número de rivales y las vueltas. Semáforo de salida, física de grip y colisiones entre coches.",
+    objective_es: "Termina la carrera en primera posición superando a todos los rivales antes de que completen sus vueltas.",
+    howToPlay_es: "Arriba/abajo para acelerar y frenar, izquierda/derecha para girar. En móvil: joystick táctil izquierdo + botones derecha. Espacio activa el turbo. R reinicia la carrera.",
+    highlights: [
+      "18 circuitos con distintos entornos (costa, bosque, desierto, nieve y más).",
+      "3 niveles de IA: fácil, medio y difícil con diferencias reales de trazada.",
+      "Parrilla de salida con semáforo y posicionamiento en cuadrícula.",
+      "Colisiones entre coches y límite de pista con grip por entorno.",
+      "Joystick táctil para móvil y teclado en escritorio.",
+    ],
+    difficulty: "Media",
+    multiplayer: "Solo vs IA",
+    viability: "Alta: motor Canvas 2D nativo, sin dependencias externas de juego.",
+    visualStyle: "Circuito 2D cenital con degradados de entorno y HUD minimalista.",
+    techFocus: "Canvas 2D, física de vehículo, IA de carrera por dificultad, spline de pista.",
+
+    category_en: "Racing",
+    tagline_en: "18 circuits, AI by difficulty, starting grid and real collisions.",
+    description_en:
+      "2D racing game with a native Canvas engine. Choose from 18 circuits across different environments, configure AI difficulty, number of rivals and laps. Starting grid with traffic lights, grip physics and car-to-car collisions.",
+    objective_en: "Finish the race in first place by beating all rivals before they complete their laps.",
+    howToPlay_en: "Up/down to accelerate and brake, left/right to steer. On mobile: left touch joystick + right buttons. Space activates turbo. R restarts the race.",
+    highlights_en: [
+      "18 circuits across different environments (coast, forest, desert, snow and more).",
+      "3 AI levels: easy, medium and hard with real line-racing differences.",
+      "Starting grid with traffic lights and grid-box positioning.",
+      "Car-to-car collisions and track boundary with environment-based grip.",
+      "Touch joystick for mobile and keyboard on desktop.",
+    ],
+    difficulty_en: "Medium",
+    multiplayer_en: "Solo vs AI",
+    viability_en: "High: native Canvas 2D engine, no external game dependencies.",
+    visualStyle_en: "Top-down 2D circuit with environment gradients and minimal HUD.",
+    techFocus_en: "Canvas 2D, vehicle physics, difficulty-based race AI, track spline.",
   },
 
   // ── Knowledge ──────────────────────────────────────────────────────────────

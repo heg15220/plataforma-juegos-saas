@@ -1,0 +1,14 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="paint0_linear" x1="130" y1="50" x2="1080" y2="620" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0C8A7E"/>
+      <stop offset="1" stop-color="#F4B93A"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" rx="24" fill="url(#paint0_linear)"/>
+  <circle cx="190" cy="150" r="120" fill="#FFFFFF" fill-opacity="0.16"/>
+  <circle cx="1010" cy="520" r="170" fill="#FFFFFF" fill-opacity="0.12"/>
+  <path d="M250 500L535 210L700 310L920 130" stroke="#FFF8E8" stroke-width="24" stroke-linecap="round"/>
+  <rect x="760" y="390" width="140" height="92" rx="14" fill="#103B3B" fill-opacity="0.82"/>
+  <text x="120" y="560" fill="#FFFCEB" font-family="Verdana, sans-serif" font-weight="700" font-size="78">NEON DRIFT SPRINT</text>
+</svg>
