@@ -1086,7 +1086,7 @@ export default function RaceGame2DPro() {
     pos: 1, total: 6, lap: 1, totalLaps: 3,
     speed: 0, turbo: 0, turboActive: false, weatherIcon: "SUN",
   });
-  const [semaphore, setSemaphore] = useState({ phase: "off", lights: [false, false, false] });
+  const [semaphore, setSemaphore] = useState({ phase: "off", lights: [false, false, false, false, false] });
   const [joyKnob, setJoyKnob] = useState({ dx: 0, dy: 0 });
   const [endData, setEndData] = useState(null);
 
@@ -1332,16 +1332,18 @@ export default function RaceGame2DPro() {
       // â”€â”€ Countdown / semaphore â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       if (g.startPhase === "countdown") {
         g.startTimer += dt;
-        if (g.startTimer >= 0.85 * (g.countdownStep + 1)) {
+        if (g.startTimer >= 0.80 * (g.countdownStep + 1)) {
           g.countdownStep++;
-          if (g.countdownStep <= 3) {
-            const lights = [false, false, false];
+          if (g.countdownStep <= 5) {
+            const lights = [false, false, false, false, false];
             for (let i = 0; i < g.countdownStep; i++) lights[i] = true;
             setSemaphore({ phase: "countdown", lights });
+          } else if (g.countdownStep === 6) {
+            setSemaphore({ phase: "countdown", lights: [true, true, true, true, true] });
           } else {
             g.startPhase = "fading";
             g.phaseTimer = 0;
-            setSemaphore({ phase: "go", lights: [false, false, false] });
+            setSemaphore({ phase: "go", lights: [false, false, false, false, false] });
           }
         }
       } else if (g.startPhase === "fading") {
@@ -1349,7 +1351,7 @@ export default function RaceGame2DPro() {
         if (g.phaseTimer >= 0.55) {
           g.startPhase = "racing";
           g._raceStartTime = performance.now();
-          setSemaphore({ phase: "off", lights: [false, false, false] });
+          setSemaphore({ phase: "off", lights: [false, false, false, false, false] });
         }
       }
 
@@ -1715,7 +1717,7 @@ export default function RaceGame2DPro() {
         <div className="r2p__semaphore">
           <div className="r2p__semLights">
             {semaphore.lights.map((on, i) => (
-              <div key={i} className={`r2p__semLight${on ? " on-red" : ""}`} />
+              <div key={i} className={`r2p__semLight${on ? " isOn" : ""}`} />
             ))}
           </div>
           {semaphore.phase === "go" && <div className="r2p__semGo">GO!</div>}
