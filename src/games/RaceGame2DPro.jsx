@@ -397,7 +397,59 @@ function buildTrack(trackDef, canvasW, canvasH) {
     totalLength += Math.hypot(next.x - samples[i].x, next.y - samples[i].y);
   }
 
-  return { samples, totalLength, startS: 0.03, trackWidth: trackDef.trackWidth || 48 };
+  // Generate decorations (trees + grandstand) seeded by track id
+  const decorations = [];
+  const rng = (() => {
+    let s = (trackDef.id * 9301 + 49297) % 233280;
+    return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+  })();
+
+  const envData = ENVIRONMENTS[trackDef.envId];
+  const treeCount = envData.treeCount || 16;
+  const outerOffset = (trackDef.trackWidth || 48) / 2 + 80;
+
+  // Trees: placed around the track at random sample points, pushed outward
+  for (let t = 0; t < treeCount; t++) {
+    const si = Math.floor(rng() * SAMPLES);
+    const sp = samples[si];
+    const side = rng() > 0.5 ? 1 : -1;
+    const dist2 = outerOffset + rng() * 80;
+    const nx = -Math.sin(sp.ang), ny = Math.cos(sp.ang);
+    const radius = 6 + rng() * 12;
+    decorations.push({
+      type: "tree",
+      x: sp.x + nx * dist2 * side,
+      y: sp.y + ny * dist2 * side,
+      radius,
+      color: envData.treeColor || "#1e5a28",
+    });
+  }
+
+  // Grandstand: near start/finish if hasCrowd
+  if (envData.hasCrowd) {
+    const startSample = samples[Math.floor(0.03 * SAMPLES)];
+    const perpX = -Math.sin(startSample.ang), perpY = Math.cos(startSample.ang);
+    const alngX = Math.cos(startSample.ang), alngY = Math.sin(startSample.ang);
+    const side = 1;
+    const dist3 = (trackDef.trackWidth || 48) / 2 + 65;
+    for (let row = 0; row < 3; row++) {
+      for (let col = -4; col <= 4; col++) {
+        const cx = startSample.x + perpX * (dist3 + row * 14) * side + alngX * col * 16;
+        const cy = startSample.y + perpY * (dist3 + row * 14) * side + alngY * col * 16;
+        decorations.push({ type: "crowd", x: cx, y: cy, row, col });
+      }
+    }
+    // Grandstand roof
+    decorations.push({
+      type: "stand",
+      x: startSample.x + perpX * (dist3 + 20) * side,
+      y: startSample.y + perpY * (dist3 + 20) * side,
+      ang: startSample.ang,
+      w: 160, h: 50,
+    });
+  }
+
+  return { samples, totalLength, startS: 0.03, trackWidth: trackDef.trackWidth || 48, decorations };
 }
 
 function sampleTrackAt(track, s) {
@@ -711,6 +763,52 @@ function renderBackground(ctx, w, h, env, weatherProfile, starfield, time) {
     grad.addColorStop(1, "rgba(25,12,0,0.50)");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
+  }
+}
+
+function renderDecorations(ctx, track, env) {
+  if (!track.decorations) return;
+  for (const d of track.decorations) {
+    if (d.type === "tree") {
+      // Drop shadow
+      ctx.save();
+      ctx.globalAlpha = 0.28;
+      ctx.fillStyle = "rgba(0,0,0,0.5)";
+      ctx.beginPath();
+      ctx.ellipse(d.x + 3, d.y + 4, d.radius * 0.9, d.radius * 0.7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      // Tree canopy
+      ctx.fillStyle = d.color;
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2);
+      ctx.fill();
+      // Highlight
+      const bc = d.color.replace(/#/, "");
+      const tr2 = Math.min(255, parseInt(bc.substring(0, 2), 16) + 30);
+      const tg2 = Math.min(255, parseInt(bc.substring(2, 4), 16) + 30);
+      const tb2 = Math.min(255, parseInt(bc.substring(4, 6), 16) + 20);
+      ctx.fillStyle = `rgb(${tr2},${tg2},${tb2})`;
+      ctx.beginPath();
+      ctx.arc(d.x - d.radius * 0.2, d.y - d.radius * 0.2, d.radius * 0.55, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    } else if (d.type === "stand") {
+      ctx.save();
+      ctx.translate(d.x, d.y);
+      ctx.rotate(d.ang + Math.PI / 2);
+      ctx.fillStyle = "rgba(60,60,80,0.85)";
+      ctx.fillRect(-d.w / 2, -d.h / 2, d.w, d.h);
+      ctx.fillStyle = "rgba(30,30,50,0.9)";
+      ctx.fillRect(-d.w / 2, -d.h / 2, d.w, 10);
+      ctx.restore();
+    } else if (d.type === "crowd") {
+      const crowdColors = ["#c44", "#c84", "#48c", "#8c4", "#c48", "#888"];
+      ctx.fillStyle = crowdColors[(d.row * 3 + (d.col + 4)) % crowdColors.length];
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 }
 
@@ -1475,6 +1573,7 @@ export default function RaceGame2DPro() {
         updateFollowCamera(g.camera, playerCar, dt);
       }
       applyCameraTransform(ctx, g.camera, W, H);
+      renderDecorations(ctx, g.track, g.env);
       renderTrack(ctx, g.track, g.env);
       renderStartGrid(ctx, g.cars, g.startPhase, g.phaseTimer, g.env);
       for (const car of g.cars) {
