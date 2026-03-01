@@ -416,12 +416,19 @@ function buildTrack(trackDef, canvasW, canvasH) {
     const dist2 = outerOffset + rng() * 80;
     const nx = -Math.sin(sp.ang), ny = Math.cos(sp.ang);
     const radius = 6 + rng() * 12;
+    const treeColor = envData.treeColor || "#1e5a28";
+    const tc = treeColor.replace(/#/, "");
+    const thr = Math.min(255, parseInt(tc.substring(0, 2), 16) + 30);
+    const thg = Math.min(255, parseInt(tc.substring(2, 4), 16) + 30);
+    const thb = Math.min(255, parseInt(tc.substring(4, 6), 16) + 20);
+    const treeHighlight = `rgb(${thr},${thg},${thb})`;
     decorations.push({
       type: "tree",
       x: sp.x + nx * dist2 * side,
       y: sp.y + ny * dist2 * side,
       radius,
-      color: envData.treeColor || "#1e5a28",
+      color: treeColor,
+      highlight: treeHighlight,
     });
   }
 
@@ -626,10 +633,9 @@ function updateCar(car, dt, input, track, weatherProfile, allCars, startLocked) 
   }
   if (car.spawnGrace > 0) car.spawnGrace -= dt;
 
-  // Update s
-  const newS = closestS(track, car.x, car.y);
-  const ds = wrap01(newS - car.s + 0.5) - 0.5;
-  if (ds > 0) car.s = newS;
+  // Update s (reuse cs computed above)
+  const ds = wrap01(cs - car.s + 0.5) - 0.5;
+  if (ds > 0) car.s = cs;
 
   // Near-miss turbo bonus and turbo fill (player only)
   if (car.isPlayer) {
@@ -785,11 +791,7 @@ function renderDecorations(ctx, track, env) {
       ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2);
       ctx.fill();
       // Highlight
-      const bc = d.color.replace(/#/, "");
-      const tr2 = Math.min(255, parseInt(bc.substring(0, 2), 16) + 30);
-      const tg2 = Math.min(255, parseInt(bc.substring(2, 4), 16) + 30);
-      const tb2 = Math.min(255, parseInt(bc.substring(4, 6), 16) + 20);
-      ctx.fillStyle = `rgb(${tr2},${tg2},${tb2})`;
+      ctx.fillStyle = d.highlight || d.color;
       ctx.beginPath();
       ctx.arc(d.x - d.radius * 0.2, d.y - d.radius * 0.2, d.radius * 0.55, 0, Math.PI * 2);
       ctx.fill();
@@ -1044,17 +1046,16 @@ function renderCar(ctx, car, isPlayer) {
   }
 
   // ── Dust particles ──
-  if (car.dustParticles) {
+  if (car.dustParticles && car.dustParticles.length > 0) {
+    ctx.save();
+    ctx.fillStyle = "rgba(180,160,120,0.8)";
     for (const dp of car.dustParticles) {
-      const alpha = (dp.life / dp.maxLife) * 0.55;
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = "rgba(180,160,120,0.8)";
+      ctx.globalAlpha = (dp.life / dp.maxLife) * 0.55;
       ctx.beginPath();
       ctx.arc(dp.x, dp.y, 4 * (dp.life / dp.maxLife), 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
     }
+    ctx.restore();
   }
 
   // ── Car body ──
@@ -1674,8 +1675,8 @@ export default function RaceGame2DPro() {
         updateFollowCamera(g.camera, playerCar, dt);
       }
       applyCameraTransform(ctx, g.camera, W, H);
-      renderDecorations(ctx, g.track, g.env);
       renderTrack(ctx, g.track, g.env);
+      renderDecorations(ctx, g.track, g.env);
       renderStartGrid(ctx, g.cars, g.startPhase, g.phaseTimer, g.env);
       for (const car of g.cars) {
         if (!car.isPlayer) renderCar(ctx, car, false);
