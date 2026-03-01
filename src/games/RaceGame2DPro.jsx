@@ -669,11 +669,8 @@ function smooth1D(arr, passes = 2) {
 // ------------------------
 export default function RaceGame2DPro() {
   const lang = navigator.language.startsWith("es") ? "es" : "en";
-  const navigate = useNavigate();
-  const MINIGAMES_HOME = "/minigames";
 
-  // Tutorial / Setup
-  const [showTutorial, setShowTutorial] = useState(true);
+  // Setup
   const [showSetup, setShowSetup] = useState(true);
 
   // Setup options
@@ -686,8 +683,6 @@ export default function RaceGame2DPro() {
   const [hud, setHud] = useState({ pos: 1, total: 6, lap: "1/3", speed: 0, note: "" });
   const [trackLabel, setTrackLabel] = useState("");
   const [leaderboard, setLeaderboard] = useState([]);
-
-  const tutorial = tutorialTexts["/minigames/race"]?.[lang];
 
   // Canvas and loop refs
   const canvasRef = useRef(null);
@@ -2321,7 +2316,6 @@ export default function RaceGame2DPro() {
   // Lifecycle: start/stop loop
   // ------------------------
   useEffect(() => {
-    if (showTutorial) return;
     if (showSetup) return;
 
     const down = (e) => {
@@ -2374,7 +2368,7 @@ export default function RaceGame2DPro() {
       window.removeEventListener("keyup", up);
       window.removeEventListener("resize", onResize);
     };
-  }, [buildTrack, loop, resetRace, resizeCanvas, showSetup, showTutorial, syncKeyboardToInput]);
+  }, [buildTrack, loop, resetRace, resizeCanvas, showSetup, syncKeyboardToInput]);
 
   useEffect(() => {
     stateRef.current.totalLaps = laps;
@@ -2409,21 +2403,6 @@ export default function RaceGame2DPro() {
   // ------------------------
   // Render branches (hooks already declared above)
   // ------------------------
-  if (showTutorial) {
-    return (
-      <MinigameTutorial
-        title={tutorial?.title || t.title}
-        description={tutorial?.description || ""}
-        image={sourceImages(`./RaceGame.png`)}
-        onStart={() => {
-          setShowTutorial(false);
-          setShowSetup(true);
-        }}
-        lang={lang}
-      />
-    );
-  }
-
   if (showSetup) {
     return (
       <div className="race2dpro race2dpro--setup">
@@ -2434,9 +2413,6 @@ export default function RaceGame2DPro() {
               <div className="race2dpro__setupSub">{t.subtitle}</div>
             </div>
 
-            <button className="race2dpro__setupBack" onClick={() => navigate(MINIGAMES_HOME)} type="button">
-              ⟵ {t.backHome}
-            </button>
           </div>
 
           <div className="race2dpro__setupBlock">
@@ -2591,9 +2567,6 @@ export default function RaceGame2DPro() {
             <div className="race2dpro__controls">
               <button className="race2dpro__btn" onClick={handleRestart} type="button">{t.restart}</button>
               <button className="race2dpro__btn race2dpro__btn--ghost" onClick={handleBackToSetup} type="button">{t.backToSetup}</button>
-              <button className="race2dpro__btn race2dpro__btn--ghost" onClick={() => navigate(MINIGAMES_HOME)} type="button">
-                ⟵ {t.backHome}
-              </button>
             </div>
           </div>
         </div>
