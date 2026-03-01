@@ -448,3 +448,74 @@
   - `campaign.route` de longitud 5,
   - `campaign.bossLevels = 2`,
   - ultimo mapa de ruta `citadel-heart-12` (final boss).
+## 2026-03-01 - RaceGame2DPro: arranque + realismo de circuito + camara seguimiento
+- Corregido flujo de inicio desde setup/end para evitar que `Iniciar carrera` falle cuando el canvas aun no esta montado (`initializeRace` + `pendingStartRef`).
+- Rehecha la geometria de `TRACKS` (18 circuitos) con trazadas mas cercanas a circuitos reales: rectas largas, secciones tecnicas, curvas enlazadas y zonas tipo chicane/hairpin.
+- Mejorado render del asfalto: runoff, bordes, pianos rojo/blanco por curvatura y linea central discontinua para lectura visual de trazada.
+- Ajustada camara de seguimiento del jugador (look-ahead + zoom dinamico + shake por colision), activa durante toda la carrera.
+- Limpiados textos corruptos por codificacion en UI (setup/HUD/end/touch controls) para presentacion profesional.
+- CSS de `RaceGame2DPro.css` mantenido en version reescrita integral previa.
+- Validacion tecnica:
+  - `npm run build` OK (sin errores de compilacion; warning esperado de chunk grande global del proyecto).
+  - Playwright OK sobre `#game=racing-race2dpro` con click en `.r2p__startBtn`.
+  - Evidencia visual en `output/racing-start-button-fix/shot-0.png..shot-2.png` (entra en carrera y se ve pista actualizada con pianos).
+- Nota: `RaceGame2DPro.jsx` queda por encima de 4000 lineas (actualmente >4500) segun requisito del encargo.
+## 2026-03-01 - Crucigrama: tablero compacto + pistas a la derecha + formato tipo Ahorcado
+- Ajustado `CrosswordKnowledgeGame` para que el tablero use tamano de celda reducido y adaptativo por dimension de rejilla (`5x5` a `8x8`).
+- Reestructurada la UI del crucigrama a layout de dos columnas: tablero/acciones a la izquierda y pistas a la derecha.
+- En responsive (`<=719px`) el layout vuelve a una sola columna para mantener legibilidad.
+- Unificada la estructura de pistas del crucigrama al estilo Ahorcado:
+  - ES: `N. Pista: <definicion>`
+  - EN: `N. Clue: <definition>`
+- Aniadido normalizador para estandarizar cada pista como frase breve con puntuacion final, aplicandose a todas las partidas/palabras generadas por el motor.
+- Validacion:
+  - `npm run test -- src/games/knowledge/crosswordGenerator.test.js` OK.
+  - `npm run build` OK.
+  - Playwright + revision visual en `output/knowledge-crucigrama-layout-hints-right/` (tablero mas pequeno y pistas a la derecha confirmados).
+## 2026-03-01 - Crucigrama: reescritura integral del estilo de pistas
+- Reescrito el normalizador de pistas para crucigrama desde cero en `CrosswordKnowledgeGame`:
+  - se elimino el formato heredado ("palabra emparentada", "entrada lexical vinculada", etc.),
+  - se implemento parser + transformacion semantica para producir pistas directas estilo Ahorcado,
+  - se incorporo limpieza de mojibake y normalizacion de texto.
+- Nuevo formato de salida en UI:
+  - ES: `Pista: ...`
+  - EN: `Clue: ...`
+  - se retiro prefijo numerico en la frase para alinearlo con el estilo Ahorcado.
+- Validacion:
+  - `npm run build` OK,
+  - `npm run test -- src/games/knowledge/crosswordGenerator.test.js` OK,
+  - Playwright visual en `output/knowledge-crucigrama-clues-rewrite/` confirmando el nuevo formato en todas las pistas mostradas.
+## 2026-03-01 - Crucigrama: limpieza total de pistas y formato unificado
+- `src/games/knowledge/CrosswordKnowledgeGame.jsx` actualizado para rehacer todas las pistas en tiempo de juego a partir del banco actual con un normalizador nuevo:
+  - elimina el estilo heredado ("termino asociado", "entrada lexical vinculada", etc.),
+  - extrae ancla semantica y tipo gramatical,
+  - reescribe cada pista en formato definicional corto.
+- Formato final aplicado en UI para todas las palabras: `Pista: ...` (ES) y `Clue: ...` (EN), sin prefijo numerico en la frase.
+- Panel de pistas simplificado a una lista unica (`Pistas/Clues`) en lugar de separar por "Horizontales/Verticales".
+- Validacion tecnica:
+  - `npm run build` OK (fuera de sandbox por `spawn EPERM`),
+  - `npm run test -- src/games/knowledge/crosswordGenerator.test.js` OK (fuera de sandbox por `spawn EPERM`),
+  - Playwright QA en `output/knowledge-crucigrama-clues-clean-v2/` con `shot-0..2.png` y `state-0..2.json`, sin `errors-*.json`.
+- Verificacion visual: captura revisada (`shot-0.png`) confirma nuevo bloque `Pistas` con todas las lineas en formato `Pista: ...`.
+- Ajuste final del normalizador: inferencia de tipo semantico mas conservadora para evitar pistas de cualidad en conceptos nominales (prioriza `noun` salvo senales claras de verbo/adverbio o POS explicito).
+- Revalidado tras el ajuste:
+  - `npm run build` OK,
+  - `npm run test -- src/games/knowledge/crosswordGenerator.test.js` OK,
+  - Playwright rehecha en `output/knowledge-crucigrama-clues-clean-v2/`.
+## 2026-03-01 - Crucigrama (coordenadas en pistas) + altura extra de juego (Sky Runner/Crucigrama)
+- `src/games/knowledge/CrosswordKnowledgeGame.jsx`:
+  - Las pistas ahora muestran posicion de inicio de palabra con coordenadas 1-based:
+    - ES: `Pista (fila X, columna Y): ...`
+    - EN: `Clue (row X, column Y): ...`
+  - Se usa el `start` real de cada entrada del generador para evitar desalineaciones.
+- `src/styles.css`:
+  - Modal launch para Sky Runner: `max-height` del canvas host aumentado de `44vh` a `48vh` en `.launch-game-area .platformer-game .phaser-canvas-host`.
+  - Modal launch para Crucigrama: `max-height` del panel de pistas aumentado a `430px` en `.launch-game-area .knowledge-arcade-game.knowledge-crucigrama .crossword-clues`.
+
+### Validacion
+- Build: `npm run build` OK (fuera de sandbox por `spawn EPERM` en sandbox).
+- Playwright skill client (fuera de sandbox por `spawn EPERM` de Chromium en sandbox):
+  - Crucigrama: `output/knowledge-crucigrama-rowcol-height-20260301/` (`shot-0..2.png`, `state-0..2.json`).
+    - Confirmado en estado: pistas con formato `Pista (fila X, columna Y): ...`.
+  - Sky Runner: `output/platformer-height-20260301/` (`shot-0..2.png`, `state-0..2.json`).
+  - Sin `errors-*.json` en ambos outputs.

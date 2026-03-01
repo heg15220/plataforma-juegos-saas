@@ -21,6 +21,249 @@ import {
   nextCellInRow
 } from "./crosswordGenerator";
 
+const hashText = (text) => {
+  let hash = 2166136261;
+  const source = String(text || "");
+  for (let index = 0; index < source.length; index += 1) {
+    hash ^= source.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+};
+
+const pickByWord = (word, options) => {
+  if (!Array.isArray(options) || options.length === 0) return "";
+  return options[hashText(word) % options.length];
+};
+
+const stripMojibake = (value) => String(value || "")
+  .replace(/Â/g, "")
+  .replace(/Ã¡/g, "a")
+  .replace(/Ã©/g, "e")
+  .replace(/Ã­/g, "i")
+  .replace(/Ã³/g, "o")
+  .replace(/Ãº/g, "u")
+  .replace(/Ã±/g, "n")
+  .replace(/Ã¼/g, "u")
+  .replace(/Ã/g, "");
+
+const normalizeAscii = (value) => stripMojibake(value)
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .replace(/\s+/g, " ")
+  .trim();
+
+const ensureSentence = (value, fallback) => {
+  const safe = String(value || "").replace(/\s+/g, " ").trim() || fallback;
+  const first = safe.charAt(0).toUpperCase();
+  const tail = safe.slice(1);
+  const sentence = `${first}${tail}`;
+  return /[.!?]$/.test(sentence) ? sentence : `${sentence}.`;
+};
+
+const detectPosHint = (rawClue, locale) => {
+  const clue = normalizeAscii(rawClue).toLowerCase();
+  if (!clue) return "generic";
+
+  if (locale === "es") {
+    if (clue.startsWith("adjetivo")) return "adjective";
+    if (clue.startsWith("verbo") || clue.startsWith("accion")) return "verb";
+    if (clue.startsWith("adverbio")) return "adverb";
+    if (clue.startsWith("sustantivo")) return "noun";
+    return "generic";
+  }
+
+  if (clue.startsWith("adjective")) return "adjective";
+  if (clue.startsWith("verb") || clue.startsWith("action")) return "verb";
+  if (clue.startsWith("adverb")) return "adverb";
+  if (clue.startsWith("noun")) return "noun";
+  return "generic";
+};
+
+const extractAnchor = (rawClue) => {
+  const normalized = normalizeAscii(rawClue);
+  if (!normalized) return "";
+
+  const quoted = normalized.match(/"([^"]+)"/);
+  if (quoted?.[1]) {
+    return quoted[1].trim().toLowerCase();
+  }
+
+  const tail = normalized.match(/\b(?:de|del|about|for|of)\s+([a-z0-9\s-]+)[.!?]?$/i);
+  if (tail?.[1]) {
+    return tail[1]
+      .trim()
+      .toLowerCase()
+      .replace(/^(el|la|los|las|un|una|the|a|an)\s+/i, "");
+  }
+
+  return "";
+};
+
+const inferAnchorType = (anchor, locale) => {
+  const safe = normalizeAscii(anchor).toLowerCase();
+  if (!safe) return "generic";
+
+  if (locale === "es") {
+    if (/(ar|er|ir)$/.test(safe)) return "verb";
+    if (/mente$/.test(safe)) return "adverb";
+    return "noun";
+  }
+
+  if (/(ate|ify|ise|ize|ing)$/.test(safe)) return "verb";
+  if (/ly$/.test(safe)) return "adverb";
+  return "noun";
+};
+
+const resolveDefinitionType = (posHint, anchorType) => (
+  posHint !== "generic" ? posHint : anchorType
+);
+
+const buildSpanishDefinitionClue = ({ word, anchor, type }) => {
+  const safeAnchor = normalizeAscii(anchor).toLowerCase();
+  if (!safeAnchor) {
+    const generic = pickByWord(word, [
+      `Entrada del espanol de ${word.length} letras`,
+      `Vocablo de uso comun con ${word.length} letras`,
+      `Definicion breve de una palabra de ${word.length} letras`
+    ]);
+    return ensureSentence(generic, `Entrada del espanol de ${word.length} letras.`);
+  }
+
+  if (type === "verb") {
+    const sentence = pickByWord(word, [
+      `Accion de ${safeAnchor}`,
+      `Proceso que implica ${safeAnchor}`,
+      `Acto expresado como ${safeAnchor}`
+    ]);
+    return ensureSentence(sentence, `Accion de ${safeAnchor}.`);
+  }
+
+  if (type === "adjective") {
+    const sentence = pickByWord(word, [
+      `Que presenta rasgos de ${safeAnchor}`,
+      `Cualidad cercana a ${safeAnchor}`,
+      `Describe algo con caracter ${safeAnchor}`
+    ]);
+    return ensureSentence(sentence, `Que presenta rasgos de ${safeAnchor}.`);
+  }
+
+  if (type === "adverb") {
+    const sentence = pickByWord(word, [
+      `De manera ${safeAnchor}`,
+      `Modo vinculado con ${safeAnchor}`,
+      `Forma de actuar relacionada con ${safeAnchor}`
+    ]);
+    return ensureSentence(sentence, `De manera ${safeAnchor}.`);
+  }
+
+  if (type === "noun") {
+    const sentence = pickByWord(word, [
+      `Nombre usado para ${safeAnchor}`,
+      `Concepto del vocabulario comun sobre ${safeAnchor}`,
+      `Elemento de uso comun relacionado con ${safeAnchor}`
+    ]);
+    return ensureSentence(sentence, `Nombre usado para ${safeAnchor}.`);
+  }
+
+  const sentence = pickByWord(word, [
+    `Definicion breve vinculada con ${safeAnchor}`,
+    `Idea del vocabulario comun sobre ${safeAnchor}`,
+    `Significado relacionado con ${safeAnchor}`
+  ]);
+  return ensureSentence(sentence, `Definicion breve vinculada con ${safeAnchor}.`);
+};
+
+const buildEnglishDefinitionClue = ({ word, anchor, type }) => {
+  const safeAnchor = normalizeAscii(anchor).toLowerCase();
+  if (!safeAnchor) {
+    const generic = pickByWord(word, [
+      `Common entry with ${word.length} letters`,
+      `Short definition for a ${word.length} letter word`,
+      `General vocabulary item of ${word.length} letters`
+    ]);
+    return ensureSentence(generic, `Common entry with ${word.length} letters.`);
+  }
+
+  if (type === "verb") {
+    const sentence = pickByWord(word, [
+      `Action of ${safeAnchor}`,
+      `Process involving ${safeAnchor}`,
+      `Act expressed as ${safeAnchor}`
+    ]);
+    return ensureSentence(sentence, `Action of ${safeAnchor}.`);
+  }
+
+  if (type === "adjective") {
+    const sentence = pickByWord(word, [
+      `Having a quality close to ${safeAnchor}`,
+      `Describes something with a ${safeAnchor} trait`,
+      `Quality related to ${safeAnchor}`
+    ]);
+    return ensureSentence(sentence, `Having a quality close to ${safeAnchor}.`);
+  }
+
+  if (type === "adverb") {
+    const sentence = pickByWord(word, [
+      `In a ${safeAnchor} manner`,
+      `Manner linked to ${safeAnchor}`,
+      `Way of acting related to ${safeAnchor}`
+    ]);
+    return ensureSentence(sentence, `In a ${safeAnchor} manner.`);
+  }
+
+  if (type === "noun") {
+    const sentence = pickByWord(word, [
+      `Name used for ${safeAnchor}`,
+      `Common concept about ${safeAnchor}`,
+      `General vocabulary item related to ${safeAnchor}`
+    ]);
+    return ensureSentence(sentence, `Name used for ${safeAnchor}.`);
+  }
+
+  const sentence = pickByWord(word, [
+    `Short definition linked to ${safeAnchor}`,
+    `General meaning connected with ${safeAnchor}`,
+    `Vocabulary idea about ${safeAnchor}`
+  ]);
+  return ensureSentence(sentence, `Short definition linked to ${safeAnchor}.`);
+};
+
+const rewriteCrosswordClue = (meta, locale) => {
+  const rawClue = meta?.clue || "";
+  const fallback = locale === "es"
+    ? "Definicion breve del termino."
+    : "Short definition of the term.";
+  const posHint = detectPosHint(rawClue, locale);
+  const anchor = extractAnchor(rawClue);
+  const anchorType = inferAnchorType(anchor, locale);
+  const type = resolveDefinitionType(posHint, anchorType);
+
+  const rewritten = locale === "es"
+    ? buildSpanishDefinitionClue({
+      word: normalizeAscii(meta?.word || ""),
+      anchor,
+      type
+    })
+    : buildEnglishDefinitionClue({
+      word: normalizeAscii(meta?.word || ""),
+      anchor,
+      type
+    });
+
+  const withoutPrefix = String(rewritten || "").replace(/^(pista|clue)\s*:\s*/i, "").trim();
+  return ensureSentence(withoutPrefix, fallback);
+};
+
+const formatClueStart = (start, locale) => {
+  const row = Number.isFinite(start?.row) ? start.row + 1 : 1;
+  const col = Number.isFinite(start?.col) ? start.col + 1 : 1;
+  if (locale === "es") {
+    return `(fila ${row}, columna ${col})`;
+  }
+  return `(row ${row}, column ${col})`;
+};
+
 const COPY_BY_LOCALE = {
   es: {
     title: "Crucigrama Dinamico",
@@ -34,8 +277,7 @@ const COPY_BY_LOCALE = {
     statusPlaying: "En curso",
     clearCell: "Borrar celda",
     check: "Comprobar",
-    across: "Horizontales",
-    down: "Verticales",
+    clues: "Pistas",
     startMessage: "Rellena la rejilla con las pistas.",
     pendingCells: "Aun quedan celdas por completar.",
     wrongLetters: "Hay letras incorrectas.",
@@ -55,10 +297,10 @@ const COPY_BY_LOCALE = {
       count === 1
         ? "Completa la palabra seleccionada antes de comprobar."
         : "Completa todas las palabras seleccionadas antes de comprobar.",
-    acrossHint: (meta) => meta?.clue ?? "",
-    downHint: (meta) => meta?.clue ?? "",
-    acrossClue: (id, text, start) => `${id}. (${start.row + 1},${start.col + 1}) ${text}`,
-    downClue: (id, text, start) => `${id}. (${start.row + 1},${start.col + 1}) ${text}`
+    acrossHint: (meta) => rewriteCrosswordClue(meta, "es"),
+    downHint: (meta) => rewriteCrosswordClue(meta, "es"),
+    acrossClue: (_id, text, start) => `Pista ${formatClueStart(start, "es")}: ${text}`,
+    downClue: (_id, text, start) => `Pista ${formatClueStart(start, "es")}: ${text}`
   },
   en: {
     title: "Dynamic Crossword",
@@ -72,8 +314,7 @@ const COPY_BY_LOCALE = {
     statusPlaying: "In progress",
     clearCell: "Clear cell",
     check: "Check",
-    across: "Across",
-    down: "Down",
+    clues: "Clues",
     startMessage: "Fill the grid with the clues.",
     pendingCells: "There are still empty cells.",
     wrongLetters: "There are incorrect letters.",
@@ -93,10 +334,10 @@ const COPY_BY_LOCALE = {
       count === 1
         ? "Complete the selected word before checking."
         : "Complete all selected words before checking.",
-    acrossHint: (meta) => meta?.clue ?? "",
-    downHint: (meta) => meta?.clue ?? "",
-    acrossClue: (id, text, start) => `${id}. (${start.row + 1},${start.col + 1}) ${text}`,
-    downClue: (id, text, start) => `${id}. (${start.row + 1},${start.col + 1}) ${text}`
+    acrossHint: (meta) => rewriteCrosswordClue(meta, "en"),
+    downHint: (meta) => rewriteCrosswordClue(meta, "en"),
+    acrossClue: (_id, text, start) => `Clue ${formatClueStart(start, "en")}: ${text}`,
+    downClue: (_id, text, start) => `Clue ${formatClueStart(start, "en")}: ${text}`
   }
 };
 
@@ -163,6 +404,23 @@ function CrosswordKnowledgeGame() {
       )
     )
   ), [state.activeDirection, state.cellWordMap, state.selected.col, state.selected.row]);
+
+  const visibleClues = useMemo(() => (
+    [...(state.clues.across || []), ...(state.clues.down || [])]
+      .slice()
+      .sort((left, right) => {
+        if (left.id !== right.id) return left.id - right.id;
+        return left.key.localeCompare(right.key);
+      })
+  ), [state.clues.across, state.clues.down]);
+
+  const cellSize = useMemo(() => {
+    const maxSide = Math.max(state.grid.rows, state.grid.cols);
+    if (maxSide <= 5) return 40;
+    if (maxSide === 6) return 36;
+    if (maxSide === 7) return 33;
+    return 30;
+  }, [state.grid.cols, state.grid.rows]);
 
   const restart = useCallback(() => {
     setState((previous) =>
@@ -436,93 +694,82 @@ function CrosswordKnowledgeGame() {
           <span>{copy.status}: {state.status === "won" ? copy.statusWon : copy.statusPlaying}</span>
         </div>
 
-        <div className="crossword-grid" style={{ "--crossword-cols": state.grid.cols }}>
-          {state.entries.map((row, rowIndex) =>
-            row.map((cell, colIndex) => {
-              const blocked = cell === "#";
-              const selected = state.selected.row === rowIndex && state.selected.col === colIndex;
-              const cellId = keyForCell(rowIndex, colIndex);
-              const cellNumber = state.cellNumbers[cellId] ?? null;
-              const feedback = state.cellFeedback[cellId] ?? null;
-              const feedbackClass = feedback ? `feedback-${feedback}` : "";
-              const tokenClass = feedback ? `feedback-token-${state.feedbackToken}` : "";
+        <div className="crossword-layout">
+          <div className="crossword-board-panel">
+            <div
+              className="crossword-grid"
+              style={{
+                "--crossword-cols": state.grid.cols,
+                "--crossword-cell-size": `${cellSize}px`
+              }}
+            >
+              {state.entries.map((row, rowIndex) =>
+                row.map((cell, colIndex) => {
+                  const blocked = cell === "#";
+                  const selected = state.selected.row === rowIndex && state.selected.col === colIndex;
+                  const cellId = keyForCell(rowIndex, colIndex);
+                  const cellNumber = state.cellNumbers[cellId] ?? null;
+                  const feedback = state.cellFeedback[cellId] ?? null;
+                  const feedbackClass = feedback ? `feedback-${feedback}` : "";
+                  const tokenClass = feedback ? `feedback-token-${state.feedbackToken}` : "";
 
-              return (
-                <button
-                  key={`${state.puzzleKey}-${rowIndex}-${colIndex}`}
-                  type="button"
-                  className={[
-                    "crossword-cell",
-                    blocked ? "blocked" : "",
-                    selected ? "selected" : "",
-                    feedbackClass,
-                    tokenClass
-                  ].filter(Boolean).join(" ")}
-                  disabled={blocked}
-                  onClick={() => {
-                    if (blocked) return;
-                    setState((previous) => ({
-                      ...previous,
-                      selected: { row: rowIndex, col: colIndex }
-                    }));
-                  }}
-                >
-                  {!blocked ? <span className="crossword-number">{cellNumber ?? ""}</span> : null}
-                  {!blocked ? <span className="crossword-letter">{cell}</span> : null}
-                </button>
-              );
-            })
-          )}
-        </div>
+                  return (
+                    <button
+                      key={`${state.puzzleKey}-${rowIndex}-${colIndex}`}
+                      type="button"
+                      className={[
+                        "crossword-cell",
+                        blocked ? "blocked" : "",
+                        selected ? "selected" : "",
+                        feedbackClass,
+                        tokenClass
+                      ].filter(Boolean).join(" ")}
+                      disabled={blocked}
+                      onClick={() => {
+                        if (blocked) return;
+                        setState((previous) => ({
+                          ...previous,
+                          selected: { row: rowIndex, col: colIndex }
+                        }));
+                      }}
+                    >
+                      {!blocked ? <span className="crossword-number">{cellNumber ?? ""}</span> : null}
+                      {!blocked ? <span className="crossword-letter">{cell}</span> : null}
+                    </button>
+                  );
+                })
+              )}
+            </div>
 
-        <div className="crossword-toolbar">
-          <button type="button" onClick={clearCell}>{copy.clearCell}</button>
-          <button type="button" onClick={checkNow}>{copy.check}</button>
-        </div>
+            <div className="crossword-toolbar">
+              <button type="button" onClick={clearCell}>{copy.clearCell}</button>
+              <button type="button" onClick={checkNow}>{copy.check}</button>
+            </div>
+          </div>
 
-        <div className="crossword-clues">
-          <article>
-            <h5>{copy.across}</h5>
-            <ul>
-              {state.clues.across.map((clue) => {
-                const feedback = state.wordFeedback[clue.key] ?? null;
-                const isActive = selectedWordKeys.has(clue.key);
-                return (
-                  <li
-                    key={clue.key}
-                    className={[
-                      isActive ? "active-word" : "",
-                      feedback ? `feedback-${feedback}` : "",
-                      feedback ? `feedback-token-${state.feedbackToken}` : ""
-                    ].filter(Boolean).join(" ")}
-                  >
-                    {clue.text}
-                  </li>
-                );
-              })}
-            </ul>
-          </article>
-          <article>
-            <h5>{copy.down}</h5>
-            <ul>
-              {state.clues.down.map((clue) => {
-                const feedback = state.wordFeedback[clue.key] ?? null;
-                const isActive = selectedWordKeys.has(clue.key);
-                return (
-                  <li
-                    key={clue.key}
-                    className={[
-                      isActive ? "active-word" : "",
-                      feedback ? `feedback-${feedback}` : "",
-                      feedback ? `feedback-token-${state.feedbackToken}` : ""
-                    ].filter(Boolean).join(" ")}
-                  >
-                    {clue.text}
-                  </li>
-                );
-              })}
-            </ul>
-          </article>
+          <div className="crossword-clues">
+            <article>
+              <h5>{copy.clues}</h5>
+              <ul>
+                {visibleClues.map((clue) => {
+                  const feedback = state.wordFeedback[clue.key] ?? null;
+                  const isActive = selectedWordKeys.has(clue.key);
+                  return (
+                    <li
+                      key={clue.key}
+                      className={[
+                        isActive ? "active-word" : "",
+                        feedback ? `feedback-${feedback}` : "",
+                        feedback ? `feedback-token-${state.feedbackToken}` : ""
+                      ].filter(Boolean).join(" ")}
+                    >
+                      {clue.text}
+                    </li>
+                  );
+                })}
+              </ul>
+            </article>
+          </div>
         </div>
       </section>
 

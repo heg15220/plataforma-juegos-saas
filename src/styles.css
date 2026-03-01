@@ -1218,6 +1218,11 @@ body {
   aspect-ratio: 16 / 9;
   max-height: 44vh;
 }
+
+/* Give Sky Runner a bit more vertical room in the modal gameplay area */
+.launch-game-area .platformer-game .phaser-canvas-host {
+  max-height: 48vh;
+}
 /* Fill the aspect-ratio container exactly; override the global height:auto */
 .launch-game-area .phaser-canvas-host canvas {
   width: 100% !important;
@@ -3087,26 +3092,42 @@ body {
   text-decoration-thickness: 2px;
 }
 
-.crossword-grid {
+.crossword-layout {
   margin-top: 0.72rem;
   display: grid;
-  grid-template-columns: repeat(var(--crossword-cols, 5), minmax(0, 1fr));
-  gap: 0.26rem;
+  grid-template-columns: auto minmax(230px, 1fr);
+  align-items: start;
+  gap: 0.64rem;
+}
+
+.crossword-board-panel {
+  display: grid;
+  justify-items: start;
+  gap: 0.5rem;
+}
+
+.crossword-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--crossword-cols, 5), var(--crossword-cell-size, 34px));
+  grid-auto-rows: var(--crossword-cell-size, 34px);
+  gap: 0.2rem;
   border-radius: 12px;
   border: 1px solid rgba(251, 146, 60, 0.34);
   background: rgba(255, 237, 213, 0.12);
-  padding: 0.5rem;
+  padding: 0.38rem;
+  width: max-content;
 }
 
 .crossword-cell {
   position: relative;
-  aspect-ratio: 1 / 1;
+  width: var(--crossword-cell-size, 34px);
+  height: var(--crossword-cell-size, 34px);
   border-radius: 8px;
   border: 1px solid rgba(253, 186, 116, 0.55);
   background: rgba(255, 251, 235, 0.96);
   color: #7c2d12;
   font-family: "Bricolage Grotesque", sans-serif;
-  font-size: 1rem;
+  font-size: 0.88rem;
   font-weight: 800;
   text-transform: uppercase;
   cursor: pointer;
@@ -3150,9 +3171,9 @@ body {
 
 .crossword-number {
   position: absolute;
-  left: 4px;
+  left: 3px;
   top: 2px;
-  font-size: 0.56rem;
+  font-size: 0.5rem;
   line-height: 1;
   color: rgba(124, 45, 18, 0.82);
   font-weight: 800;
@@ -3163,23 +3184,31 @@ body {
   inset: 0;
   display: grid;
   place-items: center;
-  font-size: 1.02rem;
+  font-size: 0.84rem;
   font-weight: 800;
   line-height: 1;
 }
 
 .crossword-toolbar {
-  margin-top: 0.64rem;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.4rem;
+  width: 100%;
 }
 
 .crossword-clues {
-  margin-top: 0.72rem;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: 1fr;
+  align-content: start;
   gap: 0.48rem;
+  max-height: 390px;
+  overflow: auto;
+  padding-right: 0.24rem;
+}
+
+/* Give Crucigrama a slightly taller clue panel in launch modal */
+.launch-game-area .knowledge-arcade-game.knowledge-crucigrama .crossword-clues {
+  max-height: 430px;
 }
 
 .crossword-clues article {
@@ -4093,6 +4122,20 @@ body {
     grid-template-columns: 1fr;
   }
 
+  .crossword-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .crossword-board-panel {
+    justify-items: center;
+  }
+
+  .crossword-clues {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
   .solitaire-topbar,
   .solitaire-tableau,
   .crossword-clues,
@@ -4143,6 +4186,27 @@ body {
   .platformer-campaign-strip,
   .platformer-legend-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .crossword-grid {
+    grid-template-columns: repeat(var(--crossword-cols, 5), 28px);
+    grid-auto-rows: 28px;
+  }
+
+  .crossword-cell {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+  }
+
+  .crossword-number {
+    font-size: 0.44rem;
+  }
+
+  .crossword-letter {
+    font-size: 0.74rem;
   }
 }
 
