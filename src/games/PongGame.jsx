@@ -18,11 +18,14 @@ const createDefaultSnapshot = () => ({
   winner: null,
   difficultyKey: "arcade",
   difficultyLabel: "Arcade",
+  ballMaxSpeed: 1060,
   aiProfile: "BAL",
   soundEnabled: true,
   playerControlMode: "keyboard",
   fullscreen: false,
-  fps: 60
+  fps: 60,
+  goalTop: 151,
+  goalBottom: 389
 });
 
 function PongGame() {

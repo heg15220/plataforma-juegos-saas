@@ -519,3 +519,45 @@
     - Confirmado en estado: pistas con formato `Pista (fila X, columna Y): ...`.
   - Sky Runner: `output/platformer-height-20260301/` (`shot-0..2.png`, `state-0..2.json`).
   - Sin `errors-*.json` en ambos outputs.
+
+## 2026-03-01 - Pong: porterias centrales (extremos sin punto)
+- `src/games/pong/constants.js`:
+  - anadidos `goalOpeningRatio` y `goalOpeningMinHeight` para parametrizar la zona valida de gol.
+- `src/games/pong/PongRuntime.js`:
+  - calculada `goalArea` central de forma determinista desde el alto del canvas.
+  - la puntuacion ahora solo se registra si la bola cruza la pared lateral dentro de la porteria.
+  - cuando la bola cruza por los extremos (fuera de porteria), rebota en pared lateral y no suma punto.
+  - anadido render visual de segmentos de pared superior/inferior y marcas de limite de porteria.
+- `src/games/PongGame.jsx`:
+  - snapshot por defecto extendido con `goalTop`/`goalBottom` para trazabilidad QA.
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por `spawn EPERM` de esbuild dentro del sandbox).
+- Playwright skill client OK:
+  - `output/pong-goal-porteria-check/shot-0.png..shot-2.png`.
+  - sin `errors-*.json` en la corrida.
+
+## 2026-03-01 - Pong: velocidad maxima de pelota por dificultad IA
+- `src/games/pong/constants.js`:
+  - cada preset de dificultad ahora define su `maxBallSpeed`:
+    - `rookie`: `880`
+    - `arcade`: `1060`
+    - `pro`: `1280`
+- `src/games/pong/PongRuntime.js`:
+  - anadido `getBallMaxSpeed()` para resolver el tope dinamico segun `difficultyKey`.
+  - toda la fisica que limitaba velocidad con `BALL_CONFIG.maxSpeed` ahora usa el tope dinamico:
+    - saque,
+    - rebotes en palas,
+    - rebotes en pared superior/inferior,
+    - rebote lateral fuera de porteria,
+    - limite superior de `aiSpeedCap` adaptativo.
+  - al cambiar dificultad (`setDifficulty`) se actualiza `state.ballMaxSpeed` y se clampa la velocidad actual de la bola para evitar quedar por encima del nuevo maximo.
+  - snapshot extendido con `ballMaxSpeed`.
+- `src/games/PongGame.jsx`:
+  - snapshot por defecto extendido con `ballMaxSpeed` para coherencia inicial.
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por `spawn EPERM` de esbuild dentro del sandbox).
+- Playwright skill client OK:
+  - `output/pong-difficulty-speed-check/shot-0.png..shot-2.png`
+  - sin `errors-*.json`.

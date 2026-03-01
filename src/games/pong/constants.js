@@ -43,7 +43,9 @@ export const MATCH_CONFIG = {
   roundBreakSeconds: 0.95,
   startCountdown: 2.4,
   maxComboWindow: 2.2,
-  maxParticles: 90
+  maxParticles: 90,
+  goalOpeningRatio: 0.44,
+  goalOpeningMinHeight: 170
 };
 
 export const DIFFICULTY_PRESETS = {
@@ -51,6 +53,7 @@ export const DIFFICULTY_PRESETS = {
     key: "rookie",
     label: "Rookie",
     aiBaseSpeed: 330,
+    maxBallSpeed: 880,
     aiPrecisionError: 78,
     aiReaction: 0.22,
     aiPredictionWeight: 0.52,
@@ -60,6 +63,7 @@ export const DIFFICULTY_PRESETS = {
     key: "arcade",
     label: "Arcade",
     aiBaseSpeed: 430,
+    maxBallSpeed: 1060,
     aiPrecisionError: 52,
     aiReaction: 0.16,
     aiPredictionWeight: 0.7,
@@ -69,6 +73,7 @@ export const DIFFICULTY_PRESETS = {
     key: "pro",
     label: "Pro",
     aiBaseSpeed: 540,
+    maxBallSpeed: 1280,
     aiPrecisionError: 30,
     aiReaction: 0.1,
     aiPredictionWeight: 0.86,

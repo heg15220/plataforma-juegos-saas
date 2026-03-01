@@ -106,6 +106,16 @@ export default class PongRuntime {
 
     this.width = PONG_WIDTH;
     this.height = PONG_HEIGHT;
+    const goalHeight = clamp(
+      this.height * MATCH_CONFIG.goalOpeningRatio,
+      MATCH_CONFIG.goalOpeningMinHeight,
+      this.height - 80
+    );
+    const goalTop = (this.height - goalHeight) * 0.5;
+    this.goalArea = {
+      top: goalTop,
+      bottom: goalTop + goalHeight
+    };
 
     this.canvas.width = this.width;
     this.canvas.height = this.height;
@@ -204,13 +214,16 @@ export default class PongRuntime {
       soundEnabled: this.soundEnabled,
       difficultyKey: this.difficultyKey,
       difficultyLabel: DIFFICULTY_PRESETS[this.difficultyKey].label,
+      ballMaxSpeed: this.getBallMaxSpeed(),
       playerWins: this.totalWins,
       bestRally: this.bestRally,
       timerLabel: toTimerString(MATCH_CONFIG.matchSeconds),
       winner: null,
       fps: 60,
       frameTime: 16.67,
-      fullscreen: false
+      fullscreen: false,
+      goalTop: Math.round(this.goalArea.top),
+      goalBottom: Math.round(this.goalArea.bottom)
     };
 
     this.handleKeyDown = this.handleKeyDown.bind(this);
@@ -480,6 +493,11 @@ export default class PongRuntime {
     this.publishSnapshot(true);
   }
 
+  getBallMaxSpeed() {
+    const preset = DIFFICULTY_PRESETS[this.difficultyKey] || DIFFICULTY_PRESETS.arcade;
+    return Number.isFinite(preset?.maxBallSpeed) ? preset.maxBallSpeed : BALL_CONFIG.maxSpeed;
+  }
+
   setDifficulty(key) {
     if (!DIFFICULTY_PRESETS[key]) {
       return;
@@ -488,6 +506,8 @@ export default class PongRuntime {
     this.difficultyKey = key;
     this.state.difficultyKey = key;
     this.state.difficultyLabel = DIFFICULTY_PRESETS[key].label;
+    this.state.ballMaxSpeed = this.getBallMaxSpeed();
+    this.ball.speed = clamp(this.ball.speed, BALL_CONFIG.minSpeed, this.state.ballMaxSpeed);
     this.state.message = `Dificultad ${DIFFICULTY_PRESETS[key].label}`;
     this.statusFlash = 0.42;
     this.publishSnapshot(true);
@@ -639,7 +659,7 @@ export default class PongRuntime {
     this.ball.speed = clamp(
       BALL_CONFIG.serveSpeed + (this.state.playerScore + this.state.aiScore) * 8,
       BALL_CONFIG.minSpeed,
-      BALL_CONFIG.maxSpeed
+      this.getBallMaxSpeed()
     );
     this.ball.spin = 0;
     this.ball.lastTouchedBy = "none";
@@ -648,6 +668,25 @@ export default class PongRuntime {
     this.state.message = direction > 0 ? "Saque para 1P" : "Saque para COM";
     this.audio.playServeCue();
     this.statusFlash = 0.18;
+  }
+
+  isBallInsideGoalLane() {
+    const minY = this.goalArea.top + this.ball.radius;
+    const maxY = this.goalArea.bottom - this.ball.radius;
+    return this.ball.y >= minY && this.ball.y <= maxY;
+  }
+
+  bounceFromSideWall(side) {
+    if (side === "left") {
+      this.ball.x = this.ball.radius;
+      this.ball.vx = Math.abs(this.ball.vx);
+    } else {
+      this.ball.x = this.width - this.ball.radius;
+      this.ball.vx = -Math.abs(this.ball.vx);
+    }
+    this.ball.speed = clamp(this.ball.speed * BALL_CONFIG.wallSpeedDamp, BALL_CONFIG.minSpeed, this.getBallMaxSpeed());
+    this.wallPulse = 0.55;
+    this.audio.playWallCue();
   }
 
   registerGoal(scoredBy) {
@@ -710,7 +749,7 @@ export default class PongRuntime {
     const speedCap = clamp(
       preset.aiBaseSpeed + pressure * 210 * personality.aggression,
       preset.aiBaseSpeed * 0.8,
-      BALL_CONFIG.maxSpeed * 0.92
+      this.getBallMaxSpeed() * 0.92
     );
 
     const reaction = clamp(preset.aiReaction - pressure * 0.04, 0.06, 0.28);
@@ -895,11 +934,17 @@ export default class PongRuntime {
       return false;
     }
 
-    if (side === "player" && this.ball.vx >= 0) {
+    // Use relative horizontal velocity instead of only ball.vx:
+    // if the paddle moves into the ball, the hit should still be valid.
+    const ballVxPx = this.ball.vx * this.ball.speed;
+    const relativeVx = ballVxPx - paddle.vx;
+    const epsilon = 0.5;
+
+    if (side === "player" && relativeVx >= -epsilon) {
       return false;
     }
 
-    if (side === "ai" && this.ball.vx <= 0) {
+    if (side === "ai" && relativeVx <= epsilon) {
       return false;
     }
 
@@ -923,7 +968,7 @@ export default class PongRuntime {
     this.ball.speed = clamp(
       this.ball.speed + BALL_CONFIG.hitSpeedGain + Math.abs(english) * BALL_CONFIG.englishSpeedGain,
       BALL_CONFIG.minSpeed,
-      BALL_CONFIG.maxSpeed
+      this.getBallMaxSpeed()
     );
     this.ball.spin = english;
     this.ball.lastTouchedBy = side;
@@ -957,7 +1002,7 @@ export default class PongRuntime {
     if (this.ball.y - this.ball.radius <= 0) {
       this.ball.y = this.ball.radius;
       this.ball.vy = Math.abs(this.ball.vy);
-      this.ball.speed = clamp(this.ball.speed * BALL_CONFIG.wallSpeedDamp, BALL_CONFIG.minSpeed, BALL_CONFIG.maxSpeed);
+      this.ball.speed = clamp(this.ball.speed * BALL_CONFIG.wallSpeedDamp, BALL_CONFIG.minSpeed, this.getBallMaxSpeed());
       this.wallPulse = 0.55;
       this.audio.playWallCue();
     }
@@ -965,7 +1010,7 @@ export default class PongRuntime {
     if (this.ball.y + this.ball.radius >= this.height) {
       this.ball.y = this.height - this.ball.radius;
       this.ball.vy = -Math.abs(this.ball.vy);
-      this.ball.speed = clamp(this.ball.speed * BALL_CONFIG.wallSpeedDamp, BALL_CONFIG.minSpeed, BALL_CONFIG.maxSpeed);
+      this.ball.speed = clamp(this.ball.speed * BALL_CONFIG.wallSpeedDamp, BALL_CONFIG.minSpeed, this.getBallMaxSpeed());
       this.wallPulse = 0.55;
       this.audio.playWallCue();
     }
@@ -977,12 +1022,19 @@ export default class PongRuntime {
     }
 
     if (this.ball.x + this.ball.radius < 0) {
-      this.registerGoal("ai");
-      return;
+      if (this.isBallInsideGoalLane()) {
+        this.registerGoal("ai");
+        return;
+      }
+      this.bounceFromSideWall("left");
     }
 
     if (this.ball.x - this.ball.radius > this.width) {
-      this.registerGoal("player");
+      if (this.isBallInsideGoalLane()) {
+        this.registerGoal("player");
+        return;
+      }
+      this.bounceFromSideWall("right");
     }
   }
 
@@ -1136,11 +1188,14 @@ export default class PongRuntime {
       winner:           this.state.winner,
       difficultyKey:    this.state.difficultyKey,
       difficultyLabel:  this.state.difficultyLabel,
+      ballMaxSpeed:     this.state.ballMaxSpeed,
       aiProfile:        this.state.aiProfile,
       soundEnabled:     this.state.soundEnabled,
       playerControlMode: this.state.playerControlMode,
       fullscreen:       this.state.fullscreen,
       fps:              Math.round(this.state.fps),
+      goalTop:          this.state.goalTop,
+      goalBottom:       this.state.goalBottom
     });
   }
 
@@ -1160,6 +1215,8 @@ export default class PongRuntime {
       ctx.fillRect(0, 0, W, 4);
       ctx.fillRect(0, H - 4, W, 4);
     }
+
+    this._drawGoalWalls(ctx, W, H);
 
     ctx.setLineDash([10, 8]);
     ctx.strokeStyle = "rgba(51,65,85,0.9)";
@@ -1249,6 +1306,41 @@ export default class PongRuntime {
         ctx.restore();
       }
     }
+  }
+
+  _drawGoalWalls(ctx, W, H) {
+    const { top, bottom } = this.goalArea;
+    const inset = 2;
+    const markerWidth = 46;
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(34,211,238,0.45)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(inset, 0);
+    ctx.lineTo(inset, top);
+    ctx.moveTo(inset, bottom);
+    ctx.lineTo(inset, H);
+    ctx.moveTo(W - inset, 0);
+    ctx.lineTo(W - inset, top);
+    ctx.moveTo(W - inset, bottom);
+    ctx.lineTo(W - inset, H);
+    ctx.stroke();
+
+    ctx.setLineDash([6, 6]);
+    ctx.strokeStyle = "rgba(148,163,184,0.5)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, top);
+    ctx.lineTo(markerWidth, top);
+    ctx.moveTo(0, bottom);
+    ctx.lineTo(markerWidth, bottom);
+    ctx.moveTo(W - markerWidth, top);
+    ctx.lineTo(W, top);
+    ctx.moveTo(W - markerWidth, bottom);
+    ctx.lineTo(W, bottom);
+    ctx.stroke();
+    ctx.restore();
   }
 
   _drawPaddle(ctx, paddle, color) {
