@@ -9,6 +9,7 @@ import HeadSoccerGame from "../games/HeadSoccerGame";
 import PacmanGame from "../games/PacmanGame";
 import ChessGame from "../games/ChessGame";
 import DominoStrategyGame from "../games/DominoStrategyGame";
+import RaceGame2DPro from "../games/RaceGame2DPro";
 import resolveBrowserLanguage from "../utils/resolveBrowserLanguage";
 
 const PlatformerGame = lazy(() => import("../games/PlatformerGame"));
@@ -38,7 +39,8 @@ const GAME_COMPONENTS = {
   "platformer-sky-runner": PlatformerGame,
   "fighter-neon-dojo": FighterGame,
   "sports-head-soccer-arena": HeadSoccerGame,
-  "arcade-pacman-maze-protocol": PacmanGame
+  "arcade-pacman-maze-protocol": PacmanGame,
+  "racing-race2dpro": RaceGame2DPro,
 };
 
 const CONTROL_HINTS_BY_LOCALE = {
@@ -60,7 +62,8 @@ const CONTROL_HINTS_BY_LOCALE = {
     "platformer-sky-runner": "Movimiento con A/D o flechas, salto variable con W/arriba/espacio y accion con F en rutas aleatorias de 5 mapas con jefes.",
     "fighter-neon-dojo": "Combate con A/D o flechas, salto W/arriba, jab J/espacio, heavy K/enter, guardia L/abajo y special U/B.",
     "sports-head-soccer-arena": "Flechas izquierda/derecha para mover, arriba para salto, Space para disparo y B para habilidad.",
-    "arcade-pacman-maze-protocol": "WASD o flechas para mover, Enter/Espacio para empezar, P/Esc para pausa, R reinicia, M sonido y G debug."
+    "arcade-pacman-maze-protocol": "WASD o flechas para mover, Enter/Espacio para empezar, P/Esc para pausa, R reinicia, M sonido y G debug.",
+    "racing-race2dpro": "Arriba/abajo acelerar/frenar, izq/der girar. Móvil: joystick táctil izq. + botones der. Espacio turbo. R reinicia."
   },
   en: {
     "adventure-echoes": "Move with WASD/arrows plus search, scan, rations, beacon and jump (B).",
@@ -80,7 +83,8 @@ const CONTROL_HINTS_BY_LOCALE = {
     "platformer-sky-runner": "Move with A/D or arrows, use variable jump with W/up/space and F action in randomized 5-map runs with boss fights.",
     "fighter-neon-dojo": "Fight with A/D or arrows, jump W/up, jab J/space, heavy K/enter, guard L/down and special U/B.",
     "sports-head-soccer-arena": "Left/right arrows move, up jumps, Space shoots and B triggers skill.",
-    "arcade-pacman-maze-protocol": "Use arrows or WASD to move, Enter/Space to start, P/Esc to pause, R restart, M sound and G debug."
+    "arcade-pacman-maze-protocol": "Use arrows or WASD to move, Enter/Space to start, P/Esc to pause, R restart, M sound and G debug.",
+    "racing-race2dpro": "Up/down throttle/brake, left/right steer. Mobile: left touch joystick + right buttons. Space turbo. R restart."
   }
 };
 
