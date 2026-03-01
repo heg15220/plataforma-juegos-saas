@@ -561,3 +561,32 @@
 - Playwright skill client OK:
   - `output/pong-difficulty-speed-check/shot-0.png..shot-2.png`
   - sin `errors-*.json`.
+
+## 2026-03-01 - Domino (revision de reglas Ludoteka + mejora UX/UI)
+- `src/games/DominoStrategyGame.jsx`:
+  - reglas internas actualizadas para reflejar modalidad activa `Domino 7+7` contra IA.
+  - cierre por tranca corregido en puntuacion:
+    - antes: sumaba solo la mano rival,
+    - ahora: suma total bloqueado (mano jugador + mano IA), como en la regla de tranca.
+  - salida por rondas ajustada:
+    - ronda 1 abre por doble mas alto / ficha mas alta,
+    - rondas siguientes alternan salida (`nextStarter`).
+  - payload QA ampliado con `variant: domino-7-plus-7` y `nextStarter`.
+  - mejoras de jugabilidad:
+    - fichas jugables resaltadas en la mano,
+    - indicador `L`, `R` o `L/R` por ficha segun extremos posibles,
+    - dobles marcados como `is-double` para render perpendicular en mesa/mano.
+  - resumen de ronda ampliado en tranca con puntos de mano `Tu/IA`.
+- `src/styles.css`:
+  - nueva capa visual de mesa para domino estrategico (`domino-table`, chip de modalidad, nota de reglas activas).
+  - cadena de mesa en layout mas legible (flex, centrada, area minima).
+  - estilo de dobles perpendiculares para `domino-strategy-game`.
+  - mejora de feedback visual en fichas jugables/no jugables y badge de legalidad.
+  - ajuste responsive para cabecera de mesa en movil.
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por `spawn EPERM` de esbuild dentro del sandbox).
+- Playwright skill client OK:
+  - `output/strategy-domino-rules-ux-check/shot-0.png..shot-2.png`
+  - `state-0..2.json` con `variant: domino-7-plus-7` y `nextStarter`.
+  - sin `errors-*.json`.
