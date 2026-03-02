@@ -10,6 +10,7 @@ import PacmanGame from "../games/PacmanGame";
 import ChessGame from "../games/ChessGame";
 import DominoStrategyGame from "../games/DominoStrategyGame";
 import PokerTexasHoldemGame from "../games/PokerTexasHoldemGame";
+import ParchisStrategyGame from "../games/ParchisStrategyGame";
 import RaceGame2DPro from "../games/RaceGame2DPro";
 import resolveBrowserLanguage from "../utils/resolveBrowserLanguage";
 
@@ -37,6 +38,7 @@ const GAME_COMPONENTS = {
   "knowledge-sopa-letras-mega": KnowledgeSopaLetrasGame,
   "strategy-chess-grandmaster": ChessGame,
   "strategy-poker-holdem-no-bet": PokerTexasHoldemGame,
+  "strategy-parchis-ludoteka": ParchisStrategyGame,
   "rpg-emberfall": RpgGame,
   "platformer-sky-runner": PlatformerGame,
   "fighter-neon-dojo": FighterGame,
@@ -61,6 +63,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-sopa-letras-mega": "Arrastra o marca inicio-fin para seleccionar palabras en horizontal, vertical o diagonal (tambien al reves). R carga partida aleatoria.",
     "strategy-chess-grandmaster": "Clic para mover, promocion al coronar, U deshace, D reclama tablas y F alterna pantalla completa.",
     "strategy-poker-holdem-no-bet": "Poker clasico 5 cartas con apuestas reales: ciegas, bote y acciones call/raise/fold/all-in. Enter accion principal, U subir, A all-in, F retirarse, 1-5 seleccionar descarte, D descartar, S servirse, N siguiente mano y R reiniciar.",
+    "strategy-parchis-ludoteka": "S/Enter inicia partida, R/Enter/Space tira dado, 1..9 elige jugada, Enter primera jugada, X continua sin jugada y N nueva partida.",
     "rpg-emberfall": "Explora con WASD/flechas y usa atacar, habilidad, defender, enfocar, invocar (U) y pocion.",
     "platformer-sky-runner": "Movimiento con A/D o flechas, salto variable con W/arriba/espacio y accion con F en rutas aleatorias de 5 mapas con jefes.",
     "fighter-neon-dojo": "Combate con A/D o flechas, salto W/arriba, jab J/espacio, heavy K/enter, guardia L/abajo y special U/B.",
@@ -83,6 +86,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-sopa-letras-mega": "Drag or click start-end to select words horizontally, vertically, or diagonally (reverse also works). Press R for a random match.",
     "strategy-chess-grandmaster": "Click pieces to move, choose promotion on last rank, U undo, D claim draw, and F toggles fullscreen.",
     "strategy-poker-holdem-no-bet": "Classic 5-card draw with real betting: blinds, pot play, and check/call/raise/fold/all-in decisions. Enter main action, U raise, A all-in, F fold, 1-5 select discard, D discard, S stand pat, N next hand, and R restart.",
+    "strategy-parchis-ludoteka": "S/Enter starts the match, R/Enter/Space rolls the die, 1..9 picks a move, Enter takes the first move, X continues without move, and N starts a new match.",
     "rpg-emberfall": "Explore with WASD/arrows and use attack, skill, defend, focus, summon (U) and potion.",
     "platformer-sky-runner": "Move with A/D or arrows, use variable jump with W/up/space and F action in randomized 5-map runs with boss fights.",
     "fighter-neon-dojo": "Fight with A/D or arrows, jump W/up, jab J/space, heavy K/enter, guard L/down and special U/B.",

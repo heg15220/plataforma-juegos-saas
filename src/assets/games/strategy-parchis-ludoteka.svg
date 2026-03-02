@@ -1,0 +1,45 @@
+<svg width="640" height="360" viewBox="0 0 640 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="640" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#123A5A"/>
+      <stop offset="1" stop-color="#0D1E2E"/>
+    </linearGradient>
+    <linearGradient id="board" x1="120" y1="40" x2="520" y2="320" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FAF5E8"/>
+      <stop offset="1" stop-color="#E8DCC3"/>
+    </linearGradient>
+    <filter id="shadow" x="70" y="10" width="500" height="340" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#07121D" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <circle cx="84" cy="70" r="120" fill="#1C5E8D" fill-opacity="0.25"/>
+  <circle cx="560" cy="310" r="160" fill="#2A88B8" fill-opacity="0.18"/>
+
+  <g filter="url(#shadow)">
+    <rect x="120" y="40" width="400" height="280" rx="24" fill="url(#board)"/>
+  </g>
+
+  <rect x="172" y="92" width="296" height="176" rx="12" fill="#F5EAD2" stroke="#BBAE91" stroke-width="4"/>
+  <path d="M320 92V268M172 180H468" stroke="#C5B89A" stroke-width="4"/>
+
+  <rect x="236" y="156" width="168" height="48" rx="10" fill="#D8C8A8" stroke="#A79372" stroke-width="3"/>
+
+  <circle cx="196" cy="116" r="20" fill="#D93636"/>
+  <circle cx="444" cy="116" r="20" fill="#2F79D1"/>
+  <circle cx="196" cy="244" r="20" fill="#3AAE55"/>
+  <circle cx="444" cy="244" r="20" fill="#F2B423"/>
+
+  <circle cx="320" cy="180" r="14" fill="#193247"/>
+  <circle cx="320" cy="180" r="7" fill="#F8FBFF"/>
+
+  <circle cx="258" cy="180" r="8" fill="#D93636"/>
+  <circle cx="382" cy="180" r="8" fill="#2F79D1"/>
+  <circle cx="320" cy="132" r="8" fill="#3AAE55"/>
+  <circle cx="320" cy="228" r="8" fill="#F2B423"/>
+
+  <text x="320" y="312" text-anchor="middle" fill="#F7F2E6" font-size="28" font-family="Outfit, Arial, sans-serif" font-weight="700">
+    Parchis Ludoteka
+  </text>
+</svg>

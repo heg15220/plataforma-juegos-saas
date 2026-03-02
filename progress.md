@@ -891,3 +891,167 @@
 - Verificacion visual i18n forzando locale `en-US`:
   - `output/strategy-poker-i18n-check/shot-en-us.png`
   - UI del componente en ingles (controles, estado de mesa, acciones, panel central y textos de asiento).
+
+## 2026-03-02 - Parchis (calidad tablero + flujo de jugada + IA)
+- `src/games/ParchisStrategyGame.jsx`:
+  - Mejorado flujo de jugada del usuario: clic en ficha ahora prioriza seleccion (clic 1) y confirma movimiento con segundo clic/Enter.
+  - Enter/Espacio en `await-action` ejecuta la jugada de la ficha seleccionada cuando existe; si no, usa la primera jugada disponible.
+  - Reordenada la lista de jugadas para priorizar la ficha seleccionada y anadido bloque de ayuda de seleccion.
+  - Reducido autop-move a casos de una sola jugada sin seleccion activa.
+  - IA: anadida `estimatePieceExposure` y nuevo peso `exposureWeight` por dificultad para penalizar movimientos expuestos a captura inmediata.
+  - Tablero SVG refinado: margen interno real (evita clipping de bordes), marco ornamental, marcas visuales de seguros/salidas y centro de meta mejor definido.
+- `src/styles.css`:
+  - Mejora de acabados visuales del tablero/paneles (contrastes, sombras, bordes, legibilidad).
+  - Nuevos estilos para anillos de salida, marcas de casilla segura, nota de seleccion y accion enfocada.
+  - Ajustada animacion de fichas seleccionables (`piece-glow`) para no sobrescribir `transform` de posicion.
+
+### Validacion ejecutada
+- Build: `npm run build` OK.
+- Playwright parchis (flujo general): `output/parchis-audit/after/shot-0..5.png` + `state-0..5.json`.
+- Playwright parchis (estado seleccion): `output/parchis-audit/after-probe-2/shot-0.png` + `state-0.json`.
+- En las corridas no se observaron errores nuevos de consola y `render_game_to_text` mantiene coherencia con el estado visual.
+
+### TODO sugerido
+- Si se quiere mayor control competitivo: exponer un toggle UX para activar/desactivar auto-movimiento cuando solo exista una jugada legal.
+- Ajustar pesos `exposureWeight` tras partidas largas (especialmente en dificultad dificil) para equilibrar agresividad vs. seguridad.
+- Verificacion dirigida de seleccion (Playwright con clic sobre SVG):
+  - 1er clic en ficha seleccionable: no mueve (`firstClickMoved: false`, sigue `phase: await-action`).
+  - 2o clic en la misma ficha: confirma movimiento (`secondClickMoved: true`, avance de progreso y cambio de turno).
+## 2026-03-02 - Parchis: rebuild visual del tablero hacia estilo clasico (referencia Fournier/Cayro)
+- Tablero rehacido desde cero con arquitectura desacoplada y modelo declarativo:
+  - Nuevo modelo: `src/games/parchis/boardModel.js` (coordenadas normalizadas `0..1000`, grid logico, `track-0..67`, `home-{color}-0..7`, casas y meta central).
+  - Nuevo renderer: `src/games/parchis/LudoBoard.jsx` por capas SVG (`BoardBase`, `SquaresLayer`, `OverlayLayer`, `TokensLayer`) con API de props:
+    - `positions`
+    - `highlightedSquares`
+    - `onSquareClick(squareId)`
+    - `onTokenClick(tokenId)`
+    - `theme`
+- Integrado en `src/games/ParchisStrategyGame.jsx`:
+  - Eliminado el render anterior del tablero embebido en el componente.
+  - Mapeo de estado del juego -> `positions` (fichas en track, pasillo final, casa y meta).
+  - Mapeo de acciones legales -> `highlightedSquares`.
+  - Click de casilla implementado para resolver jugada por destino y priorizar ficha seleccionada.
+  - Mantenido flujo existente de click en ficha (clic 1 selecciona, clic 2 confirma).
+- Estilo actualizado en `src/styles.css` para aproximar tablero clasico:
+  - marco doble, fondo neutro, casas con circulos de color,
+  - casillas numeradas, pasillos finales en color solido,
+  - meta central en rombo 4 colores,
+  - iconografia de seguros y marcadores de salida,
+  - tokens con stacking y foco visual.
+
+### Validacion
+- Build OK: `npm run build` (ejecutado fuera de sandbox por restriccion EPERM).
+- Playwright skill client sobre URL preview:
+  - `output/strategy-parchis-classic-check/shot-0..3.png`
+  - `output/strategy-parchis-classic-check/state-0..3.json`
+  - sin archivos `errors-*.json` en la corrida limpia.
+
+### TODO sugerido
+- Ajustar aun mas la tipografia/rotacion de indices de casilla para emular 1:1 el tablero de referencia.
+- Ejecutar una pasada Playwright dirigida con interaccion por selector SVG (clic en casillas resaltadas) para cubrir explicitamente `onSquareClick`.
+## 2026-03-02 - Parchis: correccion de posicion de pasillos finales
+- Ajustado el modelo de geometria en `src/games/parchis/boardModel.js` para centrar correctamente las filas/columnas de llegada a meta:
+  - red: `[7,1] -> [7,8]`
+  - blue: `[13,7] -> [6,7]`
+  - yellow: `[7,13] -> [7,6]`
+  - green: `[1,7] -> [8,7]`
+- Resultado: los pasillos de cada color ahora quedan sobre el eje central del tablero, alineados con el estilo clasico de referencia.
+- Validacion:
+  - Build OK (`npm run build`, fuera de sandbox por EPERM en sandbox).
+  - Captura de comprobacion: `output/strategy-parchis-home-lanes-fix/shot-0.png`.
+## 2026-03-02 - Parchis: ampliacion de casillas + salidas coloreadas
+- Ajustado `src/games/parchis/boardModel.js`:
+  - ampliado tamano de casillas del recorrido y pasillos finales (`trackSize`, `laneSize`) para dar mas ancho util visual por casilla;
+  - mantenido el trazado sin solape con casas/pasillos;
+  - las casillas de salida (`start`) ahora conservan `color` en el modelo para poder pintarse por zona.
+- Ajustado `src/games/parchis/LudoBoard.jsx`:
+  - anadido anillo exterior de contraste en las fichas (`ludo-token-outline`) para legibilidad sobre casillas de salida coloreadas.
+- Ajustado `src/styles.css`:
+  - reglas de color por casilla de salida (`.ludo-square--track.is-start.color-*`),
+  - contraste de numeracion/iconos en salida,
+  - mejora de contraste visual de fichas (outline + ring + stroke).
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por EPERM en sandbox).
+- Captura de verificacion: `output/strategy-parchis-start-cell-color-fix/shot-0.png`.
+## 2026-03-02 - Parchis: botones iniciar/reiniciar + salida desde casa + ajuste pasillos
+- `src/games/ParchisStrategyGame.jsx`:
+  - migrado el flujo de arranque a `await-start` con boton `Iniciar partida` y `Reiniciar partida` en cabecera (arriba derecha);
+  - al iniciar/reiniciar, las 4 fichas de cada color arrancan en casa (`INITIAL_TRACK_PIECES = 0`);
+  - salida obligatoria actualizada para activarse con 5 en cualquiera de los dos dados mostrados (`dice`/`diceAux`), manteniendo movimiento por dado principal;
+  - estado/payload extendidos con `diceAux` y estado visual actualizado (`Pendiente de inicio`, dados en status row, panel de inicio en acciones);
+  - IA/turnos 4 jugadores mantenidos (humano + 3 IAs) con textos/UI sincronizados.
+- `src/games/parchis/boardModel.js`:
+  - reajustados pasillos finales de `yellow` y `green` para evitar solape visual con los finales de `red` y `blue` en la zona central;
+  - mapeo de color por owner ampliado para `ai-blue`, `ai-yellow`, `ai-green`.
+- Copy/hints sincronizados con nuevo flujo de inicio:
+  - `src/components/GamePlayground.jsx`
+  - `src/games/registry.jsx`
+  - `src/data/games.js`
+
+### Validacion
+- Build OK: `npm run build` (ejecutado fuera de sandbox por EPERM de esbuild en sandbox).
+- QA visual Playwright (`web_game_playwright_client.mjs`):
+  - `output/strategy-parchis-3ai-start-fixes/shot-0..2.png`
+  - `output/strategy-parchis-3ai-start-fixes/state-0..2.json`
+  - verificado en estado: `phase=await-roll` tras iniciar, `home=4` para todos los jugadores al arranque y `variant=parchis-4p-human-vs-3ai`.
+## 2026-03-02 - Parchis: correccion posicion pasillos finales (verde/amarillo/azul)
+- `src/games/parchis/boardModel.js` ajustado para que los pasillos finales apunten al lado correcto de la meta y no crucen al lado opuesto:
+  - red: `[7,1] -> [7,6]`
+  - blue: `[13,7] -> [8,7]`
+  - yellow: `[7,13] -> [7,8]`
+  - green: `[1,7] -> [6,7]`
+- Resultado visual: cada color termina en su casilla de aproximacion propia alrededor de la meta (sin desplazamientos erraticos).
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por EPERM de esbuild en sandbox).
+- Capturas de verificacion: `output/strategy-parchis-lanes-position-fix/shot-0.png` y `shot-1.png`.
+## 2026-03-02 - Parchis: regla de doble 6 + secuencia obligatoria con 5
+- `src/games/ParchisStrategyGame.jsx` actualizado en motor de turnos para reglas de dados solicitadas:
+  - el turno extra ahora solo ocurre con `doble 6` (no con un 6 simple);
+  - `sixStreak` y penalizacion de tercer 6 adaptadas a `tres dobles 6 consecutivos`;
+  - cuando hay un `5` en cualquiera de los dos dados y quedan fichas en casa:
+    - se fuerza primero `salida obligatoria` (step 5),
+    - y se encola el otro dado para aplicarlo justo despues (`queuedDiceValues`).
+- Se anadio pipeline de segundo dado pendiente:
+  - nuevo estado `queuedDiceValues` (inicializacion, payload, limpieza en fin de turno),
+  - activacion automatica del dado pendiente tras completar la salida obligatoria.
+- Copy/UI sincronizados:
+  - reglas prompt del componente actualizado (doble 6 + secuencia 5 + otro dado),
+  - etiqueta de estado de racha renombrada a `Racha doble 6`.
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por EPERM de esbuild en sandbox).
+- Playwright runtime check (`output/strategy-parchis-dice-rules-fix/state-0.json`):
+  - caso detectado `dados 5 y 4` con `mandatoryEntry=true`, `steps=5`, `queuedDiceValues=[4]`.
+- Playwright runtime check (`output/strategy-parchis-dice-rules-fix-queue/state-0.json`):
+  - caso `dados 6 y 1` sin turno extra (pasa a `ai-blue`), confirmando que no se repite tirada con 6 simple.
+## 2026-03-02 - Parchis: revision de bloqueo de ronda + regla de dobles
+- Se reviso el reporte de "no empieza la siguiente ronda":
+  - en prueba aislada larga (`output/strategy-parchis-round-stall-isolation/state-0.json`) la partida avanza por rondas completas sin bloqueo (turnCount progresa y rota por los 4 jugadores).
+  - se detecto un edge-case real en la cola del segundo dado tras salida obligatoria con 5: si ese segundo dado quedaba sin jugadas, no se autoresolvia.
+- Fix aplicado en `src/games/ParchisStrategyGame.jsx`:
+  - `activateQueuedDieMove(...)` ahora calcula acciones legales y, si no hay ninguna, llama automaticamente a `resolveNoLegalActions(...)` para cerrar turno/continuar ronda sin quedarse en espera manual.
+- Regla extra pedida implementada:
+  - cualquier doble (`dado1 === dado2`) concede turno extra.
+  - se mantiene la penalizacion especial para `tres dobles 6 consecutivos`.
+  - textos de reglas y mensajes de turno extra actualizados (`Turno extra por dobles`).
+- Ajuste tecnico adicional para simulacion IA:
+  - `makeHypotheticalRollState(...)` marca doble de forma general (para valorar turno extra correctamente).
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por EPERM de esbuild en sandbox).
+- QA Playwright:
+  - `output/strategy-parchis-round-stall-isolation/state-0.json`: ronda fluye hasta volver a humano (`turnCount=5`) sin bloqueo.
+  - logs muestran dobles con turno extra activo (ej: `IA Azul tira: Dados 4 y 4 (dobles).` seguido de nueva tirada de IA Azul).
+## 2026-03-02 - Parchis: fix atasco IA al sacar primera ficha + dobles extra
+- `src/games/ParchisStrategyGame.jsx`:
+  - corregido scheduler IA para rearmar decision cuando cambia estado interno en el mismo `turn/phase` (evita bloqueo tras salida obligatoria + segundo dado);
+  - `activateQueuedDieMove(...)` ahora autoresuelve `sin jugadas` para cerrar turno automaticamente;
+  - regla de turno extra ampliada: cualquier doble (`dado1===dado2`) otorga turno extra;
+  - mensajes/reglas sincronizados (`Turno extra por dobles`).
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por EPERM en sandbox).
+- Playwright: `output/strategy-parchis-round-stall-check-v3/state-0..7.json`.
+- Confirmado: la IA no queda bloqueada al sacar primera ficha y la ronda avanza; dobles dan turno extra.

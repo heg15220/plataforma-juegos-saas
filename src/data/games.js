@@ -18,6 +18,7 @@ import knowledgeCrucigramaImage from "../assets/games/knowledge-crucigrama.svg";
 import knowledgeSopaLetrasImage from "../assets/games/knowledge-sopa-letras.svg";
 import chessGrandmasterArenaImage from "../assets/games/chess-grandmaster-arena.svg";
 import strategyPokerNoBetImage from "../assets/games/strategy-poker-no-bet.svg";
+import strategyParchisLudotekaImage from "../assets/games/strategy-parchis-ludoteka.svg";
 import race2dproImage from "../assets/games/race2dpro.svg";
 
 /**
@@ -805,6 +806,51 @@ export const games = [
   },
 
   // ── Strategy (chess) ───────────────────────────────────────────────────────
+  {
+    id: "strategy-parchis-ludoteka",
+    image: strategyParchisLudotekaImage,
+    sessionTime: "8-18 min",
+
+    title: "Parchis Ludoteka Arena",
+    category: "Estrategia",
+    tagline: "Parchis estrategico individual (Tu vs 3 IAs) con capturas, barreras y bonus +10/+20.",
+    description:
+      "Adaptacion completa de reglas clave de parchis para la plataforma: salida obligatoria con 5, turno extra por 6, regla de tres 6 consecutivos, casillas seguras, capturas, barreras, pasillo final, llegada exacta y bonus por comer/coronar.",
+    objective_es: "Completa el recorrido con tus 4 fichas antes que los 3 rivales IA, gestionando riesgo de captura, bloqueos y tempo de turnos.",
+    howToPlay_es: "Pulsa Iniciar partida (S/Enter). Luego usa Tirar dado (R/Enter). Con 1..9 o click eliges jugada. Enter ejecuta la primera opcion, X continua si no hay jugada y N reinicia partida.",
+    highlights: [
+      "Reglas nucleares de Ludoteka aplicadas al flujo de turno (5 salida, 6 extra, triple 6 con penalizacion).",
+      "Motor de movimiento con barreras, casillas seguras y llegada exacta a meta.",
+      "Bonos encadenables de +10 (corona) y +20 (captura).",
+      "IA con tres perfiles diferenciados: Facil, Media y Dificil.",
+      "Bridge QA con render_game_to_text y avance temporal determinista.",
+    ],
+    difficulty: "Variable (3 niveles IA)",
+    multiplayer: "Solo vs 3 IAs",
+    viability: "Alta: motor por estados con trazabilidad de piezas, turnos y reglas especiales.",
+    visualStyle: "Tablero tactico claro con recorrido comun, pasillos finales y telemetria de fase/racha.",
+    techFocus: "Sistema de reglas de parchis con evaluacion IA por heuristicas y estimacion de amenaza.",
+
+    category_en: "Strategy",
+    tagline_en: "Individual strategy parchis (You vs 3 AIs) with captures, barriers and +10/+20 bonuses.",
+    description_en:
+      "A full strategic adaptation of core parchis rules for the platform: mandatory exit on 5, extra turn on 6, three-consecutive-6 penalty, safe cells, captures, barriers, final lane routing, exact finish and +10/+20 rewards.",
+    objective_en: "Complete the route with all 4 pieces before the 3 AI rivals while managing capture risk, blockades and turn tempo.",
+    howToPlay_en: "Press Start match (S/Enter), then Roll (R/Enter). Use 1..9 or click to pick a move. Enter executes the first option, X continues with no legal move, and N restarts the match.",
+    highlights_en: [
+      "Core Ludoteka-like turn flow (exit on 5, extra turn on 6, triple-6 penalty).",
+      "Movement engine with barriers, safe cells and exact finish requirement.",
+      "Chainable +10 (goal) and +20 (capture) reward moves.",
+      "Three clearly differentiated AI profiles: Easy, Medium and Hard.",
+      "QA bridge with render_game_to_text and deterministic time stepping.",
+    ],
+    difficulty_en: "Variable (3 AI levels)",
+    multiplayer_en: "Solo vs 3 AIs",
+    viability_en: "High: state-driven engine with full traceability of pieces, turns and special rules.",
+    visualStyle_en: "Clear tactical board with common track, final lanes and phase/streak telemetry.",
+    techFocus_en: "Parchis rules engine with heuristic AI and forward threat estimation.",
+  },
+
   {
     id: "strategy-poker-holdem-no-bet",
     image: strategyPokerNoBetImage,
