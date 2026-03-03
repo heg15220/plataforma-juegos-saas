@@ -253,10 +253,16 @@ function TokensLayer({ model, tokenMap, theme, onTokenClick }) {
           return weightA - weightB;
         });
 
+        const isWallPair =
+          ordered.length === 2 &&
+          Boolean(ordered[0]?.color) &&
+          ordered.every((token) => token.color === ordered[0].color);
         const stackSize = Math.max(1, Math.min(4, ordered.length));
-        const pattern = STACK_LAYOUTS[stackSize] || STACK_LAYOUTS[4];
-        const offsetUnit = Math.min(square.w, square.h) * 0.24;
-        const tokenRadius = Math.min(square.w, square.h) * 0.34;
+        const pattern = isWallPair
+          ? [{ x: -0.88, y: 0 }, { x: 0.88, y: 0 }]
+          : STACK_LAYOUTS[stackSize] || STACK_LAYOUTS[4];
+        const offsetUnit = Math.min(square.w, square.h) * (isWallPair ? 0.35 : 0.24);
+        const tokenRadius = Math.min(square.w, square.h) * (isWallPair ? 0.29 : 0.34);
 
         return ordered.map((token, index) => {
           const slot = pattern[Math.min(index, pattern.length - 1)] || { x: 0, y: 0 };
@@ -267,6 +273,7 @@ function TokensLayer({ model, tokenMap, theme, onTokenClick }) {
           const ring = theme.tokenRing;
           const className = [
             "ludo-token",
+            isWallPair ? "is-wall" : "",
             token.selected ? "is-selected" : "",
             token.movable ? "is-movable" : "",
             interactive ? "is-interactive" : ""

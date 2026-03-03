@@ -1055,3 +1055,94 @@
 - Build OK: `npm run build` (fuera de sandbox por EPERM en sandbox).
 - Playwright: `output/strategy-parchis-round-stall-check-v3/state-0..7.json`.
 - Confirmado: la IA no queda bloqueada al sacar primera ficha y la ronda avanza; dobles dan turno extra.
+
+## 2026-03-03 - Parchis: suma de doble dado con una sola ficha activa + correccion de direccion
+- `src/games/ParchisStrategyGame.jsx`:
+  - corregida la direccion de avance visual/logica al mapear progreso de ficha a casilla de track (`progressToTrackIndex` ahora decrementa indice).
+  - ajustada la heuristica de distancia (`getTrackDistance`) para mantener coherencia de amenaza/cobertura IA con el nuevo sentido de avance.
+  - nueva resolucion de tirada `resolveRollSetup(...)` para unificar reglas:
+    - salida obligatoria con 5 (manteniendo cola del otro dado),
+    - suma de ambos dados cuando el jugador solo tiene una ficha activa (`ficha unica activa: d1 + d2`),
+    - fallback al dado principal cuando la suma no tiene jugada legal.
+  - `makeHypotheticalRollState(...)` sincronizado con la misma regla de suma/fallback para no desalinear la evaluacion de IA.
+  - texto de reglas (`RULES_PROMPT`) y payload QA (`coordinates`) actualizados para reflejar el comportamiento real.
+- Nota tecnica de skill:
+  - el cliente del skill en `.../skills/develop-web-game/scripts/web_game_playwright_client.js` sigue fallando por ESM/CJS en este entorno; se uso `web_game_playwright_client.mjs` del repo (patron ya documentado previamente).
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por `EPERM` de esbuild en sandbox).
+- Tests OK: `npm test` -> `10 files`, `29 tests` en verde.
+- QA Playwright (parchis por hash directo):
+  - `output/strategy-parchis-direction-dice-fix-hash/shot-0..5.png`
+  - `output/strategy-parchis-direction-dice-fix-hash/state-0..5.json`
+  - sin `errors-*.json`.
+- QA Playwright extendida:
+  - `output/strategy-parchis-direction-dice-fix-long/state-*.json` contiene eventos de suma activa:
+    - `Tu (Rojo) tira: Dados 3 y 1. ficha unica activa: 3 + 1 = 4`
+    - `Tu (Rojo) tira: Dados 2 y 6. ficha unica activa: 2 + 6 = 8`
+    - `IA Verde tira: Dados 1 y 6. ficha unica activa: 1 + 6 = 7`
+  - se observa avance por decremento de indice en humano tras salir (ej. `67 -> 65 -> 64 -> 60...`), consistente con el nuevo sentido esperado.
+
+### TODO sugerido
+- Añadir tests unitarios dedicados de parchis para:
+  - regla de suma con una sola ficha activa (`6+4 => 10` cuando hay jugada legal),
+  - fallback al dado principal cuando la suma no es legal,
+  - correspondencia de sentido de avance en `progressToTrackIndex`.
+
+## 2026-03-04 - Parchis: pared en salida sin bloqueo + render de doble ficha + ritmo mas suave
+- `src/games/ParchisStrategyGame.jsx`:
+  - nuevo helper `resolveBlockedMandatoryEntryState(...)` para resolver el caso en el que hay `mandatoryEntry` pero la salida esta bloqueada por pared propia.
+  - `rollForPlayer(...)` actualizado:
+    - si la salida obligatoria no tiene accion legal, reconduce automaticamente la jugada al otro dado (y, si procede, al principal) en vez de perder turno.
+    - se registra mensaje/log explicito: `Salida bloqueada por pared en la salida...`.
+  - `makeHypotheticalRollState(...)` sincronizado con la misma resolucion para mantener coherencia de evaluacion IA.
+  - ritmo de IA y tiradas suavizado:
+    - dificultad IA: `thinkMs` ajustado a `680 / 1020 / 1360` (facil/media/dificil),
+    - jitter IA ampliado a `260ms`,
+    - duracion de tirada a `980ms`,
+    - refresco visual de caras de dado a `110ms`.
+  - `RULES_PROMPT` actualizado con la regla de salida bloqueada por pared propia.
+- `src/games/parchis/LudoBoard.jsx`:
+  - deteccion de pared visual (`2` fichas del mismo color en la misma casilla) y layout dedicado:
+    - separacion horizontal mayor,
+    - radio de ficha ligeramente menor para que ambas se vean completas.
+  - clase nueva por ficha en pared: `is-wall`.
+- `src/styles.css`:
+  - transicion de desplazamiento de ficha suavizada (`260ms -> 360ms`) para que los movimientos se perciban menos bruscos.
+  - refinado visual para `ludo-token.is-wall` (contornos mas marcados).
+  - animacion de dado en CSS ajustada (`800ms -> 980ms`).
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por `EPERM` de esbuild en sandbox).
+- Tests OK: `npm test` (`10` files, `29` tests en verde).
+- QA Playwright:
+  - `output/strategy-parchis-wall-entry-speed-fix/shot-0..17.png`
+  - `output/strategy-parchis-wall-entry-speed-fix/state-0..17.json`
+  - sin `errors-*.json`.
+- Evidencia del fix de pared en salida (no bloqueo):
+  - `state-11.json`: `message = "Salida bloqueada por pared en la salida. Se aplica el otro dado (5)."`
+  - `state-16.json`: log `IA Azul: Salida bloqueada por pared en la salida. Se aplica el otro dado (2).`
+- Evidencia visual de pared con dos fichas visibles:
+  - `shot-11.png` (pared azul en salida `C17` y pared verde en `C51` con ambas fichas visibles y separadas).
+
+## 2026-03-04 - Parchis: fix segundo dado en dobles (humano + IA)
+- `src/games/ParchisStrategyGame.jsx`:
+  - `resolveRollSetup(...)` ahora encola el segundo dado cuando hay dobles y no aplica ni salida obligatoria ni modo suma por ficha unica (`queuedDiceValues: [auxDie]`).
+  - `activateQueuedDieMove(...)` generalizado para cualquier dado pendiente (mensaje neutral `Se aplica el dado pendiente (...)`).
+  - reglas visibles (`RULES_PROMPT`) actualizadas para reflejar que en dobles se juegan ambos dados y luego se mantiene turno extra por dobles.
+- Resultado funcional:
+  - al tirar, por ejemplo, `2/2`, se ejecuta el primer `2`, despues se activa automaticamente el segundo `2` y permite volver a escoger ficha para ese segundo movimiento;
+  - aplica tanto al jugador humano como a la IA.
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por `EPERM` en sandbox).
+- Tests OK: `npm test` (`10` files, `29` tests en verde).
+- QA Playwright extendida:
+  - `output/strategy-parchis-doubles-second-die-fix/shot-0..27.png`
+  - `output/strategy-parchis-doubles-second-die-fix/state-0..27.json`
+  - sin `errors-*.json`.
+- Evidencia en logs de humano e IA:
+  - `state-7.json`: `Tu (Rojo): Se aplica el dado pendiente (3).`
+  - `state-4.json`: `IA Azul: Se aplica el dado pendiente (6).`
+  - `state-9.json`: `Tu (Rojo): Se aplica el dado pendiente (2).`
+  - `state-21.json`: `IA Azul: Se aplica el dado pendiente (1).`

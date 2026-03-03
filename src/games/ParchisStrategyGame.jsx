@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useGameRuntimeBridge from "../utils/useGameRuntimeBridge";
+import resolveBrowserLanguage from "../utils/resolveBrowserLanguage";
 import LudoBoard from "./parchis/LudoBoard";
 import { PARCHIS_BOARD_MODEL, getOwnerColor } from "./parchis/boardModel";
 
@@ -10,14 +11,17 @@ const PIECES_PER_PLAYER = 4;
 const INITIAL_TRACK_PIECES = 0;
 const MAX_LOG_LINES = 14;
 const HUMAN_PLAYER_ID = "human";
+const DICE_ROLL_DURATION_MS = 980;
+const DICE_ROLL_PULSE_MS = 110;
+const AI_THINK_JITTER_MS = 260;
 
 const SAFE_TRACK_INDEXES = new Set([0, 5, 12, 17, 22, 29, 34, 39, 46, 51, 56, 63]);
 
 const PLAYERS = [
-  { id: HUMAN_PLAYER_ID, label: "Tu (Rojo)", short: "R", color: "red", startIndex: 0 },
-  { id: "ai-blue", label: "IA Azul", short: "B", color: "blue", startIndex: 17 },
-  { id: "ai-yellow", label: "IA Amarilla", short: "Y", color: "yellow", startIndex: 34 },
-  { id: "ai-green", label: "IA Verde", short: "G", color: "green", startIndex: 51 }
+  { id: HUMAN_PLAYER_ID, short: "R", color: "red", startIndex: 0 },
+  { id: "ai-blue", short: "B", color: "blue", startIndex: 17 },
+  { id: "ai-yellow", short: "Y", color: "yellow", startIndex: 34 },
+  { id: "ai-green", short: "G", color: "green", startIndex: 51 }
 ];
 
 const TURN_ORDER = PLAYERS.map((player) => player.id);
@@ -34,8 +38,7 @@ const createLastRollByOwner = () => Object.fromEntries(TURN_ORDER.map((playerId)
 const AI_LEVELS = {
   easy: {
     id: "easy",
-    label: "Facil",
-    thinkMs: 520,
+    thinkMs: 680,
     captureWeight: 65,
     goalWeight: 85,
     enterWeight: 26,
@@ -47,8 +50,7 @@ const AI_LEVELS = {
   },
   medium: {
     id: "medium",
-    label: "Media",
-    thinkMs: 860,
+    thinkMs: 1020,
     captureWeight: 145,
     goalWeight: 165,
     enterWeight: 58,
@@ -60,8 +62,7 @@ const AI_LEVELS = {
   },
   hard: {
     id: "hard",
-    label: "Dificil",
-    thinkMs: 1220,
+    thinkMs: 1360,
     captureWeight: 210,
     goalWeight: 240,
     enterWeight: 64,
@@ -73,7 +74,20 @@ const AI_LEVELS = {
   }
 };
 
-const RULES_PROMPT = `PARCHIS LUDOTEKA (ADAPTACION EN ESTA IMPLEMENTACION)
+const PARCHIS_COPY = {
+  es: {
+    players: {
+      human: "Tu (Rojo)",
+      "ai-blue": "IA Azul",
+      "ai-yellow": "IA Amarilla",
+      "ai-green": "IA Verde"
+    },
+    aiLevels: {
+      easy: "Facil",
+      medium: "Media",
+      hard: "Dificil"
+    },
+    rulesPrompt: `PARCHIS LUDOTEKA (ADAPTACION EN ESTA IMPLEMENTACION)
 - Modalidad activa: Individual a 4 (tu color rojo contra 3 IAs: azul, amarilla y verde).
 - Salida inicial: las 4 fichas comienzan en casa (circulos de color).
 - Objetivo: completar el recorrido con las 4 fichas antes que cualquier rival.
@@ -81,6 +95,9 @@ const RULES_PROMPT = `PARCHIS LUDOTEKA (ADAPTACION EN ESTA IMPLEMENTACION)
 REGLAS IMPLEMENTADAS
 - Si sale 5 en cualquiera de los dos dados mostrados y tienes fichas en casa, debes sacar una obligatoriamente.
 - Si sale 5 y otro valor (ej. 5 y 3), primero sale ficha obligatoria y luego se aplica el otro dado.
+- Si la salida obligatoria con 5 no se puede ejecutar porque la salida esta bloqueada por una pared propia, se juega con el otro dado (o con el principal si procede) en lugar de perder el turno.
+- Cuando salen dobles y no aplica salida obligatoria ni suma por ficha unica activa, se juega dos veces ese mismo valor (una por cada dado) y despues hay turno extra por dobles.
+- Si no hay salida obligatoria y solo tienes una ficha activa en tablero, se aplica la suma de ambos dados en un unico movimiento (ej. 6 + 4 = 10). Si la suma no tiene jugada legal, se usa el dado principal.
 - Las fichas avanzan por recorrido comun y luego entran al pasillo final de su color.
 - Si sale 6 y todas tus fichas estan fuera de casa, ese 6 avanza 7 casillas.
 - Cualquier doble (mismo numero en ambos dados) concede turno extra.
@@ -101,7 +118,229 @@ IA POR DIFICULTAD
 
 FUERA DE ALCANCE EN ESTE COMPONENTE
 - Modalidades por parejas, 1 contra 1 con dos colores, parchis de 6 fichas y tablero 3 contra 3 de 6 colores.
-- Preferencia de color antes de entrar a partida, preseleccion de ficha antes del turno y vista previa del dado (opciones de lobby/UX externo).`;
+- Preferencia de color antes de entrar a partida, preseleccion de ficha antes del turno y vista previa del dado (opciones de lobby/UX externo).`,
+    ui: {
+      ready: "Partida lista. Pulsa Iniciar partida.",
+      startMatch: "Iniciar partida",
+      restartMatch: "Reiniciar partida",
+      gameTitle: "Parchis Ludoteka Arena",
+      gameSubtitle: "Implementacion individual a 4 (Tu + 3 IAs) con reglas clave de Ludoteka y 3 niveles de IA.",
+      aiDifficulty: "Dificultad IA",
+      controls:
+        "Controles: S/Enter inicia, R/Enter/Space tira dado, 1..9 para jugada, Enter confirma la seleccion, X continuar sin jugada y N reiniciar.",
+      statusRolling: "Tirada en curso",
+      statusAwaitStart: "Pendiente de inicio",
+      statusAwaitRoll: "Esperando tirada",
+      statusAwaitAction: "Esperando jugada",
+      statusClosed: "Partida cerrada",
+      turn: "Turno",
+      dice: "Dados",
+      move: "Movimiento",
+      sixStreak: "Racha doble 6",
+      aiLevel: "Nivel IA",
+      pendingBonus: "Bono pendiente",
+      aiThinking: "IA pensando...",
+      rollingFor: "Tirando",
+      redStart: "Salida roja",
+      blueStart: "Salida azul",
+      yellowStart: "Salida amarilla",
+      greenStart: "Salida verde",
+      safeCells: "Seguros",
+      safeCellsValue: "casillas resaltadas",
+      interaction: "Interaccion",
+      interactionValue: "casillas y fichas soportan clic + Enter/Espacio",
+      currentRoll: "Tirada actual",
+      rollResolved: "Tirada resuelta",
+      rollingNow: (player) => `Lanzando ${player}...`,
+      latestRolls: "Ultimas tiradas",
+      home: "Casa",
+      active: "En juego",
+      goal: "Meta",
+      rematch: "Revancha",
+      youWon: "Ganaste la partida.",
+      pressStart: "Pulsa Iniciar partida para comenzar. (Atajo: S o Enter)",
+      rollDice: "Tirar dado",
+      selectedPiece: (pieceRef) => `Ficha seleccionada: ${pieceRef}. Pulsa Enter o vuelve a pulsar la ficha para mover.`,
+      selectPieceFirst: "Selecciona una ficha en el tablero para priorizar su jugada.",
+      moveSelected: "Mover ficha seleccionada",
+      continueNoMove: "Continuar (sin jugada legal)",
+      autoMoveHint: "Auto-movimiento activo: solo hay una jugada legal.",
+      aiTurnWait: (player, thinking) => `Turno de ${player}. ${thinking ? "Analizando jugada..." : "Resolviendo..."}`,
+      rulesSummary: "Reglas activas de parchis (prompt base)"
+    },
+    msg: {
+      startTurn: (player) => `Partida iniciada. Turno para ${player}.`,
+      noBonusMove: (bonus) => `No hay jugada legal para el bono de +${bonus}.`,
+      noEntryMove: "No puedes sacar ficha con 5 porque la salida esta bloqueada.",
+      noMove: (steps) => `No hay movimiento legal con ${steps}.`,
+      noValidPenaltyPiece: "No hay ficha valida para penalizar.",
+      returnsHomePenalty: (pieceRef) => `${pieceRef} vuelve a casa por tercer 6 consecutivo.`,
+      laneSafePenalty: (pieceRef) => `${pieceRef} se salva de la penalizacion por estar en pasillo final.`,
+      tripleSixSummary: (detail) => `Tercer doble 6 consecutivo: se cancela el movimiento. ${detail}`,
+      queuedDie: (dieValue, steps) => `Se aplica el dado pendiente (${dieValue})${steps !== dieValue ? ` como ${steps}` : ""}.`,
+      winner: (player) => `${player} completa sus 4 fichas y gana la partida.`,
+      bonusCapture: (player) => `${player} obtiene bono +20 por captura.`,
+      bonusGoal: (player) => `${player} obtiene bono +10 por coronar.`,
+      blockedExitQueued: (dieValue, steps) =>
+        `Salida bloqueada por pared en la salida. Se aplica el otro dado (${dieValue})${steps !== dieValue ? ` como ${steps}` : ""}.`,
+      blockedExitPrimary: (steps) => `Salida bloqueada por pared en la salida. Se juega con ${steps}.`,
+      rollText: (die, auxDie, isDouble, notes) =>
+        `Dados ${die} y ${auxDie}${isDouble ? " (dobles)" : ""}${notes.length ? `. ${notes.join(". ")}` : "."}`,
+      rollNoteSingleActive: (primary, secondary, steps) => `ficha unica activa: ${primary} + ${secondary} = ${steps}`,
+      rollNoteSixAsSeven: "se aplica avance de 7",
+      rollNoteSumFallback: (steps) => `sin jugada legal para la suma, se aplica ${steps}`,
+      rollLog: (player, rollText) => `${player} tira: ${rollText}`,
+      actionLog: (player, actionText) => `${player}: ${actionText}.`,
+      configChanged: (label) => `Dificultad IA cambiada a ${label}.`,
+      configLog: (label) => `Configuracion: IA ${label}.`
+    },
+    action: {
+      goal: "meta",
+      lane: (step) => `pasillo ${step}`,
+      track: (index) => `C${index}`,
+      opponent: "rival",
+      enter: (pieceRef, targetText) => `Sacar ${pieceRef} a salida (${targetText})`,
+      enterCapture: (pieceRef, targetText, capturedRef) => `Sacar ${pieceRef} a salida (${targetText}) y comer ${capturedRef}`,
+      move: (pieceRef, steps, targetText) => `Mover ${pieceRef} +${steps} a ${targetText}`,
+      moveCapture: (pieceRef, steps, targetText, capturedRef) => `Mover ${pieceRef} +${steps} a ${targetText} y comer ${capturedRef}`,
+      moveGoal: (pieceRef, steps, targetText) => `Mover ${pieceRef} +${steps} a ${targetText} (corona)`
+    }
+  },
+  en: {
+    players: {
+      human: "You (Red)",
+      "ai-blue": "Blue AI",
+      "ai-yellow": "Yellow AI",
+      "ai-green": "Green AI"
+    },
+    aiLevels: {
+      easy: "Easy",
+      medium: "Medium",
+      hard: "Hard"
+    },
+    rulesPrompt: `PARCHIS LUDOTEKA (IMPLEMENTED VARIANT)
+- Active mode: 4-player solo (you as red vs 3 AIs: blue, yellow, green).
+- Initial setup: all 4 tokens start at home.
+- Objective: complete the route with all 4 tokens before any rival.
+
+IMPLEMENTED RULES
+- If either die shows 5 and you still have home tokens, you must bring one out.
+- If a 5 appears with another value (for example 5 and 3), mandatory exit is resolved first, then the other die is applied.
+- If mandatory exit with 5 cannot be performed because your own barrier blocks the start square, the turn continues with the other die (or primary die when needed) instead of losing the turn.
+- On doubles, when mandatory exit and single-active-token sum are not applied, the same value is played twice (once per die), then the extra turn for doubles is still granted.
+- If there is no mandatory exit and you have exactly one active token, both dice are summed into one move (for example 6 + 4 = 10). If the sum has no legal move, primary die value is used.
+- Tokens move through the shared track and then into their own final lane.
+- If die shows 6 and all your tokens are already out of home, that 6 is played as 7.
+- Any doubles grant an extra turn.
+- Max 2 tokens per square.
+- Barriers (2 same-color tokens in one square) cannot be crossed.
+- Exact value is required to reach goal.
+- Reaching goal grants a +10 bonus move with another token.
+- Capturing an opponent grants a +20 bonus move with another token.
+- Safe squares cannot be captured normally.
+- On a start square, bringing a token out may capture an opponent even on a safe square.
+- Three consecutive double 6s: third move is canceled and the token moved on the second double 6 goes back home (unless it is already in final lane).
+- If no legal move exists, nothing moves.
+
+AI DIFFICULTY
+- Easy: more random decisions and weaker defense.
+- Medium: tactical heuristics (captures, progress, safety, barriers).
+- Hard: advanced heuristics plus future-threat estimation across rivals.
+
+OUT OF SCOPE
+- Team modes, 1v1 with two colors, 6-token parchis, and 3v3 six-color boards.
+- Lobby features like preferred color selection, preselected token, or pre-roll previews.`,
+    ui: {
+      ready: "Match ready. Press Start match.",
+      startMatch: "Start match",
+      restartMatch: "Restart match",
+      gameTitle: "Parchis Ludoteka Arena",
+      gameSubtitle: "4-player solo implementation (You + 3 AIs) with key Ludoteka-inspired rules and 3 AI levels.",
+      aiDifficulty: "AI difficulty",
+      controls:
+        "Controls: S/Enter starts, R/Enter/Space rolls, 1..9 picks move, Enter confirms selection, X continues without move, N restarts.",
+      statusRolling: "Rolling",
+      statusAwaitStart: "Awaiting start",
+      statusAwaitRoll: "Awaiting roll",
+      statusAwaitAction: "Awaiting move",
+      statusClosed: "Match closed",
+      turn: "Turn",
+      dice: "Dice",
+      move: "Move",
+      sixStreak: "Double-6 streak",
+      aiLevel: "AI level",
+      pendingBonus: "Pending bonus",
+      aiThinking: "AI thinking...",
+      rollingFor: "Rolling for",
+      redStart: "Red start",
+      blueStart: "Blue start",
+      yellowStart: "Yellow start",
+      greenStart: "Green start",
+      safeCells: "Safe cells",
+      safeCellsValue: "highlighted squares",
+      interaction: "Interaction",
+      interactionValue: "squares and tokens support click + Enter/Space",
+      currentRoll: "Current roll",
+      rollResolved: "Roll resolved",
+      rollingNow: (player) => `Rolling ${player}...`,
+      latestRolls: "Latest rolls",
+      home: "Home",
+      active: "Active",
+      goal: "Goal",
+      rematch: "Rematch",
+      youWon: "You won the match.",
+      pressStart: "Press Start match to begin. (Shortcut: S or Enter)",
+      rollDice: "Roll dice",
+      selectedPiece: (pieceRef) => `Selected token: ${pieceRef}. Press Enter or click it again to move.`,
+      selectPieceFirst: "Select a token on the board to prioritize its move.",
+      moveSelected: "Move selected token",
+      continueNoMove: "Continue (no legal move)",
+      autoMoveHint: "Auto-move enabled: only one legal move.",
+      aiTurnWait: (player, thinking) => `${player}'s turn. ${thinking ? "Analyzing move..." : "Resolving..."}`,
+      rulesSummary: "Active parchis rules (base prompt)"
+    },
+    msg: {
+      startTurn: (player) => `Match started. Turn for ${player}.`,
+      noBonusMove: (bonus) => `No legal move for +${bonus} bonus.`,
+      noEntryMove: "You cannot bring a token out with 5 because start square is blocked.",
+      noMove: (steps) => `No legal move with ${steps}.`,
+      noValidPenaltyPiece: "No valid token available for penalty.",
+      returnsHomePenalty: (pieceRef) => `${pieceRef} returns home on third consecutive double 6.`,
+      laneSafePenalty: (pieceRef) => `${pieceRef} avoids penalty because it is in final lane.`,
+      tripleSixSummary: (detail) => `Third consecutive double 6: move is canceled. ${detail}`,
+      queuedDie: (dieValue, steps) => `Applying pending die (${dieValue})${steps !== dieValue ? ` as ${steps}` : ""}.`,
+      winner: (player) => `${player} completes all 4 tokens and wins the match.`,
+      bonusCapture: (player) => `${player} gets +20 bonus for a capture.`,
+      bonusGoal: (player) => `${player} gets +10 bonus for reaching goal.`,
+      blockedExitQueued: (dieValue, steps) =>
+        `Mandatory exit blocked by own barrier at start. Applying the other die (${dieValue})${steps !== dieValue ? ` as ${steps}` : ""}.`,
+      blockedExitPrimary: (steps) => `Mandatory exit blocked by own barrier at start. Playing ${steps}.`,
+      rollText: (die, auxDie, isDouble, notes) =>
+        `Dice ${die} and ${auxDie}${isDouble ? " (doubles)" : ""}${notes.length ? `. ${notes.join(". ")}` : "."}`,
+      rollNoteSingleActive: (primary, secondary, steps) => `single active token: ${primary} + ${secondary} = ${steps}`,
+      rollNoteSixAsSeven: "7-step advance applies",
+      rollNoteSumFallback: (steps) => `sum has no legal move, using ${steps}`,
+      rollLog: (player, rollText) => `${player} rolls: ${rollText}`,
+      actionLog: (player, actionText) => `${player}: ${actionText}.`,
+      configChanged: (label) => `AI difficulty changed to ${label}.`,
+      configLog: (label) => `Settings: AI ${label}.`
+    },
+    action: {
+      goal: "goal",
+      lane: (step) => `lane ${step}`,
+      track: (index) => `C${index}`,
+      opponent: "opponent",
+      enter: (pieceRef, targetText) => `Bring ${pieceRef} out to start (${targetText})`,
+      enterCapture: (pieceRef, targetText, capturedRef) => `Bring ${pieceRef} out to start (${targetText}) and capture ${capturedRef}`,
+      move: (pieceRef, steps, targetText) => `Move ${pieceRef} +${steps} to ${targetText}`,
+      moveCapture: (pieceRef, steps, targetText, capturedRef) => `Move ${pieceRef} +${steps} to ${targetText} and capture ${capturedRef}`,
+      moveGoal: (pieceRef, steps, targetText) => `Move ${pieceRef} +${steps} to ${targetText} (goal)`
+    }
+  }
+};
+
+const normalizeLocale = (locale) => (locale === "es" ? "es" : "en");
+const getCopy = (locale) => PARCHIS_COPY[normalizeLocale(locale)] || PARCHIS_COPY.en;
 
 const clampMs = (value) => {
   const parsed = Number(value);
@@ -114,13 +353,14 @@ const rollDie = () => Math.floor(Math.random() * 6) + 1;
 const appendLog = (logs, line) => [line, ...logs].slice(0, MAX_LOG_LINES);
 
 const pieceCode = (piece) => `${PLAYER_BY_ID[piece.owner]?.short || "?"}${piece.slot}`;
-const playerLabel = (playerId) => PLAYER_BY_ID[playerId]?.label || playerId;
+const playerLabel = (playerId, locale = "es") => getCopy(locale).players[playerId] || playerId;
+const aiLevelLabel = (difficultyId, locale = "es") => getCopy(locale).aiLevels[difficultyId] || difficultyId;
 const isSafeTrackIndex = (index) => SAFE_TRACK_INDEXES.has(index);
 
 const progressToTrackIndex = (ownerId, progress) => {
   const player = PLAYER_BY_ID[ownerId];
   if (!player) return null;
-  return ((player.startIndex + progress) % TRACK_LENGTH + TRACK_LENGTH) % TRACK_LENGTH;
+  return ((player.startIndex - progress) % TRACK_LENGTH + TRACK_LENGTH) % TRACK_LENGTH;
 };
 
 const isPieceHome = (piece) => piece.progress == null && !piece.finished;
@@ -161,12 +401,48 @@ const isLaneBarrier = (state, ownerId, laneProgress, excludePieceId = null) =>
 const countPieces = (state, ownerId) => state.pieces.filter((piece) => piece.owner === ownerId);
 const countHomePieces = (state, ownerId) => countPieces(state, ownerId).filter(isPieceHome).length;
 const countFinishedPieces = (state, ownerId) => countPieces(state, ownerId).filter(isPieceFinished).length;
+const countActivePieces = (state, ownerId) =>
+  countPieces(state, ownerId).filter((piece) => !isPieceHome(piece) && !isPieceFinished(piece)).length;
 const allPiecesOutOfHome = (state, ownerId) => countHomePieces(state, ownerId) === 0;
 const moveStepsFromDie = (state, ownerId, die) => (die === 6 && allPiecesOutOfHome(state, ownerId) ? 7 : die);
 
+const resolveRollSetup = (state, ownerId, die, auxDie) => {
+  const mandatoryEntry = (die === 5 || auxDie === 5) && countHomePieces(state, ownerId) > 0;
+  const primarySteps = moveStepsFromDie(state, ownerId, die);
+  const secondarySteps = moveStepsFromDie(state, ownerId, auxDie);
+
+  if (mandatoryEntry) {
+    let queuedDiceValues = [];
+    if (die === 5 && auxDie === 5) queuedDiceValues = [5];
+    else if (die === 5) queuedDiceValues = [auxDie];
+    else queuedDiceValues = [die];
+
+    return {
+      mandatoryEntry: true,
+      steps: 5,
+      queuedDiceValues,
+      combinedMove: false,
+      primarySteps,
+      secondarySteps
+    };
+  }
+
+  const combinedMove = countActivePieces(state, ownerId) === 1;
+  const splitDoubleMove = !combinedMove && die === auxDie;
+  return {
+    mandatoryEntry: false,
+    steps: combinedMove ? primarySteps + secondarySteps : primarySteps,
+    queuedDiceValues: splitDoubleMove ? [auxDie] : [],
+    combinedMove,
+    primarySteps,
+    secondarySteps
+  };
+};
+
 const clonePieces = (pieces) => pieces.map((piece) => ({ ...piece }));
 
-const createInitialState = (difficultyId = "medium") => {
+const createInitialState = (difficultyId = "medium", locale = "es") => {
+  const copy = getCopy(locale);
   const pieces = [];
   let stamp = 0;
   for (const player of PLAYERS) {
@@ -184,6 +460,7 @@ const createInitialState = (difficultyId = "medium") => {
   }
 
   return {
+    locale: normalizeLocale(locale),
     phase: "await-start",
     turn: HUMAN_PLAYER_ID,
     turnCount: 1,
@@ -201,36 +478,41 @@ const createInitialState = (difficultyId = "medium") => {
     pendingBonus: null,
     pendingBonusSource: null,
     winner: null,
-    message: "Partida lista. Pulsa Iniciar partida.",
-    logs: ["Partida lista. Pulsa Iniciar partida."]
+    lastMovePieceId: null,
+    slowMoveTransitionPieceId: null,
+    message: copy.ui.ready,
+    logs: [copy.ui.ready]
   };
 };
 
 const pieceById = (state, pieceId) => state.pieces.find((piece) => piece.id === pieceId) || null;
 
-const describeTarget = (action) => {
-  if (action.destinationType === "goal") return "meta";
-  if (action.destinationType === "lane") return `pasillo ${action.targetLaneStep}`;
-  if (action.destinationType === "track") return `C${action.targetTrackIndex}`;
-  return "destino";
+const describeTarget = (action, locale = "es") => {
+  const copy = getCopy(locale);
+  if (action.destinationType === "goal") return copy.action.goal;
+  if (action.destinationType === "lane") return copy.action.lane(action.targetLaneStep);
+  if (action.destinationType === "track") return copy.action.track(action.targetTrackIndex);
+  return copy.action.goal;
 };
 
 const describeAction = (state, action) => {
+  const locale = state?.locale || "es";
+  const copy = getCopy(locale);
   const piece = pieceById(state, action.pieceId);
   const ref = piece ? pieceCode(piece) : action.pieceId;
   if (action.type === "enter") {
     if (action.capturePieceId) {
       const captured = pieceById(state, action.capturePieceId);
-      return `Sacar ${ref} a salida (${describeTarget(action)}) y comer ${captured ? pieceCode(captured) : "rival"}`;
+      return copy.action.enterCapture(ref, describeTarget(action, locale), captured ? pieceCode(captured) : "opponent");
     }
-    return `Sacar ${ref} a salida (${describeTarget(action)})`;
+    return copy.action.enter(ref, describeTarget(action, locale));
   }
-  const base = `Mover ${ref} +${action.steps} a ${describeTarget(action)}`;
+  const base = copy.action.move(ref, action.steps, describeTarget(action, locale));
   if (action.capturePieceId) {
     const captured = pieceById(state, action.capturePieceId);
-    return `${base} y comer ${captured ? pieceCode(captured) : "rival"}`;
+    return copy.action.moveCapture(ref, action.steps, describeTarget(action, locale), captured ? pieceCode(captured) : "opponent");
   }
-  if (action.reachesGoal) return `${base} (corona)`;
+  if (action.reachesGoal) return copy.action.moveGoal(ref, action.steps, describeTarget(action, locale));
   return base;
 };
 
@@ -388,7 +670,72 @@ const getLegalActions = (state, ownerId) => {
   return actions;
 };
 
-const getTrackDistance = (fromIndex, toIndex) => ((toIndex - fromIndex + TRACK_LENGTH) % TRACK_LENGTH);
+const resolveBlockedMandatoryEntryState = (state, ownerId) => {
+  if (state.pendingBonus != null || !state.mandatoryEntry) return { nextState: state, note: null };
+
+  const forcedEntryActions = getLegalActions(state, ownerId);
+  if (forcedEntryActions.length > 0) return { nextState: state, note: null };
+
+  const queue = Array.isArray(state.queuedDiceValues) ? state.queuedDiceValues : [];
+  const candidates = [];
+
+  if (queue.length > 0) {
+    const dieValue = queue[0];
+    candidates.push({
+      source: "queued",
+      dieValue,
+      steps: moveStepsFromDie(state, ownerId, dieValue)
+    });
+  }
+
+  if (Number.isFinite(state.steps) && state.steps > 0) {
+    candidates.push({
+      source: "primary",
+      dieValue: null,
+      steps: state.steps
+    });
+  }
+
+  for (const candidate of candidates) {
+    const trial = {
+      ...state,
+      mandatoryEntry: false,
+      queuedDiceValues: [],
+      steps: candidate.steps
+    };
+    const actions = getLegalActions(trial, ownerId);
+    if (actions.length > 0) {
+      return {
+        nextState: trial,
+        note: candidate
+      };
+    }
+  }
+
+  const fallback = candidates[0];
+  if (!fallback) {
+    return {
+      nextState: {
+        ...state,
+        mandatoryEntry: false,
+        queuedDiceValues: []
+      },
+      note: null
+    };
+  }
+
+  return {
+    nextState: {
+      ...state,
+      mandatoryEntry: false,
+      queuedDiceValues: [],
+      steps: fallback.steps
+    },
+    note: fallback
+  };
+};
+
+const getTrackDistance = (fromIndex, toIndex) => ((fromIndex - toIndex + TRACK_LENGTH) % TRACK_LENGTH);
 
 const countThreatenedTrackPieces = (state, ownerId) => {
   const opponents = state.pieces.filter((piece) => piece.owner !== ownerId && isPieceInTrack(piece));
@@ -474,30 +821,33 @@ const evaluatePosition = (state, ownerId) => {
 const makeHypotheticalRollState = (state, ownerId, die, auxDie) => {
   const isDouble = die === auxDie;
   const sixLike = isDouble && die === 6;
-  const mandatoryEntry = (die === 5 || auxDie === 5) && countHomePieces(state, ownerId) > 0;
-  let steps = moveStepsFromDie(state, ownerId, die);
-  let queuedDiceValues = [];
+  const rollSetup = resolveRollSetup(state, ownerId, die, auxDie);
 
-  if (mandatoryEntry) {
-    steps = 5;
-    if (die === 5 && auxDie === 5) queuedDiceValues = [5];
-    else if (die === 5) queuedDiceValues = [auxDie];
-    else queuedDiceValues = [die];
-  }
-
-  return {
+  const baseState = {
     ...state,
     turn: ownerId,
     phase: "await-action",
     dice: die,
     diceAux: auxDie,
-    steps,
+    steps: rollSetup.steps,
     rollWasSix: isDouble,
     sixStreak: sixLike ? state.sixStreak + 1 : 0,
-    queuedDiceValues,
-    mandatoryEntry,
+    queuedDiceValues: rollSetup.queuedDiceValues,
+    mandatoryEntry: rollSetup.mandatoryEntry,
     pendingBonus: null,
     pendingBonusSource: null
+  };
+
+  if (rollSetup.mandatoryEntry) {
+    return resolveBlockedMandatoryEntryState(baseState, ownerId).nextState;
+  }
+
+  if (!rollSetup.combinedMove) return baseState;
+  if (getLegalActions(baseState, ownerId).length > 0) return baseState;
+
+  return {
+    ...baseState,
+    steps: rollSetup.primarySteps
   };
 };
 
@@ -574,19 +924,21 @@ const continueExtraTurn = (state, reason) => ({
 
 const finishAfterResolvedMove = (state, actorId, reason) => {
   if (state.rollWasSix) {
-    return continueExtraTurn(state, `${reason} Turno extra por dobles.`);
+    const suffix = normalizeLocale(state.locale) === "es" ? " Turno extra por dobles." : " Extra turn for doubles.";
+    return continueExtraTurn(state, `${reason}${suffix}`);
   }
   return passTurn(state, reason);
 };
 
 const resolveNoLegalActions = (state, actorId) => {
   if (state.phase !== "await-action" || state.turn !== actorId) return state;
+  const copy = getCopy(state.locale);
 
   const reason = state.pendingBonus != null
-    ? `No hay jugada legal para el bono de +${state.pendingBonus}.`
+    ? copy.msg.noBonusMove(state.pendingBonus)
     : state.mandatoryEntry
-      ? "No puedes sacar ficha con 5 porque la salida esta bloqueada."
-      : `No hay movimiento legal con ${getActionSteps(state)}.`;
+      ? copy.msg.noEntryMove
+      : copy.msg.noMove(getActionSteps(state));
 
   const withLog = {
     ...state,
@@ -594,7 +946,7 @@ const resolveNoLegalActions = (state, actorId) => {
     queuedDiceValues: [],
     pendingBonus: state.pendingBonus != null ? null : state.pendingBonus,
     pendingBonusSource: state.pendingBonus != null ? null : state.pendingBonusSource,
-    logs: appendLog(state.logs, `${playerLabel(actorId)}: ${reason}`),
+    logs: appendLog(state.logs, `${playerLabel(actorId, state.locale)}: ${reason}`),
     message: reason
   };
 
@@ -602,9 +954,10 @@ const resolveNoLegalActions = (state, actorId) => {
 };
 
 const resolveTripleSixPenalty = (state, actorId) => {
+  const copy = getCopy(state.locale);
   const pieces = clonePieces(state.pieces);
   const secondMovedPieceId = state.sixMovedPieceIds[1] || null;
-  let movedBackText = "No hay ficha valida para penalizar.";
+  let movedBackText = copy.msg.noValidPenaltyPiece;
 
   if (secondMovedPieceId) {
     const piece = pieces.find((entry) => entry.id === secondMovedPieceId && entry.owner === actorId);
@@ -612,30 +965,31 @@ const resolveTripleSixPenalty = (state, actorId) => {
       if (isPieceInTrack(piece)) {
         piece.progress = null;
         piece.finished = false;
-        movedBackText = `${pieceCode(piece)} vuelve a casa por tercer 6 consecutivo.`;
+        movedBackText = copy.msg.returnsHomePenalty(pieceCode(piece));
       } else if (isPieceInLane(piece)) {
-        movedBackText = `${pieceCode(piece)} se salva de la penalizacion por estar en pasillo final.`;
+        movedBackText = copy.msg.laneSafePenalty(pieceCode(piece));
       }
     }
   }
 
-  const summary = `Tercer doble 6 consecutivo: se cancela el movimiento. ${movedBackText}`;
+  const summary = copy.msg.tripleSixSummary(movedBackText);
   const nextState = {
     ...state,
     pieces,
-    logs: appendLog(state.logs, `${playerLabel(actorId)}: ${summary}`),
+    logs: appendLog(state.logs, `${playerLabel(actorId, state.locale)}: ${summary}`),
     message: summary
   };
   return passTurn(nextState, summary);
 };
 
 const activateQueuedDieMove = (state, actorId, simulate = false) => {
+  const copy = getCopy(state.locale);
   const queue = Array.isArray(state.queuedDiceValues) ? state.queuedDiceValues : [];
   if (!queue.length) return null;
 
   const [dieValue, ...rest] = queue;
   const steps = moveStepsFromDie(state, actorId, dieValue);
-  const text = `Salida obligatoria completada. Se aplica el otro dado (${dieValue})${steps !== dieValue ? ` como ${steps}` : ""}.`;
+  const text = copy.msg.queuedDie(dieValue, steps);
 
   const nextState = {
     ...state,
@@ -644,7 +998,7 @@ const activateQueuedDieMove = (state, actorId, simulate = false) => {
     mandatoryEntry: false,
     queuedDiceValues: rest,
     message: text,
-    logs: simulate ? state.logs : appendLog(state.logs, `${playerLabel(actorId)}: ${text}`)
+    logs: simulate ? state.logs : appendLog(state.logs, `${playerLabel(actorId, state.locale)}: ${text}`)
   };
 
   const actions = getLegalActions(nextState, actorId);
@@ -656,7 +1010,8 @@ const activateQueuedDieMove = (state, actorId, simulate = false) => {
 };
 
 const applyActionAndAdvance = (state, action, actorId, options = {}) => {
-  const { simulate = false } = options;
+  const { simulate = false, slowMoveTransition = false } = options;
+  const copy = getCopy(state.locale);
   if (state.phase !== "await-action" || state.turn !== actorId) return state;
   if (!action || action.ownerId !== actorId) return state;
 
@@ -701,7 +1056,7 @@ const applyActionAndAdvance = (state, action, actorId, options = {}) => {
 
   if (!simulate) {
     const actionText = describeAction(state, action);
-    const line = `${playerLabel(actorId)}: ${actionText}.`;
+    const line = copy.msg.actionLog(playerLabel(actorId, state.locale), actionText);
     logs = appendLog(state.logs, line);
     message = line;
   }
@@ -711,12 +1066,14 @@ const applyActionAndAdvance = (state, action, actorId, options = {}) => {
     pieces,
     moveCounter,
     sixMovedPieceIds,
+    lastMovePieceId: mover.id,
+    slowMoveTransitionPieceId: slowMoveTransition ? mover.id : null,
     logs,
     message
   };
 
   if (countFinishedPieces(nextBase, actorId) >= PIECES_PER_PLAYER) {
-    const winnerText = `${playerLabel(actorId)} completa sus 4 fichas y gana la partida.`;
+    const winnerText = copy.msg.winner(playerLabel(actorId, state.locale));
     return {
       ...nextBase,
       winner: actorId,
@@ -746,8 +1103,8 @@ const applyActionAndAdvance = (state, action, actorId, options = {}) => {
 
   if (producedBonus != null) {
     const text = producedSource === "capture"
-      ? `${playerLabel(actorId)} obtiene bono +20 por captura.`
-      : `${playerLabel(actorId)} obtiene bono +10 por coronar.`;
+      ? copy.msg.bonusCapture(playerLabel(actorId, state.locale))
+      : copy.msg.bonusGoal(playerLabel(actorId, state.locale));
     return {
       ...nextBase,
       phase: "await-action",
@@ -774,6 +1131,7 @@ const applyActionAndAdvance = (state, action, actorId, options = {}) => {
 
 const rollForPlayer = (state, actorId, forcedRoll = null) => {
   if (state.phase !== "await-roll" || state.turn !== actorId || state.winner) return state;
+  const copy = getCopy(state.locale);
   let die = null;
   let auxDie = null;
 
@@ -794,36 +1152,75 @@ const rollForPlayer = (state, actorId, forcedRoll = null) => {
     return resolveTripleSixPenalty(state, actorId);
   }
 
-  const mandatoryEntry = (die === 5 || auxDie === 5) && countHomePieces(state, actorId) > 0;
-  let steps = moveStepsFromDie(state, actorId, die);
-  let queuedDiceValues = [];
-
-  if (mandatoryEntry) {
-    steps = 5;
-    if (die === 5 && auxDie === 5) queuedDiceValues = [5];
-    else if (die === 5) queuedDiceValues = [auxDie];
-    else queuedDiceValues = [die];
-  }
-
+  const rollSetup = resolveRollSetup(state, actorId, die, auxDie);
   const sixStreak = isDoubleSix ? state.sixStreak + 1 : 0;
-  const rollText = `Dados ${die} y ${auxDie}${isDouble ? " (dobles)" : ""}${die === 6 && !mandatoryEntry && steps === 7 ? " (se aplica avance de 7)" : ""}.`;
-  const rolledState = {
+  const buildRollText = ({ steps, combinedMove, fallbackFromCombined = false }) => {
+    const notes = [];
+    if (combinedMove) {
+      notes.push(copy.msg.rollNoteSingleActive(rollSetup.primarySteps, rollSetup.secondarySteps, steps));
+    } else if (die === 6 && !rollSetup.mandatoryEntry && steps === 7) {
+      notes.push(copy.msg.rollNoteSixAsSeven);
+    }
+    if (fallbackFromCombined) {
+      notes.push(copy.msg.rollNoteSumFallback(steps));
+    }
+    return copy.msg.rollText(die, auxDie, isDouble, notes);
+  };
+
+  const rollText = buildRollText({
+    steps: rollSetup.steps,
+    combinedMove: rollSetup.combinedMove
+  });
+  let rolledState = {
     ...state,
     phase: "await-action",
     dice: die,
     diceAux: auxDie,
-    steps,
+    steps: rollSetup.steps,
     rollWasSix: isDouble,
     sixStreak,
-    queuedDiceValues,
-    mandatoryEntry,
+    queuedDiceValues: rollSetup.queuedDiceValues,
+    mandatoryEntry: rollSetup.mandatoryEntry,
     pendingBonus: null,
     pendingBonusSource: null,
     message: rollText,
-    logs: appendLog(state.logs, `${playerLabel(actorId)} tira: ${rollText}`)
+    logs: appendLog(state.logs, copy.msg.rollLog(playerLabel(actorId, state.locale), rollText))
   };
 
-  const actions = getLegalActions(rolledState, actorId);
+  let actions = getLegalActions(rolledState, actorId);
+  if (!actions.length && rollSetup.mandatoryEntry) {
+    const resolvedMandatory = resolveBlockedMandatoryEntryState(rolledState, actorId);
+    rolledState = resolvedMandatory.nextState;
+    actions = getLegalActions(rolledState, actorId);
+
+    if (actions.length && resolvedMandatory.note) {
+      const fallbackText = resolvedMandatory.note.source === "queued"
+        ? copy.msg.blockedExitQueued(resolvedMandatory.note.dieValue, resolvedMandatory.note.steps)
+        : copy.msg.blockedExitPrimary(resolvedMandatory.note.steps);
+      rolledState = {
+        ...rolledState,
+        message: fallbackText,
+        logs: appendLog(rolledState.logs, `${playerLabel(actorId, state.locale)}: ${fallbackText}`)
+      };
+    }
+  }
+
+  if (!actions.length && rollSetup.combinedMove) {
+    const fallbackSteps = rollSetup.primarySteps;
+    const fallbackText = buildRollText({
+      steps: fallbackSteps,
+      combinedMove: false,
+      fallbackFromCombined: true
+    });
+    rolledState = {
+      ...rolledState,
+      steps: fallbackSteps,
+      message: fallbackText,
+      logs: appendLog(state.logs, copy.msg.rollLog(playerLabel(actorId, state.locale), fallbackText))
+    };
+    actions = getLegalActions(rolledState, actorId);
+  }
+
   if (!actions.length) {
     return resolveNoLegalActions(rolledState, actorId);
   }
@@ -923,7 +1320,8 @@ function SvgDie({ value, rolling, size = 56, idSuffix }) {
 }
 
 function ParchisStrategyGame() {
-  const [state, setState] = useState(() => createInitialState("medium"));
+  const locale = useMemo(resolveBrowserLanguage, []);
+  const [state, setState] = useState(() => createInitialState("medium", locale));
   const [aiThinking, setAiThinking] = useState(false);
   const [selectedPieceId, setSelectedPieceId] = useState(null);
   const [diceUi, setDiceUi] = useState(() => ({
@@ -973,7 +1371,7 @@ function ParchisStrategyGame() {
     if (rollPendingRef.current) return;
     rollPendingRef.current = true;
     rollOwnerRef.current = ownerId;
-    rollDelayRef.current = 820;
+    rollDelayRef.current = DICE_ROLL_DURATION_MS;
     rollPulseRef.current = 0;
     setDiceUi((previous) => ({
       ...previous,
@@ -991,7 +1389,8 @@ function ParchisStrategyGame() {
     resetDiceAnimation();
     setState((previous) => {
       if (previous.phase !== "await-start") return previous;
-      const text = `Partida iniciada. Turno para ${playerLabel(HUMAN_PLAYER_ID)}.`;
+      const copy = getCopy(previous.locale);
+      const text = copy.msg.startTurn(playerLabel(HUMAN_PLAYER_ID, previous.locale));
       return {
         ...previous,
         phase: "await-roll",
@@ -1004,7 +1403,7 @@ function ParchisStrategyGame() {
   }, [resetDiceAnimation, stopAiThinking, stopAutoMove]);
 
   const restartMatch = useCallback(() => {
-    setState((previous) => createInitialState(previous.difficultyId));
+    setState((previous) => createInitialState(previous.difficultyId, previous.locale || locale));
     setSelectedPieceId(null);
     stopAiThinking();
     stopAutoMove();
@@ -1015,7 +1414,7 @@ function ParchisStrategyGame() {
       faces: [1, 1],
       lastByOwner: createLastRollByOwner()
     });
-  }, [resetDiceAnimation, stopAiThinking, stopAutoMove]);
+  }, [locale, resetDiceAnimation, stopAiThinking, stopAutoMove]);
 
   const rollHuman = useCallback(() => {
     if (state.winner || state.turn !== HUMAN_PLAYER_ID || state.phase !== "await-roll") return;
@@ -1045,10 +1444,17 @@ function ParchisStrategyGame() {
   const playHumanAction = useCallback(
     (action) => {
       if (!action) return;
+      const shouldSlowTransition =
+        state.turn === HUMAN_PLAYER_ID &&
+        state.phase === "await-action" &&
+        selectablePieceIds.size === 1 &&
+        selectablePieceIds.has(action.pieceId);
       setSelectedPieceId(null);
-      setState((previous) => applyActionAndAdvance(previous, action, HUMAN_PLAYER_ID));
+      setState((previous) =>
+        applyActionAndAdvance(previous, action, HUMAN_PLAYER_ID, { slowMoveTransition: shouldSlowTransition })
+      );
     },
-    []
+    [selectablePieceIds, state.phase, state.turn]
   );
 
   const resolveHumanNoMoves = useCallback(() => {
@@ -1159,8 +1565,8 @@ function ParchisStrategyGame() {
     rollDelayRef.current -= ms;
     rollPulseRef.current += ms;
 
-    while (rollPulseRef.current >= 90 && rollPendingRef.current) {
-      rollPulseRef.current -= 90;
+    while (rollPulseRef.current >= DICE_ROLL_PULSE_MS && rollPendingRef.current) {
+      rollPulseRef.current -= DICE_ROLL_PULSE_MS;
       setDiceUi((previous) => ({
         ...previous,
         faces: [rollDie(), rollDie()]
@@ -1246,7 +1652,7 @@ function ParchisStrategyGame() {
 
     const profile = AI_LEVELS[state.difficultyId] || AI_LEVELS.medium;
     aiPendingRef.current = true;
-    aiDelayRef.current = profile.thinkMs + randomInt(220);
+    aiDelayRef.current = profile.thinkMs + randomInt(AI_THINK_JITTER_MS);
     setAiThinking(true);
   }, [
     diceUi.rolling,
@@ -1311,8 +1717,8 @@ function ParchisStrategyGame() {
     setState((previous) => ({
       ...previous,
       difficultyId,
-      message: `Dificultad IA cambiada a ${AI_LEVELS[difficultyId].label}.`,
-      logs: appendLog(previous.logs, `Configuracion: IA ${AI_LEVELS[difficultyId].label}.`)
+      message: getCopy(previous.locale).msg.configChanged(aiLevelLabel(difficultyId, previous.locale)),
+      logs: appendLog(previous.logs, getCopy(previous.locale).msg.configLog(aiLevelLabel(difficultyId, previous.locale)))
     }));
   }, []);
 
@@ -1435,20 +1841,23 @@ function ParchisStrategyGame() {
         squareId,
         label: String(piece.slot),
         movable: selectablePieceIds.has(piece.id),
-        selected: selectedPieceId === piece.id
+        selected: selectedPieceId === piece.id,
+        slowTransition: state.slowMoveTransitionPieceId === piece.id
       });
     }
 
     return { tokens };
-  }, [selectablePieceIds, selectedPieceId, state.pieces]);
+  }, [selectablePieceIds, selectedPieceId, state.pieces, state.slowMoveTransitionPieceId]);
 
   const bridgeState = useMemo(() => ({ ...state, aiThinking, diceUi }), [state, aiThinking, diceUi]);
   const payloadBuilder = useCallback((snapshot) => {
+    const copy = getCopy(snapshot.locale);
     const legal = snapshot.turn === HUMAN_PLAYER_ID ? getLegalActions(snapshot, HUMAN_PLAYER_ID) : [];
     return {
       mode: "strategy-parchis-ludoteka",
       variant: "parchis-4p-human-vs-3ai",
-      coordinates: "track_index_0_to_67_counterclockwise_from_red_start",
+      coordinates: "track_index_0_to_67_clockwise_from_red_start_forward_decrements_index",
+      locale: snapshot.locale,
       phase: snapshot.phase,
       turn: snapshot.turn,
       turnCount: snapshot.turnCount,
@@ -1466,7 +1875,7 @@ function ParchisStrategyGame() {
       winner: snapshot.winner,
       players: PLAYERS.map((player) => ({
         id: player.id,
-        label: player.label,
+        label: playerLabel(player.id, snapshot.locale),
         startIndex: player.startIndex,
         home: snapshot.pieces.filter((piece) => piece.owner === player.id && isPieceHome(piece)).length,
         active: snapshot.pieces.filter((piece) => piece.owner === player.id && !isPieceHome(piece) && !isPieceFinished(piece)).length,
@@ -1499,24 +1908,25 @@ function ParchisStrategyGame() {
       })),
       message: snapshot.message,
       logs: snapshot.logs.slice(0, 8),
-      rulesPrompt: RULES_PROMPT
+      rulesPrompt: copy.rulesPrompt
     };
   }, []);
 
   useGameRuntimeBridge(bridgeState, payloadBuilder, advanceTime);
+  const copy = getCopy(state.locale);
 
   const statusLabel = diceUi.rolling
-    ? "Tirada en curso"
+    ? copy.ui.statusRolling
     : state.phase === "await-start"
-    ? "Pendiente de inicio"
+    ? copy.ui.statusAwaitStart
     : state.phase === "await-roll"
-    ? "Esperando tirada"
+    ? copy.ui.statusAwaitRoll
     : state.phase === "await-action"
-      ? "Esperando jugada"
-      : "Partida cerrada";
+      ? copy.ui.statusAwaitAction
+      : copy.ui.statusClosed;
 
   const currentSteps = state.pendingBonus ?? state.steps ?? null;
-  const currentPlayer = playerLabel(state.turn);
+  const currentPlayer = playerLabel(state.turn, state.locale);
   const currentDifficulty = AI_LEVELS[state.difficultyId] || AI_LEVELS.medium;
   const selectedPiece = selectedPieceId ? pieceById(state, selectedPieceId) : null;
   const selectedPieceRef = selectedPiece ? pieceCode(selectedPiece) : null;
@@ -1525,44 +1935,44 @@ function ParchisStrategyGame() {
     <div className="mini-game parchis-strategy-game">
       <div className="mini-head">
         <div>
-          <h4>Parchis Ludoteka Arena</h4>
-          <p>Implementacion individual a 4 (Tu + 3 IAs) con reglas clave de Ludoteka y 3 niveles de IA.</p>
+          <h4>{copy.ui.gameTitle}</h4>
+          <p>{copy.ui.gameSubtitle}</p>
         </div>
         <div className="parchis-head-actions">
-          <button type="button" onClick={startMatch} disabled={state.phase !== "await-start"}>Iniciar partida</button>
-          <button type="button" onClick={restartMatch}>Reiniciar partida</button>
+          <button type="button" onClick={startMatch} disabled={state.phase !== "await-start"}>{copy.ui.startMatch}</button>
+          <button type="button" onClick={restartMatch}>{copy.ui.restartMatch}</button>
         </div>
       </div>
 
       <div className="parchis-config">
         <label htmlFor="parchis-ai-level">
-          Dificultad IA
+          {copy.ui.aiDifficulty}
           <select
             id="parchis-ai-level"
             value={state.difficultyId}
             onChange={(event) => changeDifficulty(event.target.value)}
           >
             {Object.values(AI_LEVELS).map((level) => (
-              <option key={level.id} value={level.id}>{level.label}</option>
+              <option key={level.id} value={level.id}>{aiLevelLabel(level.id, state.locale)}</option>
             ))}
           </select>
         </label>
 
         <p className="parchis-config-note">
-          Controles: S/Enter inicia, R/Enter/Space tira dado, 1..9 para jugada, Enter confirma la seleccion, X continuar sin jugada y N reiniciar.
+          {copy.ui.controls}
         </p>
       </div>
 
       <div className="status-row parchis-status-row">
         <span className={`status-pill ${state.phase === "game-over" ? "finished" : "playing"}`}>{statusLabel}</span>
-        <span>Turno: {currentPlayer}</span>
-        <span>Dados: {state.dice ?? (diceUi.rolling ? "..." : "--")} / {state.diceAux ?? (diceUi.rolling ? "..." : "--")}</span>
-        <span>Movimiento: {currentSteps ?? "--"}</span>
-        <span>Racha doble 6: {state.sixStreak}</span>
-        <span>Nivel IA: {currentDifficulty.label}</span>
-        {state.pendingBonus != null ? <span>Bono pendiente: +{state.pendingBonus}</span> : null}
-        {aiThinking ? <span>IA pensando...</span> : null}
-        {diceUi.rolling ? <span>Tirando: {playerLabel(diceUi.activeOwner || "")}</span> : null}
+        <span>{copy.ui.turn}: {currentPlayer}</span>
+        <span>{copy.ui.dice}: {state.dice ?? (diceUi.rolling ? "..." : "--")} / {state.diceAux ?? (diceUi.rolling ? "..." : "--")}</span>
+        <span>{copy.ui.move}: {currentSteps ?? "--"}</span>
+        <span>{copy.ui.sixStreak}: {state.sixStreak}</span>
+        <span>{copy.ui.aiLevel}: {aiLevelLabel(currentDifficulty.id, state.locale)}</span>
+        {state.pendingBonus != null ? <span>{copy.ui.pendingBonus}: +{state.pendingBonus}</span> : null}
+        {aiThinking ? <span>{copy.ui.aiThinking}</span> : null}
+        {diceUi.rolling ? <span>{copy.ui.rollingFor}: {playerLabel(diceUi.activeOwner || "", state.locale)}</span> : null}
       </div>
 
       <div className="parchis-game-layout">
@@ -1593,19 +2003,19 @@ function ParchisStrategyGame() {
           />
 
           <div className="parchis-board-legend">
-            <span><strong>Salida roja:</strong> C0</span>
-            <span><strong>Salida azul:</strong> C17</span>
-            <span><strong>Salida amarilla:</strong> C34</span>
-            <span><strong>Salida verde:</strong> C51</span>
-            <span><strong>Seguros:</strong> casillas resaltadas</span>
-            <span><strong>Interaccion:</strong> casillas y fichas soportan clic + Enter/Espacio</span>
+            <span><strong>{copy.ui.redStart}:</strong> C0</span>
+            <span><strong>{copy.ui.blueStart}:</strong> C17</span>
+            <span><strong>{copy.ui.yellowStart}:</strong> C34</span>
+            <span><strong>{copy.ui.greenStart}:</strong> C51</span>
+            <span><strong>{copy.ui.safeCells}:</strong> {copy.ui.safeCellsValue}</span>
+            <span><strong>{copy.ui.interaction}:</strong> {copy.ui.interactionValue}</span>
           </div>
         </div>
 
         <aside className="parchis-panel">
           <div className="parchis-dice-panel">
             <article className="dice-roll-card">
-              <p>Tirada actual</p>
+              <p>{copy.ui.currentRoll}</p>
               <div className="dice-pair">
                 {diceUi.faces.map((face, index) => (
                   <SvgDie
@@ -1616,14 +2026,18 @@ function ParchisStrategyGame() {
                   />
                 ))}
               </div>
-              <small>{diceUi.rolling ? `Lanzando ${playerLabel(diceUi.activeOwner || "")}...` : "Tirada resuelta"}</small>
+              <small>
+                {diceUi.rolling
+                  ? copy.ui.rollingNow(playerLabel(diceUi.activeOwner || "", state.locale))
+                  : copy.ui.rollResolved}
+              </small>
             </article>
 
             <article className="dice-history-card">
-              <p>Ultimas tiradas</p>
+              <p>{copy.ui.latestRolls}</p>
               {PLAYERS.map((player) => (
                 <div key={`dice-history-${player.id}`} className="dice-history-row">
-                  <span>{player.label}</span>
+                  <span>{playerLabel(player.id, state.locale)}</span>
                   <strong>
                     {diceUi.lastByOwner[player.id]?.[0] ?? "--"} / {diceUi.lastByOwner[player.id]?.[1] ?? "--"}
                   </strong>
@@ -1635,10 +2049,10 @@ function ParchisStrategyGame() {
           <div className="parchis-scoreboard">
             {PLAYERS.map((player) => (
               <article key={player.id} className={`parchis-score-card ${player.id === state.turn ? "is-turn" : ""}`}>
-                <p>{player.label}</p>
+                <p>{playerLabel(player.id, state.locale)}</p>
                 <strong>{pieceStats[player.id].goal} / {PIECES_PER_PLAYER}</strong>
-                <span>Casa: {pieceStats[player.id].home}</span>
-                <span>En juego: {pieceStats[player.id].active}</span>
+                <span>{copy.ui.home}: {pieceStats[player.id].home}</span>
+                <span>{copy.ui.active}: {pieceStats[player.id].active}</span>
               </article>
             ))}
           </div>
@@ -1647,16 +2061,16 @@ function ParchisStrategyGame() {
             {state.winner ? (
               <div className="parchis-end-panel">
                 <strong>
-                  {state.winner === HUMAN_PLAYER_ID ? "Ganaste la partida." : `${playerLabel(state.winner)} gana la partida.`}
+                  {state.winner === HUMAN_PLAYER_ID ? copy.ui.youWon : getCopy(state.locale).msg.winner(playerLabel(state.winner, state.locale))}
                 </strong>
-                <button type="button" onClick={restartMatch}>Revancha</button>
+                <button type="button" onClick={restartMatch}>{copy.ui.rematch}</button>
               </div>
             ) : state.phase === "await-start" ? (
-              <p className="parchis-ai-wait">Pulsa Iniciar partida para comenzar. (Atajo: S o Enter)</p>
+              <p className="parchis-ai-wait">{copy.ui.pressStart}</p>
             ) : state.turn === HUMAN_PLAYER_ID ? (
               <>
                 {state.phase === "await-roll" ? (
-                  <button type="button" className="primary" onClick={rollHuman} disabled={diceUi.rolling}>Tirar dado</button>
+                  <button type="button" className="primary" onClick={rollHuman} disabled={diceUi.rolling}>{copy.ui.rollDice}</button>
                 ) : null}
 
                 {state.phase === "await-action" ? (
@@ -1665,8 +2079,8 @@ function ParchisStrategyGame() {
                       <>
                         <p className="parchis-selection-note">
                           {selectedPieceRef
-                            ? `Ficha seleccionada: ${selectedPieceRef}. Pulsa Enter o vuelve a pulsar la ficha para mover.`
-                            : "Selecciona una ficha en el tablero para priorizar su jugada."}
+                            ? copy.ui.selectedPiece(selectedPieceRef)
+                            : copy.ui.selectPieceFirst}
                         </p>
                         {selectedHumanAction ? (
                           <button
@@ -1675,7 +2089,7 @@ function ParchisStrategyGame() {
                             onClick={() => playHumanAction(selectedHumanAction)}
                             disabled={diceUi.rolling}
                           >
-                            Mover ficha seleccionada
+                            {copy.ui.moveSelected}
                           </button>
                         ) : null}
                         <div className="parchis-action-list">
@@ -1697,18 +2111,18 @@ function ParchisStrategyGame() {
                       </>
                     ) : (
                       <button type="button" className="ghost" onClick={resolveHumanNoMoves} disabled={diceUi.rolling}>
-                        Continuar (sin jugada legal)
+                        {copy.ui.continueNoMove}
                       </button>
                     )}
                     {orderedHumanActions.length === 1 && !diceUi.rolling && !selectedPieceId ? (
-                      <p className="parchis-auto-note">Auto-movimiento activo: solo hay una jugada legal.</p>
+                      <p className="parchis-auto-note">{copy.ui.autoMoveHint}</p>
                     ) : null}
                   </>
                 ) : null}
               </>
             ) : (
               <p className="parchis-ai-wait">
-                Turno de {currentPlayer}. {aiThinking ? "Analizando jugada..." : "Resolviendo..."}
+                {copy.ui.aiTurnWait(currentPlayer, aiThinking)}
               </p>
             )}
           </div>
@@ -1716,8 +2130,8 @@ function ParchisStrategyGame() {
       </div>
 
       <details className="parchis-rules">
-        <summary>Reglas activas de parchis (prompt base)</summary>
-        <pre>{RULES_PROMPT}</pre>
+        <summary>{copy.ui.rulesSummary}</summary>
+        <pre>{copy.rulesPrompt}</pre>
       </details>
 
       <p className="game-message">{state.message}</p>
