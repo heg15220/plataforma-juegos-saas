@@ -188,6 +188,13 @@ export default class PongRuntime {
       trail: []
     };
 
+    this.aiMistake = {
+      active: false,
+      until: 0,
+      offset: 0,
+      cooldownUntil: 0
+    };
+
     this.particles = [];
 
     this.state = {
@@ -608,6 +615,11 @@ export default class PongRuntime {
     this.ball.speed = BALL_CONFIG.serveSpeed;
     this.ball.spin = 0;
     this.ball.lastTouchedBy = "none";
+
+    this.aiMistake.active = false;
+    this.aiMistake.until = 0;
+    this.aiMistake.offset = 0;
+    this.aiMistake.cooldownUntil = 0;
   }
 
   startMatch() {
@@ -753,11 +765,12 @@ export default class PongRuntime {
     );
 
     const reaction = clamp(preset.aiReaction - pressure * 0.04, 0.06, 0.28);
+    const errorCap = Math.max(90, preset.aiPrecisionError * 1.35);
 
     const error = clamp(
       preset.aiPrecisionError * personality.precisionFactor * (1 - pressure * 0.22),
       7,
-      90
+      errorCap
     );
 
     return {
@@ -766,6 +779,15 @@ export default class PongRuntime {
       error,
       jitter: preset.aiJitter,
       predictionWeight: clamp(preset.aiPredictionWeight + pressure * 0.05, 0.45, 0.96),
+      errorDrift: Number.isFinite(preset.aiErrorDrift) ? preset.aiErrorDrift : 0.12,
+      advanceFactor: Number.isFinite(preset.aiAdvanceFactor) ? preset.aiAdvanceFactor : 0.38,
+      whiffChance: Number.isFinite(preset.aiWhiffChance) ? preset.aiWhiffChance : 0,
+      whiffDurationMin: Number.isFinite(preset.aiWhiffDurationMin) ? preset.aiWhiffDurationMin : 0.2,
+      whiffDurationMax: Number.isFinite(preset.aiWhiffDurationMax) ? preset.aiWhiffDurationMax : 0.48,
+      whiffOffsetMin: Number.isFinite(preset.aiWhiffOffsetMin) ? preset.aiWhiffOffsetMin : 40,
+      whiffOffsetMax: Number.isFinite(preset.aiWhiffOffsetMax) ? preset.aiWhiffOffsetMax : 112,
+      whiffCooldownMin: Number.isFinite(preset.aiWhiffCooldownMin) ? preset.aiWhiffCooldownMin : 0.95,
+      whiffCooldownMax: Number.isFinite(preset.aiWhiffCooldownMax) ? preset.aiWhiffCooldownMax : 1.8,
       personality
     };
   }
@@ -876,10 +898,43 @@ export default class PongRuntime {
         Math.sin(this.elapsed * 8.5 + this.state.round * 0.65) *
         aiParams.jitter *
         jitterScale;
-      const noisyPrediction = predicted + jitter + randomRange(-aiParams.error, aiParams.error) * 0.12;
+      let noisyPrediction = predicted + jitter + randomRange(-aiParams.error, aiParams.error) * aiParams.errorDrift;
+
+      if (aiParams.whiffChance > 0) {
+        if (this.aiMistake.active && this.elapsed >= this.aiMistake.until) {
+          this.aiMistake.active = false;
+          this.aiMistake.offset = 0;
+        }
+
+        if (!this.aiMistake.active && this.elapsed >= this.aiMistake.cooldownUntil) {
+          const dangerWindow = clamp((this.ball.x - CENTER_X) / CENTER_X, 0, 1);
+          const triggerRate = aiParams.whiffChance * (0.35 + dangerWindow * 0.95);
+          if (Math.random() < triggerRate * dt) {
+            const direction = Math.random() < 0.5 ? -1 : 1;
+            this.aiMistake.active = true;
+            this.aiMistake.offset =
+              direction * randomRange(aiParams.whiffOffsetMin, aiParams.whiffOffsetMax);
+            this.aiMistake.until =
+              this.elapsed + randomRange(aiParams.whiffDurationMin, aiParams.whiffDurationMax);
+            this.aiMistake.cooldownUntil =
+              this.elapsed + randomRange(aiParams.whiffCooldownMin, aiParams.whiffCooldownMax);
+          }
+        }
+
+        if (this.aiMistake.active) {
+          noisyPrediction += this.aiMistake.offset;
+        }
+      } else if (this.aiMistake.active) {
+        this.aiMistake.active = false;
+        this.aiMistake.offset = 0;
+      }
 
       targetY = lerp(paddle.y, noisyPrediction, aiParams.predictionWeight);
     } else {
+      if (this.aiMistake.active) {
+        this.aiMistake.active = false;
+        this.aiMistake.offset = 0;
+      }
       const centerOffset = Math.sin(this.elapsed * 1.2 + this.state.round * 0.3) * aiParams.jitter * 0.12;
       targetY = lerp(paddle.y, CENTER_Y + centerOffset, PADDLE_CONFIG.aiCenterPull + aiParams.personality.centerBias * 0.25);
     }
@@ -909,7 +964,7 @@ export default class PongRuntime {
     const defaultAiX = this.width - PADDLE_CONFIG.margin;
     let targetAiX = defaultAiX;
     if (this.state.mode === "playing" && this.ball.vx > 0) {
-      const maxAdvance = (defaultAiX - paddle.xMin) * 0.38 * aiParams.personality.aggression;
+      const maxAdvance = (defaultAiX - paddle.xMin) * aiParams.advanceFactor * aiParams.personality.aggression;
       targetAiX = clamp(defaultAiX - maxAdvance, paddle.xMin, defaultAiX);
     }
     const desiredVx = clamp((targetAiX - paddle.x) * 5, -PADDLE_CONFIG.aiHMaxSpeed, PADDLE_CONFIG.aiHMaxSpeed);

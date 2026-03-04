@@ -1,0 +1,229 @@
+{
+  "touchProbe": {
+    "ok": true,
+    "step1AnchorCount": 0,
+    "step2AnchorCount": 0,
+    "message": "Encuentra las palabras ocultas en el tablero."
+  },
+  "state": {
+    "mode": "knowledge-arcade",
+    "variant": "sopa-letras",
+    "coordinates": "grid_row_col_origin_top_left",
+    "locale": "es",
+    "match": {
+      "current": 2392,
+      "total": 10000
+    },
+    "status": "playing",
+    "boardSize": 20,
+    "wordsTotal": 14,
+    "wordsFound": 0,
+    "foundWords": [],
+    "pendingWords": [
+      "CODIGO",
+      "OLIMPIADA",
+      "LITERATURA",
+      "CARTOGRAFIA",
+      "SELVA",
+      "MEMORIA",
+      "ENCICLOPEDIA",
+      "PRONOMBRE",
+      "FRACCION",
+      "QUIMICA",
+      "TECTONICA",
+      "PROBABILIDAD",
+      "ORBITA",
+      "ETICA"
+    ],
+    "targets": [
+      {
+        "word": "CODIGO",
+        "start": {
+          "row": 18,
+          "col": 1
+        },
+        "end": {
+          "row": 18,
+          "col": 6
+        },
+        "direction": "horizontal-forward",
+        "found": false
+      },
+      {
+        "word": "OLIMPIADA",
+        "start": {
+          "row": 6,
+          "col": 18
+        },
+        "end": {
+          "row": 6,
+          "col": 10
+        },
+        "direction": "horizontal-reverse",
+        "found": false
+      },
+      {
+        "word": "LITERATURA",
+        "start": {
+          "row": 7,
+          "col": 12
+        },
+        "end": {
+          "row": 16,
+          "col": 12
+        },
+        "direction": "vertical-down",
+        "found": false
+      },
+      {
+        "word": "CARTOGRAFIA",
+        "start": {
+          "row": 9,
+          "col": 0
+        },
+        "end": {
+          "row": 19,
+          "col": 10
+        },
+        "direction": "diagonal-down-right",
+        "found": false
+      },
+      {
+        "word": "SELVA",
+        "start": {
+          "row": 12,
+          "col": 10
+        },
+        "end": {
+          "row": 8,
+          "col": 6
+        },
+        "direction": "diagonal-up-left",
+        "found": false
+      },
+      {
+        "word": "MEMORIA",
+        "start": {
+          "row": 10,
+          "col": 11
+        },
+        "end": {
+          "row": 4,
+          "col": 5
+        },
+        "direction": "diagonal-up-left",
+        "found": false
+      },
+      {
+        "word": "ENCICLOPEDIA",
+        "start": {
+          "row": 12,
+          "col": 0
+        },
+        "end": {
+          "row": 1,
+          "col": 11
+        },
+        "direction": "diagonal-up-right",
+        "found": false
+      },
+      {
+        "word": "PRONOMBRE",
+        "start": {
+          "row": 7,
+          "col": 2
+        },
+        "end": {
+          "row": 15,
+          "col": 10
+        },
+        "direction": "diagonal-down-right",
+        "found": false
+      },
+      {
+        "word": "FRACCION",
+        "start": {
+          "row": 8,
+          "col": 0
+        },
+        "end": {
+          "row": 1,
+          "col": 0
+        },
+        "direction": "vertical-up",
+        "found": false
+      },
+      {
+        "word": "QUIMICA",
+        "start": {
+          "row": 18,
+          "col": 17
+        },
+        "end": {
+          "row": 12,
+          "col": 17
+        },
+        "direction": "vertical-up",
+        "found": false
+      },
+      {
+        "word": "TECTONICA",
+        "start": {
+          "row": 2,
+          "col": 8
+        },
+        "end": {
+          "row": 10,
+          "col": 0
+        },
+        "direction": "diagonal-down-left",
+        "found": false
+      },
+      {
+        "word": "PROBABILIDAD",
+        "start": {
+          "row": 16,
+          "col": 13
+        },
+        "end": {
+          "row": 5,
+          "col": 2
+        },
+        "direction": "diagonal-up-left",
+        "found": false
+      },
+      {
+        "word": "ORBITA",
+        "start": {
+          "row": 16,
+          "col": 0
+        },
+        "end": {
+          "row": 11,
+          "col": 5
+        },
+        "direction": "diagonal-up-right",
+        "found": false
+      },
+      {
+        "word": "ETICA",
+        "start": {
+          "row": 13,
+          "col": 6
+        },
+        "end": {
+          "row": 9,
+          "col": 2
+        },
+        "direction": "diagonal-up-left",
+        "found": false
+      }
+    ],
+    "cursor": {
+      "row": 0,
+      "col": 0
+    },
+    "previewPath": [],
+    "message": "Encuentra las palabras ocultas en el tablero."
+  }
+}

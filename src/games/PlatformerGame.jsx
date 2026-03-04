@@ -7,10 +7,10 @@ const INITIAL_SNAPSHOT = createInitialSnapshot();
 
 const statusByScreen = {
   start: "Ready",
-  playing: "In run",
-  level_complete: "Level clear",
-  game_over: "Game over",
-  game_complete: "Victory"
+  playing: "Playing",
+  level_complete: "Level Clear!",
+  game_over: "Game Over",
+  game_complete: "Victory!"
 };
 
 const ratioToPercent = (value) => `${Math.max(0, Math.min(100, value * 100)).toFixed(1)}%`;
@@ -115,13 +115,7 @@ function PlatformerGame() {
     snapshot.coinsTotal > 0 ? snapshot.coinsCollected / snapshot.coinsTotal : 0;
   const timeProgress =
     snapshot.timeLimit > 0 ? snapshot.timeLeft / snapshot.timeLimit : 0;
-  const playerPowerText = snapshot.player.powerLevel > 0 ? "Fire" : "Small";
   const stageTitle = snapshot.levelName || `Stage ${snapshot.levelIndex + 1}`;
-  const layoutLabel = snapshot.levelLayout === "vertical"
-    ? "Vertical"
-    : snapshot.levelLayout === "hybrid"
-      ? "Hybrid"
-      : "Horizontal";
 
   const canRestart = useMemo(
     () => snapshot.screen !== "start",
@@ -132,69 +126,52 @@ function PlatformerGame() {
     <div className="mini-game platformer-game">
       <div className="mini-head">
         <div>
-          <h4>Sky Runner DX - Arcade Platformer</h4>
-          <p>Random 5-map runs with mixed horizontal/vertical routes and multi-boss encounters.</p>
+          <h4>Sky Runner DX</h4>
+          <p>5-stage random run — reach the flag, stomp enemies, collect coins for bonus score.</p>
         </div>
         <div className="platformer-actions">
           <button type="button" onClick={onStart}>
-            {snapshot.screen === "start" ? "Start run" : "Continue"}
+            {snapshot.screen === "start" ? "Start" : "Continue"}
           </button>
           <button type="button" onClick={onRestart} disabled={!canRestart}>
-            Restart level
+            Restart
           </button>
         </div>
       </div>
 
       <div className="status-row">
         <span className={`status-pill ${snapshot.screen}`}>{statusLabel}</span>
-        <span>Score: {snapshot.score}</span>
-        <span>Lives: {snapshot.lives}</span>
-        <span>Level: {snapshot.levelIndex + 1}/{snapshot.levelCount}</span>
-        <span>Layout: {layoutLabel}</span>
-        <span>Boss maps: {snapshot.runBossLevelCount}</span>
-        <span>Coins: {snapshot.coinsCollected}/{snapshot.coinsTotal}</span>
-        <span>Power: {playerPowerText}</span>
-        <span>Time: {Math.max(0, Math.ceil(snapshot.timeLeft))}s</span>
+        <span>Stage <strong>{snapshot.levelIndex + 1}</strong>/{snapshot.levelCount} &mdash; {stageTitle}</span>
+        {snapshot.isBossLevel && <span className="status-pill boss">Boss Stage</span>}
+        <span>Score: <strong>{snapshot.score}</strong></span>
+        <span>Lives: <strong>{snapshot.lives}</strong></span>
       </div>
 
       <div className="platformer-campaign-strip">
-        <span>Campaign: random 5-map route</span>
-        <span>Stage: {stageTitle}</span>
         <span>
-          Objective: {snapshot.activeBoss ? `defeat ${snapshot.activeBoss.name} then reach the flag` : "reach the flag (coins = bonus)"}
+          {snapshot.activeBoss
+            ? `Boss: ${snapshot.activeBoss.name} — stomp or shoot to damage, then reach the flag`
+            : snapshot.screen === "start"
+              ? "A/D or arrows to move · W/Space to jump · hold jump for height · F to fire (with power-up)"
+              : "Reach the flag! Coins = bonus score."}
         </span>
       </div>
 
       <div className="meter-stack">
         <div className="meter-line compact">
-          <p>Coin progress</p>
+          <p>Coins</p>
           <div className="meter-track">
             <span className="meter-fill quiz" style={{ width: ratioToPercent(coinsProgress) }} />
           </div>
-          <strong>{Math.round(coinsProgress * 100)}%</strong>
+          <strong>{snapshot.coinsCollected}/{snapshot.coinsTotal}</strong>
         </div>
         <div className="meter-line compact">
-          <p>Time remaining</p>
+          <p>Time</p>
           <div className="meter-track">
             <span className="meter-fill timer" style={{ width: ratioToPercent(timeProgress) }} />
           </div>
           <strong>{Math.max(0, Math.ceil(snapshot.timeLeft))}s</strong>
         </div>
-      </div>
-
-      <div className="platformer-legend-grid">
-        <article>
-          <p>Movement Feel</p>
-          <strong>Smooth accel/decel + variable jump</strong>
-        </article>
-        <article>
-          <p>Combat Loop</p>
-          <strong>Stomp enemies or fire with power-up</strong>
-        </article>
-        <article>
-          <p>Progression</p>
-          <strong>Randomized 5-map route with guaranteed final boss</strong>
-        </article>
       </div>
 
       <div className="phaser-canvas-shell platformer-stage-shell">
@@ -248,9 +225,9 @@ function PlatformerGame() {
         </button>
       </div>
 
-      <p className="game-message">
-        {snapshot.message} Controls: A/D or arrows to move, W/up/Space to jump, hold jump for height, F to fire with power-up.
-      </p>
+      {snapshot.message && (
+        <p className="game-message">{snapshot.message}</p>
+      )}
     </div>
   );
 }

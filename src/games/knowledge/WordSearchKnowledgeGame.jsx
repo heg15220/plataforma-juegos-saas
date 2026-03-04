@@ -61,6 +61,15 @@ const COPY_BY_LOCALE = {
 
 const cellKey = (row, col) => `${row},${col}`;
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+const isPrimarySelectionPointer = (event) => {
+  const pointerButton = Number.isFinite(event.button) ? event.button : 0;
+  if (event.pointerType === "mouse") {
+    return pointerButton === 0;
+  }
+  if (pointerButton === 0 || pointerButton === -1) return true;
+  if (typeof event.isPrimary === "boolean") return event.isPrimary;
+  return true;
+};
 
 const parseMatchParam = (raw) => {
   if (raw == null) return null;
@@ -115,13 +124,16 @@ function WordSearchKnowledgeGame() {
     () => resolveMatchIdFromHash() ?? getRandomKnowledgeMatchId(),
     []
   );
+  const boardRef = useRef(null);
   const selectingRef = useRef(false);
+  const selectingPointerIdRef = useRef(null);
   const [state, setState] = useState(() =>
     createInitialState(initialMatchId, locale, copy)
   );
 
   const restart = useCallback(() => {
     selectingRef.current = false;
+    selectingPointerIdRef.current = null;
     setState((previous) =>
       createInitialState(getRandomKnowledgeMatchIdExcept(previous.matchId), locale, copy)
     );
@@ -159,6 +171,38 @@ function WordSearchKnowledgeGame() {
       };
     });
   }, []);
+
+  const getCellFromPoint = useCallback((clientX, clientY) => {
+    if (typeof document === "undefined") return null;
+    if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return null;
+
+    const node = document.elementFromPoint(clientX, clientY);
+    if (!(node instanceof Element)) return null;
+    const cell = node.closest("[data-wordsearch-cell='true']");
+    if (!(cell instanceof HTMLElement)) return null;
+    if (boardRef.current && !boardRef.current.contains(cell)) return null;
+
+    const row = Number(cell.dataset.row);
+    const col = Number(cell.dataset.col);
+    if (!Number.isInteger(row) || !Number.isInteger(col)) return null;
+    return { row, col };
+  }, []);
+
+  const updateSelectionFromPointer = useCallback((event) => {
+    if (!selectingRef.current) return null;
+    if (
+      selectingPointerIdRef.current != null &&
+      Number.isFinite(event.pointerId) &&
+      event.pointerId !== selectingPointerIdRef.current
+    ) {
+      return null;
+    }
+
+    const nextCell = getCellFromPoint(event.clientX, event.clientY);
+    if (!nextCell) return null;
+    updateSelection(nextCell.row, nextCell.col);
+    return nextCell;
+  }, [getCellFromPoint, updateSelection]);
 
   const clearSelection = useCallback((snapshot) => ({
     ...snapshot,
@@ -228,19 +272,35 @@ function WordSearchKnowledgeGame() {
   }, [clearSelection, copy]);
 
   useEffect(() => {
-    const onPointerUp = () => {
+    const onPointerMove = (event) => {
       if (!selectingRef.current) return;
-      selectingRef.current = false;
-      finishSelection();
+      updateSelectionFromPointer(event);
     };
 
+    const onPointerUp = (event) => {
+      if (!selectingRef.current) return;
+      if (
+        selectingPointerIdRef.current != null &&
+        Number.isFinite(event.pointerId) &&
+        event.pointerId !== selectingPointerIdRef.current
+      ) {
+        return;
+      }
+      const explicitEnd = updateSelectionFromPointer(event);
+      selectingRef.current = false;
+      selectingPointerIdRef.current = null;
+      finishSelection(explicitEnd || null);
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerUp);
     return () => {
+      window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("pointercancel", onPointerUp);
     };
-  }, [finishSelection]);
+  }, [finishSelection, updateSelectionFromPointer]);
 
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -423,9 +483,14 @@ function WordSearchKnowledgeGame() {
         <div className="wordsearch-shell">
           <div className="wordsearch-board-shell">
             <div
+              ref={boardRef}
               className="wordsearch-board"
               role="grid"
               style={{ "--wordsearch-size": state.boardSize }}
+              onPointerMove={(event) => {
+                if (!selectingRef.current) return;
+                updateSelectionFromPointer(event);
+              }}
             >
               {state.board.map((row, rowIndex) =>
                 row.map((letter, colIndex) => {
@@ -449,11 +514,20 @@ function WordSearchKnowledgeGame() {
                       key={id}
                       type="button"
                       className={className}
+                      data-wordsearch-cell="true"
+                      data-row={rowIndex}
+                      data-col={colIndex}
                       draggable={false}
                       onContextMenu={(event) => event.preventDefault()}
                       onPointerDown={(event) => {
-                        if (event.button !== 0) return;
+                        if (!isPrimarySelectionPointer(event)) return;
                         event.preventDefault();
+                        if (Number.isFinite(event.pointerId)) {
+                          selectingPointerIdRef.current = event.pointerId;
+                          event.currentTarget.setPointerCapture?.(event.pointerId);
+                        } else {
+                          selectingPointerIdRef.current = null;
+                        }
                         selectingRef.current = true;
                         if (state.selectionStart && state.previewPath.length === 1) {
                           updateSelection(rowIndex, colIndex);
@@ -462,14 +536,15 @@ function WordSearchKnowledgeGame() {
                         startSelection(rowIndex, colIndex, false);
                       }}
                       onPointerEnter={(event) => {
-                        if (!selectingRef.current && event.buttons === 0) return;
+                        if (!selectingRef.current) return;
+                        if (
+                          selectingPointerIdRef.current != null &&
+                          Number.isFinite(event.pointerId) &&
+                          event.pointerId !== selectingPointerIdRef.current
+                        ) {
+                          return;
+                        }
                         updateSelection(rowIndex, colIndex);
-                      }}
-                      onPointerUp={(event) => {
-                        if (event.button !== 0) return;
-                        event.preventDefault();
-                        selectingRef.current = false;
-                        finishSelection({ row: rowIndex, col: colIndex });
                       }}
                     >
                       {letter}

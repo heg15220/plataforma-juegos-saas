@@ -52,12 +52,21 @@ export const DIFFICULTY_PRESETS = {
   rookie: {
     key: "rookie",
     label: "Rookie",
-    aiBaseSpeed: 330,
-    maxBallSpeed: 880,
-    aiPrecisionError: 78,
-    aiReaction: 0.22,
-    aiPredictionWeight: 0.52,
-    aiJitter: 44
+    aiBaseSpeed: 248,
+    maxBallSpeed: 760,
+    aiPrecisionError: 124,
+    aiReaction: 0.28,
+    aiPredictionWeight: 0.38,
+    aiJitter: 84,
+    aiErrorDrift: 0.34,
+    aiAdvanceFactor: 0.22,
+    aiWhiffChance: 0.48,
+    aiWhiffDurationMin: 0.24,
+    aiWhiffDurationMax: 0.58,
+    aiWhiffOffsetMin: 54,
+    aiWhiffOffsetMax: 142,
+    aiWhiffCooldownMin: 0.9,
+    aiWhiffCooldownMax: 1.7
   },
   arcade: {
     key: "arcade",
@@ -67,7 +76,10 @@ export const DIFFICULTY_PRESETS = {
     aiPrecisionError: 52,
     aiReaction: 0.16,
     aiPredictionWeight: 0.7,
-    aiJitter: 30
+    aiJitter: 30,
+    aiErrorDrift: 0.18,
+    aiAdvanceFactor: 0.32,
+    aiWhiffChance: 0
   },
   pro: {
     key: "pro",
@@ -77,7 +89,10 @@ export const DIFFICULTY_PRESETS = {
     aiPrecisionError: 30,
     aiReaction: 0.1,
     aiPredictionWeight: 0.86,
-    aiJitter: 20
+    aiJitter: 20,
+    aiErrorDrift: 0.12,
+    aiAdvanceFactor: 0.38,
+    aiWhiffChance: 0
   }
 };
 
