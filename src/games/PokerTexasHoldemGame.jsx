@@ -2,12 +2,20 @@
 import useGameRuntimeBridge from "../utils/useGameRuntimeBridge";
 
 const OPPONENT_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8];
-const STARTING_STACK_OPTIONS = [80, 120, 160];
-const TARGET_OPTIONS_BY_STACK = {
-  80: [100, 130, 150],
-  120: [150, 180, 220],
-  160: [200, 260, 300]
+const STARTING_STACK_OPTIONS = [60, 80, 100, 120, 140, 160, 200, 240, 300, 400];
+const TARGET_MULTIPLIERS = [1.2, 1.35, 1.5, 1.7, 1.9, 2.1, 2.4, 2.8, 3.2];
+const roundToTen = (value) => Math.round(value / 10) * 10;
+const buildTargetOptionsForStack = (stack) => {
+  const values = TARGET_MULTIPLIERS
+    .map((multiplier) => roundToTen(stack * multiplier))
+    .filter((target) => target > stack);
+  const uniqueSorted = [...new Set(values)].sort((a, b) => a - b);
+  if (!uniqueSorted.length) return [stack + 20];
+  return uniqueSorted;
 };
+const TARGET_OPTIONS_BY_STACK = Object.fromEntries(
+  STARTING_STACK_OPTIONS.map((stack) => [stack, buildTargetOptionsForStack(stack)])
+);
 const BLIND_LEVELS = {
   slow: { id: "slow", label: "1 / 2", small: 1, big: 2 },
   standard: { id: "standard", label: "2 / 4", small: 2, big: 4 },
@@ -17,7 +25,9 @@ const DEFAULT_STARTING_STACK = 120;
 const DEFAULT_TARGET_CHIPS = 180;
 const DEFAULT_BLIND_LEVEL_ID = "standard";
 const MAX_LOGS = 14;
-const AUTO_NEXT_MS = 3400;
+const AI_THINK_JITTER_MS = 520;
+const AI_CHAIN_TURN_BONUS_MS = 700;
+const AI_WATCHDOG_MS = 6200;
 const HAND_CARDS = 5;
 const PHASES = ["pre-bet", "discard", "post-bet"];
 const PHASE_LABELS = {
@@ -35,13 +45,54 @@ const SUITS = [
 const RANKS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
 const RANK_LABEL = { 2: "2", 3: "3", 4: "4", 5: "5", 6: "6", 7: "7", 8: "8", 9: "9", 10: "10", 11: "J", 12: "Q", 13: "K", 14: "A" };
 const AI_LEVELS = {
-  rookie: { id: "rookie", label: "Basica", thinkMs: 520 },
-  tactical: { id: "tactical", label: "Tactica", thinkMs: 820 },
-  expert: { id: "expert", label: "Experta", thinkMs: 1120 }
+  rookie: { id: "rookie", label: "Basica", thinkMs: 1200 },
+  tactical: { id: "tactical", label: "Tactica", thinkMs: 1850 },
+  expert: { id: "expert", label: "Experta", thinkMs: 2550 }
 };
 const AI_LEVEL_LABELS = {
   es: { rookie: "Basica", tactical: "Tactica", expert: "Experta" },
   en: { rookie: "Basic", tactical: "Tactical", expert: "Expert" }
+};
+const AI_STRATEGY_PROFILES = {
+  rookie: {
+    equitySamples: 64,
+    discardSamples: 24,
+    bluffBase: 0.04,
+    semiBluffRate: 0.08,
+    rebluffRate: 0.02,
+    riskTolerance: 0.32,
+    callMargin: -0.02,
+    valueRaiseThreshold: 0.7,
+    jamThreshold: 0.86,
+    shortStackBb: 6,
+    speculativeCallMax: 0.12
+  },
+  tactical: {
+    equitySamples: 140,
+    discardSamples: 52,
+    bluffBase: 0.11,
+    semiBluffRate: 0.2,
+    rebluffRate: 0.08,
+    riskTolerance: 0.5,
+    callMargin: 0.01,
+    valueRaiseThreshold: 0.62,
+    jamThreshold: 0.79,
+    shortStackBb: 8,
+    speculativeCallMax: 0.2
+  },
+  expert: {
+    equitySamples: 220,
+    discardSamples: 84,
+    bluffBase: 0.18,
+    semiBluffRate: 0.28,
+    rebluffRate: 0.16,
+    riskTolerance: 0.66,
+    callMargin: 0.03,
+    valueRaiseThreshold: 0.57,
+    jamThreshold: 0.74,
+    shortStackBb: 11,
+    speculativeCallMax: 0.28
+  }
 };
 const RULES_PROMPT = {
   es: `POKER CLASICO 5 CARTAS (CON APUESTAS)
@@ -99,7 +150,9 @@ const UI_COPY = {
     showdownCards: "Cartas de cierre",
     matchEnd: "Fin de partida",
     handEnd: "Fin de mano",
-    nextHandAuto: "Siguiente mano automatica...",
+    nextHandAuto: "Pulsa Siguiente mano para continuar.",
+    nextHandHint: "Continua cuando quieras.",
+    nextHandButton: "Siguiente mano",
     actionDiscard: "Descartar seleccion",
     actionStand: "Servirse (0 descartes)",
     actionFold: "Retirarse",
@@ -166,7 +219,9 @@ const UI_COPY = {
     showdownCards: "Showdown cards",
     matchEnd: "Match over",
     handEnd: "Hand over",
-    nextHandAuto: "Next hand automatically...",
+    nextHandAuto: "Press Next hand to continue.",
+    nextHandHint: "Continue when you are ready.",
+    nextHandButton: "Next hand",
     actionDiscard: "Discard selected",
     actionStand: "Stand pat (0 discards)",
     actionFold: "Fold",
@@ -228,9 +283,11 @@ const localizeRuntimeText = (text, locale) => {
   const replacements = [
     [/Partida cerrada:/g, "Match over:"],
     [/Siguiente mano automatica\.\.\./g, "Next hand automatically..."],
+    [/Pulsa Siguiente mano para continuar\./g, "Press Next hand to continue."],
+    [/lidera con/g, "leads with"],
     [/gana la mano/g, "wins the hand"],
     [/Mano empatada:/g, "Tied hand:"],
-    [/gana por retirada general y recoge/g, "wins by full-table fold and collects"],
+    [/gana por retirada general y recoge/g, "wins by full-table fold and takes"],
     [/Sin ganador/g, "No winner"],
     [/Sin showdown\./g, "No showdown."],
     [/gana showdown con/g, "wins showdown with"],
@@ -245,14 +302,24 @@ const localizeRuntimeText = (text, locale) => {
     [/gana la mesa por eliminacion\./g, "wins the table by elimination."],
     [/Ciegas/g, "Blinds"],
     [/Mano (\d+): reparte/g, "Hand $1: dealt by"],
+    [/actua\. Turno para/g, "acts. Turn for"],
+    [/actua\./g, "acts."],
     [/Turno para/g, "Turn for"],
+    [/Sin fichas/g, "No chips"],
     [/Ya esta servido\./g, "Already stood pat."],
     [/Mantiene su mano\./g, "Keeps the hand."],
     [/Busca mejorar\./g, "Looks to improve."],
     [/Sube por valor\./g, "Raises for value."],
     [/Sube controlando riesgo\./g, "Raises while controlling risk."],
+    [/Apuesta de valor calculada\./g, "Calculated value bet."],
+    [/Semi-farol con proyecto\./g, "Semi-bluff with draw potential."],
+    [/Farol de presion\./g, "Pressure bluff."],
+    [/Controla el bote\./g, "Controls the pot."],
     [/Pasa\./g, "Checks."],
+    [/pasa\./g, "checks."],
     [/All-in forzado\./g, "Forced all-in."],
+    [/All-in por valor\./g, "Value all-in."],
+    [/All-in de presion\./g, "Pressure all-in."],
     [/Resube fuerte\./g, "Strong re-raise."],
     [/Iguala con mano fuerte\./g, "Calls with a strong hand."],
     [/Iguala por precio\./g, "Calls for the price."],
@@ -268,14 +335,20 @@ const localizeRuntimeText = (text, locale) => {
     [/Selecciona al menos una carta o pulsa Servirse\./g, "Select at least one card or press Stand pat."],
     [/Se retira\./g, "Folds."],
     [/se retira\./g, "folds."],
+    [/Iguala (\d+)\./g, "Calls $1."],
+    [/iguala (\d+)\./g, "calls $1."],
     [/iguala (\d+) ficha\(s\)\./g, "calls $1 chip(s)."],
+    [/Sube a (\d+)\./g, "Raises to $1."],
     [/sube a (\d+)\./g, "raises to $1."],
     [/va all-in \((\d+)\)\./g, "goes all-in ($1)."],
     [/se retira en descarte\./g, "folds during discard."],
+    [/Descarta (\d+)\./g, "Discards $1."],
+    [/descarta (\d+)\./g, "discards $1."],
     [/descarta (\d+) carta\(s\)\./g, "discards $1 card(s)."],
+    [/Se sirve\./g, "Stands pat."],
     [/se sirve\./g, "stands pat."],
+    [/Se sirve sin descartar\./g, "Stands pat without discarding."],
     [/se sirve sin descartar\./g, "stands pat without discarding."],
-    [/actua\. Turno para/g, "acts. Turn for"],
     [/cierra su accion\./g, "closes the action."],
     [/Debes igualar (\d+) fichas o retirarte\./g, "You must call $1 chips or fold."],
     [/Debes igualar (\d+) ficha\(s\) para seguir\./g, "You must call $1 chip(s) to continue."],
@@ -295,6 +368,18 @@ const localizeRuntimeText = (text, locale) => {
   for (const [pattern, value] of replacements) out = out.replace(pattern, value);
   out = out.replace(/\bTu\b/g, "You");
   out = out.replace(/\bIA\s+(\d+)\b/g, "AI $1");
+  out = out.replace(/\bYou wins\b/g, "You win");
+  out = out.replace(/\bYou leads\b/g, "You lead");
+  out = out.replace(/\bYou win by full-table fold and takes\b/g, "You win by full-table fold and take");
+  out = out.replace(/\bYou folds\b/g, "You fold");
+  out = out.replace(/\bYou checks\b/g, "You check");
+  out = out.replace(/\bYou calls\b/g, "You call");
+  out = out.replace(/\bYou raises\b/g, "You raise");
+  out = out.replace(/\bYou goes\b/g, "You go");
+  out = out.replace(/\bYou stands\b/g, "You stand");
+  out = out.replace(/\bYou closes\b/g, "You close");
+  out = out.replace(/\bYou discards\b/g, "You discard");
+  out = out.replace(/\bYou collects\b/g, "You collect");
   out = out.replace(/\bfichas\b/g, "chips");
   out = out.replace(/ficha\(s\)/g, "chip(s)");
   out = out.replace(/\bcarta\(s\)\b/g, "card(s)");
@@ -317,6 +402,43 @@ const appendLog = (logs, line) => [line, ...logs].slice(0, MAX_LOGS);
 const cardText = (card) => (card ? `${RANK_LABEL[card.rank]}${card.symbol}` : "--");
 const cloneCards = (cards) => cards.map((card) => ({ ...card }));
 const emptyDiscardSelection = () => Array.from({ length: HAND_CARDS }, () => false);
+const createReadStats = () => ({
+  handsObserved: 0,
+  voluntaryHands: 0,
+  raises: 0,
+  preBetRaises: 0,
+  postBetRaises: 0,
+  reraises: 0,
+  calls: 0,
+  callsFacingRaise: 0,
+  checks: 0,
+  folds: 0,
+  foldsFacingRaise: 0,
+  allIns: 0,
+  showdowns: 0,
+  showdownWins: 0,
+  potsWonWithoutShowdown: 0
+});
+const cloneReadStats = (stats) => ({ ...createReadStats(), ...(stats || {}) });
+const readMetricsFromStats = (stats) => {
+  const safe = cloneReadStats(stats);
+  const hands = Math.max(1, safe.handsObserved);
+  const vpip = clampPercent(safe.voluntaryHands / hands, 0, 1);
+  const foldToRaise = clampPercent(safe.foldsFacingRaise / Math.max(1, safe.foldsFacingRaise + safe.callsFacingRaise), 0, 1);
+  const showdownWinRate = clampPercent(safe.showdownWins / Math.max(1, safe.showdowns), 0, 1);
+  const stealRate = clampPercent(safe.potsWonWithoutShowdown / hands, 0, 1);
+  const rawAggression = (safe.raises + safe.allIns * 1.1) / Math.max(1, safe.calls + safe.checks);
+  const aggression = clampPercent((rawAggression - 0.45) / 1.6, 0, 1);
+  return {
+    hands: safe.handsObserved,
+    vpip,
+    foldToRaise,
+    showdownWinRate,
+    stealRate,
+    aggression,
+    rawAggression
+  };
+};
 
 const clampPercent = (value, min, max) => Math.max(min, Math.min(max, value));
 const AI_SEAT_LAYOUTS = {
@@ -475,6 +597,309 @@ const recommendedDiscardIndices = (hand) => {
   const keep = new Set((high.length ? high : sorted.slice(0, 1)).map((entry) => entry.index));
   return hand.map((_, index) => index).filter((index) => !keep.has(index));
 };
+const DISCARD_PATTERNS = Array.from({ length: 1 << HAND_CARDS }, (_, mask) => {
+  const indices = [];
+  for (let i = 0; i < HAND_CARDS; i += 1) {
+    if (mask & (1 << i)) indices.push(i);
+  }
+  return indices;
+});
+const clamp01 = (value) => clampPercent(Number.isFinite(value) ? value : 0, 0, 1);
+const tieBreakStrength = (tie = []) => tie.reduce((acc, rank, index) => acc + ((rank || 0) / 14) / Math.pow(2, index + 1), 0);
+const handStrengthScore = (value) => clamp01(((value?.cat || 0) + tieBreakStrength(value?.tie || [])) / 10);
+const resolveAiStyle = (levelId) => AI_STRATEGY_PROFILES[levelId] || AI_STRATEGY_PROFILES.tactical;
+const deckWithoutCards = (cards) => {
+  const blocked = new Set((cards || []).map((card) => card?.id).filter(Boolean));
+  return createDeck().filter((card) => !blocked.has(card.id));
+};
+const drawRandomCards = (deck, amount) => {
+  const count = Math.min(Math.max(0, Math.floor(Number(amount) || 0)), deck.length);
+  if (!count) return [];
+  const indices = deck.map((_, index) => index);
+  for (let i = 0; i < count; i += 1) {
+    const pick = i + randomInt(indices.length - i);
+    [indices[i], indices[pick]] = [indices[pick], indices[i]];
+  }
+  return indices.slice(0, count).map((index) => deck[index]);
+};
+const activeOpponentSeats = (state, seat) => state.players
+  .filter((player) => player.seatIndex !== seat && !player.folded && !player.busted)
+  .map((player) => player.seatIndex);
+const computePotOdds = (pot, toCall) => {
+  if (toCall <= 0) return 0;
+  return clamp01(toCall / Math.max(1, pot + toCall));
+};
+const estimateStraightPotential = (hand) => {
+  const rankSet = new Set(hand.map((card) => card.rank));
+  if (rankSet.has(14)) rankSet.add(1);
+  let coveredBest = 0;
+  for (let start = 1; start <= 10; start += 1) {
+    let covered = 0;
+    for (let rank = start; rank <= start + 4; rank += 1) {
+      if (rankSet.has(rank)) covered += 1;
+    }
+    coveredBest = Math.max(coveredBest, covered);
+  }
+  if (coveredBest >= 5) return 0;
+  if (coveredBest === 4) return 0.22;
+  if (coveredBest === 3) return 0.1;
+  return 0;
+};
+const estimateDrawPotential = (hand, handValue = evalFive(hand)) => {
+  if (!hand || hand.length !== HAND_CARDS || handValue.cat >= 5) return 0;
+  const suitCounts = hand.reduce((acc, card) => {
+    acc[card.suit] = (acc[card.suit] || 0) + 1;
+    return acc;
+  }, {});
+  const suitPeak = Math.max(...Object.values(suitCounts), 0);
+  let potential = estimateStraightPotential(hand);
+  if (suitPeak === 4) potential += 0.28;
+  else if (suitPeak === 3) potential += 0.12;
+  if (handValue.cat === 1) potential += 0.16;
+  if (handValue.cat === 2) potential += 0.08;
+  if (handValue.cat === 3) potential += 0.05;
+  if (handValue.cat === 0) {
+    const highCards = hand.filter((card) => card.rank >= 11).length;
+    if (highCards >= 2) potential += 0.1;
+    else if (highCards === 1) potential += 0.05;
+  }
+  return clamp01(Math.min(0.62, potential));
+};
+const resolveEquitySamples = (style, opponentCount) => {
+  const divider = Math.max(1, Math.sqrt(Math.max(1, opponentCount)));
+  return Math.max(48, Math.round(style.equitySamples / divider));
+};
+const estimateWinRateVsField = (state, seat, sampleCount, actorEval) => {
+  const actor = state.players[seat];
+  if (!actor || actor.folded || actor.busted || !actor.hand?.length) return 0;
+  const opponents = activeOpponentSeats(state, seat);
+  if (!opponents.length) return 1;
+  const deck = deckWithoutCards(actor.hand);
+  const drawsPerSample = opponents.length * HAND_CARDS;
+  const samples = Math.max(24, Math.floor(Number(sampleCount) || 0));
+  const baseEval = actorEval || evalFive(actor.hand);
+  let equity = 0;
+  for (let sample = 0; sample < samples; sample += 1) {
+    const draw = drawRandomCards(deck, drawsPerSample);
+    if (draw.length < drawsPerSample) break;
+    const evals = [baseEval];
+    for (let offset = 0; offset < drawsPerSample; offset += HAND_CARDS) {
+      evals.push(evalFive(draw.slice(offset, offset + HAND_CARDS)));
+    }
+    let best = evals[0];
+    for (const value of evals.slice(1)) {
+      if (compareEval(value, best) > 0) best = value;
+    }
+    const winners = evals.filter((value) => compareEval(value, best) === 0).length;
+    if (compareEval(evals[0], best) === 0) equity += 1 / Math.max(1, winners);
+  }
+  return clamp01(equity / samples);
+};
+const estimateDiscardPlanStrength = (hand, discardIndices, sampleCount) => {
+  const baseDeck = deckWithoutCards(hand);
+  const drawCount = Math.min(discardIndices.length, baseDeck.length);
+  if (!drawCount) return handStrengthScore(evalFive(hand));
+  const samples = Math.max(16, Math.floor(Number(sampleCount) || 0));
+  let aggregate = 0;
+  for (let sample = 0; sample < samples; sample += 1) {
+    const replacements = drawRandomCards(baseDeck, drawCount);
+    if (replacements.length < drawCount) break;
+    const candidate = cloneCards(hand);
+    discardIndices.forEach((index, replaceIndex) => {
+      candidate[index] = replacements[replaceIndex];
+    });
+    aggregate += handStrengthScore(evalFive(candidate));
+  }
+  return aggregate / samples;
+};
+const chooseDiscardPlanBySimulation = (hand, style) => {
+  if (!hand || hand.length !== HAND_CARDS) return [];
+  const current = evalFive(hand);
+  if (current.cat >= 6) return [];
+  const samples = style.discardSamples;
+  let bestIndices = [];
+  let bestScore = estimateDiscardPlanStrength(hand, [], samples) + (current.cat >= 4 ? 0.02 : 0);
+  for (const indices of DISCARD_PATTERNS) {
+    if (!indices.length) continue;
+    if (indices.length > 4 && current.cat >= 1) continue;
+    if (current.cat >= 4 && indices.length > 1) continue;
+    if (current.cat === 3 && indices.length > 2) continue;
+    if (current.cat === 2 && indices.length > 1) continue;
+    const score = estimateDiscardPlanStrength(hand, indices, samples);
+    const penalty = indices.length * 0.012 + (indices.length === HAND_CARDS ? 0.08 : 0);
+    const adjusted = score - penalty;
+    if (adjusted > bestScore + 0.001) {
+      bestScore = adjusted;
+      bestIndices = indices;
+    }
+  }
+  return bestIndices;
+};
+const summarizeOpponentReads = (state, seat) => {
+  const observedOpponents = state.players.filter((player) => player.seatIndex !== seat && !player.busted);
+  if (!observedOpponents.length) {
+    return {
+      sampleConfidence: 0,
+      looseness: 0.5,
+      foldToRaise: 0.5,
+      aggression: 0.5,
+      showdownStrength: 0.5,
+      stealRate: 0.2
+    };
+  }
+  const metrics = observedOpponents.map((player) => readMetricsFromStats(player.readStats));
+  const avg = (selector, fallback = 0) => {
+    const values = metrics.map(selector).filter((value) => Number.isFinite(value));
+    if (!values.length) return fallback;
+    return values.reduce((sum, value) => sum + value, 0) / values.length;
+  };
+  const avgHands = avg((entry) => entry.hands, 0);
+  return {
+    sampleConfidence: clamp01(avgHands / 18),
+    looseness: clamp01(avg((entry) => entry.vpip, 0.5)),
+    foldToRaise: clamp01(avg((entry) => entry.foldToRaise, 0.5)),
+    aggression: clamp01(avg((entry) => entry.aggression, 0.5)),
+    showdownStrength: clamp01(avg((entry) => entry.showdownWinRate, 0.5)),
+    stealRate: clamp01(avg((entry) => entry.stealRate, 0.2))
+  };
+};
+const buildAiBetContext = (state, seat, handValue, style) => {
+  const actor = state.players[seat];
+  const opponents = activeOpponentSeats(state, seat);
+  const opponentReads = summarizeOpponentReads(state, seat);
+  const toCall = Math.max(0, state.currentBet - actor.currentBet);
+  const potOdds = computePotOdds(state.pot, toCall);
+  const drawPotential = state.phase === "pre-bet" ? estimateDrawPotential(actor.hand, handValue) : 0;
+  const winRate = estimateWinRateVsField(state, seat, resolveEquitySamples(style, opponents.length), handValue);
+  const pendingActors = state.turnQueue.slice(1).filter((candidate) => canActBet(state.players[candidate])).length;
+  const totalRivalsInQueue = Math.max(1, state.turnQueue.filter((candidate) => canActBet(state.players[candidate])).length - 1);
+  const positionAdvantage = clamp01(1 - pendingActors / totalRivalsInQueue);
+  const stackBb = (actor.chips + actor.currentBet) / Math.max(1, state.bigBlind);
+  const potCommitment = toCall / Math.max(1, actor.chips + actor.currentBet);
+  const potRatio = state.pot / Math.max(1, actor.chips + toCall);
+  const pressure = clamp01((state.currentBet - actor.currentBet) / Math.max(1, state.bigBlind * 4));
+  const baselineFoldEquity =
+    (state.phase === "post-bet" ? 0.16 : 0.1) +
+    (opponents.length <= 2 ? 0.12 : 0) +
+    positionAdvantage * 0.16 -
+    pressure * 0.1;
+  const readAdjustment =
+    opponentReads.foldToRaise * 0.26 -
+    opponentReads.looseness * 0.14 -
+    opponentReads.aggression * 0.12 +
+    opponentReads.stealRate * 0.08;
+  const perceivedFoldEquity = clamp01(
+    baselineFoldEquity + readAdjustment
+  );
+  const bluffCatchBonus = clamp01(
+    opponentReads.stealRate * 0.28 +
+    opponentReads.aggression * 0.14 -
+    opponentReads.showdownStrength * 0.09
+  ) * (0.45 + opponentReads.sampleConfidence * 0.55);
+  return {
+    toCall,
+    potOdds,
+    drawPotential,
+    winRate,
+    handStrength: handStrengthScore(handValue),
+    handValue,
+    activeOpponents: opponents.length,
+    positionAdvantage,
+    stackBb,
+    potCommitment,
+    potRatio,
+    perceivedFoldEquity,
+    equityEdge: winRate - potOdds,
+    bluffCatchBonus,
+    opponentReads,
+    actorChips: actor.chips,
+    phase: state.phase
+  };
+};
+const resolveRaiseAmount = (state, actor, context, style, mode = "value") => {
+  const minRaise = Math.max(1, state.bigBlind);
+  const maxRaise = actor.chips - context.toCall;
+  if (maxRaise < minRaise) return null;
+  const potFactor = mode === "bluff" ? 0.34 : mode === "semi" ? 0.44 : 0.58;
+  const potComponent = Math.floor(state.pot * potFactor);
+  const equityComponent = Math.floor(Math.max(0, context.winRate - 0.5) * state.bigBlind * 10);
+  const positionComponent = Math.floor(context.positionAdvantage * state.bigBlind * (mode === "value" ? 2.2 : 1.4));
+  const riskComponent = Math.floor(state.bigBlind * style.riskTolerance * (mode === "value" ? 2.6 : 1.5));
+  let raise = minRaise + potComponent + equityComponent + positionComponent + riskComponent;
+  if (mode === "bluff") raise = Math.floor(raise * (0.68 + style.riskTolerance * 0.32));
+  else if (mode === "semi") raise = Math.floor(raise * (0.8 + style.riskTolerance * 0.26));
+  raise = Math.max(minRaise, Math.min(maxRaise, raise));
+  return raise;
+};
+const shouldOpenBluff = (context, style) => {
+  if (context.toCall > 0) return false;
+  if (context.handValue.cat >= 2 || context.drawPotential >= 0.2) return false;
+  if (context.activeOpponents > 3 || context.stackBb < 7) return false;
+  if (context.opponentReads.aggression > 0.72 && context.opponentReads.foldToRaise < 0.38) return false;
+  const chance = style.bluffBase
+    * (0.65 + context.positionAdvantage * 0.7)
+    * (context.phase === "post-bet" ? 1.25 : 0.75)
+    * (0.7 + context.opponentReads.foldToRaise * 0.9)
+    * (1.08 - context.opponentReads.looseness * 0.3)
+    * (1 + context.perceivedFoldEquity * 0.5);
+  return Math.random() < clamp01(chance);
+};
+const shouldSemiBluff = (context, style) => {
+  if (context.phase !== "pre-bet") return false;
+  if (context.handValue.cat >= 4 || context.drawPotential < 0.18) return false;
+  const chance = style.semiBluffRate
+    * (0.7 + context.positionAdvantage * 0.6)
+    * (0.75 + context.drawPotential)
+    * (0.82 + context.opponentReads.foldToRaise * 0.42);
+  return Math.random() < clamp01(chance);
+};
+const shouldRebluff = (state, context, style) => {
+  if (style.rebluffRate <= 0 || context.toCall <= 0) return false;
+  if (context.activeOpponents > 2 || context.handValue.cat >= 2) return false;
+  if (context.toCall > Math.max(state.bigBlind * 2, context.actorChips * 0.18)) return false;
+  if (context.opponentReads.foldToRaise < 0.28) return false;
+  const chance = style.rebluffRate
+    * (0.62 + context.perceivedFoldEquity)
+    * (0.75 + context.opponentReads.foldToRaise * 0.55)
+    * (context.positionAdvantage > 0.55 ? 1.2 : 0.9);
+  return Math.random() < clamp01(chance);
+};
+const shouldValueJam = (context, style) => {
+  const monsterHand = context.handValue.cat >= 6 || context.winRate >= style.jamThreshold;
+  if (!monsterHand) return false;
+  return context.stackBb <= style.shortStackBb || context.potRatio >= 0.48 || context.potCommitment >= 0.34;
+};
+const shouldDesperationJam = (context, style) => {
+  if (context.stackBb > style.shortStackBb) return false;
+  if (context.activeOpponents > 2) return false;
+  if (context.handValue.cat >= 3) return true;
+  if (context.winRate < 0.38) return false;
+  const chance = 0.22 + style.riskTolerance * 0.28 + context.perceivedFoldEquity * 0.25;
+  return Math.random() < clamp01(chance);
+};
+const decideAiBasicBetAction = (state, actor, handValue, levelId) => {
+  const toCall = Math.max(0, state.currentBet - actor.currentBet);
+  const strong = handValue.cat >= 4;
+  const medium = handValue.cat >= 2;
+  if (toCall <= 0) {
+    if (strong && actor.chips > state.bigBlind) return { type: "raise", amount: state.bigBlind * 2, note: "Sube por valor." };
+    if (medium && levelId !== "rookie" && actor.chips > state.bigBlind) return { type: "raise", amount: state.bigBlind, note: "Sube controlando riesgo." };
+    return { type: "check", note: "Pasa." };
+  }
+  if (strong) {
+    if (actor.chips <= toCall) return { type: "all-in", note: "All-in forzado." };
+    if (levelId === "expert" && actor.chips > toCall + state.bigBlind) return { type: "raise", amount: state.bigBlind * 2, note: "Resube fuerte." };
+    return { type: "call", note: "Iguala con mano fuerte." };
+  }
+  if (medium) {
+    return toCall <= Math.max(1, Math.floor(actor.chips * 0.25))
+      ? { type: "call", note: "Iguala por precio." }
+      : { type: "fold", note: "Retirada tactica." };
+  }
+  return toCall <= Math.max(1, Math.floor(state.bigBlind / 2))
+    ? { type: "call", note: "Defensa minima." }
+    : { type: "fold", note: "No compensa pagar." };
+};
 
 const createPlayers = (opponents, stack) => {
   const players = [{
@@ -492,7 +917,10 @@ const createPlayers = (opponents, stack) => {
     busted: false,
     currentBet: 0,
     totalCommitted: 0,
-    intent: ""
+    intent: "",
+    readStats: createReadStats(),
+    voluntaryThisHand: false,
+    aggressiveThisHand: false
   }];
   for (let i = 1; i <= opponents; i += 1) {
     players.push({
@@ -510,14 +938,17 @@ const createPlayers = (opponents, stack) => {
       busted: false,
       currentBet: 0,
       totalCommitted: 0,
-      intent: ""
+      intent: "",
+      readStats: createReadStats(),
+      voluntaryThisHand: false,
+      aggressiveThisHand: false
     });
   }
   return players;
 };
 
 const distributePot = (players, winners, pot, dealer) => {
-  const nextPlayers = players.map((player) => ({ ...player }));
+  const nextPlayers = players.map((player) => ({ ...player, readStats: cloneReadStats(player.readStats) }));
   const payouts = {};
   for (const seat of winners) {
     nextPlayers[seat].handsWon += 1;
@@ -536,9 +967,32 @@ const distributePot = (players, winners, pot, dealer) => {
   }
   return { players: nextPlayers, payouts };
 };
+const applyReadStatsAfterHand = (players, result) => {
+  const winnerSet = new Set(result?.winners || []);
+  return players.map((player) => {
+    const readStats = cloneReadStats(player.readStats);
+    const participated = player.totalCommitted > 0 || (player.hand?.length || 0) > 0;
+    if (participated) {
+      readStats.handsObserved += 1;
+      if (player.voluntaryThisHand) readStats.voluntaryHands += 1;
+      if (result?.type === "showdown" && !player.folded) {
+        readStats.showdowns += 1;
+        if (winnerSet.has(player.seatIndex)) readStats.showdownWins += 1;
+      }
+    }
+    if (result?.type === "fold" && winnerSet.has(player.seatIndex)) {
+      readStats.potsWonWithoutShowdown += 1;
+    }
+    return {
+      ...player,
+      readStats
+    };
+  });
+};
 
 const finalizeHand = (state, players, deck, logs, result) => {
-  const nextPlayers = players.map((player) => ({ ...player, busted: player.chips <= 0 }));
+  let nextPlayers = players.map((player) => ({ ...player, busted: player.chips <= 0, readStats: cloneReadStats(player.readStats) }));
+  nextPlayers = applyReadStatsAfterHand(nextPlayers, result);
   const contenders = nextPlayers.filter((player) => player.chips > 0);
   const max = Math.max(...nextPlayers.map((player) => player.chips), 0);
   const leaders = nextPlayers.filter((player) => player.chips === max);
@@ -568,14 +1022,14 @@ const finalizeHand = (state, players, deck, logs, result) => {
     },
     message: matchWinner
       ? `Partida cerrada: ${matchWinner.name} lidera con ${matchWinner.chips} fichas.`
-      : `${result.reason} Siguiente mano automatica...`,
+      : `${result.reason} Pulsa Siguiente mano para continuar.`,
     logs: appendLog(logs, result.reason),
     lastResult: { ...result, handNumber: state.handNumber }
   };
 };
 
 const resolveFold = (state, players, deck, logs, winnerSeat) => {
-  const nextPlayers = players.map((player) => ({ ...player }));
+  const nextPlayers = players.map((player) => ({ ...player, readStats: cloneReadStats(player.readStats) }));
   const pot = Math.max(0, state.pot);
   if (winnerSeat != null) {
     nextPlayers[winnerSeat].chips += pot;
@@ -671,6 +1125,7 @@ const startHand = (state, dealer, handNumber, resetLast = false) => {
     const busted = player.chips <= 0;
     return {
       ...player,
+      readStats: cloneReadStats(player.readStats),
       hand: [],
       folded: busted,
       discarded: busted,
@@ -679,7 +1134,9 @@ const startHand = (state, dealer, handNumber, resetLast = false) => {
       busted,
       currentBet: 0,
       totalCommitted: 0,
-      intent: busted ? "Sin fichas" : ""
+      intent: busted ? "Sin fichas" : "",
+      voluntaryThisHand: false,
+      aggressiveThisHand: false
     };
   });
 
@@ -707,7 +1164,8 @@ const startHand = (state, dealer, handNumber, resetLast = false) => {
       },
       message: `${winner.name} gana la mesa por eliminacion.`,
       logs: appendLog(state.logs, `${winner.name} gana la mesa por eliminacion.`),
-      lastResult: resetLast ? null : state.lastResult
+      lastResult: resetLast ? null : state.lastResult,
+      lastActorType: null
     };
   }
 
@@ -748,6 +1206,7 @@ const startHand = (state, dealer, handNumber, resetLast = false) => {
     turnIndex: turnQueue[0] ?? null,
     selectedDiscards: emptyDiscardSelection(),
     overlay: null,
+    lastActorType: null,
     message: `Turno para ${turnQueue[0] != null ? players[turnQueue[0]].name : "--"}.`,
     logs,
     lastResult: resetLast ? null : state.lastResult
@@ -759,40 +1218,88 @@ const decideAi = (state, seat) => {
   const actor = state.players[seat];
   if (!actor || actor.folded || actor.busted) return { type: "check" };
   const level = AI_LEVELS[state.aiLevelId] || AI_LEVELS.tactical;
+  const style = resolveAiStyle(level.id);
   const handValue = evalFive(actor.hand);
 
   if (state.phase === "discard") {
     if (actor.discarded) return { type: "stand", note: "Ya esta servido." };
-    const indices = recommendedDiscardIndices(actor.hand);
-    if (!indices.length || handValue.cat >= 3) return { type: "stand", note: "Mantiene su mano." };
+    const indices = level.id === "rookie"
+      ? recommendedDiscardIndices(actor.hand)
+      : chooseDiscardPlanBySimulation(actor.hand, style);
+    if (!indices.length || handValue.cat >= 5) return { type: "stand", note: "Mantiene su mano." };
     return { type: "discard", indices, note: "Busca mejorar." };
   }
 
-  const toCall = Math.max(0, state.currentBet - actor.currentBet);
-  const strong = handValue.cat >= 4;
-  const medium = handValue.cat >= 2;
+  if (level.id === "rookie") return decideAiBasicBetAction(state, actor, handValue, level.id);
 
-  if (toCall <= 0) {
-    if (strong && actor.chips > state.bigBlind) return { type: "raise", amount: state.bigBlind * 2, note: "Sube por valor." };
-    if (medium && level.id !== "rookie" && actor.chips > state.bigBlind) return { type: "raise", amount: state.bigBlind, note: "Sube controlando riesgo." };
+  const context = buildAiBetContext(state, seat, handValue, style);
+  const actions = new Set(availableActions(state, seat));
+  const canRaise = actions.has("raise");
+  const canCall = actions.has("call");
+  const canCheck = actions.has("check");
+  const canFold = actions.has("fold");
+  const canAllIn = actions.has("all-in");
+
+  if (context.toCall <= 0) {
+    if (canAllIn && shouldValueJam(context, style)) return { type: "all-in", note: "All-in por valor." };
+    if (canRaise && (context.winRate >= style.valueRaiseThreshold || (context.handValue.cat >= 4 && context.winRate >= 0.5))) {
+      const amount = resolveRaiseAmount(state, actor, context, style, "value");
+      if (amount != null) return { type: "raise", amount, note: context.winRate > 0.72 ? "Apuesta de valor calculada." : "Sube por valor." };
+    }
+    if (canRaise && shouldSemiBluff(context, style)) {
+      const amount = resolveRaiseAmount(state, actor, context, style, "semi");
+      if (amount != null) return { type: "raise", amount, note: "Semi-farol con proyecto." };
+    }
+    if (canRaise && shouldOpenBluff(context, style)) {
+      const amount = resolveRaiseAmount(state, actor, context, style, "bluff");
+      if (amount != null) return { type: "raise", amount, note: "Farol de presion." };
+    }
+    if (canCheck) return { type: "check", note: "Pasa." };
+    if (canFold) return { type: "fold", note: "Retirada tactica." };
     return { type: "check", note: "Pasa." };
   }
 
-  if (strong) {
-    if (actor.chips <= toCall) return { type: "all-in", note: "All-in forzado." };
-    if (level.id === "expert" && actor.chips > toCall + state.bigBlind) return { type: "raise", amount: state.bigBlind * 2, note: "Resube fuerte." };
-    return { type: "call", note: "Iguala con mano fuerte." };
+  if (canAllIn && shouldValueJam(context, style)) return { type: "all-in", note: "All-in por valor." };
+
+  if (context.winRate + style.callMargin + context.bluffCatchBonus >= context.potOdds) {
+    const wantsValueRaise =
+      canRaise &&
+      (context.winRate >= style.valueRaiseThreshold + 0.04 || (context.handValue.cat >= 4 && context.equityEdge > 0.06));
+    if (wantsValueRaise) {
+      const amount = resolveRaiseAmount(state, actor, context, style, "value");
+      if (amount != null) return { type: "raise", amount, note: "Resube fuerte." };
+    }
+    if (canCall) {
+      if (context.toCall <= Math.max(1, Math.floor(actor.chips * 0.1))) return { type: "call", note: "Controla el bote." };
+      return { type: "call", note: context.handValue.cat >= 3 ? "Iguala con mano fuerte." : "Iguala por precio." };
+    }
   }
 
-  if (medium) {
-    return toCall <= Math.max(1, Math.floor(actor.chips * 0.25))
-      ? { type: "call", note: "Iguala por precio." }
-      : { type: "fold", note: "Retirada tactica." };
+  if (canRaise && shouldRebluff(state, context, style)) {
+    const amount = resolveRaiseAmount(state, actor, context, style, "bluff");
+    if (amount != null) return { type: "raise", amount, note: "Farol de presion." };
   }
 
-  return toCall <= Math.max(1, Math.floor(state.bigBlind / 2))
-    ? { type: "call", note: "Defensa minima." }
-    : { type: "fold", note: "No compensa pagar." };
+  if (
+    canCall &&
+    context.drawPotential >= 0.18 &&
+    context.toCall <= Math.max(1, Math.floor(actor.chips * style.speculativeCallMax))
+  ) {
+    return { type: "call", note: "Controla el bote." };
+  }
+
+  if (canAllIn && shouldDesperationJam(context, style)) return { type: "all-in", note: "All-in de presion." };
+  if (
+    canCall &&
+    context.toCall <= Math.max(1, Math.floor(actor.chips * 0.12)) &&
+    context.bluffCatchBonus >= 0.16 &&
+    context.opponentReads.sampleConfidence >= 0.45
+  ) {
+    return { type: "call", note: "Defensa minima." };
+  }
+  if (canFold) return { type: "fold", note: context.toCall > Math.floor(actor.chips * 0.3) ? "Retirada tactica." : "No compensa pagar." };
+  if (canCall) return { type: "call", note: "Defensa minima." };
+  return canCheck ? { type: "check", note: "Pasa." } : { type: "fold", note: "Retirada tactica." };
 };
 
 const applyAction = (state, seat, action, isAi = false) => {
@@ -801,7 +1308,11 @@ const applyAction = (state, seat, action, isAi = false) => {
   const actor = state.players[seat];
   if (!actor || actor.folded || actor.busted) return state;
 
-  const players = state.players.map((player) => ({ ...player, hand: cloneCards(player.hand) }));
+  const players = state.players.map((player) => ({
+    ...player,
+    hand: cloneCards(player.hand),
+    readStats: cloneReadStats(player.readStats)
+  }));
   const deck = cloneCards(state.deck);
   let logs = [...state.logs];
   let pot = state.pot;
@@ -809,6 +1320,7 @@ const applyAction = (state, seat, action, isAi = false) => {
   let selectedDiscards = state.selectedDiscards;
   let raiseOccurred = false;
   const me = players[seat];
+  const stats = me.readStats || (me.readStats = createReadStats());
   const betting = state.phase !== "discard";
   const reject = (message) => (isAi ? state : { ...state, message });
 
@@ -818,16 +1330,22 @@ const applyAction = (state, seat, action, isAi = false) => {
     const type = String(action?.type || "");
     if (type === "fold") {
       me.folded = true;
+      stats.folds += 1;
+      if (toCall > 0) stats.foldsFacingRaise += 1;
       me.intent = action.note || "Se retira.";
       logs = appendLog(logs, `${me.name} se retira.`);
     } else if (type === "check") {
       if (toCall > 0) return reject(`Debes igualar ${toCall} fichas o retirarte.`);
+      stats.checks += 1;
       me.intent = action.note || "Pasa.";
       logs = appendLog(logs, `${me.name} pasa.`);
     } else if (type === "call") {
       if (toCall <= 0) return reject("No hay apuesta pendiente para igualar.");
       const paid = postWager(me, toCall);
       pot += paid;
+      stats.calls += 1;
+      if (toCall > 0) stats.callsFacingRaise += 1;
+      me.voluntaryThisHand = true;
       me.intent = action.note || `Iguala ${paid}.`;
       logs = appendLog(logs, `${me.name} iguala ${paid} ficha(s).`);
     } else if (type === "raise" || type === "bet") {
@@ -836,6 +1354,12 @@ const applyAction = (state, seat, action, isAi = false) => {
       const before = currentBet;
       const paid = postWager(me, toCall + raise);
       pot += paid;
+      stats.raises += 1;
+      if (state.phase === "pre-bet") stats.preBetRaises += 1;
+      else stats.postBetRaises += 1;
+      if (toCall > 0) stats.reraises += 1;
+      me.voluntaryThisHand = true;
+      me.aggressiveThisHand = true;
       if (me.currentBet > before) {
         currentBet = me.currentBet;
         raiseOccurred = true;
@@ -847,7 +1371,15 @@ const applyAction = (state, seat, action, isAi = false) => {
       const before = currentBet;
       const paid = postWager(me, me.chips);
       pot += paid;
+      stats.allIns += 1;
+      if (toCall > 0) stats.callsFacingRaise += 1;
+      me.voluntaryThisHand = true;
       if (me.currentBet > before) {
+        stats.raises += 1;
+        if (state.phase === "pre-bet") stats.preBetRaises += 1;
+        else stats.postBetRaises += 1;
+        if (toCall > 0) stats.reraises += 1;
+        me.aggressiveThisHand = true;
         currentBet = me.currentBet;
         raiseOccurred = true;
       }
@@ -862,6 +1394,7 @@ const applyAction = (state, seat, action, isAi = false) => {
     const type = String(action?.type || "");
     if (type === "fold") {
       me.folded = true;
+      stats.folds += 1;
       me.intent = action.note || "Se retira.";
       logs = appendLog(logs, `${me.name} se retira en descarte.`);
     } else if (type === "discard") {
@@ -901,6 +1434,7 @@ const applyAction = (state, seat, action, isAi = false) => {
       currentBet,
       turnQueue: nextQueue,
       turnIndex: nextQueue[0],
+      lastActorType: me.type,
       selectedDiscards,
       message: `${me.name} actua. Turno para ${players[nextQueue[0]].name}.`,
       logs
@@ -914,6 +1448,7 @@ const applyAction = (state, seat, action, isAi = false) => {
       deck,
       pot,
       currentBet,
+      lastActorType: me.type,
       selectedDiscards,
       logs,
       message: `${me.name} cierra su accion.`
@@ -976,7 +1511,8 @@ const createMatch = (opponents, aiLevelId, startingStack, targetChips, blindLeve
       message: "",
       logs: [],
       lastResult: null,
-      overlay: null
+      overlay: null,
+      lastActorType: null
     },
     dealer,
     1,
@@ -1132,9 +1668,16 @@ function PokerTexasHoldemGame() {
     const current = aiTimerRef.current;
     if (current.active && current.hand === state.handNumber && current.phase === state.phase && current.turn === state.turnIndex) return;
     const level = AI_LEVELS[state.aiLevelId] || AI_LEVELS.tactical;
-    aiTimerRef.current = { active: true, ms: level.thinkMs + randomInt(220), hand: state.handNumber, phase: state.phase, turn: state.turnIndex };
+    const chainBonus = state.lastActorType === "ai" ? AI_CHAIN_TURN_BONUS_MS : 0;
+    aiTimerRef.current = {
+      active: true,
+      ms: level.thinkMs + randomInt(AI_THINK_JITTER_MS) + chainBonus,
+      hand: state.handNumber,
+      phase: state.phase,
+      turn: state.turnIndex
+    };
     setAiThinking(true);
-  }, [state.mode, state.turnIndex, state.players, state.handNumber, state.phase, state.aiLevelId, stopAiTimer]);
+  }, [state.mode, state.turnIndex, state.players, state.handNumber, state.phase, state.aiLevelId, state.lastActorType, stopAiTimer]);
 
   useEffect(() => {
     const isAiTurn =
@@ -1159,18 +1702,12 @@ function PokerTexasHoldemGame() {
         if (!actor || actor.type !== "ai" || actor.folded || actor.busted) return previous;
         return applyAction(previous, expectedTurn, decideAi(previous, expectedTurn), true);
       });
-    }, 2800);
+    }, AI_WATCHDOG_MS);
     return () => window.clearTimeout(watchdog);
   }, [state.mode, state.turnIndex, state.players, state.handNumber, state.phase]);
 
   useEffect(() => {
-    if (state.mode !== "hand-over") {
-      stopAutoTimer();
-      return;
-    }
-    const current = autoTimerRef.current;
-    if (current.active && current.hand === state.handNumber) return;
-    autoTimerRef.current = { active: true, ms: AUTO_NEXT_MS, hand: state.handNumber };
+    stopAutoTimer();
   }, [state.mode, state.handNumber, stopAutoTimer]);
 
   useEffect(() => {
@@ -1290,6 +1827,19 @@ function PokerTexasHoldemGame() {
       busted: player.busted
     })),
     seats: snapshot.players.map((player) => ({
+      ...(() => {
+        const reads = readMetricsFromStats(player.readStats);
+        return {
+          reads: {
+            hands: reads.hands,
+            vpip: Number(reads.vpip.toFixed(3)),
+            aggression: Number(reads.rawAggression.toFixed(3)),
+            foldToRaise: Number(reads.foldToRaise.toFixed(3)),
+            showdownWinRate: Number(reads.showdownWinRate.toFixed(3)),
+            stealRate: Number(reads.stealRate.toFixed(3))
+          }
+        };
+      })(),
       seatIndex: player.seatIndex,
       name: localizePlayerName(player.name, locale),
       folded: player.folded,
@@ -1479,7 +2029,14 @@ function PokerTexasHoldemGame() {
                 <h5>{localizeText(state.overlay.title)}</h5>
                 <p>{localizeText(state.overlay.subtitle)}</p>
                 {state.overlay.detail ? <strong>{localizeText(state.overlay.detail)}</strong> : null}
-                {state.mode === "hand-over" ? <span>{ui.nextHandAuto}</span> : null}
+                {state.mode === "hand-over" ? (
+                  <div className="poker-next-hand-controls">
+                    <span>{ui.nextHandHint}</span>
+                    <button type="button" className="poker-next-hand-btn" onClick={startNextHand}>
+                      {ui.nextHandButton}
+                    </button>
+                  </div>
+                ) : null}
               </div>
             </div>
           ) : null}

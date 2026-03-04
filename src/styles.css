@@ -5080,6 +5080,7 @@ body {
   padding: 0.62rem 0.72rem;
   display: grid;
   gap: 0.24rem;
+  pointer-events: auto;
 }
 
 .poker-winner-card h5 {
@@ -5098,6 +5099,28 @@ body {
 
 .poker-winner-card strong {
   color: #fef08a;
+}
+
+.poker-next-hand-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+}
+
+.poker-next-hand-btn {
+  border: 1px solid rgba(125, 211, 252, 0.72);
+  border-radius: 999px;
+  padding: 0.16rem 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #e0f2fe;
+  background: linear-gradient(130deg, rgba(8, 47, 73, 0.95), rgba(14, 116, 144, 0.9));
+  cursor: pointer;
+}
+
+.poker-next-hand-btn:hover {
+  border-color: rgba(186, 230, 253, 0.9);
+  transform: translateY(-1px);
 }
 
 .poker-winner-tag {

@@ -1146,3 +1146,79 @@
   - `state-4.json`: `IA Azul: Se aplica el dado pendiente (6).`
   - `state-9.json`: `Tu (Rojo): Se aplica el dado pendiente (2).`
   - `state-21.json`: `IA Azul: Se aplica el dado pendiente (1).`
+## 2026-03-04 - Poker: ritmo IA mas lento + mas tiempo de mensaje fin de mano
+- `src/games/PokerTexasHoldemGame.jsx`:
+  - Aumentado retardo entre manos automatico (`AUTO_NEXT_MS`) de `3400` a `5400` para que el overlay/mensaje final de ronda permanezca visible mas tiempo antes de iniciar la siguiente.
+  - Ajustados tiempos base de decision IA para desacelerar transiciones de jugadas:
+    - `rookie`: `520 -> 900 ms`
+    - `tactical`: `820 -> 1300 ms`
+    - `expert`: `1120 -> 1750 ms`
+  - Introducidas constantes de control de ritmo:
+    - `AI_THINK_JITTER_MS = 320` (antes jitter hardcodeado de `220`)
+    - `AI_WATCHDOG_MS = 4400` (antes watchdog fijo `2800`)
+  - El timer de turno IA ahora usa `randomInt(AI_THINK_JITTER_MS)` y el watchdog respeta `AI_WATCHDOG_MS` para evitar ejecuciones prematuras al haber incrementado los tiempos.
+
+### Validacion
+- Build OK: `npm run build` (ejecutado fuera de sandbox por `EPERM` de esbuild en sandbox).
+- Playwright poker OK:
+  - `output/strategy-poker-ai-speed-slower/shot-0..3.png`
+  - `output/strategy-poker-ai-speed-slower/state-0..3.json`
+  - sin archivos `errors-*.json`.
+- Evidencia funcional:
+  - `state-0.json` y `state-1.json` en `stateMode: hand-over` muestran mensaje final (`Siguiente mano automatica...`) visible durante mas tiempo antes del avance.
+## 2026-03-04 - Poker: lectura historica por rival integrada en IA tactica/experta
+- `src/games/PokerTexasHoldemGame.jsx` ampliado con memoria de comportamiento por jugador (`readStats`) persistente entre manos:
+  - `handsObserved`, `voluntaryHands` (VPIP), `raises`, `preBetRaises`, `postBetRaises`, `reraises`,
+  - `calls`, `callsFacingRaise`, `checks`, `folds`, `foldsFacingRaise`, `allIns`,
+  - `showdowns`, `showdownWins`, `potsWonWithoutShowdown`.
+- Durante cada accion de apuesta se registran eventos de lectura (call/raise/fold/all-in) y flags de mano (`voluntaryThisHand`, `aggressiveThisHand`).
+- Al cerrar cada mano (`finalizeHand`) se consolidan estadisticas historicas por rival mediante `applyReadStatsAfterHand(...)`.
+- Nueva capa de interpretacion de rivales para IA:
+  - `readMetricsFromStats(...)` + `summarizeOpponentReads(...)` generan perfil agregado por oponentes: `looseness`, `foldToRaise`, `aggression`, `showdownStrength`, `stealRate`, `sampleConfidence`.
+  - `buildAiBetContext(...)` incorpora estos datos para ajustar `perceivedFoldEquity` y `bluffCatchBonus`.
+- IA adaptativa actualizada:
+  - faroles/re-faroles (`shouldOpenBluff`, `shouldRebluff`) ahora dependen tambien del perfil observado de rivales,
+  - semi-farol ajustado por tendencia de fold rival,
+  - calls/folds incluyen `bluffCatchBonus` y defensa minima condicionada a evidencia historica (`sampleConfidence`).
+- `render_game_to_text` enriquecido:
+  - cada asiento expone `reads` con metricas (`hands`, `vpip`, `aggression`, `foldToRaise`, `showdownWinRate`, `stealRate`) para QA.
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por EPERM de esbuild en sandbox).
+- Playwright OK:
+  - `output/strategy-poker-opponent-read-check/shot-0..4.png`
+  - `output/strategy-poker-opponent-read-check/state-0..4.json`
+  - sin `errors-*.json`.
+- Evidencia en estado:
+  - `state-1.json` y `state-4.json` muestran `seats[].reads` con valores acumulados (ej. `hands`, `vpip`, `aggression`, `showdownWinRate`) creciendo entre manos.
+## 2026-03-04 - Poker: ampliacion de metas de fichas
+- `src/games/PokerTexasHoldemGame.jsx` actualizado para ofrecer mas niveles de `chipTarget` por stack inicial.
+- Nuevas opciones:
+  - stack `80`: `100, 120, 130, 150, 170, 190, 220, 250`
+  - stack `120`: `150, 170, 180, 200, 220, 240, 260, 300, 340, 380`
+  - stack `160`: `200, 230, 260, 300, 340, 380, 420, 480, 540, 600`
+- No se cambia la logica de compatibilidad: `ensureTargetForStack(...)` sigue seleccionando un valor valido si el target previo no existe para el nuevo stack.
+## 2026-03-04 - Poker: ampliacion de stacks iniciales seleccionables
+- Se amplio `STARTING_STACK_OPTIONS` para permitir elegir mas cantidades al iniciar partida:
+  - `60, 80, 100, 120, 140, 160, 200, 240, 300, 400`.
+- Se sustituyo el mapa fijo de targets por generacion automatica por stack:
+  - `TARGET_MULTIPLIERS` + `buildTargetOptionsForStack(stack)`.
+  - `TARGET_OPTIONS_BY_STACK` ahora se construye para todos los stacks soportados.
+- Resultado: al cambiar `Stack inicial`, siempre hay varios objetivos de fichas coherentes y seleccionables.
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por EPERM de esbuild en sandbox).
+## 2026-03-04 - Poker i18n runtime audit (mensajes mixtos)
+- Auditados mensajes runtime del poker (logs, intents y mensajes de turno) para detectar textos parcialmente traducidos en locale `en`.
+- Corregido orden de reemplazo en `localizeRuntimeText` para que `"actua. Turno para"` se traduzca completo y no quede mixto (`"AI 4 acts. Turn for You."`).
+- Añadidas traducciones faltantes de intents:
+  - `Sube a X.` -> `Raises to X.`
+  - `Iguala X.` -> `Calls X.`
+  - `Descarta X.` -> `Discards X.`
+- Añadidas variantes faltantes de logs/runtime:
+  - `pasa.` -> `checks.`
+  - `Sin fichas` -> `No chips`
+  - `Se sirve.` y `Se sirve sin descartar.` ya cubiertas en mayúscula/minúscula.
+- Nota de validación: no se pudo completar build en sandbox por `esbuild spawn EPERM` sin elevación.
+- Extendida la auditoría de i18n con validación scriptada de frases runtime (simulando `localizeRuntimeText` en `en`) para detectar mezclas ES/EN en producción.
+- Correcciones adicionales: `lidera con` -> `leads with`, y normalización de conjugaciones con sujeto `You` (ej. `You win`, `You lead`, `You fold`, `You check`, etc.).
