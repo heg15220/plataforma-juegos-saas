@@ -1222,3 +1222,17 @@
 - Nota de validación: no se pudo completar build en sandbox por `esbuild spawn EPERM` sin elevación.
 - Extendida la auditoría de i18n con validación scriptada de frases runtime (simulando `localizeRuntimeText` en `en`) para detectar mezclas ES/EN en producción.
 - Correcciones adicionales: `lidera con` -> `leads with`, y normalización de conjugaciones con sujeto `You` (ej. `You win`, `You lead`, `You fold`, `You check`, etc.).
+## 2026-03-04 - Poker responsive movil (portrait + landscape)
+- Implementado responsive especifico para poker con clases dinamicas (`poker-mobile`, `poker-mobile-portrait`, `poker-mobile-landscape`) derivadas del viewport real.
+- Anadido aviso contextual de orientacion (descartable) en portrait movil: informa que se puede jugar en vertical y que girar amplia la mesa, sin forzar rotacion.
+- Rehecha la capa movil del layout:
+  - estado y marcador en carrusel horizontal;
+  - mesa en grid adaptativo (2 columnas portrait, 3 landscape);
+  - board y asiento humano priorizados al inicio;
+  - acciones tactiles con panel sticky y botones mas altos.
+- Ajustes adicionales de legibilidad/compactacion en cartas, seats y tipografias para 390x844 y 844x390.
+- Validacion automatizada:
+  - Playwright mobile portrait/landscape contra `#game=strategy-poker-holdem-no-bet`.
+  - capturas: `output/strategy-poker-mobile-responsive/mobile-portrait-viewport.png` y `mobile-landscape-viewport.png`.
+  - verificado que el aviso aparece solo en portrait y se oculta en landscape.
+- Nota tecnica: `npm run build` en sandbox sigue fallando por `esbuild spawn EPERM` (limitacion de entorno), no por error de sintaxis de cambios.

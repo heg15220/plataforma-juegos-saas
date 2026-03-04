@@ -1,0 +1,18 @@
+[
+  {
+    "name": "mobile-portrait",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "tipText": "En movil puedes jugar bien en vertical. Si giras el telefono tendras una mesa mas amplia."
+  },
+  {
+    "name": "mobile-landscape",
+    "viewport": {
+      "width": 844,
+      "height": 390
+    },
+    "tipText": null
+  }
+]

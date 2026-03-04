@@ -176,7 +176,16 @@ const UI_COPY = {
     handLabelInResult: "Mano",
     payoutLabel: "Pago",
     activeRules: "Reglas activas de mesa",
-    showdownFallback: "Showdown"
+    showdownFallback: "Showdown",
+    mobileRotateHint: "En movil puedes jugar bien en vertical. Si giras el telefono tendras una mesa mas amplia.",
+    mobileRotateDismiss: "Entendido",
+    mobileToggleConfig: "Ajustes",
+    mobileToggleStats: "Marcador",
+    mobileKpiTurn: "Turno",
+    mobileKpiPot: "Bote",
+    mobileKpiCall: "Igualar",
+    mobileKpiPhase: "Fase",
+    mobileHistory: "Historial de mano"
   },
   en: {
     headerTitle: "Classic 5-Card Poker - With Betting",
@@ -245,7 +254,16 @@ const UI_COPY = {
     handLabelInResult: "Hand",
     payoutLabel: "Payout",
     activeRules: "Active table rules",
-    showdownFallback: "Showdown"
+    showdownFallback: "Showdown",
+    mobileRotateHint: "On mobile you can keep playing in portrait. Rotate for a wider table view.",
+    mobileRotateDismiss: "Got it",
+    mobileToggleConfig: "Settings",
+    mobileToggleStats: "Scoreboard",
+    mobileKpiTurn: "Turn",
+    mobileKpiPot: "Pot",
+    mobileKpiCall: "Call",
+    mobileKpiPhase: "Phase",
+    mobileHistory: "Hand history"
   }
 };
 const ACTION_LABELS = {
@@ -255,6 +273,12 @@ const ACTION_LABELS = {
 const resolveLocale = () => {
   if (typeof navigator === "undefined" || typeof navigator.language !== "string") return "en";
   return navigator.language.toLowerCase().startsWith("es") ? "es" : "en";
+};
+const readMobileViewport = () => {
+  if (typeof window === "undefined") return { isMobile: false, isPortrait: false };
+  const width = Math.max(window.innerWidth || 0, document.documentElement?.clientWidth || 0);
+  const height = Math.max(window.innerHeight || 0, document.documentElement?.clientHeight || 0);
+  return { isMobile: width <= 920, isPortrait: height >= width };
 };
 const localizePlayerName = (name, locale) => {
   if (locale === "es") return name;
@@ -1566,11 +1590,16 @@ function PokerTexasHoldemGame() {
   const [pendingBlindLevel, setPendingBlindLevel] = useState(DEFAULT_BLIND_LEVEL_ID);
   const [pendingTarget, setPendingTarget] = useState(DEFAULT_TARGET_CHIPS);
   const [aiThinking, setAiThinking] = useState(false);
+  const [mobileViewport, setMobileViewport] = useState(() => readMobileViewport());
+  const [showMobileConfig, setShowMobileConfig] = useState(() => !readMobileViewport().isMobile);
+  const [showMobileStats, setShowMobileStats] = useState(() => !readMobileViewport().isMobile);
+  const [dismissRotateHint, setDismissRotateHint] = useState(false);
 
   const aiTimerRef = useRef({ active: false, ms: 0, hand: 0, phase: "", turn: null });
   const autoTimerRef = useRef({ active: false, ms: 0, hand: 0 });
   const frameRef = useRef(0);
   const lastRef = useRef(0);
+  const previousIsMobileRef = useRef(readMobileViewport().isMobile);
 
   const stopAiTimer = useCallback(() => {
     aiTimerRef.current = { active: false, ms: 0, hand: 0, phase: "", turn: null };
@@ -1756,6 +1785,28 @@ function PokerTexasHoldemGame() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [playerAllIn, playerCall, playerCheck, playerDiscardSelected, playerFold, playerRaise, playerStandPat, restartMatch, startNextHand, state.currentBet, state.mode, state.phase, state.players, state.turnIndex, toggleDiscardSelection]);
+  useEffect(() => {
+    const updateViewport = () => setMobileViewport(readMobileViewport());
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    window.addEventListener("orientationchange", updateViewport);
+    return () => {
+      window.removeEventListener("resize", updateViewport);
+      window.removeEventListener("orientationchange", updateViewport);
+    };
+  }, []);
+  useEffect(() => {
+    const wasMobile = previousIsMobileRef.current;
+    if (wasMobile === mobileViewport.isMobile) return;
+    previousIsMobileRef.current = mobileViewport.isMobile;
+    if (mobileViewport.isMobile) {
+      setShowMobileConfig(false);
+      setShowMobileStats(false);
+    } else {
+      setShowMobileConfig(true);
+      setShowMobileStats(true);
+    }
+  }, [mobileViewport.isMobile]);
 
   const human = state.players[0];
   const toCall = Math.max(0, state.currentBet - human.currentBet);
@@ -1777,6 +1828,16 @@ function PokerTexasHoldemGame() {
   const recommended = useMemo(() => recommendedDiscardIndices(human.hand).map((index) => index + 1), [human.hand]);
   const actionsNow = useMemo(() => availableActions(state, 0), [state]);
   const localizedActionsNow = useMemo(() => actionsNow.map((action) => (ACTION_LABELS[locale] || ACTION_LABELS.en)[action] || action), [actionsNow, locale]);
+  const compactPhaseLabel = phaseLabels[state.phase] || ui.showdownFallback;
+  const compactTurnLabel = state.turnIndex != null ? localizeName(state.players[state.turnIndex]?.name) : "--";
+  const showRotateHint = mobileViewport.isMobile && mobileViewport.isPortrait && !dismissRotateHint;
+  const rootClassName = useMemo(() => [
+    "mini-game",
+    "poker-holdem-game",
+    mobileViewport.isMobile ? "poker-mobile" : "",
+    mobileViewport.isMobile && mobileViewport.isPortrait ? "poker-mobile-portrait" : "",
+    mobileViewport.isMobile && !mobileViewport.isPortrait ? "poker-mobile-landscape" : ""
+  ].filter(Boolean).join(" "), [mobileViewport.isMobile, mobileViewport.isPortrait]);
   const roundCenterCards = useMemo(() => {
     if (state.mode === "hand-active") return [];
     const winnerSeat = state.lastResult?.winners?.[0];
@@ -1861,7 +1922,7 @@ function PokerTexasHoldemGame() {
   useGameRuntimeBridge(state, bridgePayload, advanceTime);
 
   return (
-    <div className="mini-game poker-holdem-game">
+    <div className={rootClassName}>
       <div className="mini-head">
         <div>
           <h4>{ui.headerTitle}</h4>
@@ -1871,83 +1932,110 @@ function PokerTexasHoldemGame() {
           <button type="button" onClick={restartMatch}>{ui.newGame}</button>
         </div>
       </div>
+      {mobileViewport.isMobile ? (
+        <div className="poker-mobile-panel-toggles" role="group" aria-label="mobile-poker-panels">
+          <button type="button" className={showMobileConfig ? "active" : ""} onClick={() => setShowMobileConfig((value) => !value)}>{ui.mobileToggleConfig}</button>
+          <button type="button" className={showMobileStats ? "active" : ""} onClick={() => setShowMobileStats((value) => !value)}>{ui.mobileToggleStats}</button>
+        </div>
+      ) : null}
+      {!mobileViewport.isMobile || showMobileConfig ? (
+        <div className="poker-config">
+          <label htmlFor="poker-opponents">{ui.opponents}
+            <select id="poker-opponents" value={pendingOpp} onChange={(event) => setPendingOpp(Number(event.target.value) || 1)}>
+              {OPPONENT_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}
+            </select>
+          </label>
+          <label htmlFor="poker-profile">{ui.aiProfile}
+            <select id="poker-profile" value={pendingLevel} onChange={(event) => setPendingLevel(event.target.value)}>
+              {Object.values(AI_LEVELS).map((entry) => <option key={entry.id} value={entry.id}>{aiLevelLabels[entry.id] || entry.label}</option>)}
+            </select>
+          </label>
+          <label htmlFor="poker-stack">{ui.startingStack}
+            <select id="poker-stack" value={pendingStack} onChange={(event) => handleStackChange(Number(event.target.value) || DEFAULT_STARTING_STACK)}>
+              {STARTING_STACK_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}
+            </select>
+          </label>
+          <label htmlFor="poker-blinds">{ui.blindLevel}
+            <select id="poker-blinds" value={pendingBlindLevel} onChange={(event) => setPendingBlindLevel(event.target.value)}>
+              {Object.values(BLIND_LEVELS).map((entry) => <option key={entry.id} value={entry.id}>{entry.label}</option>)}
+            </select>
+          </label>
+          <label htmlFor="poker-target">{ui.chipTarget}
+            <select id="poker-target" value={pendingTarget} onChange={(event) => setPendingTarget(Number(event.target.value) || DEFAULT_TARGET_CHIPS)}>
+              {targetOptions.map((value) => <option key={value} value={value}>{value}</option>)}
+            </select>
+          </label>
+          <button type="button" className="poker-apply" onClick={applyConfiguration}>{ui.applyReset}</button>
+        </div>
+      ) : null}
+      {showRotateHint ? (
+        <div className="poker-orientation-tip" role="status" aria-live="polite">
+          <p>{ui.mobileRotateHint}</p>
+          <button type="button" onClick={() => setDismissRotateHint(true)}>{ui.mobileRotateDismiss}</button>
+        </div>
+      ) : null}
+      {mobileViewport.isMobile ? (
+        <div className="poker-mobile-kpis">
+          <article><span>{ui.mobileKpiTurn}</span><strong>{compactTurnLabel}</strong></article>
+          <article><span>{ui.mobileKpiPhase}</span><strong>{compactPhaseLabel}</strong></article>
+          <article><span>{ui.mobileKpiPot}</span><strong>{state.pot}</strong></article>
+          <article><span>{ui.mobileKpiCall}</span><strong>{toCall}</strong></article>
+        </div>
+      ) : null}
+      {!mobileViewport.isMobile || showMobileStats ? (
+        <>
+          <div className="status-row poker-status-row">
+            <span className={`status-pill ${state.mode === "hand-active" ? "playing" : "finished"}`}>
+              {state.mode === "hand-active" ? ui.inGame : state.mode === "match-over" ? ui.matchClosed : ui.handClosed}
+            </span>
+            <span>{ui.hand}: {state.handNumber}</span>
+            <span>{ui.phase}: {compactPhaseLabel}</span>
+            <span>{ui.dealer}: {state.players[state.dealerIndex] ? localizeName(state.players[state.dealerIndex].name) : "--"}</span>
+            <span>{ui.turn}: {compactTurnLabel}</span>
+            <span>{ui.active}: {aliveSeats(state.players).length}</span>
+            <span>{ui.pot}: {state.pot}</span>
+            <span>{ui.bet}: {state.currentBet}</span>
+            <span>{ui.blinds}: {activeBlind.label}</span>
+            <span>{ui.target}: {state.targetChips}</span>
+            <span>{ui.ai}: {aiLevelLabels[level.id] || level.label}</span>
+            {aiThinking ? <span>{ui.aiThinking}</span> : null}
+          </div>
 
-      <div className="poker-config">
-        <label htmlFor="poker-opponents">{ui.opponents}
-          <select id="poker-opponents" value={pendingOpp} onChange={(event) => setPendingOpp(Number(event.target.value) || 1)}>
-            {OPPONENT_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}
-          </select>
-        </label>
-        <label htmlFor="poker-profile">{ui.aiProfile}
-          <select id="poker-profile" value={pendingLevel} onChange={(event) => setPendingLevel(event.target.value)}>
-            {Object.values(AI_LEVELS).map((entry) => <option key={entry.id} value={entry.id}>{aiLevelLabels[entry.id] || entry.label}</option>)}
-          </select>
-        </label>
-        <label htmlFor="poker-stack">{ui.startingStack}
-          <select id="poker-stack" value={pendingStack} onChange={(event) => handleStackChange(Number(event.target.value) || DEFAULT_STARTING_STACK)}>
-            {STARTING_STACK_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}
-          </select>
-        </label>
-        <label htmlFor="poker-blinds">{ui.blindLevel}
-          <select id="poker-blinds" value={pendingBlindLevel} onChange={(event) => setPendingBlindLevel(event.target.value)}>
-            {Object.values(BLIND_LEVELS).map((entry) => <option key={entry.id} value={entry.id}>{entry.label}</option>)}
-          </select>
-        </label>
-        <label htmlFor="poker-target">{ui.chipTarget}
-          <select id="poker-target" value={pendingTarget} onChange={(event) => setPendingTarget(Number(event.target.value) || DEFAULT_TARGET_CHIPS)}>
-            {targetOptions.map((value) => <option key={value} value={value}>{value}</option>)}
-          </select>
-        </label>
-        <button type="button" className="poker-apply" onClick={applyConfiguration}>{ui.applyReset}</button>
-      </div>
-
-      <div className="status-row poker-status-row">
-        <span className={`status-pill ${state.mode === "hand-active" ? "playing" : "finished"}`}>
-          {state.mode === "hand-active" ? ui.inGame : state.mode === "match-over" ? ui.matchClosed : ui.handClosed}
-        </span>
-        <span>{ui.hand}: {state.handNumber}</span>
-        <span>{ui.phase}: {phaseLabels[state.phase] || ui.showdownFallback}</span>
-        <span>{ui.dealer}: {state.players[state.dealerIndex] ? localizeName(state.players[state.dealerIndex].name) : "--"}</span>
-        <span>{ui.turn}: {state.turnIndex != null ? localizeName(state.players[state.turnIndex]?.name) : "--"}</span>
-        <span>{ui.active}: {aliveSeats(state.players).length}</span>
-        <span>{ui.pot}: {state.pot}</span>
-        <span>{ui.bet}: {state.currentBet}</span>
-        <span>{ui.blinds}: {activeBlind.label}</span>
-        <span>{ui.target}: {state.targetChips}</span>
-        <span>{ui.ai}: {aiLevelLabels[level.id] || level.label}</span>
-        {aiThinking ? <span>{ui.aiThinking}</span> : null}
-      </div>
-
-      <div className="poker-scoreboard">
-        {state.players.map((player) => (
-          <article key={player.id} className="poker-score-card">
-            <p>{localizeName(player.name)}</p>
-            <strong>{player.chips}</strong>
-            <span>{player.handsWon} {ui.hands}</span>
-            <span>{ui.inRound}: {player.currentBet}</span>
-          </article>
-        ))}
-      </div>
+          <div className="poker-scoreboard">
+            {state.players.map((player) => (
+              <article key={player.id} className="poker-score-card">
+                <p>{localizeName(player.name)}</p>
+                <strong>{player.chips}</strong>
+                <span>{player.handsWon} {ui.hands}</span>
+                <span>{ui.inRound}: {player.currentBet}</span>
+              </article>
+            ))}
+          </div>
+        </>
+      ) : null}
 
       <div className="poker-table">
         <div className="poker-round-table">
           <div className="poker-felt-ring" />
           {state.players.map((player) => {
             const humanSeat = player.type === "human";
+            const mobileAiSeat = mobileViewport.isMobile && !humanSeat;
             const compactAiSeat = !humanSeat && state.players.length > 5;
             const hidden = !humanSeat && state.mode === "hand-active";
             const isTurn = state.mode === "hand-active" && state.turnIndex === player.seatIndex;
             const isDealer = state.dealerIndex === player.seatIndex;
             const seat = seatPosition(player.seatIndex, state.players.length);
             const stackChips = Math.max(2, Math.min(10, Math.ceil(player.chips / Math.max(8, state.bigBlind * 2))));
+            const hideAiSecondaryInfo = mobileAiSeat && state.mode === "hand-active" && !isTurn;
+            const visibleCards = hidden && hideAiSecondaryInfo ? 2 : hidden && mobileAiSeat && isTurn ? 3 : HAND_CARDS;
             const statusLabel = player.busted ? ui.noChips : player.folded ? ui.folded : player.allIn ? "All-in" : isTurn ? ui.activeSeat : ui.inHand;
             return (
-              <div key={player.id} className={["poker-table-seat", humanSeat ? "poker-player-seat" : "poker-ai-seat", compactAiSeat ? "compact-seat" : ""].filter(Boolean).join(" ")} style={{ "--seat-x": `${seat.x}%`, "--seat-y": `${seat.y}%` }}>
+              <div key={player.id} className={["poker-table-seat", humanSeat ? "poker-player-seat" : "poker-ai-seat", compactAiSeat ? "compact-seat" : "", hideAiSecondaryInfo ? "mobile-ai-condensed" : "", mobileAiSeat && isTurn ? "mobile-ai-focus" : ""].filter(Boolean).join(" ")} style={{ "--seat-x": `${seat.x}%`, "--seat-y": `${seat.y}%` }}>
                 <article className={["poker-seat", player.folded ? "folded" : "", isTurn ? "active-turn" : "", isDealer ? "dealer" : ""].filter(Boolean).join(" ")}>
                   <header><h5>{localizeName(player.name)}</h5><p>{statusLabel}</p></header>
                   <div className="seat-hand-shell">
                     <div className={`poker-hole-cards ${hidden ? "hidden-hand" : "shown-hand"}`}>
-                      {Array.from({ length: HAND_CARDS }, (_, index) => (
+                      {Array.from({ length: visibleCards }, (_, index) => (
                         <PokerCard
                           key={`${player.id}-${index}`}
                           card={player.hand[index]}
@@ -1959,18 +2047,20 @@ function PokerTexasHoldemGame() {
                         />
                       ))}
                     </div>
-                    <aside className="seat-stack-rail" aria-label={`${ui.chipsAriaPrefix} ${localizeName(player.name)}`}>
-                      <div className="seat-stack-visual">
-                        {Array.from({ length: stackChips }, (_, chipIndex) => (
-                          <span key={`${player.id}-chip-${chipIndex}`} className="seat-stack-chip" style={{ "--chip-index": `${chipIndex}` }} />
-                        ))}
-                      </div>
+                    <aside className={["seat-stack-rail", hideAiSecondaryInfo ? "mobile-condensed-stack" : ""].filter(Boolean).join(" ")} aria-label={`${ui.chipsAriaPrefix} ${localizeName(player.name)}`}>
+                      {!hideAiSecondaryInfo ? (
+                        <div className="seat-stack-visual">
+                          {Array.from({ length: stackChips }, (_, chipIndex) => (
+                            <span key={`${player.id}-chip-${chipIndex}`} className="seat-stack-chip" style={{ "--chip-index": `${chipIndex}` }} />
+                          ))}
+                        </div>
+                      ) : null}
                       <strong>{player.chips}</strong>
-                      <small>{ui.chipsLabel}</small>
+                      {!hideAiSecondaryInfo ? <small>{ui.chipsLabel}</small> : null}
                     </aside>
                   </div>
-                  <div className="seat-chip-row"><span>{ui.bet}: {player.currentBet}</span><span>{ui.committed}: {player.totalCommitted}</span></div>
-                  <span className="swap-chip">{player.discarded ? `${ui.discardLabel}: ${player.discardCount}` : ui.discardPending}</span>
+                  {!hideAiSecondaryInfo ? <div className="seat-chip-row"><span>{ui.bet}: {player.currentBet}</span><span>{ui.committed}: {player.totalCommitted}</span></div> : null}
+                  {!hideAiSecondaryInfo ? <span className="swap-chip">{player.discarded ? `${ui.discardLabel}: ${player.discardCount}` : ui.discardPending}</span> : null}
                   {player.intent ? <span className="swap-chip">{localizeText(player.intent)}</span> : null}
                 </article>
               </div>
@@ -2060,13 +2150,15 @@ function PokerTexasHoldemGame() {
           </>
         )}
       </div>
-      <div className="poker-table-meta">
-        <ul className="poker-discard-status">
-          {state.players.map((player) => <li key={`discard-${player.id}`}>{localizeName(player.name)}: {player.discarded ? `${player.discardCount} ${locale === "es" ? "carta(s)" : "card(s)"}` : localizeText("sin resolver")}</li>)}
-        </ul>
-        <p className="poker-bet-note">{ui.minRaise}: +{state.bigBlind} {ui.chipsLabel}.</p>
-        <p className="poker-bet-note">{toCall > 0 ? `${ui.mustCall} ${toCall} ${locale === "es" ? "ficha(s)" : "chip(s)"} ${locale === "es" ? "para seguir." : "to continue."}` : ui.noBetPending}</p>
-      </div>
+      {!mobileViewport.isMobile || showMobileStats ? (
+        <div className="poker-table-meta">
+          <ul className="poker-discard-status">
+            {state.players.map((player) => <li key={`discard-${player.id}`}>{localizeName(player.name)}: {player.discarded ? `${player.discardCount} ${locale === "es" ? "carta(s)" : "card(s)"}` : localizeText("sin resolver")}</li>)}
+          </ul>
+          <p className="poker-bet-note">{ui.minRaise}: +{state.bigBlind} {ui.chipsLabel}.</p>
+          <p className="poker-bet-note">{toCall > 0 ? `${ui.mustCall} ${toCall} ${locale === "es" ? "ficha(s)" : "chip(s)"} ${locale === "es" ? "para seguir." : "to continue."}` : ui.noBetPending}</p>
+        </div>
+      ) : null}
 
       <p className="poker-hand-insight">
         {ui.handRead}: {insight}.{" "}
@@ -2102,7 +2194,14 @@ function PokerTexasHoldemGame() {
       </details>
 
       <p className="game-message">{localizeText(state.message)}</p>
-      <ul className="game-log">{state.logs.map((entry, index) => <li key={`log-${index}`}>{localizeText(entry)}</li>)}</ul>
+      {mobileViewport.isMobile ? (
+        <details className="poker-mobile-log">
+          <summary>{ui.mobileHistory}</summary>
+          <ul className="game-log">{state.logs.map((entry, index) => <li key={`log-${index}`}>{localizeText(entry)}</li>)}</ul>
+        </details>
+      ) : (
+        <ul className="game-log">{state.logs.map((entry, index) => <li key={`log-${index}`}>{localizeText(entry)}</li>)}</ul>
+      )}
     </div>
   );
 }
