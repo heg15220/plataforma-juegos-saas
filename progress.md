@@ -1236,3 +1236,175 @@
   - capturas: `output/strategy-poker-mobile-responsive/mobile-portrait-viewport.png` y `mobile-landscape-viewport.png`.
   - verificado que el aviso aparece solo en portrait y se oculta en landscape.
 - Nota tecnica: `npm run build` en sandbox sigue fallando por `esbuild spawn EPERM` (limitacion de entorno), no por error de sintaxis de cambios.
+## 2026-03-04 - Domino: motor clasico 4P por parejas + mesa renovada
+- Reescrito `src/games/DominoStrategyGame.jsx` con motor de domino clasico fiel a reglas de mesa:
+  - 28 fichas doble-seis, reparto 7 por jugador, 4 asientos (`player`, `right`, `partner`, `left`).
+  - Ronda 1 abre quien tiene `6|6`; rondas siguientes abre el jugador a la derecha del inicio anterior.
+  - Turnos circulares, jugadas legales por extremos, pases forzados y seleccion de extremo por teclado/UI.
+  - Fin de ronda por `domino` o `tranca` (pases consecutivos de todos y cierre por numero agotado en extremos).
+  - Puntuacion por equipos (parejas): el equipo ganador suma los puntos de la mano rival.
+  - IA multi-asiento por niveles: facil (determinista simple), media (heuristica), dificil (minimax por equipos).
+  - `render_game_to_text` ampliado con estado de equipos, manos por asiento, layout de cadena y metadatos de ronda.
+- Rehecha la UI de mesa para acercarla a referencia visual:
+  - zonas de jugadores arriba/izquierda/derecha y mano humana abajo,
+  - HUD por equipos y pips en mano,
+  - cadena central en tapete con layout serpenteante y dobles perpendiculares,
+  - indicadores de turno y estado de IA pensando.
+- Estilos nuevos/ajustes en `src/styles.css` (`domino-strategy-pro`) para tapete, ring de asientos, backs compactos y cadena absoluta con scroll.
+- Copys actualizados para domino en:
+  - `src/data/games.js`
+  - `src/components/GamePlayground.jsx`
+  - `src/games/registry.jsx`
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por EPERM de `esbuild` en sandbox).
+- Playwright QA OK con cliente local equivalente (`web_game_playwright_client.mjs`) sobre `#game=knowledge-domino-chain`:
+  - `output/strategy-domino-upgrade/shot-0.png..shot-2.png`
+  - `output/strategy-domino-upgrade/state-0.json..state-2.json`
+  - estado confirma `variant: domino-classic-4p-pairs`, asientos 4P, puntuacion por equipos, `chainLayout` serpenteante y turnos IA/humano.
+- Nota: el cliente de la skill en `C:\Users\hugoe\.codex\skills\develop-web-game\scripts\web_game_playwright_client.js` fallo en este entorno al ejecutarse como `.js` ESM; se uso el cliente `.mjs` equivalente del repo para completar la validacion.
+## 2026-03-04 - Domino: nombres Usuario/Compañero + highlight de jugadas + modos 1IA/2IAs + IA mas lenta
+- `src/games/DominoStrategyGame.jsx` actualizado de motor fijo 4P a motor multimodo con `modeId`:
+  - Modos nuevos:
+    - `duel`: `Usuario vs 1 IA` (`seats: player,right`, reparto completo 14/14).
+    - `triad`: `Usuario vs 2 IAs` (`seats: player,right,left`, reparto completo 10/9/9).
+    - `pairs`: se mantiene `Usuario + Compañero vs 2 IAs` (4P por parejas).
+  - Estado/rondas ahora dependen de `modeConfig` (asientos activos, orden de turnos, equipos, scoring, tranca y cierre).
+  - Marcador y resolucion de ronda generalizados para 2, 3 y 4 participantes.
+  - IA ralentizada para mejorar UX:
+    - `easy`: `1100 ms`
+    - `medium`: `1650 ms`
+    - `hard`: `2300 ms`
+  - Renombrados asientos visibles:
+    - jugador humano: `Usuario`
+    - pareja IA: `Compañero`
+  - Nuevo selector de `Modo de partida` en config (cambiar modo reinicia partida).
+- Highlight visual ampliado:
+  - Se mantiene resaltado fuerte de ficha seleccionada en mano (`Seleccionada`).
+  - Se mantiene highlight de ultima ficha del usuario en tablero.
+  - Aniadido highlight dedicado para la ultima ficha puesta por `Compañero` (`lastPartnerMoveTileId` + badge visual en tablero).
+  - Resumen textual bajo toolbar ahora incluye ultima jugada del Usuario y del Compañero (si aplica por modo).
+- `render_game_to_text` ampliado:
+  - `modeId`, `modeLabel`, `variant` dinamico.
+  - `lastPartnerMoveTileId`, `lastPartnerMoveSide`.
+  - `hands.counts` dinamico por asientos activos del modo.
+
+### Validacion
+- Build OK: `npm run build` (fuera de sandbox por EPERM de esbuild en sandbox).
+- Playwright (cliente del repo) OK en modo parejas:
+  - `output/strategy-domino-modes-highlight/pairs/shot-0..3.png`
+  - `output/strategy-domino-modes-highlight/pairs/state-0..3.json`
+  - Evidencia de highlight de companero: `state-1.json` contiene `lastPartnerMoveTileId` no nulo.
+- Validacion visual full-page adicional (Playwright custom) de modos:
+  - `output/strategy-domino-modes-highlight/validation/pairs-full.png`
+  - `output/strategy-domino-modes-highlight/validation/duel-full.png`
+  - `output/strategy-domino-modes-highlight/validation/triad-full.png`
+  - Estados asociados: `pairs-state.json`, `duel-state.json`, `triad-state.json`.
+## 2026-03-04 - Domino i18n + responsive movil (en curso)
+- `DominoStrategyGame.jsx`:
+  - eliminado `IS_ES` sin uso;
+  - anadidos textos i18n para badges de ultima jugada (`lastPlayerBadge`, `lastPartnerBadge`) en ES/EN;
+  - anadida clase raiz `locale-${LOCALE}` para variantes de estilo por idioma;
+  - moved labels de ultima jugada al JSX (sin texto hardcodeado en CSS).
+- `styles.css` (bloque domino pro):
+  - anadidas rejillas por modo (`mode-duel`, `mode-triad`) para evitar huecos y mejorar composicion;
+  - reemplazados pseudo-elementos con texto fijo por `.domino-board-badge` visualmente equivalente;
+  - anadido bloque `domino-mobile` + `domino-mobile-portrait/landscape` para:
+    - mano horizontal con scroll/tap targets mayores,
+    - toolbar sticky tactil,
+    - paneles de estado/marcador en scroll horizontal,
+    - ajuste de alturas de cadena y asientos segun orientacion.
+- Pendiente inmediato: build + validacion Playwright y ajuste fino visual si aparece regression.
+## 2026-03-04 - Domino: cierre i18n completo + responsive movil validado
+- Internacionalizacion Domino completada por locale del navegador:
+  - `LOCALE` se fija por `navigator.language` (`es*` => espanol, resto ingles).
+  - textos de UI/runtime/reglas ya mapeados a `T` en `DominoStrategyGame.jsx`.
+  - eliminada variable muerta `IS_ES`.
+- Texto visible en tablero sin hardcode en CSS:
+  - eliminados pseudo-elementos con `content: "Tu jugada" / "Companero"`.
+  - badges migrados a JSX con i18n: `T.ui.lastPlayerBadge`, `T.ui.lastPartnerBadge`.
+- Responsive movil reforzado en `src/styles.css` para domino pro:
+  - layouts por modo (`mode-duel`, `mode-triad`) para evitar huecos en asientos.
+  - bloque `domino-mobile` + `domino-mobile-portrait` + `domino-mobile-landscape`:
+    - mano horizontal con scroll/tap targets ampliados,
+    - toolbar sticky tactil,
+    - marcador/status con scroll horizontal,
+    - ajustes de altura del area de cadena y compactacion de asientos.
+- Limpieza tecnica:
+  - eliminado BOM UTF-8 accidental al inicio de `DominoStrategyGame.jsx`.
+
+### Validacion final
+- Build OK: `npm run build` (fuera de sandbox por `esbuild spawn EPERM` en sandbox).
+- Playwright (cliente del repo) OK:
+  - `output/strategy-domino-i18n-mobile-check/desktop/shot-0..3.png`
+  - `output/strategy-domino-i18n-mobile-check/desktop/state-0..3.json`
+  - sin `errors-*.json`.
+- Playwright movil (captura viewport real del modal domino):
+  - `output/strategy-domino-i18n-mobile-check/mobile/domino-mobile-portrait-v3.png`
+  - `output/strategy-domino-i18n-mobile-check/mobile/domino-mobile-landscape-v3.png`
+  - probes: `...-v3-probe.json` confirman `overlay=true`, `runtime=true`, `hash=#game=knowledge-domino-chain`.
+- Capturas extra tramo inferior (mano + toolbar):
+  - `output/strategy-domino-i18n-mobile-check/mobile/domino-mobile-portrait-v4-bottom.png`
+  - `output/strategy-domino-i18n-mobile-check/mobile/domino-mobile-landscape-v4-bottom.png`.
+## 2026-03-04 - Domino mobile portrait: fix de solapes + mano visible
+- Ajustado `src/styles.css` en bloque `domino-mobile`/`domino-mobile-portrait` para corregir UX vertical:
+  - configuracion en una sola columna en portrait (evita solape de desplegables largos),
+  - `label/select` con `min-width:0` y `width:100%` para evitar overflow,
+  - altura del area de cadena reducida en portrait (`24dvh..33dvh`) para liberar espacio de juego,
+  - layout de asientos en portrait por modo:
+    - `pairs`: top + chain + (`left`/`right`) en la misma fila + bottom,
+    - `triad`: chain + (`left`/`right`) + bottom,
+  - mano del usuario en portrait convertida a grid 4 columnas (sin scroll horizontal) para mostrar mas fichas simultaneas,
+  - compactacion de badges/hints sobre fichas para evitar superposicion.
+
+### Validacion
+- Build OK: `npm run build`.
+- Playwright mobile (modal domino real, viewport 390x844 y 844x390):
+  - `output/strategy-domino-i18n-mobile-check/mobile-fix-pass2/domino-portrait-top.png`
+  - `output/strategy-domino-i18n-mobile-check/mobile-fix-pass2/domino-portrait-bottom.png`
+  - `output/strategy-domino-i18n-mobile-check/mobile-fix-pass2/domino-landscape-top.png`
+  - `output/strategy-domino-i18n-mobile-check/mobile-fix-pass2/domino-landscape-bottom.png`
+  - `probe` en ambos: `overlay=true`, `runtime=true`, sin `errors-*.json`.
+- Evidencia visual clave: en portrait (`domino-portrait-bottom.png`) se ven 7 fichas del usuario en rejilla, sin solape de desplegables.
+## 2026-03-04 - Poker mobile: compactacion extrema de configuracion
+- `src/games/PokerTexasHoldemGame.jsx`:
+  - labels de configuracion envueltos en `<span>` para poder truncar texto y mantener altura minima en movil.
+- `src/styles.css`:
+  - compactado fuerte del bloque `.poker-mobile .poker-config`:
+    - menor `margin-top` y `gap`,
+    - labels con tipografia y line-height mas densos,
+    - truncado con ellipsis en texto de label,
+    - selects con menor `font-size`, `padding`, `min-height` y radio,
+    - boton `poker-apply` reducido y en fila completa.
+  - en `portrait` se usa rejilla de 2 columnas (cuando cabe) para minimizar altura total; en `<=420px` se mantiene fallback a 1 columna.
+- Validacion:
+  - Build OK: `npm run build` (fuera de sandbox por restricciones EPERM del entorno).
+## 2026-03-04 - Poker mobile landscape: ajuste para evitar desplazamiento en interfaz principal
+- `src/games/PokerTexasHoldemGame.jsx`:
+  - nuevos textos i18n: `mobileExtraInfo` (ES/EN).
+  - en movil horizontal se fuerzan cerrados los paneles de `Ajustes` y `Marcador` al detectar landscape (evita que tapen la mesa tras rotar).
+  - los asientos IA en movil horizontal usan modo condensado siempre para reducir altura de la mesa.
+  - bloque informativo inferior (`lectura`, `showdown`, `reglas`, `mensaje`) pasa a `details` compacto en landscape (`poker-mobile-extra`) para mantener la vista principal sin scroll.
+- `src/styles.css`:
+  - nuevos estilos `poker-mobile-extra` y variantes compactas en landscape.
+  - compactacion agresiva en landscape de header/toggles/KPIs/configuracion/scoreboard/mesa/cartas/acciones.
+  - `poker-actions-panel` deja de ser sticky en landscape y pasa a flujo normal compacto.
+  - reducidas alturas maximas de paneles secundarios (`poker-mobile-extra`, `poker-mobile-log`) con scroll interno.
+  - ocultado `poker-table-meta` en landscape para priorizar mesa + acciones.
+- Validacion:
+  - Build OK: `npm run build` (fuera de sandbox por restricciones EPERM del entorno).
+## 2026-03-04 - Poker landscape mobile: modo vista completa tipo desktop
+- `src/games/PokerTexasHoldemGame.jsx`:
+  - en landscape movil se fuerzan visibles `Ajustes` y `Marcador` (equivalente a escritorio) y se ocultan toggles de paneles (solo se usan en portrait).
+  - `poker-mobile-kpis` se limita a portrait para ahorrar altura en horizontal.
+  - `hideAiSecondaryInfo` en asientos IA activo en horizontal movil para compactar mesa sin perder estado principal.
+  - se elimina el plegado exclusivo de landscape para insight/showdown/rules/message: en horizontal vuelven a mostrarse como en escritorio.
+  - anadido contenedor `poker-post-grid` para distribuir acciones + meta + insight + showdown + reglas + mensaje + log en rejilla compacta.
+- `src/styles.css`:
+  - anadido estilo base `poker-post-grid`.
+  - landscape movil remaquetado para vista completa:
+    - root con altura acotada a viewport y `overflow:hidden`,
+    - compactacion extrema de header/config/status/scoreboard/mesa/botones,
+    - rejilla de bloques inferiores en 3 columnas (`actions`, `meta`, `insight`, `rules`, `showdown`, `message`, `log`) con scroll interno por bloque.
+- Validacion:
+  - Build OK: `npm run build` (fuera de sandbox por restricciones EPERM del entorno).

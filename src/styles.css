@@ -686,7 +686,7 @@ body {
 .domino-scoreboard {
   margin-top: 0.66rem;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
   gap: 0.42rem;
 }
 
@@ -2549,6 +2549,24 @@ body {
     0 8px 14px rgba(2, 6, 23, 0.24);
 }
 
+.domino-tile.last-player-tile {
+  border-color: rgba(56, 189, 248, 0.9);
+  box-shadow:
+    0 0 0 2px rgba(56, 189, 248, 0.34),
+    0 0 0 6px rgba(14, 165, 233, 0.14),
+    0 10px 18px rgba(2, 6, 23, 0.28);
+  animation: domino-last-player-tile-pulse 1.4s ease-in-out infinite;
+}
+
+.domino-tile.last-partner-tile {
+  border-color: rgba(251, 191, 36, 0.9);
+  box-shadow:
+    0 0 0 2px rgba(251, 191, 36, 0.34),
+    0 0 0 6px rgba(245, 158, 11, 0.14),
+    0 10px 18px rgba(2, 6, 23, 0.28);
+  animation: domino-last-partner-tile-pulse 1.4s ease-in-out infinite;
+}
+
 .domino-strategy-game .domino-tile.is-double,
 .domino-strategy-game .domino-hand-tile.is-double {
   width: 78px;
@@ -2637,8 +2655,29 @@ body {
 .domino-hand-tile.selected {
   border-color: rgba(250, 204, 21, 0.9);
   box-shadow:
-    0 0 0 2px rgba(250, 204, 21, 0.3),
-    0 8px 16px rgba(2, 6, 23, 0.24);
+    0 0 0 2px rgba(250, 204, 21, 0.36),
+    0 0 0 6px rgba(250, 204, 21, 0.14),
+    0 12px 22px rgba(2, 6, 23, 0.28);
+  transform: translateY(-3px) scale(1.015);
+}
+
+.domino-hand-tile.selected .domino-half {
+  background: linear-gradient(160deg, rgba(254, 243, 199, 0.98), rgba(255, 255, 255, 0.98));
+}
+
+.domino-selected-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.72);
+  background: rgba(8, 47, 73, 0.8);
+  color: #e0f2fe;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  padding: 0.08rem 0.34rem;
+  z-index: 2;
 }
 
 .domino-strategy-game .domino-hand-tile.playable {
@@ -2674,6 +2713,809 @@ body {
   color: #dcfce7;
   font-size: 0.8rem;
   font-weight: 700;
+}
+
+.domino-strategy-game.domino-strategy-pro {
+  color: #fff7e2;
+  border-color: rgba(231, 195, 132, 0.46);
+  background:
+    radial-gradient(circle at 16% -20%, rgba(251, 191, 36, 0.18), transparent 42%),
+    radial-gradient(circle at 86% -16%, rgba(245, 158, 11, 0.15), transparent 40%),
+    linear-gradient(150deg, #3b1f0f 0%, #5b2f17 44%, #452313 100%);
+  box-shadow:
+    0 20px 34px rgba(19, 10, 4, 0.34),
+    inset 0 1px 0 rgba(255, 237, 213, 0.1);
+}
+
+.domino-strategy-pro .mini-head h4 {
+  color: #fffbeb;
+}
+
+.domino-strategy-pro .mini-head p {
+  color: #fde9c7;
+}
+
+.domino-strategy-pro .domino-strategy-actions button {
+  background: linear-gradient(140deg, #92400e, #b45309);
+}
+
+.domino-strategy-pro .domino-strategy-config label {
+  color: #fde9c7;
+}
+
+.domino-strategy-pro .domino-strategy-config select {
+  border-color: rgba(253, 230, 138, 0.42);
+  background: rgba(120, 53, 15, 0.45);
+  color: #fff7ed;
+}
+
+.domino-strategy-pro .domino-config-note {
+  color: #fce7c4;
+}
+
+.domino-strategy-pro .status-row span {
+  border: 1px solid rgba(253, 230, 138, 0.38);
+  border-radius: 999px;
+  background: rgba(69, 30, 12, 0.5);
+  color: #ffefcf;
+  padding: 0.14rem 0.46rem;
+}
+
+.domino-strategy-pro .status-row .status-pill.playing {
+  background: rgba(22, 101, 52, 0.66);
+  border-color: rgba(134, 239, 172, 0.55);
+}
+
+.domino-strategy-pro .status-row .status-pill.finished {
+  background: rgba(146, 64, 14, 0.7);
+  border-color: rgba(253, 186, 116, 0.55);
+}
+
+.domino-strategy-pro .domino-team-scoreboard {
+  gap: 0.54rem;
+}
+
+.domino-strategy-pro .domino-team-scoreboard .domino-scorecard {
+  display: grid;
+  gap: 0.16rem;
+}
+
+.domino-strategy-pro .domino-team-scoreboard .domino-scorecard span {
+  font-size: 0.68rem;
+  color: #fde9c7;
+  font-weight: 700;
+}
+
+.domino-strategy-pro .domino-team-scoreboard .team-us {
+  border-color: rgba(125, 211, 252, 0.5);
+  background: linear-gradient(150deg, rgba(3, 105, 161, 0.42), rgba(7, 89, 133, 0.32));
+}
+
+.domino-strategy-pro .domino-team-scoreboard .team-rivals {
+  border-color: rgba(251, 191, 36, 0.55);
+  background: linear-gradient(150deg, rgba(180, 83, 9, 0.45), rgba(120, 53, 15, 0.38));
+}
+
+.domino-strategy-pro .domino-team-scoreboard .team-target {
+  border-color: rgba(253, 230, 138, 0.5);
+  background: linear-gradient(150deg, rgba(120, 53, 15, 0.44), rgba(146, 64, 14, 0.34));
+}
+
+.domino-strategy-pro .domino-seat {
+  border: 1px solid rgba(253, 230, 138, 0.35);
+  border-radius: 10px;
+  background: linear-gradient(150deg, rgba(36, 19, 8, 0.84), rgba(76, 33, 15, 0.82));
+  padding: 0.34rem 0.38rem;
+  display: grid;
+  gap: 0.14rem;
+}
+
+.domino-strategy-pro .domino-seat.active {
+  border-color: rgba(250, 204, 21, 0.8);
+  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.18);
+}
+
+.domino-strategy-pro .domino-seat header {
+  display: grid;
+  gap: 0.08rem;
+}
+
+.domino-strategy-pro .domino-seat h5 {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #fffbeb;
+}
+
+.domino-strategy-pro .domino-seat .seat-meta {
+  font-size: 0.63rem;
+  color: #fcd6a5;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+}
+
+.domino-strategy-pro .domino-seat .seat-count {
+  margin: 0;
+  font-size: 0.7rem;
+  color: #fde8cb;
+  font-weight: 700;
+}
+
+.domino-strategy-pro .domino-seat-thinking {
+  font-size: 0.66rem;
+  color: #fde68a;
+  font-weight: 700;
+}
+
+.domino-strategy-pro .domino-ai-hand-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.16rem;
+}
+
+.domino-strategy-pro .domino-mini-back {
+  width: 18px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid rgba(186, 230, 253, 0.4);
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(15, 23, 42, 0.94),
+      rgba(15, 23, 42, 0.94) 6px,
+      rgba(30, 64, 175, 0.9) 6px,
+      rgba(30, 64, 175, 0.9) 12px
+    );
+}
+
+.domino-strategy-pro .domino-table {
+  border-color: rgba(253, 230, 138, 0.34);
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(82, 39, 17, 0.88) 0,
+      rgba(82, 39, 17, 0.88) 2px,
+      rgba(96, 44, 19, 0.92) 2px,
+      rgba(96, 44, 19, 0.92) 4px
+    ),
+    linear-gradient(160deg, rgba(59, 29, 14, 0.86), rgba(88, 42, 19, 0.84));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 237, 213, 0.06),
+    0 14px 24px rgba(16, 7, 2, 0.3);
+}
+
+.domino-strategy-pro .domino-variant-chip {
+  border-color: rgba(251, 191, 36, 0.72);
+  background: rgba(120, 53, 15, 0.56);
+  color: #fef3c7;
+}
+
+.domino-strategy-pro .domino-table-note {
+  color: #fde9c7;
+}
+
+.domino-strategy-pro .domino-edge-readout span {
+  border-color: rgba(251, 191, 36, 0.45);
+  background: rgba(69, 30, 12, 0.56);
+  color: #ffedd5;
+}
+
+.domino-strategy-pro .domino-arena-shell {
+  margin-top: 0.58rem;
+  display: grid;
+  grid-template-columns: minmax(110px, 136px) minmax(0, 1fr) minmax(110px, 136px);
+  grid-template-rows: auto minmax(220px, 1fr) auto;
+  grid-template-areas:
+    "top top top"
+    "left chain right"
+    "bottom bottom bottom";
+  gap: 0.44rem;
+  align-items: center;
+}
+
+.domino-strategy-pro.mode-duel .domino-arena-shell {
+  grid-template-columns: minmax(130px, 180px) minmax(0, 1fr);
+  grid-template-rows: minmax(220px, 1fr) auto;
+  grid-template-areas:
+    "chain chain"
+    "right bottom";
+}
+
+.domino-strategy-pro.mode-duel .domino-seat-slot.slot-bottom {
+  justify-items: stretch;
+}
+
+.domino-strategy-pro.mode-duel .domino-seat-player-chip {
+  width: 100%;
+}
+
+.domino-strategy-pro.mode-triad .domino-arena-shell {
+  grid-template-rows: minmax(220px, 1fr) auto;
+  grid-template-areas:
+    "left chain right"
+    "bottom bottom bottom";
+}
+
+.domino-strategy-pro .domino-seat-slot {
+  display: grid;
+}
+
+.domino-strategy-pro .domino-seat-slot.slot-top {
+  grid-area: top;
+  justify-items: center;
+}
+
+.domino-strategy-pro .domino-seat-slot.slot-top .domino-seat {
+  width: min(340px, 100%);
+}
+
+.domino-strategy-pro .domino-seat-slot.slot-left {
+  grid-area: left;
+}
+
+.domino-strategy-pro .domino-seat-slot.slot-right {
+  grid-area: right;
+}
+
+.domino-strategy-pro .domino-seat-slot.slot-bottom {
+  grid-area: bottom;
+  justify-items: center;
+}
+
+.domino-strategy-pro .domino-seat-slot.slot-left .domino-seat,
+.domino-strategy-pro .domino-seat-slot.slot-right .domino-seat {
+  min-height: 168px;
+  align-content: center;
+}
+
+.domino-strategy-pro .domino-seat-player-chip {
+  width: min(340px, 100%);
+  border-color: rgba(125, 211, 252, 0.5);
+  background: linear-gradient(150deg, rgba(2, 60, 109, 0.52), rgba(4, 78, 126, 0.42));
+}
+
+.domino-strategy-pro .domino-chain-scroll {
+  grid-area: chain;
+  margin-top: 0;
+  border-radius: 11px;
+  border: 1px solid rgba(253, 230, 138, 0.34);
+  background:
+    radial-gradient(circle at 14% 6%, rgba(255, 255, 255, 0.08), transparent 45%),
+    radial-gradient(circle at 88% 94%, rgba(255, 255, 255, 0.07), transparent 46%),
+    linear-gradient(160deg, rgba(5, 59, 33, 0.76), rgba(8, 83, 45, 0.84));
+  padding: 0.45rem;
+  overflow: auto;
+  min-height: 212px;
+  max-height: 360px;
+}
+
+.domino-strategy-pro .domino-chain.domino-chain-stage {
+  position: relative;
+  display: block;
+  margin: 0 auto;
+  min-height: 120px;
+  border: 0;
+  background: none;
+  padding: 0;
+}
+
+.domino-strategy-pro .domino-chain-node {
+  position: absolute;
+  display: block;
+}
+
+.domino-strategy-pro .domino-chain-node .domino-tile {
+  width: 86px;
+  min-width: 86px;
+  min-height: 44px;
+}
+
+.domino-strategy-pro .domino-chain-node .domino-half {
+  min-height: 44px;
+}
+
+.domino-strategy-pro .domino-chain-node .domino-half strong {
+  font-size: 0.58rem;
+}
+
+.domino-strategy-pro .domino-chain-node .domino-pip {
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  margin-top: -4px;
+}
+
+.domino-strategy-pro .domino-chain-node .domino-tile.is-double {
+  width: 44px;
+  min-width: 44px;
+  min-height: 86px;
+}
+
+.domino-strategy-pro .domino-chain-node .domino-tile.is-double .domino-half {
+  min-height: 42px;
+}
+
+.domino-strategy-pro .domino-chain-node .domino-tile.is-vertical {
+  transform: rotate(90deg);
+  transform-origin: center center;
+}
+
+.domino-strategy-pro .domino-chain-node .domino-board-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  border-radius: 999px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  padding: 0.08rem 0.32rem;
+  line-height: 1.1;
+  z-index: 4;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.domino-strategy-pro .domino-chain-node .domino-board-badge.badge-player {
+  border: 1px solid rgba(56, 189, 248, 0.8);
+  background: rgba(8, 47, 73, 0.9);
+  color: #e0f2fe;
+}
+
+.domino-strategy-pro .domino-chain-node .domino-board-badge.badge-partner {
+  border: 1px solid rgba(251, 191, 36, 0.82);
+  background: rgba(120, 53, 15, 0.92);
+  color: #ffedd5;
+}
+.domino-strategy-pro .domino-zone-player {
+  border: 1px solid rgba(253, 230, 138, 0.34);
+  border-radius: 11px;
+  padding: 0.42rem;
+  background: linear-gradient(155deg, rgba(23, 62, 33, 0.72), rgba(17, 83, 42, 0.7));
+}
+
+.domino-strategy-pro .domino-zone-player.active {
+  border-color: rgba(250, 204, 21, 0.78);
+  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.16);
+}
+
+@media (max-width: 900px) {
+  .domino-strategy-pro .domino-arena-shell {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto minmax(180px, 1fr) auto auto;
+    grid-template-areas:
+      "top top"
+      "chain chain"
+      "left right"
+      "bottom bottom";
+  }
+
+  .domino-strategy-pro .domino-chain-scroll {
+    padding: 0.32rem;
+    min-height: 186px;
+  }
+
+  .domino-strategy-pro .domino-seat-slot.slot-left .domino-seat,
+  .domino-strategy-pro .domino-seat-slot.slot-right .domino-seat {
+    min-height: 120px;
+  }
+}
+
+@media (max-width: 640px) {
+  .domino-strategy-pro .domino-strategy-config {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.36rem;
+  }
+
+  .domino-strategy-pro .domino-config-note {
+    grid-column: 1 / -1;
+    font-size: 0.69rem;
+    line-height: 1.3;
+  }
+
+  .domino-strategy-pro .status-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.34rem;
+    overflow-x: auto;
+    padding-bottom: 0.1rem;
+  }
+
+  .domino-strategy-pro .status-row span {
+    white-space: nowrap;
+  }
+
+  .domino-strategy-pro .domino-team-scoreboard {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .domino-strategy-pro .domino-team-scoreboard .team-target {
+    grid-column: 1 / -1;
+  }
+
+  .domino-strategy-pro .domino-arena-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto minmax(170px, 1fr) auto auto;
+    grid-template-areas:
+      "top"
+      "chain"
+      "left"
+      "right"
+      "bottom";
+  }
+
+  .domino-strategy-pro .domino-seat-slot.slot-top .domino-seat,
+  .domino-strategy-pro .domino-seat-player-chip {
+    width: 100%;
+  }
+
+  .domino-strategy-pro .domino-seat-slot.slot-left .domino-seat,
+  .domino-strategy-pro .domino-seat-slot.slot-right .domino-seat {
+    min-height: 0;
+  }
+
+  .domino-strategy-pro .domino-hand {
+    grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+    gap: 0.34rem;
+  }
+
+  .domino-strategy-pro .domino-toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .domino-strategy-pro .domino-toolbar span {
+    grid-column: 1 / -1;
+  }
+}
+
+.domino-strategy-pro.domino-mobile {
+  padding: 0.66rem;
+}
+
+.domino-strategy-pro.domino-mobile .mini-head {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.domino-strategy-pro.domino-mobile .mini-head h4 {
+  font-size: 0.98rem;
+}
+
+.domino-strategy-pro.domino-mobile .mini-head p {
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.domino-strategy-pro.domino-mobile .domino-strategy-actions {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.34rem;
+}
+
+.domino-strategy-pro.domino-mobile .domino-strategy-actions button {
+  min-height: 40px;
+  font-size: 0.78rem;
+}
+
+.domino-strategy-pro.domino-mobile .domino-strategy-config {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.34rem;
+}
+
+.domino-strategy-pro.domino-mobile .domino-strategy-config label {
+  min-width: 0;
+}
+
+.domino-strategy-pro.domino-mobile .domino-strategy-config select {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.domino-strategy-pro.domino-mobile .domino-config-note {
+  grid-column: 1 / -1;
+  font-size: 0.68rem;
+  line-height: 1.32;
+}
+
+.domino-strategy-pro.domino-mobile .status-row {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 0.32rem;
+  scroll-snap-type: x proximity;
+  padding: 0 0 0.18rem;
+}
+
+.domino-strategy-pro.domino-mobile .status-row span {
+  white-space: nowrap;
+  scroll-snap-align: start;
+}
+
+.domino-strategy-pro.domino-mobile .domino-team-scoreboard {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.38rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding-bottom: 0.16rem;
+}
+
+.domino-strategy-pro.domino-mobile .domino-team-scoreboard .domino-scorecard {
+  min-width: 150px;
+  scroll-snap-align: start;
+}
+
+.domino-strategy-pro.domino-mobile .domino-table {
+  padding: 0.42rem;
+}
+
+.domino-strategy-pro.domino-mobile .domino-chain-scroll {
+  min-height: 32dvh;
+  max-height: 48dvh;
+  overscroll-behavior: contain;
+}
+
+.domino-strategy-pro.domino-mobile .domino-chain-node .domino-tile {
+  width: 78px;
+  min-width: 78px;
+}
+
+.domino-strategy-pro.domino-mobile .domino-chain-node .domino-tile.is-double {
+  width: 40px;
+  min-width: 40px;
+  min-height: 78px;
+}
+
+.domino-strategy-pro.domino-mobile .domino-chain-node .domino-board-badge {
+  top: -8px;
+  right: -8px;
+  font-size: 0.5rem;
+  padding: 0.06rem 0.28rem;
+}
+
+.domino-strategy-pro.domino-mobile .domino-seat {
+  padding: 0.3rem 0.34rem;
+  gap: 0.1rem;
+}
+
+.domino-strategy-pro.domino-mobile .domino-seat h5 {
+  font-size: 0.68rem;
+}
+
+.domino-strategy-pro.domino-mobile .domino-seat .seat-meta {
+  font-size: 0.57rem;
+}
+
+.domino-strategy-pro.domino-mobile .domino-seat .seat-count {
+  font-size: 0.64rem;
+}
+
+.domino-strategy-pro.domino-mobile .domino-mini-back {
+  width: 14px;
+  height: 22px;
+}
+
+.domino-strategy-pro.domino-mobile .domino-zone-player {
+  padding: 0.34rem;
+}
+
+.domino-strategy-pro.domino-mobile .domino-hand {
+  display: flex;
+  gap: 0.34rem;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding-bottom: 0.16rem;
+}
+
+.domino-strategy-pro.domino-mobile .domino-hand-tile {
+  flex: 0 0 auto;
+  width: 96px;
+  min-width: 96px;
+  min-height: 66px;
+  scroll-snap-align: start;
+}
+
+.domino-strategy-pro.domino-mobile .domino-hand-tile.is-double {
+  width: 66px;
+  min-width: 66px;
+  min-height: 96px;
+}
+
+.domino-strategy-pro.domino-mobile .domino-hand-tile .domino-half {
+  min-height: 66px;
+}
+
+.domino-strategy-pro.domino-mobile .domino-toolbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 8;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.3rem;
+  border-radius: 11px;
+  border: 1px solid rgba(253, 230, 138, 0.36);
+  background: linear-gradient(170deg, rgba(52, 25, 11, 0.94), rgba(82, 39, 17, 0.94));
+  backdrop-filter: blur(3px);
+  padding: 0.34rem;
+}
+
+.domino-strategy-pro.domino-mobile .domino-toolbar span {
+  grid-column: 1 / -1;
+}
+
+.domino-strategy-pro.domino-mobile .domino-toolbar button {
+  min-height: 42px;
+  font-size: 0.79rem;
+}
+
+.domino-strategy-pro.domino-mobile .domino-selected {
+  margin-top: 0.52rem;
+  font-size: 0.73rem;
+  line-height: 1.35;
+}
+
+.domino-strategy-pro.domino-mobile-portrait .domino-arena-shell {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto minmax(150px, 1fr) auto auto;
+  grid-template-areas:
+    "top"
+    "chain"
+    "left"
+    "right"
+    "bottom";
+  gap: 0.34rem;
+}
+
+.domino-strategy-pro.mode-pairs.domino-mobile-portrait .domino-arena-shell {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto minmax(120px, 1fr) auto auto;
+  grid-template-areas:
+    "top top"
+    "chain chain"
+    "left right"
+    "bottom bottom";
+}
+
+.domino-strategy-pro.mode-duel.domino-mobile-portrait .domino-arena-shell {
+  grid-template-rows: auto minmax(160px, 1fr) auto;
+  grid-template-areas:
+    "chain"
+    "right"
+    "bottom";
+}
+
+.domino-strategy-pro.mode-triad.domino-mobile-portrait .domino-arena-shell {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  grid-template-areas:
+    "chain chain"
+    "left right"
+    "bottom bottom";
+}
+
+.domino-strategy-pro.domino-mobile-portrait .domino-seat-slot.slot-top .domino-seat,
+.domino-strategy-pro.domino-mobile-portrait .domino-seat-player-chip {
+  width: 100%;
+}
+
+.domino-strategy-pro.domino-mobile-portrait .domino-seat-slot.slot-left .domino-seat,
+.domino-strategy-pro.domino-mobile-portrait .domino-seat-slot.slot-right .domino-seat {
+  min-height: 0;
+}
+
+.domino-strategy-pro.domino-mobile-portrait .domino-strategy-config {
+  grid-template-columns: 1fr;
+}
+
+.domino-strategy-pro.domino-mobile-portrait .domino-strategy-config label {
+  font-size: 0.7rem;
+}
+
+.domino-strategy-pro.domino-mobile-portrait .domino-strategy-config select {
+  font-size: 0.76rem;
+}
+
+.domino-strategy-pro.domino-mobile-portrait .domino-config-note {
+  font-size: 0.64rem;
+  line-height: 1.28;
+}
+
+.domino-strategy-pro.domino-mobile-portrait .domino-chain-scroll {
+  min-height: 24dvh;
+  max-height: 33dvh;
+}
+
+.domino-strategy-pro.domino-mobile-portrait .domino-hand {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.24rem;
+  overflow: visible;
+  padding-bottom: 0;
+}
+
+.domino-strategy-pro.domino-mobile-portrait .domino-hand-tile {
+  width: 100%;
+  min-width: 0;
+  min-height: 58px;
+  scroll-snap-align: none;
+}
+
+.domino-strategy-pro.domino-mobile-portrait .domino-hand-tile.is-double {
+  width: 100%;
+  min-width: 0;
+  min-height: 78px;
+}
+
+.domino-strategy-pro.domino-mobile-portrait .domino-hand-tile .domino-half {
+  min-height: 58px;
+}
+
+.domino-strategy-pro.domino-mobile-portrait .domino-selected-badge,
+.domino-strategy-pro.domino-mobile-portrait .domino-legal-hint {
+  font-size: 0.5rem;
+  padding: 0.06rem 0.26rem;
+}
+
+.domino-strategy-pro.domino-mobile-landscape .domino-arena-shell {
+  grid-template-columns: minmax(100px, 132px) minmax(0, 1fr) minmax(100px, 132px);
+  grid-template-rows: minmax(160px, 1fr) auto;
+  grid-template-areas:
+    "left chain right"
+    "bottom bottom bottom";
+}
+
+.domino-strategy-pro.mode-pairs.domino-mobile-landscape .domino-arena-shell {
+  grid-template-rows: auto minmax(160px, 1fr) auto;
+  grid-template-areas:
+    "top top top"
+    "left chain right"
+    "bottom bottom bottom";
+}
+
+.domino-strategy-pro.mode-duel.domino-mobile-landscape .domino-arena-shell {
+  grid-template-columns: minmax(120px, 180px) minmax(0, 1fr);
+  grid-template-rows: minmax(150px, 1fr) auto;
+  grid-template-areas:
+    "chain chain"
+    "right bottom";
+}
+
+.domino-strategy-pro.domino-mobile-landscape .domino-chain-scroll {
+  min-height: 36dvh;
+  max-height: 45dvh;
+}
+
+@keyframes domino-last-player-tile-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(56, 189, 248, 0.34),
+      0 0 0 6px rgba(14, 165, 233, 0.14),
+      0 10px 18px rgba(2, 6, 23, 0.28);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(56, 189, 248, 0.46),
+      0 0 0 8px rgba(14, 165, 233, 0.2),
+      0 12px 22px rgba(2, 6, 23, 0.34);
+  }
+}
+
+@keyframes domino-last-partner-tile-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(251, 191, 36, 0.34),
+      0 0 0 6px rgba(245, 158, 11, 0.14),
+      0 10px 18px rgba(2, 6, 23, 0.28);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(251, 191, 36, 0.5),
+      0 0 0 8px rgba(245, 158, 11, 0.24),
+      0 12px 22px rgba(2, 6, 23, 0.34);
+  }
 }
 
 .hangman-stage {
@@ -4364,6 +5206,10 @@ body {
   font-weight: 700;
 }
 
+.poker-config label > span {
+  display: block;
+}
+
 .poker-config select {
   border: 1px solid rgba(125, 211, 252, 0.36);
   border-radius: 8px;
@@ -5170,6 +6016,11 @@ body {
   gap: 0.4rem;
 }
 
+.poker-post-grid {
+  display: grid;
+  gap: 0.44rem;
+}
+
 .poker-actions-panel button {
   border: 1px solid rgba(125, 211, 252, 0.46);
   border-radius: 9px;
@@ -5373,6 +6224,40 @@ body {
   font-weight: 700;
 }
 
+.poker-mobile-extra {
+  margin-top: 0.3rem;
+  border-radius: 10px;
+  border: 1px solid rgba(125, 211, 252, 0.3);
+  background: rgba(8, 23, 44, 0.72);
+}
+
+.poker-mobile-extra summary {
+  cursor: pointer;
+  color: #dbeafe;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.24rem 0.34rem;
+}
+
+.poker-mobile-extra-content {
+  display: grid;
+  gap: 0.24rem;
+  padding: 0.08rem 0.34rem 0.28rem;
+}
+
+.poker-mobile-extra-label {
+  margin: 0;
+  font-size: 0.64rem;
+  color: #bfdbfe;
+  font-weight: 700;
+}
+
+.poker-mobile-extra-rules pre {
+  margin: 0.18rem 0 0;
+  max-height: 132px;
+  overflow: auto;
+}
+
 @media (max-width: 860px) {
   .poker-round-table {
     height: clamp(408px, 56vh, 530px);
@@ -5470,6 +6355,7 @@ body {
 @media (max-width: 760px) {
   .poker-mobile {
     padding: 0.62rem;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5.2rem);
   }
 
   .poker-mobile .poker-table {
@@ -5500,23 +6386,42 @@ body {
 
   .poker-mobile .poker-config {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin-top: 0.46rem;
-    gap: 0.34rem;
+    margin-top: 0.36rem;
+    gap: 0.22rem;
+    align-items: start;
   }
 
   .poker-mobile .poker-config label {
-    font-size: 0.66rem;
-    gap: 0.18rem;
+    font-size: 0.58rem;
+    line-height: 1.04;
+    gap: 0.08rem;
+    min-width: 0;
+  }
+
+  .poker-mobile .poker-config label > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .poker-mobile .poker-config select {
-    font-size: 0.72rem;
-    padding: 0.3rem 0.4rem;
+    font-size: 0.64rem;
+    line-height: 1;
+    padding: 0.16rem 1.16rem 0.16rem 0.28rem;
+    min-height: 28px;
+    border-radius: 6px;
+    width: 100%;
+    min-width: 0;
   }
 
   .poker-mobile .poker-apply {
-    font-size: 0.72rem;
-    padding: 0.28rem 0.44rem;
+    font-size: 0.62rem;
+    line-height: 1;
+    padding: 0.18rem 0.3rem;
+    min-height: 28px;
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
   }
 
   .poker-mobile .poker-orientation-tip {
@@ -5729,24 +6634,100 @@ body {
 }
 
 @media (max-width: 760px) and (orientation: portrait) {
+  .poker-mobile-portrait .poker-config {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.2rem;
+  }
+
+  .poker-mobile-portrait .poker-config label,
+  .poker-mobile-portrait .poker-config select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .poker-mobile-portrait .poker-apply {
+    grid-column: 1 / -1;
+  }
+
   .poker-mobile-portrait .poker-mobile-kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .poker-mobile-portrait .poker-round-table {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.26rem;
+    padding: 0.3rem;
   }
 
   .poker-mobile-portrait .poker-board-zone {
-    order: -2;
+    order: -3;
+    flex: 0 0 100%;
+    padding: 0.28rem;
+    gap: 0.14rem;
   }
 
   .poker-mobile-portrait .poker-player-seat {
+    order: -2;
+    flex: 0 0 100%;
+  }
+
+  .poker-mobile-portrait .poker-ai-seat,
+  .poker-mobile-portrait .poker-ai-seat.compact-seat {
     order: -1;
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+  }
+
+  .poker-mobile-portrait .poker-ai-seat .poker-seat {
+    padding: 0.14rem 0.16rem;
+    gap: 0.06rem;
+  }
+
+  .poker-mobile-portrait .poker-ai-seat .poker-seat header {
+    justify-content: center;
+    gap: 0.08rem;
+  }
+
+  .poker-mobile-portrait .poker-ai-seat .poker-seat h5 {
+    font-size: 0.48rem;
+  }
+
+  .poker-mobile-portrait .poker-ai-seat .poker-seat p,
+  .poker-mobile-portrait .poker-ai-seat .seat-chip-row,
+  .poker-mobile-portrait .poker-ai-seat .swap-chip {
+    font-size: 0.4rem;
+  }
+
+  .poker-mobile-portrait .poker-ai-seat.mobile-ai-condensed .poker-hole-cards {
+    justify-content: center;
+  }
+
+  .poker-mobile-portrait .poker-ai-seat.mobile-ai-condensed .poker-hole-cards .poker-card.hidden {
+    width: 10px;
+    height: 16px;
+    min-width: 10px;
+    margin-left: -2px;
+    padding: 0;
+    border-radius: 3px;
+  }
+
+  .poker-mobile-portrait .poker-ai-seat.mobile-ai-condensed .poker-hole-cards .poker-card.hidden .back-mark {
+    font-size: 0.28rem;
+  }
+
+  .poker-mobile-portrait .poker-ai-seat.mobile-ai-condensed .seat-stack-rail.mobile-condensed-stack {
+    padding: 0.05rem 0.1rem;
+  }
+
+  .poker-mobile-portrait .poker-ai-seat.mobile-ai-condensed .seat-stack-rail.mobile-condensed-stack strong {
+    font-size: 0.46rem;
   }
 
   .poker-mobile-portrait .poker-seat {
-    padding: 0.3rem 0.36rem;
+    padding: 0.28rem 0.34rem;
   }
 
   .poker-mobile-portrait .poker-seat h5 {
@@ -5758,10 +6739,10 @@ body {
   }
 
   .poker-mobile-portrait .poker-player-seat .poker-card {
-    width: 28px;
-    height: 40px;
-    min-width: 28px;
-    padding: 0.1rem 0.12rem;
+    width: 26px;
+    height: 38px;
+    min-width: 26px;
+    padding: 0.08rem 0.1rem;
   }
 
   .poker-mobile-portrait .poker-player-seat .poker-card .rank {
@@ -5778,16 +6759,132 @@ body {
     min-width: 24px;
     padding: 0.08rem 0.1rem;
   }
+
+  .poker-mobile-portrait .poker-center-chip-flow {
+    max-height: 78px;
+  }
 }
 
 @media (max-width: 760px) and (orientation: landscape) {
+  .poker-mobile-landscape {
+    padding: 0.38rem;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.38rem);
+    min-height: calc(100dvh - 0.2rem);
+    max-height: calc(100dvh - 0.2rem);
+    overflow: hidden;
+  }
+
+  .poker-mobile-landscape .mini-head {
+    gap: 0.22rem;
+  }
+
+  .poker-mobile-landscape .mini-head h4 {
+    font-size: 0.78rem;
+    line-height: 1.1;
+  }
+
+  .poker-mobile-landscape .poker-head-actions button {
+    padding: 0.14rem 0.3rem;
+    font-size: 0.58rem;
+  }
+
+  .poker-mobile-landscape .poker-mobile-panel-toggles {
+    margin-top: 0.12rem;
+    gap: 0.18rem;
+  }
+
+  .poker-mobile-landscape .poker-mobile-panel-toggles button {
+    min-height: 26px;
+    padding: 0.12rem 0.2rem;
+    font-size: 0.58rem;
+  }
+
   .poker-mobile-landscape .poker-mobile-kpis {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-top: 0.12rem;
+    gap: 0.14rem;
+  }
+
+  .poker-mobile-landscape .poker-mobile-kpis article {
+    padding: 0.11rem 0.16rem;
+  }
+
+  .poker-mobile-landscape .poker-mobile-kpis span {
+    font-size: 0.48rem;
+  }
+
+  .poker-mobile-landscape .poker-mobile-kpis strong {
+    font-size: 0.6rem;
+  }
+
+  .poker-mobile-landscape .poker-config {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.16rem;
+    margin-top: 0.2rem;
+  }
+
+  .poker-mobile-landscape .poker-config label {
+    font-size: 0.52rem;
+    line-height: 1;
+    gap: 0.05rem;
+  }
+
+  .poker-mobile-landscape .poker-config select {
+    font-size: 0.56rem;
+    min-height: 24px;
+    padding: 0.1rem 0.9rem 0.1rem 0.22rem;
+  }
+
+  .poker-mobile-landscape .poker-apply {
+    font-size: 0.56rem;
+    min-height: 24px;
+    padding: 0.12rem 0.22rem;
+  }
+
+  .poker-mobile-landscape .poker-status-row {
+    margin-top: 0.2rem;
+    gap: 0.22rem;
+    padding-bottom: 0.12rem;
+  }
+
+  .poker-mobile-landscape .poker-status-row > span {
+    font-size: 0.52rem;
+  }
+
+  .poker-mobile-landscape .poker-scoreboard {
+    margin-top: 0.16rem;
+    gap: 0.22rem;
+    padding-bottom: 0.12rem;
+  }
+
+  .poker-mobile-landscape .poker-score-card {
+    min-width: 88px;
+    padding: 0.18rem 0.24rem;
+  }
+
+  .poker-mobile-landscape .poker-score-card p {
+    font-size: 0.54rem;
+  }
+
+  .poker-mobile-landscape .poker-score-card strong {
+    font-size: 0.74rem;
+  }
+
+  .poker-mobile-landscape .poker-score-card span {
+    font-size: 0.5rem;
+  }
+
+  .poker-mobile-landscape .poker-table {
+    margin-top: 0.16rem;
+    padding: 0.2rem;
   }
 
   .poker-mobile-landscape .poker-round-table {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.24rem;
+    gap: 0.18rem;
+    padding: 0.22rem;
+    max-height: 37dvh;
+    overflow: hidden;
   }
 
   .poker-mobile-landscape .poker-board-zone,
@@ -5795,42 +6892,200 @@ body {
     grid-column: 1 / -1;
   }
 
+  .poker-mobile-landscape .poker-board-zone {
+    padding: 0.2rem 0.24rem;
+    gap: 0.12rem;
+  }
+
+  .poker-mobile-landscape .poker-phase-track {
+    gap: 0.14rem;
+  }
+
+  .poker-mobile-landscape .poker-phase-chip {
+    font-size: 0.46rem;
+    padding: 0.06rem 0.24rem;
+  }
+
+  .poker-mobile-landscape .poker-pot-panel {
+    padding: 0.1rem 0.22rem;
+  }
+
+  .poker-mobile-landscape .poker-pot-panel strong {
+    font-size: 0.7rem;
+  }
+
+  .poker-mobile-landscape .poker-center-chip-flow {
+    max-height: 56px;
+  }
+
+  .poker-mobile-landscape .chip-player,
+  .poker-mobile-landscape .poker-center-contribution strong {
+    font-size: 0.5rem;
+  }
+
   .poker-mobile-landscape .poker-seat {
-    padding: 0.24rem 0.3rem;
-    gap: 0.16rem;
+    padding: 0.16rem 0.22rem;
+    gap: 0.08rem;
   }
 
   .poker-mobile-landscape .poker-seat h5 {
-    font-size: 0.66rem;
+    font-size: 0.58rem;
   }
 
   .poker-mobile-landscape .poker-seat p,
   .poker-mobile-landscape .seat-chip-row,
   .poker-mobile-landscape .swap-chip {
-    font-size: 0.52rem;
+    font-size: 0.44rem;
   }
 
   .poker-mobile-landscape .poker-player-seat .poker-card {
-    width: 24px;
-    height: 34px;
-    min-width: 24px;
-    padding: 0.08rem 0.1rem;
+    width: 20px;
+    height: 30px;
+    min-width: 20px;
+    padding: 0.06rem 0.08rem;
+  }
+
+  .poker-mobile-landscape .poker-player-seat .poker-card .rank {
+    font-size: 0.45rem;
+  }
+
+  .poker-mobile-landscape .poker-player-seat .poker-card .suit {
+    font-size: 0.6rem;
   }
 
   .poker-mobile-landscape .poker-board-cards .poker-card {
-    width: 22px;
-    height: 32px;
-    min-width: 22px;
-    padding: 0.07rem 0.08rem;
+    width: 18px;
+    height: 28px;
+    min-width: 18px;
+    padding: 0.05rem 0.07rem;
+  }
+
+  .poker-mobile-landscape .poker-ai-seat.mobile-ai-condensed .poker-hole-cards .poker-card.hidden {
+    width: 12px;
+    height: 20px;
+    min-width: 12px;
+    margin-left: -2px;
+    border-radius: 4px;
+  }
+
+  .poker-mobile-landscape .poker-ai-seat.mobile-ai-condensed .poker-hole-cards .poker-card.hidden .back-mark {
+    font-size: 0.34rem;
   }
 
   .poker-mobile-landscape .poker-actions-panel {
     grid-template-columns: repeat(5, minmax(0, 1fr));
+    margin-top: 0;
+    position: static;
+    padding: 0.18rem;
+    gap: 0.14rem;
   }
 
   .poker-mobile-landscape .poker-actions-panel button {
-    min-height: 32px;
-    font-size: 0.62rem;
+    min-height: 26px;
+    font-size: 0.56rem;
+    padding: 0.12rem 0.18rem;
+  }
+
+  .poker-mobile-landscape .poker-post-grid {
+    margin-top: 0.16rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+      "actions actions actions"
+      "meta insight rules"
+      "showdown message log";
+    gap: 0.14rem;
+    align-items: start;
+  }
+
+  .poker-mobile-landscape .poker-post-grid .poker-actions-panel {
+    grid-area: actions;
+  }
+
+  .poker-mobile-landscape .poker-post-grid .poker-table-meta {
+    grid-area: meta;
+    margin-top: 0;
+    max-height: 16dvh;
+    overflow: auto;
+    padding: 0.2rem 0.24rem;
+    gap: 0.14rem;
+  }
+
+  .poker-mobile-landscape .poker-post-grid .poker-discard-status {
+    font-size: 0.52rem;
+    gap: 0.1rem;
+    padding-left: 0.76rem;
+  }
+
+  .poker-mobile-landscape .poker-post-grid .poker-bet-note {
+    font-size: 0.52rem;
+    margin: 0;
+  }
+
+  .poker-mobile-landscape .poker-post-grid .poker-hand-insight {
+    grid-area: insight;
+    margin: 0;
+    max-height: 16dvh;
+    overflow: auto;
+    font-size: 0.54rem;
+    padding: 0.2rem 0.24rem;
+  }
+
+  .poker-mobile-landscape .poker-post-grid .poker-showdown {
+    grid-area: showdown;
+    margin-top: 0;
+    max-height: 15dvh;
+    overflow: auto;
+    padding: 0.2rem 0.24rem;
+    gap: 0.14rem;
+  }
+
+  .poker-mobile-landscape .poker-post-grid .poker-showdown h5 {
+    font-size: 0.58rem;
+  }
+
+  .poker-mobile-landscape .poker-post-grid .poker-showdown p,
+  .poker-mobile-landscape .poker-post-grid .poker-showdown ul {
+    font-size: 0.52rem;
+    margin: 0;
+  }
+
+  .poker-mobile-landscape .poker-post-grid .poker-rules {
+    grid-area: rules;
+    margin-top: 0;
+    padding: 0.2rem 0.24rem;
+  }
+
+  .poker-mobile-landscape .poker-post-grid .poker-rules summary {
+    font-size: 0.56rem;
+  }
+
+  .poker-mobile-landscape .poker-post-grid .poker-rules pre {
+    margin-top: 0.16rem;
+    max-height: 10dvh;
+    overflow: auto;
+    font-size: 0.5rem;
+    line-height: 1.24;
+  }
+
+  .poker-mobile-landscape .poker-post-grid .game-message {
+    grid-area: message;
+    margin: 0;
+    font-size: 0.52rem;
+    padding: 0.18rem 0.24rem;
+  }
+
+  .poker-mobile-landscape .poker-post-grid .game-log {
+    grid-area: log;
+    margin: 0;
+    max-height: 15dvh;
+    overflow: auto;
+    padding-left: 0;
+    list-style: none;
+  }
+
+  .poker-mobile-landscape .poker-post-grid .game-log li {
+    font-size: 0.5rem;
+    padding: 0.14rem 0.2rem;
   }
 }
 
@@ -7231,3 +8486,4 @@ body {
     stroke-dashoffset: -32;
   }
 }
+

@@ -1,0 +1,8 @@
+npm WARN config global `--global`, `--local` are deprecated. Use `--location=global` instead.
+npm WARN logfile could not be created: Error: EPERM: operation not permitted, open 'C:\Users\hugoe\AppData\Local\npm-cache\_logs\2026-03-04T14_57_52_307Z-debug-0.log'
+[31merror when starting dev server:
+Error: Port 4174 is already in use
+    at Server.onError (file:///C:/Users/hugoe/Downloads/plataforma-juegos-saas/node_modules/vite/dist/node/chunks/dep-827b23df.js:54873:28)
+    at Server.emit (node:events:527:28)
+    at emitErrorNT (node:net:1399:8)
+    at processTicksAndRejections (node:internal/process/task_queues:83:21)[39m

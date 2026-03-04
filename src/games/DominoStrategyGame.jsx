@@ -2,32 +2,365 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import useGameRuntimeBridge from "../utils/useGameRuntimeBridge";
 
 const MAX_PIP = 6;
-const PLAYER_HAND_SIZE = 14;
 const DEFAULT_TARGET_SCORE = 100;
-const MAX_LOG_LINES = 12;
+const MAX_LOG_LINES = 14;
 const TARGET_SCORE_OPTIONS = [50, 100, 150, 200];
+const DEFAULT_MODE_ID = "pairs";
 
-const AI_LEVELS = {
-  easy: { id: "easy", label: "Facil", thinkMs: 520 },
-  medium: { id: "medium", label: "Media", thinkMs: 860 },
-  hard: { id: "hard", label: "Dificil", thinkMs: 1180 }
+const CHAIN_COLUMNS = 8;
+const CHAIN_CELL_WIDTH = 94;
+const CHAIN_CELL_HEIGHT = 60;
+
+const ALL_SEATS = ["player", "right", "partner", "left"];
+
+const detectLocale = () => {
+  if (typeof navigator === "undefined") return "en";
+  const browserLang = String(navigator.language || navigator.userLanguage || "").toLowerCase();
+  return browserLang.startsWith("es") ? "es" : "en";
 };
 
-const RULES_PROMPT = `MODALIDAD ACTIVA: DOMINO 7+7 (contra robots)
-- Set doble-seis (28 fichas, del 0 al 6).
-- Cada lado juega 14 fichas (7+7), sin robo del monton.
-- Ronda 1: abre el doble mas alto (si no hay dobles, la ficha mas alta).
-- Rondas siguientes: la salida alterna entre jugadores.
-- En cada turno solo se juega en extremos que coincidan.
-- Si no hay jugada legal, se pasa.
-- Los dobles se representan perpendiculares en la mesa.
+const LOCALE = detectLocale();
 
-CIERRE Y PUNTUACION
-- Dominio: quien se queda sin fichas suma los puntos de la mano rival.
-- Tranca: tras dos pases seguidos, gana quien tenga menos puntos en mano.
-- En tranca, el ganador suma la puntuacion total bloqueada (suma de ambas manos).
-- La partida termina al alcanzar la meta de puntos.`;
+const I18N = {
+  es: {
+    gameTitle: "Domino Clasico Arena",
+    subtitle: "Modo configurable con 1, 2 o 3 IAs, tranca, apertura reglada y marcador a puntos.",
+    seatMeta: {
+      player: { id: "player", name: "Usuario", label: "Tu mano", isAi: false },
+      right: { id: "right", name: "IA 1", label: "Rival derecho", isAi: true },
+      partner: { id: "partner", name: "Compa\u00f1ero", label: "Pareja IA", isAi: true },
+      left: { id: "left", name: "IA 2", label: "Rival izquierdo", isAi: true }
+    },
+    modeConfigs: {
+      pairs: {
+        label: "Usuario + Compa\u00f1ero vs 2 IAs",
+        rulesLabel: "4 jugadores por parejas",
+        teams: {
+          blue: { id: "blue", label: "Usuario + Compa\u00f1ero", shortLabel: "Tu equipo" },
+          gold: { id: "gold", label: "IAs rivales", shortLabel: "Rivales" }
+        }
+      },
+      duel: {
+        label: "Usuario vs 1 IA",
+        rulesLabel: "1 contra 1",
+        teams: {
+          player: { id: "player", label: "Usuario", shortLabel: "Usuario" },
+          right: { id: "right", label: "IA 1", shortLabel: "IA 1" }
+        }
+      },
+      triad: {
+        label: "Usuario vs 2 IAs",
+        rulesLabel: "1 contra 2 IAs",
+        teams: {
+          player: { id: "player", label: "Usuario", shortLabel: "Usuario" },
+          right: { id: "right", label: "IA 1", shortLabel: "IA 1" },
+          left: { id: "left", label: "IA 2", shortLabel: "IA 2" }
+        }
+      }
+    },
+    aiLevels: { easy: "Facil", medium: "Media", hard: "Dificil" },
+    sides: { left: "izquierda", right: "derecha" },
+    phase: { playing: "En juego", roundOver: "Ronda cerrada", matchOver: "Partida cerrada" },
+    ui: {
+      newMatch: "Nueva partida",
+      nextRound: "Siguiente ronda",
+      rematch: "Revancha",
+      mode: "Modo de partida",
+      aiDifficulty: "Dificultad IA",
+      targetScore: "Puntuacion objetivo",
+      controlsNote: "Controles: flechas izq/der eligen ficha, arriba/abajo eligen extremo, Enter juega, P pasa, N avanza ronda, R reinicia. Cambiar modo reinicia la partida.",
+      round: "Ronda",
+      turn: "Turno",
+      modeTag: "Modo",
+      difficulty: "Dificultad",
+      passes: "Pases seguidos",
+      nextStarter: "Salida sig.",
+      closed: "cerrado",
+      target: "Meta",
+      hand: "Mano",
+      chain: "Cadena",
+      tableNote: "Apertura 6|6 + salida derecha + tranca por pase/cierre",
+      leftEdge: "Extremo izq",
+      rightEdge: "Extremo der",
+      tilesOnTable: "Fichas en mesa",
+      chainAria: "Cadena de domino en mesa",
+      playerHandAria: "Fichas del jugador",
+      selected: "Seleccionada",
+      lastPlayerBadge: "Tu jugada",
+      lastPartnerBadge: "Companero",
+      tiles: "fichas",
+      activeSide: "Lado activo",
+      left: "Izquierda",
+      right: "Derecha",
+      playTile: "Jugar ficha",
+      passTurn: "Pasar turno",
+      selectionPrefix: "Seleccion",
+      fitsOn: "Encaja en",
+      noneEdge: "ningun extremo",
+      yourLastMove: "Ultima jugada tuya en mesa",
+      partnerLastMove: "Ultima jugada de companero",
+      notApplicable: "no aplica en este modo",
+      roundSummary: "Resumen de ronda",
+      winner: "Ganador",
+      reason: "Motivo",
+      points: "Puntos",
+      rulesSummary: "Reglas del domino (prompt completo)",
+      reasonDomino: "domino",
+      reasonClosed: "tranca cerrada",
+      reasonPasses: "tranca por pases",
+      thinking: "Pensando...",
+      draw: "Empate"
+    },
+    runtime: {
+      pressNextRound: "Pulsa \"Siguiente ronda\".",
+      globalDraw: "La partida termina en empate global.",
+      matchWins: "gana la partida.",
+      noInit: "No se pudo iniciar la ronda.",
+      roundOpenDouble: "Ronda {round}: abre {seat} con 6|6.",
+      roundOpenAny: "Ronda {round}: salida para {seat} con {tile}.",
+      selectTile: "Selecciona una ficha para jugar.",
+      tileNoFit: "La ficha {tile} no encaja. Pulsa Pasar.",
+      tileOtherEdge: "Esa ficha solo encaja en el otro extremo.",
+      noPassWithMoves: "Tienes jugadas legales. No puedes pasar.",
+      moveMsg: "{actor} juega {tile} por {side}. Turno de {next}.",
+      moveLog: "{actor}: {tile} -> {side}",
+      passMsg: "{actor} pasa. Turno de {next}.",
+      passLog: "{actor} pasa turno.",
+      blockDraw: "Tranca con empate ({label}). Sin puntos.",
+      dominoWin: "{seat} domino la ronda. {team} suma {points} puntos.",
+      closedWin: "{team} gana por tranca cerrada ({label}) y suma {points} puntos.",
+      blockWin: "{team} gana por tranca ({label}) y suma {points} puntos."
+    },
+    rulesPrompt: `REGLAS IMPLEMENTADAS (DOMINO CLASICO MULTIMODO)
 
+- Set doble-seis completo (28 fichas, del 0 al 6).
+- Modo seleccionable: 1 vs 1 IA, 1 vs 2 IAs, o 4 jugadores por parejas.
+- Reparto: se reparten todas las fichas entre jugadores activos.
+- Asientos segun modo: Usuario (siempre), IA 1, IA 2, Companero.
+- En modo parejas: Usuario + Companero contra 2 IAs.
+- Ronda 1: abre quien tenga 6|6.
+- Rondas siguientes: abre el jugador a la derecha de la salida anterior.
+- En cada turno se juega en los extremos que coincidan; si no hay jugada, se pasa.
+- Los dobles se dibujan perpendiculares.
+- Fin de ronda:
+  1) Domino: un jugador queda sin fichas.
+  2) Tranca: todos pasan seguidos, o cierre por mismo numero en ambos extremos con las 7 fichas de ese numero en mesa.
+- Puntuacion:
+  - El ganador suma los puntos que quedan en mano de sus rivales.
+  - En tranca gana quien tenga menos puntos en mano (empate: 0 puntos).
+- Gana la partida quien alcance primero la meta de puntos.`
+  },
+  en: {
+    gameTitle: "Classic Domino Arena",
+    subtitle: "Configurable mode with 1, 2 or 3 AIs, blocking rules, regulated opening and score tracking.",
+    seatMeta: {
+      player: { id: "player", name: "User", label: "Your hand", isAi: false },
+      right: { id: "right", name: "AI 1", label: "Right rival", isAi: true },
+      partner: { id: "partner", name: "Partner", label: "Partner AI", isAi: true },
+      left: { id: "left", name: "AI 2", label: "Left rival", isAi: true }
+    },
+    modeConfigs: {
+      pairs: {
+        label: "User + Partner vs 2 AIs",
+        rulesLabel: "4 players in teams",
+        teams: {
+          blue: { id: "blue", label: "User + Partner", shortLabel: "Your team" },
+          gold: { id: "gold", label: "Rival AIs", shortLabel: "Rivals" }
+        }
+      },
+      duel: {
+        label: "User vs 1 AI",
+        rulesLabel: "1 vs 1",
+        teams: {
+          player: { id: "player", label: "User", shortLabel: "User" },
+          right: { id: "right", label: "AI 1", shortLabel: "AI 1" }
+        }
+      },
+      triad: {
+        label: "User vs 2 AIs",
+        rulesLabel: "1 vs 2 AIs",
+        teams: {
+          player: { id: "player", label: "User", shortLabel: "User" },
+          right: { id: "right", label: "AI 1", shortLabel: "AI 1" },
+          left: { id: "left", label: "AI 2", shortLabel: "AI 2" }
+        }
+      }
+    },
+    aiLevels: { easy: "Easy", medium: "Medium", hard: "Hard" },
+    sides: { left: "left", right: "right" },
+    phase: { playing: "Playing", roundOver: "Round over", matchOver: "Match over" },
+    ui: {
+      newMatch: "New match",
+      nextRound: "Next round",
+      rematch: "Rematch",
+      mode: "Game mode",
+      aiDifficulty: "AI difficulty",
+      targetScore: "Target score",
+      controlsNote: "Controls: left/right arrows select tile, up/down choose edge, Enter plays, P passes, N advances round, R restarts. Changing mode restarts the match.",
+      round: "Round",
+      turn: "Turn",
+      modeTag: "Mode",
+      difficulty: "Difficulty",
+      passes: "Consecutive passes",
+      nextStarter: "Next opener",
+      closed: "closed",
+      target: "Target",
+      hand: "Hand",
+      chain: "Chain",
+      tableNote: "Opening 6|6 + right-hand order + block by pass/closure",
+      leftEdge: "Left edge",
+      rightEdge: "Right edge",
+      tilesOnTable: "Tiles on table",
+      chainAria: "Domino chain on table",
+      playerHandAria: "Player tiles",
+      selected: "Selected",
+      lastPlayerBadge: "Your move",
+      lastPartnerBadge: "Partner",
+      tiles: "tiles",
+      activeSide: "Active side",
+      left: "Left",
+      right: "Right",
+      playTile: "Play tile",
+      passTurn: "Pass turn",
+      selectionPrefix: "Selection",
+      fitsOn: "Fits on",
+      noneEdge: "no edge",
+      yourLastMove: "Your last move on board",
+      partnerLastMove: "Partner last move",
+      notApplicable: "not applicable in this mode",
+      roundSummary: "Round summary",
+      winner: "Winner",
+      reason: "Reason",
+      points: "Points",
+      rulesSummary: "Domino rules (full prompt)",
+      reasonDomino: "domino",
+      reasonClosed: "closed block",
+      reasonPasses: "pass block",
+      thinking: "Thinking...",
+      draw: "Draw"
+    },
+    runtime: {
+      pressNextRound: "Press \"Next round\".",
+      globalDraw: "The match ends in a global draw.",
+      matchWins: "wins the match.",
+      noInit: "Could not start the round.",
+      roundOpenDouble: "Round {round}: {seat} opens with 6|6.",
+      roundOpenAny: "Round {round}: {seat} starts with {tile}.",
+      selectTile: "Select a tile to play.",
+      tileNoFit: "Tile {tile} does not fit. Press Pass.",
+      tileOtherEdge: "That tile only fits on the other edge.",
+      noPassWithMoves: "You have legal moves. You cannot pass.",
+      moveMsg: "{actor} plays {tile} on the {side}. Turn for {next}.",
+      moveLog: "{actor}: {tile} -> {side}",
+      passMsg: "{actor} passes. Turn for {next}.",
+      passLog: "{actor} passes turn.",
+      blockDraw: "Blocked draw ({label}). No points.",
+      dominoWin: "{seat} dominoed the round. {team} gains {points} points.",
+      closedWin: "{team} wins by closed block ({label}) and gains {points} points.",
+      blockWin: "{team} wins by block ({label}) and gains {points} points."
+    },
+    rulesPrompt: `IMPLEMENTED RULES (CLASSIC DOMINO MULTIMODE)
+
+- Full double-six set (28 tiles, from 0 to 6).
+- Selectable mode: 1 vs 1 AI, 1 vs 2 AIs, or 4 players in teams.
+- Deal: all tiles are distributed among active players.
+- Seats by mode: User (always), AI 1, AI 2, Partner.
+- Team mode: User + Partner vs 2 AIs.
+- Round 1: opens whoever has 6|6.
+- Following rounds: opens the player to the right of previous opener.
+- On each turn, a tile must match one of the chain edges; otherwise the player passes.
+- Doubles are drawn perpendicularly.
+- Round end:
+  1) Domino: a player runs out of tiles.
+  2) Block: all players pass consecutively, or closed block with same pip on both edges and all 7 tiles of that pip already played.
+- Scoring:
+  - Winner gains the points remaining in rivals' hands.
+  - In block, lower hand points wins (tie: 0 points).
+- Match winner is the first to reach target score.`
+  }
+};
+
+const T = I18N[LOCALE];
+
+const SEAT_META = T.seatMeta;
+
+const buildSeatToNext = (seats) => seats.reduce((map, seat, index) => {
+  map[seat] = seats[(index + 1) % seats.length];
+  return map;
+}, {});
+
+const buildTeamSeats = (seats, seatToTeam) => seats.reduce((map, seat) => {
+  const teamId = seatToTeam[seat];
+  if (!map[teamId]) map[teamId] = [];
+  map[teamId].push(seat);
+  return map;
+}, {});
+
+const createModeConfig = ({
+  id,
+  label,
+  variant,
+  rulesLabel,
+  seats,
+  seatToTeam,
+  teams
+}) => ({
+  id,
+  label,
+  variant,
+  rulesLabel,
+  seats,
+  seatToTeam,
+  teams,
+  teamIds: Object.keys(teams),
+  seatToNext: buildSeatToNext(seats),
+  teamSeats: buildTeamSeats(seats, seatToTeam)
+});
+
+const GAME_MODES = {
+  pairs: createModeConfig({
+    id: "pairs",
+    label: T.modeConfigs.pairs.label,
+    variant: "domino-classic-4p-pairs",
+    rulesLabel: T.modeConfigs.pairs.rulesLabel,
+    seats: ["player", "right", "partner", "left"],
+    seatToTeam: { player: "blue", partner: "blue", right: "gold", left: "gold" },
+    teams: T.modeConfigs.pairs.teams
+  }),
+  duel: createModeConfig({
+    id: "duel",
+    label: T.modeConfigs.duel.label,
+    variant: "domino-duel-2p",
+    rulesLabel: T.modeConfigs.duel.rulesLabel,
+    seats: ["player", "right"],
+    seatToTeam: { player: "player", right: "right" },
+    teams: T.modeConfigs.duel.teams
+  }),
+  triad: createModeConfig({
+    id: "triad",
+    label: T.modeConfigs.triad.label,
+    variant: "domino-classic-3p",
+    rulesLabel: T.modeConfigs.triad.rulesLabel,
+    seats: ["player", "right", "left"],
+    seatToTeam: { player: "player", right: "right", left: "left" },
+    teams: T.modeConfigs.triad.teams
+  })
+};
+
+const getModeConfig = (modeId) => GAME_MODES[modeId] ?? GAME_MODES[DEFAULT_MODE_ID];
+const createHandsRecord = () => ALL_SEATS.reduce((map, seat) => ({ ...map, [seat]: [] }), {});
+const buildScoresForMode = (modeConfig, previousScores = {}) => modeConfig.teamIds.reduce((scores, teamId) => ({
+  ...scores,
+  [teamId]: Number(previousScores[teamId] ?? 0)
+}), {});
+
+const AI_LEVELS = {
+  easy: { id: "easy", label: T.aiLevels.easy, thinkMs: 1100 },
+  medium: { id: "medium", label: T.aiLevels.medium, thinkMs: 1650 },
+  hard: { id: "hard", label: T.aiLevels.hard, thinkMs: 2300 }
+};
+
+const RULES_PROMPT = T.rulesPrompt;
 const PIP_LAYOUTS = {
   0: [],
   1: [[50, 50]],
@@ -53,18 +386,51 @@ function DominoPips({ value }) {
   );
 }
 
-const cloneTiles = (tiles) => tiles.map((tile) => ({ ...tile }));
+function HiddenSeatHand({ count }) {
+  const previewCount = Math.max(1, Math.min(count, 7));
+  return (
+    <div className="domino-ai-hand-preview" aria-hidden="true">
+      {Array.from({ length: previewCount }).map((_, index) => (
+        <span key={`${count}-${index}`} className="domino-mini-back" />
+      ))}
+    </div>
+  );
+}
 
+const cloneTiles = (tiles) => tiles.map((tile) => ({ ...tile }));
+const cloneHands = (hands) => ALL_SEATS.reduce((next, seat) => ({ ...next, [seat]: cloneTiles(hands[seat] ?? []) }), {});
 const safeNumber = (value) => {
   const numeric = Number(value);
   if (!Number.isFinite(numeric) || numeric <= 0) return 0;
   return numeric;
 };
-
-const formatTile = (tile) => `${tile.a}|${tile.b}`;
+const fillTemplate = (template, values) => String(template).replace(
+  /\{(\w+)\}/g,
+  (_, key) => String(values?.[key] ?? "")
+);
+const formatTile = (tile) => `${tile?.a ?? tile?.left}|${tile?.b ?? tile?.right}`;
 const appendLog = (logs, text) => [text, ...logs].slice(0, MAX_LOG_LINES);
 const sumHand = (hand) => hand.reduce((total, tile) => total + tile.a + tile.b, 0);
-const getEdges = (chain) => ({ left: chain[0]?.left ?? null, right: chain[chain.length - 1]?.right ?? null });
+const seatActor = (seat) => SEAT_META[seat]?.name ?? seat;
+const sideLabel = (side) => (side === "left" ? T.sides.left : T.sides.right);
+const formatMoveMessage = ({ actor, tile, side, next }) => fillTemplate(T.runtime.moveMsg, {
+  actor,
+  tile: formatTile(tile),
+  side: sideLabel(side),
+  next
+});
+const formatMoveLog = ({ actor, tile, side }) => fillTemplate(T.runtime.moveLog, {
+  actor,
+  tile: formatTile(tile),
+  side: sideLabel(side)
+});
+const formatPassMessage = ({ actor, next }) => fillTemplate(T.runtime.passMsg, { actor, next });
+const formatPassLog = ({ actor }) => fillTemplate(T.runtime.passLog, { actor });
+
+const getEdges = (chain) => ({
+  left: chain[0]?.left ?? null,
+  right: chain[chain.length - 1]?.right ?? null
+});
 
 const createDeck = () => {
   const deck = [];
@@ -87,82 +453,55 @@ const shuffleDeck = (source) => {
   return deck;
 };
 
+const dealHands = (deck, seats) => {
+  const hands = createHandsRecord();
+  deck.forEach((tile, index) => {
+    const seat = seats[index % seats.length];
+    hands[seat].push(tile);
+  });
+  return hands;
+};
+
 const openingPriority = (tile) => {
   const isDouble = tile.a === tile.b ? 100 : 0;
   return isDouble + tile.a + tile.b + Math.max(tile.a, tile.b) * 0.01;
 };
 
-const pickOpeningMove = (playerHand, aiHand) => {
-  const candidates = [];
-  playerHand.forEach((tile, index) => {
-    candidates.push({ owner: "player", tile, index, priority: openingPriority(tile) });
-  });
-  aiHand.forEach((tile, index) => {
-    candidates.push({ owner: "ai", tile, index, priority: openingPriority(tile) });
-  });
-  candidates.sort((first, second) => second.priority - first.priority);
-  return candidates[0] ?? null;
-};
-
-const pickOpeningMoveForStarter = (owner, playerHand, aiHand) => {
-  const hand = owner === "player" ? playerHand : aiHand;
-  if (!hand.length) return null;
+const pickHighestTileIndex = (hand) => {
+  if (!hand.length) return -1;
   let bestIndex = 0;
   let bestPriority = openingPriority(hand[0]);
   for (let index = 1; index < hand.length; index += 1) {
-    const currentPriority = openingPriority(hand[index]);
-    if (currentPriority > bestPriority) {
-      bestPriority = currentPriority;
+    const priority = openingPriority(hand[index]);
+    if (priority > bestPriority) {
+      bestPriority = priority;
       bestIndex = index;
     }
   }
-  return { owner, tile: hand[bestIndex], index: bestIndex, priority: bestPriority };
+  return bestIndex;
 };
 
-const pickOpeningByRound = ({ roundNumber, starter, playerHand, aiHand }) => {
-  if (roundNumber <= 1 || !starter) {
-    return pickOpeningMove(playerHand, aiHand);
+const pickOpeningForRound = ({ hands, roundNumber, starterSeat, seatOrder }) => {
+  if (roundNumber <= 1) {
+    for (const seat of seatOrder) {
+      const index = hands[seat].findIndex((tile) => tile.a === 6 && tile.b === 6);
+      if (index >= 0) {
+        return { seat, index, tile: hands[seat][index], forcedDoubleSix: true };
+      }
+    }
   }
-  return pickOpeningMoveForStarter(starter, playerHand, aiHand);
+
+  const preferredSeat = seatOrder.includes(starterSeat) ? starterSeat : "player";
+  const openerOrder = [preferredSeat, ...seatOrder.filter((seat) => seat !== preferredSeat)];
+  for (const seat of openerOrder) {
+    const hand = hands[seat];
+    const index = pickHighestTileIndex(hand);
+    if (index >= 0) {
+      return { seat, index, tile: hand[index], forcedDoubleSix: false };
+    }
+  }
+  return null;
 };
-
-const getPlacementsForTile = (tile, chain) => {
-  if (!tile || !chain.length) return [];
-  const edges = getEdges(chain);
-  const placements = [];
-
-  if (tile.a === edges.left) {
-    placements.push({ index: -1, side: "left", tile, oriented: { id: tile.id, left: tile.b, right: tile.a } });
-  }
-  if (tile.b === edges.left && tile.b !== tile.a) {
-    placements.push({ index: -1, side: "left", tile, oriented: { id: tile.id, left: tile.a, right: tile.b } });
-  }
-  if (tile.a === edges.right) {
-    placements.push({ index: -1, side: "right", tile, oriented: { id: tile.id, left: tile.a, right: tile.b } });
-  }
-  if (tile.b === edges.right && tile.b !== tile.a) {
-    placements.push({ index: -1, side: "right", tile, oriented: { id: tile.id, left: tile.b, right: tile.a } });
-  }
-
-  return placements;
-};
-
-const collectLegalMoves = (hand, chain) => {
-  const moves = [];
-  hand.forEach((tile, index) => {
-    const placements = getPlacementsForTile(tile, chain);
-    placements.forEach((placement) => {
-      moves.push({ ...placement, index });
-    });
-  });
-  return moves;
-};
-
-const applyMoveToChain = (chain, move) => (
-  move.side === "left"
-    ? [{ ...move.oriented }, ...chain]
-    : [...chain, { ...move.oriented }]
-);
 
 const removeHandIndex = (hand, index) => hand.filter((_, handIndex) => handIndex !== index);
 
@@ -173,98 +512,385 @@ const clampSelectedIndex = (index, handLength) => {
   return index;
 };
 
-const resolveBlockedWinner = (playerHand, aiHand) => {
-  const playerPoints = sumHand(playerHand);
-  const aiPoints = sumHand(aiHand);
-  if (playerPoints < aiPoints) return { winner: "player", reason: "block", playerPoints, aiPoints };
-  if (aiPoints < playerPoints) return { winner: "ai", reason: "block", playerPoints, aiPoints };
-  return { winner: "draw", reason: "block", playerPoints, aiPoints };
+const getPlacementsForTile = (tile, chain) => {
+  if (!tile) return [];
+  if (!chain.length) {
+    return [{ index: -1, side: "right", tile, oriented: { id: tile.id, left: tile.a, right: tile.b, playedBy: null } }];
+  }
+  const edges = getEdges(chain);
+  const placements = [];
+
+  if (tile.a === edges.left) {
+    placements.push({ index: -1, side: "left", tile, oriented: { id: tile.id, left: tile.b, right: tile.a, playedBy: null } });
+  }
+  if (tile.b === edges.left && tile.b !== tile.a) {
+    placements.push({ index: -1, side: "left", tile, oriented: { id: tile.id, left: tile.a, right: tile.b, playedBy: null } });
+  }
+  if (tile.a === edges.right) {
+    placements.push({ index: -1, side: "right", tile, oriented: { id: tile.id, left: tile.a, right: tile.b, playedBy: null } });
+  }
+  if (tile.b === edges.right && tile.b !== tile.a) {
+    placements.push({ index: -1, side: "right", tile, oriented: { id: tile.id, left: tile.b, right: tile.a, playedBy: null } });
+  }
+
+  return placements;
 };
 
-const describeRoundOutcome = (outcome, pointsAwarded) => {
-  if (outcome.winner === "draw") {
-    return `Tranca con empate (${outcome.playerPoints}-${outcome.aiPoints}). Sin puntos.`;
+const collectLegalMoves = (hand, chain) => {
+  const moves = [];
+  hand.forEach((tile, index) => {
+    const placements = getPlacementsForTile(tile, chain);
+    placements.forEach((placement) => moves.push({ ...placement, index }));
+  });
+  return moves;
+};
+
+const applyMoveToChain = (chain, move, seat) => {
+  const oriented = { ...move.oriented, playedBy: seat };
+  return move.side === "left"
+    ? [oriented, ...chain]
+    : [...chain, oriented];
+};
+
+const incrementPipUsage = (usage, tile) => {
+  const next = [...usage];
+  next[tile.left] += 1;
+  if (tile.right !== tile.left) {
+    next[tile.right] += 1;
   }
-  const winnerLabel = outcome.winner === "player" ? "Tu" : "La IA";
+  return next;
+};
+
+const isClosedByExhaustedPip = (chain, pipUsage) => {
+  if (!chain.length) return false;
+  const edges = getEdges(chain);
+  if (edges.left == null || edges.right == null) return false;
+  if (edges.left !== edges.right) return false;
+  return pipUsage[edges.left] >= 7;
+};
+
+const getTeamPips = (hands, teamSeats) => Object.entries(teamSeats).reduce((map, [teamId, seats]) => {
+  map[teamId] = seats.reduce((total, seat) => total + sumHand(hands[seat]), 0);
+  return map;
+}, {});
+
+const getTeamPipsLabel = (teamPips, modeConfig) => modeConfig.teamIds
+  .map((teamId) => `${modeConfig.teams[teamId]?.shortLabel ?? teamId}:${teamPips[teamId] ?? 0}`)
+  .join(" | ");
+
+const resolveBlockedOutcome = (hands, modeConfig, reason = "block-pass-cycle") => {
+  const teamPips = getTeamPips(hands, modeConfig.teamSeats);
+  let bestTeam = modeConfig.teamIds[0];
+  modeConfig.teamIds.forEach((teamId) => {
+    if ((teamPips[teamId] ?? Infinity) < (teamPips[bestTeam] ?? Infinity)) {
+      bestTeam = teamId;
+    }
+  });
+  const bestPips = teamPips[bestTeam] ?? 0;
+  const tied = modeConfig.teamIds.filter((teamId) => (teamPips[teamId] ?? 0) === bestPips);
+  if (tied.length > 1) {
+    return { winnerTeam: "draw", reason, teamPips };
+  }
+  return { winnerTeam: bestTeam, reason, teamPips };
+};
+
+const describeOutcome = (outcome, pointsAwarded, modeConfig) => {
+  if (outcome.winnerTeam === "draw") {
+    return fillTemplate(T.runtime.blockDraw, { label: getTeamPipsLabel(outcome.teamPips, modeConfig) });
+  }
+  const winnerTeamCopy = modeConfig.teams[outcome.winnerTeam]?.shortLabel ?? T.ui.winner;
   if (outcome.reason === "domino") {
-    return `${winnerLabel} domino la ronda y suma ${pointsAwarded} puntos.`;
+    const winnerSeat = outcome.winnerSeat ? SEAT_META[outcome.winnerSeat]?.name : T.ui.winner;
+    return fillTemplate(T.runtime.dominoWin, { seat: winnerSeat, team: winnerTeamCopy, points: pointsAwarded });
   }
-  return `${winnerLabel} gana por tranca (${outcome.playerPoints}-${outcome.aiPoints}) y suma ${pointsAwarded} puntos (total bloqueado).`;
-};
-const createNodeFromState = (state) => ({
-  turn: state.turn,
-  chain: cloneTiles(state.chain),
-  playerHand: cloneTiles(state.playerHand),
-  aiHand: cloneTiles(state.aiHand),
-  consecutivePasses: state.consecutivePasses
-});
-
-const detectNodeTerminal = (node) => {
-  if (node.aiHand.length === 0) return { winner: "ai", reason: "domino" };
-  if (node.playerHand.length === 0) return { winner: "player", reason: "domino" };
-  if (node.consecutivePasses >= 2) return resolveBlockedWinner(node.playerHand, node.aiHand);
-  return null;
+  if (outcome.reason === "block-closed") {
+    return fillTemplate(T.runtime.closedWin, {
+      team: winnerTeamCopy,
+      label: getTeamPipsLabel(outcome.teamPips, modeConfig),
+      points: pointsAwarded
+    });
+  }
+  return fillTemplate(T.runtime.blockWin, {
+    team: winnerTeamCopy,
+    label: getTeamPipsLabel(outcome.teamPips, modeConfig),
+    points: pointsAwarded
+  });
 };
 
-const evaluateNode = (node, terminal) => {
-  if (terminal) {
-    if (terminal.winner === "ai") return 20000 - sumHand(node.aiHand) * 4;
-    if (terminal.winner === "player") return -20000 + sumHand(node.playerHand) * 4;
-    return -Math.abs(sumHand(node.aiHand) - sumHand(node.playerHand));
+const finishRound = (state, outcome) => {
+  const modeConfig = getModeConfig(state.modeId);
+  const nextScores = { ...state.scores };
+  let pointsAwarded = 0;
+  if (outcome.winnerTeam !== "draw" && nextScores[outcome.winnerTeam] != null) {
+    pointsAwarded = modeConfig.teamIds.reduce(
+      (total, teamId) => teamId === outcome.winnerTeam ? total : total + (outcome.teamPips[teamId] ?? 0),
+      0
+    );
+    nextScores[outcome.winnerTeam] += pointsAwarded;
   }
 
-  const aiPips = sumHand(node.aiHand);
-  const playerPips = sumHand(node.playerHand);
-  const aiMobility = collectLegalMoves(node.aiHand, node.chain).length;
-  const playerMobility = collectLegalMoves(node.playerHand, node.chain).length;
-  const edges = getEdges(node.chain);
-  const aiEdgeControl = node.aiHand.reduce((count, tile) => (
-    count + Number(tile.a === edges.left || tile.b === edges.left || tile.a === edges.right || tile.b === edges.right)
-  ), 0);
-  const playerEdgeControl = node.playerHand.reduce((count, tile) => (
-    count + Number(tile.a === edges.left || tile.b === edges.left || tile.a === edges.right || tile.b === edges.right)
-  ), 0);
+  let matchWinnerTeam = null;
+  const reachedTarget = modeConfig.teamIds.some((teamId) => (nextScores[teamId] ?? 0) >= state.targetScore);
+  if (reachedTarget) {
+    let bestScore = -Infinity;
+    modeConfig.teamIds.forEach((teamId) => {
+      bestScore = Math.max(bestScore, nextScores[teamId] ?? 0);
+    });
+    const leaders = modeConfig.teamIds.filter((teamId) => (nextScores[teamId] ?? 0) === bestScore);
+    matchWinnerTeam = leaders.length > 1 ? "draw" : leaders[0];
+  }
 
-  return (
-    (playerPips - aiPips) * 4 +
-    (aiMobility - playerMobility) * 2.4 +
-    (aiEdgeControl - playerEdgeControl) * 0.9 -
-    node.consecutivePasses * 0.45
+  const summary = describeOutcome(outcome, pointsAwarded, modeConfig);
+  const message =
+    matchWinnerTeam == null
+      ? `${summary} ${T.runtime.pressNextRound}`
+      : matchWinnerTeam === "draw"
+        ? `${summary} ${T.runtime.globalDraw}`
+        : `${summary} ${modeConfig.teams[matchWinnerTeam]?.label ?? T.ui.winner} ${T.runtime.matchWins}`;
+
+  return {
+    ...state,
+    phase: matchWinnerTeam == null ? "round-over" : "match-over",
+    turn: null,
+    scores: nextScores,
+    roundResult: { ...outcome, pointsAwarded, matchWinnerTeam },
+    message,
+    logs: appendLog(state.logs, summary)
+  };
+};
+
+const commitSeatMove = (state, seat, move) => {
+  const modeConfig = getModeConfig(state.modeId);
+  const hand = state.hands[seat];
+  const tile = hand[move.index];
+  if (!tile) return state;
+
+  const nextHands = cloneHands(state.hands);
+  nextHands[seat] = removeHandIndex(hand, move.index);
+  const nextChain = applyMoveToChain(state.chain, move, seat);
+  const nextPipUsage = incrementPipUsage(state.pipUsage, move.oriented);
+  const nextTurn = modeConfig.seatToNext[seat];
+  const actor = seatActor(seat);
+
+  const baseState = {
+    ...state,
+    hands: nextHands,
+    chain: nextChain,
+    pipUsage: nextPipUsage,
+    turn: nextTurn,
+    selectedIndex: clampSelectedIndex(state.selectedIndex, nextHands.player.length),
+    lastPlayerMoveTileId: seat === "player" ? tile.id : state.lastPlayerMoveTileId,
+    lastPlayerMoveSide: seat === "player" ? move.side : state.lastPlayerMoveSide,
+    lastPartnerMoveTileId: seat === "partner" ? tile.id : state.lastPartnerMoveTileId,
+    lastPartnerMoveSide: seat === "partner" ? move.side : state.lastPartnerMoveSide,
+    consecutivePasses: 0,
+    turnCount: state.turnCount + 1,
+    message: formatMoveMessage({
+      actor,
+      tile,
+      side: move.side,
+      next: SEAT_META[nextTurn].name
+    }),
+    logs: appendLog(state.logs, formatMoveLog({ actor, tile, side: move.side }))
+  };
+
+  if (!nextHands[seat].length) {
+    return finishRound(baseState, {
+      winnerTeam: modeConfig.seatToTeam[seat],
+      winnerSeat: seat,
+      reason: "domino",
+      teamPips: getTeamPips(nextHands, modeConfig.teamSeats)
+    });
+  }
+
+  if (isClosedByExhaustedPip(nextChain, nextPipUsage)) {
+    const edges = getEdges(nextChain);
+    const blocked = resolveBlockedOutcome(nextHands, modeConfig, "block-closed");
+    return finishRound(baseState, { ...blocked, closingPip: edges.left });
+  }
+
+  return baseState;
+};
+
+const commitSeatPass = (state, seat) => {
+  const modeConfig = getModeConfig(state.modeId);
+  const legalMoves = collectLegalMoves(state.hands[seat], state.chain);
+  if (legalMoves.length) {
+    if (seat === "player") {
+      return { ...state, message: T.runtime.noPassWithMoves };
+    }
+    return state;
+  }
+
+  const actor = seatActor(seat);
+  const nextConsecutivePasses = state.consecutivePasses + 1;
+  const passState = {
+    ...state,
+    consecutivePasses: nextConsecutivePasses,
+    turnCount: state.turnCount + 1,
+    logs: appendLog(state.logs, formatPassLog({ actor }))
+  };
+
+  if (nextConsecutivePasses >= modeConfig.seats.length) {
+    return finishRound(passState, resolveBlockedOutcome(state.hands, modeConfig, "block-pass-cycle"));
+  }
+
+  const nextTurn = modeConfig.seatToNext[seat];
+  return {
+    ...passState,
+    turn: nextTurn,
+    message: formatPassMessage({ actor, next: SEAT_META[nextTurn].name })
+  };
+};
+
+const countPipOccurrencesForTeam = (hands, team, pip, teamSeats) => {
+  const seats = teamSeats[team] ?? [];
+  return seats.reduce(
+    (total, seat) => total + hands[seat].reduce(
+      (seatTotal, tile) => seatTotal + Number(tile.a === pip) + Number(tile.b === pip),
+      0
+    ),
+    0
   );
 };
 
-const applyNodePass = (node) => ({
-  ...node,
-  turn: node.turn === "ai" ? "player" : "ai",
-  consecutivePasses: node.consecutivePasses + 1
+const countTeamMoves = (hands, chain, team, teamSeats) => {
+  const seats = teamSeats[team] ?? [];
+  return seats.reduce(
+    (total, seat) => total + collectLegalMoves(hands[seat], chain).length,
+    0
+  );
+};
+
+const createNodeFromState = (state) => ({
+  modeId: state.modeId,
+  turn: state.turn,
+  chain: cloneTiles(state.chain),
+  hands: cloneHands(state.hands),
+  consecutivePasses: state.consecutivePasses,
+  pipUsage: [...state.pipUsage]
 });
 
+const detectNodeTerminal = (node) => {
+  const modeConfig = getModeConfig(node.modeId);
+  for (const seat of modeConfig.seats) {
+    if (node.hands[seat].length === 0) {
+      return {
+        winnerTeam: modeConfig.seatToTeam[seat],
+        winnerSeat: seat,
+        reason: "domino",
+        teamPips: getTeamPips(node.hands, modeConfig.teamSeats)
+      };
+    }
+  }
+  if (isClosedByExhaustedPip(node.chain, node.pipUsage)) {
+    return resolveBlockedOutcome(node.hands, modeConfig, "block-closed");
+  }
+  if (node.consecutivePasses >= modeConfig.seats.length) {
+    return resolveBlockedOutcome(node.hands, modeConfig, "block-pass-cycle");
+  }
+  return null;
+};
+
 const applyNodeMove = (node, move) => {
-  const handKey = node.turn === "ai" ? "aiHand" : "playerHand";
-  const nextHand = removeHandIndex(node[handKey], move.index);
+  const modeConfig = getModeConfig(node.modeId);
+  const seat = node.turn;
+  if (!seat) return node;
+  const hand = node.hands[seat];
+  const tile = hand[move.index];
+  if (!tile) return node;
+
+  const nextHands = cloneHands(node.hands);
+  nextHands[seat] = removeHandIndex(hand, move.index);
+  const nextChain = applyMoveToChain(node.chain, move, seat);
+  const nextPipUsage = incrementPipUsage(node.pipUsage, move.oriented);
+
   return {
     ...node,
-    chain: applyMoveToChain(node.chain, move),
-    [handKey]: nextHand,
-    turn: node.turn === "ai" ? "player" : "ai",
+    turn: modeConfig.seatToNext[seat],
+    hands: nextHands,
+    chain: nextChain,
+    pipUsage: nextPipUsage,
     consecutivePasses: 0
   };
 };
 
-const minimax = (node, depth, alpha, beta) => {
+const applyNodePass = (node) => ({
+  ...node,
+  turn: getModeConfig(node.modeId).seatToNext[node.turn],
+  consecutivePasses: node.consecutivePasses + 1
+});
+
+const getTeamIdsExcluding = (teamIds, excludedTeam) => teamIds.filter((teamId) => teamId !== excludedTeam);
+
+const evaluateNodeForTeam = (node, perspectiveTeam) => {
+  const modeConfig = getModeConfig(node.modeId);
   const terminal = detectNodeTerminal(node);
-  if (terminal || depth <= 0) {
-    return evaluateNode(node, terminal);
+  if (terminal) {
+    if (terminal.winnerTeam === "draw") {
+      return -Math.abs((terminal.teamPips[perspectiveTeam] ?? 0) - 14);
+    }
+    const othersTotal = getTeamIdsExcluding(modeConfig.teamIds, perspectiveTeam)
+      .reduce((total, teamId) => total + (terminal.teamPips[teamId] ?? 0), 0);
+    return terminal.winnerTeam === perspectiveTeam
+      ? 12000 + othersTotal * 12
+      : -12000 - (terminal.teamPips[perspectiveTeam] ?? 0) * 12;
   }
 
-  const hand = node.turn === "ai" ? node.aiHand : node.playerHand;
-  const legalMoves = collectLegalMoves(hand, node.chain);
-  const nextNodes = legalMoves.length ? legalMoves.map((move) => applyNodeMove(node, move)) : [applyNodePass(node)];
+  const teamPips = getTeamPips(node.hands, modeConfig.teamSeats);
+  const rivals = getTeamIdsExcluding(modeConfig.teamIds, perspectiveTeam);
+  const ownTeamPips = teamPips[perspectiveTeam] ?? 0;
+  const rivalsPips = rivals.reduce((total, teamId) => total + (teamPips[teamId] ?? 0), 0);
+  const ownMoves = countTeamMoves(node.hands, node.chain, perspectiveTeam, modeConfig.teamSeats);
+  const rivalsMoves = rivals.reduce(
+    (total, teamId) => total + countTeamMoves(node.hands, node.chain, teamId, modeConfig.teamSeats),
+    0
+  );
 
-  if (node.turn === "ai") {
+  const edges = getEdges(node.chain);
+  let edgeBalance = 0;
+  if (edges.left != null) {
+    const ownLeft = countPipOccurrencesForTeam(node.hands, perspectiveTeam, edges.left, modeConfig.teamSeats);
+    const rivalLeft = rivals.reduce(
+      (total, teamId) => total + countPipOccurrencesForTeam(node.hands, teamId, edges.left, modeConfig.teamSeats),
+      0
+    );
+    edgeBalance += ownLeft - rivalLeft;
+  }
+  if (edges.right != null && edges.right !== edges.left) {
+    const ownRight = countPipOccurrencesForTeam(node.hands, perspectiveTeam, edges.right, modeConfig.teamSeats);
+    const rivalRight = rivals.reduce(
+      (total, teamId) => total + countPipOccurrencesForTeam(node.hands, teamId, edges.right, modeConfig.teamSeats),
+      0
+    );
+    edgeBalance += ownRight - rivalRight;
+  }
+
+  return (
+    (rivalsPips - ownTeamPips * Math.max(1, rivals.length)) * 3.6 +
+    (ownMoves - rivalsMoves) * 1.5 +
+    edgeBalance * 0.6 -
+    node.consecutivePasses * 0.3
+  );
+};
+
+const minimaxForTeam = (node, perspectiveTeam, depth, alpha, beta) => {
+  const terminal = detectNodeTerminal(node);
+  if (terminal || depth <= 0) {
+    return evaluateNodeForTeam(node, perspectiveTeam);
+  }
+
+  const modeConfig = getModeConfig(node.modeId);
+  const seat = node.turn;
+  const legalMoves = collectLegalMoves(node.hands[seat], node.chain);
+  const nextNodes = legalMoves.length
+    ? legalMoves.map((move) => applyNodeMove(node, move))
+    : [applyNodePass(node)];
+
+  if (modeConfig.seatToTeam[seat] === perspectiveTeam) {
     let best = -Infinity;
     for (const nextNode of nextNodes) {
-      const score = minimax(nextNode, depth - 1, alpha, beta);
+      const score = minimaxForTeam(nextNode, perspectiveTeam, depth - 1, alpha, beta);
       best = Math.max(best, score);
       alpha = Math.max(alpha, score);
       if (beta <= alpha) break;
@@ -274,7 +900,7 @@ const minimax = (node, depth, alpha, beta) => {
 
   let best = Infinity;
   for (const nextNode of nextNodes) {
-    const score = minimax(nextNode, depth - 1, alpha, beta);
+    const score = minimaxForTeam(nextNode, perspectiveTeam, depth - 1, alpha, beta);
     best = Math.min(best, score);
     beta = Math.min(beta, score);
     if (beta <= alpha) break;
@@ -282,25 +908,30 @@ const minimax = (node, depth, alpha, beta) => {
   return best;
 };
 
-const pickAiMove = (state, legalMoves) => {
+const pickAiMove = (state, seat, legalMoves) => {
   if (!legalMoves.length) return null;
   const difficulty = AI_LEVELS[state.difficultyId] ?? AI_LEVELS.medium;
+  const modeConfig = getModeConfig(state.modeId);
+  const seatTeam = modeConfig.seatToTeam[seat];
+  const baseNode = createNodeFromState(state);
 
   if (difficulty.id === "easy") {
-    const index = (state.turnCount + state.roundNumber + state.chain.length) % legalMoves.length;
+    const index = (state.turnCount + state.roundNumber + state.chain.length + seat.charCodeAt(0)) % legalMoves.length;
     return legalMoves[index];
   }
 
   if (difficulty.id === "medium") {
     let bestMove = legalMoves[0];
     let bestScore = -Infinity;
-    legalMoves.forEach((move) => {
-      const nextNode = applyNodeMove(createNodeFromState(state), move);
-      const terminal = detectNodeTerminal(nextNode);
-      let score = evaluateNode(nextNode, terminal);
-      const replyCount = collectLegalMoves(nextNode.playerHand, nextNode.chain).length;
-      if (replyCount === 0) score += 10;
-      if (move.tile.a === move.tile.b) score += 0.5;
+    legalMoves.forEach((move, index) => {
+      const node = applyNodeMove(baseNode, move);
+      let score = evaluateNodeForTeam(node, seatTeam);
+      const nextSeat = node.turn;
+      const nextSeatMoves = collectLegalMoves(node.hands[nextSeat], node.chain).length;
+      if (modeConfig.seatToTeam[nextSeat] !== seatTeam && nextSeatMoves === 0) score += 8;
+      if (modeConfig.seatToTeam[nextSeat] === seatTeam && nextSeatMoves === 0) score -= 3;
+      if (move.tile.a === move.tile.b) score += 0.45;
+      score += index * 0.0001;
       if (score > bestScore) {
         bestScore = score;
         bestMove = move;
@@ -311,9 +942,11 @@ const pickAiMove = (state, legalMoves) => {
 
   let bestMove = legalMoves[0];
   let bestScore = -Infinity;
-  legalMoves.forEach((move) => {
-    const nextNode = applyNodeMove(createNodeFromState(state), move);
-    const score = minimax(nextNode, 2, -Infinity, Infinity);
+  legalMoves.forEach((move, index) => {
+    const node = applyNodeMove(baseNode, move);
+    let score = minimaxForTeam(node, seatTeam, 2, -Infinity, Infinity);
+    if (move.tile.a === move.tile.b) score += 0.25;
+    score += index * 0.0001;
     if (score > bestScore) {
       bestScore = score;
       bestMove = move;
@@ -322,111 +955,133 @@ const pickAiMove = (state, legalMoves) => {
   return bestMove;
 };
 
-const createRoundState = ({ scores, targetScore, difficultyId, roundNumber, starter = null }) => {
-  const shuffled = shuffleDeck(createDeck());
-  let playerHand = shuffled.slice(0, PLAYER_HAND_SIZE);
-  let aiHand = shuffled.slice(PLAYER_HAND_SIZE);
-  const opening = pickOpeningByRound({ roundNumber, starter, playerHand, aiHand });
+const buildSnakeLayout = (chain, density = null) => {
+  const columns = density?.columns ?? CHAIN_COLUMNS;
+  const cellWidth = density?.cellWidth ?? CHAIN_CELL_WIDTH;
+  const cellHeight = density?.cellHeight ?? CHAIN_CELL_HEIGHT;
+  const positions = [];
+  for (let index = 0; index < chain.length; index += 1) {
+    const row = Math.floor(index / columns);
+    const offset = index % columns;
+    const column = row % 2 === 0 ? offset : columns - 1 - offset;
+    const previous = positions[index - 1];
+    const axis = previous && previous.row !== row ? "vertical" : "horizontal";
+    positions.push({
+      index,
+      tile: chain[index],
+      row,
+      column,
+      axis,
+      leftPx: column * cellWidth + 6,
+      topPx: row * cellHeight + 6
+    });
+  }
+  const rows = Math.max(1, Math.floor((chain.length - 1) / columns) + 1);
+  return {
+    columns,
+    rows,
+    width: columns * cellWidth + 12,
+    height: rows * cellHeight + 12,
+    positions
+  };
+};
 
+const createRoundState = ({ modeId = DEFAULT_MODE_ID, scores, targetScore, difficultyId, roundNumber, starterSeat = null }) => {
+  const modeConfig = getModeConfig(modeId);
+  const deck = shuffleDeck(createDeck());
+  const hands = dealHands(deck, modeConfig.seats);
+  const opening = pickOpeningForRound({
+    hands,
+    roundNumber,
+    starterSeat,
+    seatOrder: modeConfig.seats
+  });
+  const normalizedScores = buildScoresForMode(modeConfig, scores);
   if (!opening) {
     return {
+      modeId: modeConfig.id,
       phase: "round-over",
       roundNumber,
-      scores: { ...scores },
       targetScore,
       difficultyId,
+      scores: normalizedScores,
+      starterSeat: modeConfig.seats[0],
+      nextStarterSeat: modeConfig.seats[0],
       turn: null,
       chain: [],
-      playerHand: [],
-      aiHand: [],
+      hands: createHandsRecord(),
+      pipUsage: Array(MAX_PIP + 1).fill(0),
       selectedIndex: 0,
       selectedSide: "left",
+      lastPlayerMoveTileId: null,
+      lastPlayerMoveSide: null,
+      lastPartnerMoveTileId: null,
+      lastPartnerMoveSide: null,
       consecutivePasses: 0,
-      roundResult: null,
-      nextStarter: starter,
       turnCount: 0,
-      message: "No se pudo iniciar la ronda.",
-      logs: ["No se pudo iniciar la ronda."]
+      roundResult: null,
+      message: T.runtime.noInit,
+      logs: [T.runtime.noInit]
     };
   }
 
+  const nextHands = cloneHands(hands);
   const openingTile = { ...opening.tile };
-  const openingChain = [{ id: openingTile.id, left: openingTile.a, right: openingTile.b }];
-  if (opening.owner === "player") playerHand = removeHandIndex(playerHand, opening.index);
-  else aiHand = removeHandIndex(aiHand, opening.index);
+  nextHands[opening.seat] = removeHandIndex(nextHands[opening.seat], opening.index);
+  const chain = [{ id: openingTile.id, left: openingTile.a, right: openingTile.b, playedBy: opening.seat }];
+  const pipUsage = incrementPipUsage(Array(MAX_PIP + 1).fill(0), chain[0]);
+  const nextStarterSeat = modeConfig.seatToNext[opening.seat];
+  const firstMessage = roundNumber <= 1
+    ? fillTemplate(T.runtime.roundOpenDouble, { round: roundNumber, seat: SEAT_META[opening.seat].name })
+    : fillTemplate(T.runtime.roundOpenAny, {
+      round: roundNumber,
+      seat: SEAT_META[opening.seat].name,
+      tile: formatTile(openingTile)
+    });
 
-  const openerLabel = opening.owner === "player" ? "Tu" : "IA";
-  const firstMessage =
-    roundNumber <= 1
-      ? `Ronda ${roundNumber}: abre ${openerLabel} con ${formatTile(openingTile)}.`
-      : `Ronda ${roundNumber}: salida para ${openerLabel} con ${formatTile(openingTile)}.`;
   return {
+    modeId: modeConfig.id,
     phase: "playing",
     roundNumber,
-    scores: { ...scores },
     targetScore,
     difficultyId,
-    turn: opening.owner === "player" ? "ai" : "player",
-    chain: openingChain,
-    playerHand,
-    aiHand,
+    scores: normalizedScores,
+    starterSeat: opening.seat,
+    nextStarterSeat,
+    turn: modeConfig.seatToNext[opening.seat],
+    chain,
+    hands: nextHands,
+    pipUsage,
     selectedIndex: 0,
     selectedSide: "left",
+    lastPlayerMoveTileId: null,
+    lastPlayerMoveSide: null,
+    lastPartnerMoveTileId: null,
+    lastPartnerMoveSide: null,
     consecutivePasses: 0,
-    roundResult: null,
-    nextStarter: opening.owner === "player" ? "ai" : "player",
     turnCount: 1,
+    roundResult: null,
     message: firstMessage,
     logs: [firstMessage]
   };
 };
 
-const finishRound = (state, outcome) => {
-  const nextScores = { ...state.scores };
-  let pointsAwarded = 0;
-  const blockedTotal = sumHand(state.playerHand) + sumHand(state.aiHand);
-  if (outcome.winner === "player") {
-    pointsAwarded = outcome.reason === "block" ? blockedTotal : sumHand(state.aiHand);
-    nextScores.player += pointsAwarded;
-  } else if (outcome.winner === "ai") {
-    pointsAwarded = outcome.reason === "block" ? blockedTotal : sumHand(state.playerHand);
-    nextScores.ai += pointsAwarded;
-  }
-
-  let matchWinner = null;
-  if (nextScores.player >= state.targetScore || nextScores.ai >= state.targetScore) {
-    if (nextScores.player > nextScores.ai) matchWinner = "player";
-    else if (nextScores.ai > nextScores.player) matchWinner = "ai";
-    else matchWinner = "draw";
-  }
-
-  const summary = describeRoundOutcome(outcome, pointsAwarded);
-  const message =
-    matchWinner == null
-      ? `${summary} Pulsa \"Siguiente ronda\".`
-      : matchWinner === "draw"
-        ? `${summary} La partida global termina en empate.`
-        : `${summary} ${matchWinner === "player" ? "Tu" : "La IA"} gana la partida global.`;
-
-  return {
-    ...state,
-    phase: matchWinner == null ? "round-over" : "match-over",
-    turn: null,
-    scores: nextScores,
-    roundResult: { ...outcome, pointsAwarded, matchWinner },
-    message,
-    logs: appendLog(state.logs, summary)
-  };
-};
 function DominoStrategyGame() {
   const [state, setState] = useState(() => createRoundState({
-    scores: { player: 0, ai: 0 },
+    modeId: DEFAULT_MODE_ID,
+    scores: buildScoresForMode(getModeConfig(DEFAULT_MODE_ID)),
     targetScore: DEFAULT_TARGET_SCORE,
     difficultyId: "medium",
     roundNumber: 1,
-    starter: null
+    starterSeat: null
   }));
-  const [aiThinking, setAiThinking] = useState(false);
+  const [aiThinkingSeat, setAiThinkingSeat] = useState(null);
+  const [viewportWidth, setViewportWidth] = useState(() => (
+    typeof window !== "undefined" ? window.innerWidth : 1280
+  ));
+  const [viewportHeight, setViewportHeight] = useState(() => (
+    typeof window !== "undefined" ? window.innerHeight : 720
+  ));
 
   const aiPendingRef = useRef(false);
   const aiDelayRef = useRef(0);
@@ -436,16 +1091,17 @@ function DominoStrategyGame() {
   const stopAiThinking = useCallback(() => {
     aiPendingRef.current = false;
     aiDelayRef.current = 0;
-    setAiThinking(false);
+    setAiThinkingSeat(null);
   }, []);
 
   const restartMatch = useCallback(() => {
     setState((previous) => createRoundState({
-      scores: { player: 0, ai: 0 },
+      modeId: previous.modeId,
+      scores: buildScoresForMode(getModeConfig(previous.modeId)),
       targetScore: previous.targetScore,
       difficultyId: previous.difficultyId,
       roundNumber: 1,
-      starter: null
+      starterSeat: null
     }));
   }, []);
 
@@ -453,11 +1109,12 @@ function DominoStrategyGame() {
     setState((previous) => {
       if (previous.phase !== "round-over") return previous;
       return createRoundState({
+        modeId: previous.modeId,
         scores: previous.scores,
         targetScore: previous.targetScore,
         difficultyId: previous.difficultyId,
         roundNumber: previous.roundNumber + 1,
-        starter: previous.nextStarter
+        starterSeat: previous.nextStarterSeat
       });
     });
   }, []);
@@ -465,109 +1122,54 @@ function DominoStrategyGame() {
   const playSelectedTile = useCallback(() => {
     setState((previous) => {
       if (previous.phase !== "playing" || previous.turn !== "player") return previous;
-      const selected = previous.playerHand[previous.selectedIndex];
-      if (!selected) return { ...previous, message: "Selecciona una ficha para jugar." };
+      const selectedTile = previous.hands.player[previous.selectedIndex];
+      if (!selectedTile) return { ...previous, message: T.runtime.selectTile };
 
-      const legalPlacements = getPlacementsForTile(selected, previous.chain);
+      const legalPlacements = getPlacementsForTile(selectedTile, previous.chain);
       if (!legalPlacements.length) {
-        return { ...previous, message: `La ficha ${formatTile(selected)} no encaja. Pulsa Pasar.` };
+        return { ...previous, message: fillTemplate(T.runtime.tileNoFit, { tile: formatTile(selectedTile) }) };
       }
 
       const placement =
         legalPlacements.find((candidate) => candidate.side === previous.selectedSide) ??
         (legalPlacements.length === 1 ? legalPlacements[0] : null);
       if (!placement) {
-        return { ...previous, message: "Esa ficha encaja solo en el otro extremo." };
+        return { ...previous, message: T.runtime.tileOtherEdge };
       }
 
       const move = { ...placement, index: previous.selectedIndex };
-      const nextHand = removeHandIndex(previous.playerHand, previous.selectedIndex);
-      const nextState = {
-        ...previous,
-        chain: applyMoveToChain(previous.chain, move),
-        playerHand: nextHand,
-        selectedIndex: clampSelectedIndex(previous.selectedIndex, nextHand.length),
-        turn: "ai",
-        consecutivePasses: 0,
-        turnCount: previous.turnCount + 1,
-        message: `Juegas ${formatTile(selected)} por ${move.side === "left" ? "izquierda" : "derecha"}.`,
-        logs: appendLog(previous.logs, `Tu: ${formatTile(selected)} -> ${move.side === "left" ? "izquierda" : "derecha"}`)
-      };
-      return nextHand.length ? nextState : finishRound(nextState, { winner: "player", reason: "domino" });
+      return commitSeatMove(previous, "player", move);
     });
   }, []);
 
   const passTurn = useCallback(() => {
     setState((previous) => {
       if (previous.phase !== "playing" || previous.turn !== "player") return previous;
-      if (collectLegalMoves(previous.playerHand, previous.chain).length) {
-        return { ...previous, message: "Tienes jugadas legales. No puedes pasar." };
-      }
-
-      const consecutivePasses = previous.consecutivePasses + 1;
-      if (consecutivePasses >= 2) {
-        return finishRound(
-          { ...previous, consecutivePasses, logs: appendLog(previous.logs, "Tu pasas. Se activa tranca.") },
-          resolveBlockedWinner(previous.playerHand, previous.aiHand)
-        );
-      }
-
-      return {
-        ...previous,
-        turn: "ai",
-        consecutivePasses,
-        turnCount: previous.turnCount + 1,
-        message: "Pasas turno. Juega la IA.",
-        logs: appendLog(previous.logs, "Tu pasas turno.")
-      };
+      return commitSeatPass(previous, "player");
     });
   }, []);
 
   const runAiTurn = useCallback(() => {
     setState((previous) => {
-      if (previous.phase !== "playing" || previous.turn !== "ai") return previous;
-      const legalMoves = collectLegalMoves(previous.aiHand, previous.chain);
-
+      if (previous.phase !== "playing" || previous.turn === "player") return previous;
+      const seat = previous.turn;
+      const legalMoves = collectLegalMoves(previous.hands[seat], previous.chain);
       if (!legalMoves.length) {
-        const consecutivePasses = previous.consecutivePasses + 1;
-        if (consecutivePasses >= 2) {
-          return finishRound(
-            { ...previous, consecutivePasses, logs: appendLog(previous.logs, "IA pasa. Se activa tranca.") },
-            resolveBlockedWinner(previous.playerHand, previous.aiHand)
-          );
-        }
-        return {
-          ...previous,
-          turn: "player",
-          consecutivePasses,
-          turnCount: previous.turnCount + 1,
-          message: "La IA pasa. Te toca.",
-          logs: appendLog(previous.logs, "IA pasa turno.")
-        };
+        return commitSeatPass(previous, seat);
       }
-
-      const move = pickAiMove(previous, legalMoves);
-      if (!move) return previous;
-      const tile = previous.aiHand[move.index];
-      const nextAiHand = removeHandIndex(previous.aiHand, move.index);
-      const nextState = {
-        ...previous,
-        aiHand: nextAiHand,
-        chain: applyMoveToChain(previous.chain, move),
-        turn: "player",
-        consecutivePasses: 0,
-        turnCount: previous.turnCount + 1,
-        message: `IA juega ${formatTile(tile)} por ${move.side === "left" ? "izquierda" : "derecha"}.`,
-        logs: appendLog(previous.logs, `IA: ${formatTile(tile)} -> ${move.side === "left" ? "izquierda" : "derecha"}`)
-      };
-      return nextAiHand.length ? nextState : finishRound(nextState, { winner: "ai", reason: "domino" });
+      const move = pickAiMove(previous, seat, legalMoves);
+      if (!move) {
+        return commitSeatPass(previous, seat);
+      }
+      return commitSeatMove(previous, seat, move);
     });
   }, []);
 
   const shiftSelection = useCallback((delta) => {
     setState((previous) => {
-      if (!previous.playerHand.length) return previous;
-      const nextIndex = (previous.selectedIndex + delta + previous.playerHand.length) % previous.playerHand.length;
+      const hand = previous.hands.player;
+      if (!hand.length) return previous;
+      const nextIndex = (previous.selectedIndex + delta + hand.length) % hand.length;
       return { ...previous, selectedIndex: nextIndex };
     });
   }, []);
@@ -578,7 +1180,7 @@ function DominoStrategyGame() {
     if (aiDelayRef.current <= 0) {
       aiPendingRef.current = false;
       aiDelayRef.current = 0;
-      setAiThinking(false);
+      setAiThinkingSeat(null);
       runAiTurn();
     }
   }, [runAiTurn]);
@@ -593,13 +1195,14 @@ function DominoStrategyGame() {
   }, [tickAi]);
 
   useEffect(() => {
-    if (state.phase !== "playing" || state.turn !== "ai") {
+    if (state.phase !== "playing" || state.turn === "player") {
       stopAiThinking();
       return;
     }
     aiPendingRef.current = true;
-    aiDelayRef.current = (AI_LEVELS[state.difficultyId] ?? AI_LEVELS.medium).thinkMs;
-    setAiThinking(true);
+    const thinkMs = (AI_LEVELS[state.difficultyId] ?? AI_LEVELS.medium).thinkMs;
+    aiDelayRef.current = thinkMs;
+    setAiThinkingSeat(state.turn);
   }, [state.phase, state.turn, state.difficultyId, state.roundNumber, stopAiThinking]);
 
   useEffect(() => {
@@ -615,6 +1218,15 @@ function DominoStrategyGame() {
       if (frameRef.current) window.cancelAnimationFrame(frameRef.current);
     };
   }, [tickAi]);
+
+  useEffect(() => {
+    const onResize = () => {
+      setViewportWidth(window.innerWidth);
+      setViewportHeight(window.innerHeight);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -668,81 +1280,202 @@ function DominoStrategyGame() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [passTurn, playSelectedTile, restartMatch, shiftSelection, startNextRound, state.phase]);
-  const selectedTile = useMemo(() => state.playerHand[state.selectedIndex] ?? null, [state.playerHand, state.selectedIndex]);
+
+  const modeConfig = useMemo(() => getModeConfig(state.modeId), [state.modeId]);
+  const playerHand = state.hands.player;
+  const selectedTile = useMemo(
+    () => playerHand[state.selectedIndex] ?? null,
+    [playerHand, state.selectedIndex]
+  );
   const selectedPlacements = useMemo(
     () => (selectedTile ? getPlacementsForTile(selectedTile, state.chain) : []),
     [selectedTile, state.chain]
   );
-  const playerLegalMoves = useMemo(() => collectLegalMoves(state.playerHand, state.chain), [state.playerHand, state.chain]);
+  const playerLegalMoves = useMemo(
+    () => collectLegalMoves(playerHand, state.chain),
+    [playerHand, state.chain]
+  );
   const playableSidesByTileId = useMemo(() => {
     const sideMap = new Map();
-    state.playerHand.forEach((tile) => {
+    playerHand.forEach((tile) => {
       const sides = [...new Set(getPlacementsForTile(tile, state.chain).map((placement) => placement.side))];
       sideMap.set(tile.id, sides);
     });
     return sideMap;
-  }, [state.playerHand, state.chain]);
+  }, [playerHand, state.chain]);
+  const boardDensity = useMemo(() => {
+    if (viewportWidth <= 420) {
+      return { columns: 4, cellWidth: 62, cellHeight: 42 };
+    }
+    if (viewportWidth <= 620) {
+      return { columns: 5, cellWidth: 70, cellHeight: 48 };
+    }
+    if (viewportWidth <= 920) {
+      return { columns: 6, cellWidth: 80, cellHeight: 54 };
+    }
+    return { columns: CHAIN_COLUMNS, cellWidth: CHAIN_CELL_WIDTH, cellHeight: CHAIN_CELL_HEIGHT };
+  }, [viewportWidth]);
+  const chainLayout = useMemo(() => buildSnakeLayout(state.chain, boardDensity), [state.chain, boardDensity]);
+  const teamPips = useMemo(() => getTeamPips(state.hands, modeConfig.teamSeats), [state.hands, modeConfig]);
+  const lastPlayerMoveTile = useMemo(
+    () => state.chain.find((tile) => tile.id === state.lastPlayerMoveTileId) ?? null,
+    [state.chain, state.lastPlayerMoveTileId]
+  );
+  const lastPartnerMoveTile = useMemo(
+    () => state.chain.find((tile) => tile.id === state.lastPartnerMoveTileId) ?? null,
+    [state.chain, state.lastPartnerMoveTileId]
+  );
 
   const canPlayerPlay = state.phase === "playing" && state.turn === "player";
   const canPlayerPass = canPlayerPlay && playerLegalMoves.length === 0;
-  const canAdjustTarget = state.scores.player === 0 && state.scores.ai === 0 && state.roundNumber === 1;
-
-  const bridgeState = useMemo(() => ({ ...state, aiThinking }), [state, aiThinking]);
-  const payloadBuilder = useCallback((snapshot) => ({
-    mode: "strategy-domino-classic",
-    variant: "domino-7-plus-7",
-    coordinates: "chain_order_left_to_right",
-    phase: snapshot.phase,
-    round: snapshot.roundNumber,
-    targetScore: snapshot.targetScore,
-    difficulty: snapshot.difficultyId,
-    turn: snapshot.turn,
-    aiThinking: snapshot.aiThinking,
-    consecutivePasses: snapshot.consecutivePasses,
-    nextStarter: snapshot.nextStarter,
-    scores: snapshot.scores,
-    edges: getEdges(snapshot.chain),
-    chain: snapshot.chain.map((tile) => [tile.left, tile.right]),
-    playerHand: snapshot.playerHand.map((tile) => [tile.a, tile.b]),
-    playerHandCount: snapshot.playerHand.length,
-    aiHandCount: snapshot.aiHand.length,
-    selectedIndex: snapshot.selectedIndex,
-    selectedSide: snapshot.selectedSide,
-    legalMovesPlayer: collectLegalMoves(snapshot.playerHand, snapshot.chain).map((move) => ({
-      index: move.index,
-      side: move.side,
-      tile: [move.tile.a, move.tile.b]
-    })),
-    roundResult: snapshot.roundResult,
-    message: snapshot.message,
-    logs: snapshot.logs.slice(0, 6)
-  }), []);
-  useGameRuntimeBridge(bridgeState, payloadBuilder, advanceTime);
-
+  const canAdjustTarget = modeConfig.teamIds.every((teamId) => (state.scores[teamId] ?? 0) === 0) && state.roundNumber === 1;
+  const isMobileViewport = viewportWidth <= 860;
+  const isPortraitMobile = isMobileViewport && viewportHeight >= viewportWidth;
   const phaseLabel =
     state.phase === "playing"
-      ? "En juego"
+      ? T.phase.playing
       : state.phase === "round-over"
-        ? "Ronda cerrada"
-        : "Partida cerrada";
+        ? T.phase.roundOver
+        : T.phase.matchOver;
+  const playerTeamId = modeConfig.seatToTeam.player;
+  const rootClasses = [
+    "mini-game",
+    "domino-strategy-game",
+    "domino-strategy-pro",
+    `locale-${LOCALE}`,
+    `mode-${state.modeId}`,
+    isMobileViewport ? "domino-mobile" : "",
+    isPortraitMobile ? "domino-mobile-portrait" : "",
+    isMobileViewport && !isPortraitMobile ? "domino-mobile-landscape" : ""
+  ].filter(Boolean).join(" ");
+
+  const bridgeState = useMemo(() => ({ ...state, aiThinkingSeat }), [state, aiThinkingSeat]);
+  const payloadBuilder = useCallback((snapshot) => {
+    const modeSnapshotConfig = getModeConfig(snapshot.modeId);
+    const layout = buildSnakeLayout(snapshot.chain, boardDensity);
+    const counts = modeSnapshotConfig.seats.reduce((map, seat) => ({
+      ...map,
+      [seat]: snapshot.hands[seat].length
+    }), {});
+    return {
+      mode: "strategy-domino-classic",
+      locale: LOCALE,
+      modeId: modeSnapshotConfig.id,
+      modeLabel: modeSnapshotConfig.label,
+      variant: modeSnapshotConfig.variant,
+      coordinates: "snake_table_origin_top_left",
+      coordinateSystem: "x->right, y->down, chain on serpentine grid",
+      phase: snapshot.phase,
+      round: snapshot.roundNumber,
+      targetScore: snapshot.targetScore,
+      difficulty: snapshot.difficultyId,
+      turn: snapshot.turn,
+      aiThinkingSeat: snapshot.aiThinkingSeat,
+      starterSeat: snapshot.starterSeat,
+      nextStarterSeat: snapshot.nextStarterSeat,
+      scores: snapshot.scores,
+      consecutivePasses: snapshot.consecutivePasses,
+      edges: getEdges(snapshot.chain),
+      chainLength: snapshot.chain.length,
+      chain: snapshot.chain.map((tile) => [tile.left, tile.right, tile.playedBy]),
+      chainLayout: layout.positions.map((node) => ({
+        index: node.index,
+        x: node.column,
+        y: node.row,
+        axis: node.axis,
+        tile: [node.tile.left, node.tile.right]
+      })),
+      teamPips: getTeamPips(snapshot.hands, modeSnapshotConfig.teamSeats),
+      hands: {
+        counts,
+        player: snapshot.hands.player.map((tile) => [tile.a, tile.b])
+      },
+      selectedIndex: snapshot.selectedIndex,
+      selectedSide: snapshot.selectedSide,
+      lastPlayerMoveTileId: snapshot.lastPlayerMoveTileId,
+      lastPlayerMoveSide: snapshot.lastPlayerMoveSide,
+      lastPartnerMoveTileId: snapshot.lastPartnerMoveTileId,
+      lastPartnerMoveSide: snapshot.lastPartnerMoveSide,
+      legalMovesPlayer: collectLegalMoves(snapshot.hands.player, snapshot.chain).map((move) => ({
+        index: move.index,
+        side: move.side,
+        tile: [move.tile.a, move.tile.b]
+      })),
+      roundResult: snapshot.roundResult,
+      message: snapshot.message,
+      logs: snapshot.logs.slice(0, 8)
+    };
+  }, [boardDensity]);
+  useGameRuntimeBridge(bridgeState, payloadBuilder, advanceTime);
+
+  const renderSeat = (seat, seatClassName) => {
+    const seatInfo = SEAT_META[seat];
+    const isTurn = state.turn === seat;
+    const thinking = aiThinkingSeat === seat;
+    return (
+      <section className={["domino-seat", seatClassName, isTurn ? "active" : ""].filter(Boolean).join(" ")}>
+        <header>
+          <h5>{seatInfo.name}</h5>
+          <span className="seat-meta">{seatInfo.label}</span>
+        </header>
+        <p className="seat-count">{state.hands[seat].length} {T.ui.tiles}</p>
+        <HiddenSeatHand count={state.hands[seat].length} />
+        {thinking ? <span className="domino-seat-thinking">{T.ui.thinking}</span> : null}
+      </section>
+    );
+  };
+
+  const playerSeatChip = (
+    <section className={["domino-seat domino-seat-player-chip", state.turn === "player" ? "active" : ""].filter(Boolean).join(" ")}>
+      <header>
+        <h5>{SEAT_META.player.name}</h5>
+        <span className="seat-meta">{SEAT_META.player.label}</span>
+      </header>
+      <p className="seat-count">{playerHand.length} {T.ui.tiles}</p>
+    </section>
+  );
 
   return (
-    <div className="mini-game domino-strategy-game">
+    <div className={rootClasses}>
       <div className="mini-head">
         <div>
-          <h4>Domino Clasico Arena</h4>
-          <p>Partida completa por rondas contra IA con niveles de dificultad y cierre por tranca.</p>
+          <h4>{T.gameTitle}</h4>
+          <p>{T.subtitle}</p>
         </div>
         <div className="domino-strategy-actions">
-          <button type="button" onClick={restartMatch}>Nueva partida</button>
-          {state.phase === "round-over" ? <button type="button" onClick={startNextRound}>Siguiente ronda</button> : null}
-          {state.phase === "match-over" ? <button type="button" onClick={restartMatch}>Revancha</button> : null}
+          <button type="button" onClick={restartMatch}>{T.ui.newMatch}</button>
+          {state.phase === "round-over" ? <button type="button" onClick={startNextRound}>{T.ui.nextRound}</button> : null}
+          {state.phase === "match-over" ? <button type="button" onClick={restartMatch}>{T.ui.rematch}</button> : null}
         </div>
       </div>
 
       <div className="domino-strategy-config">
+        <label htmlFor="domino-game-mode">
+          {T.ui.mode}
+          <select
+            id="domino-game-mode"
+            value={state.modeId}
+            onChange={(event) => {
+              const nextModeId = event.target.value;
+              const nextModeConfig = getModeConfig(nextModeId);
+              setState((previous) => createRoundState({
+                modeId: nextModeConfig.id,
+                scores: buildScoresForMode(nextModeConfig),
+                targetScore: previous.targetScore,
+                difficultyId: previous.difficultyId,
+                roundNumber: 1,
+                starterSeat: null
+              }));
+            }}
+          >
+            {Object.values(GAME_MODES).map((mode) => (
+              <option key={mode.id} value={mode.id}>{mode.label}</option>
+            ))}
+          </select>
+        </label>
+
         <label htmlFor="domino-ai-level">
-          Dificultad IA
+          {T.ui.aiDifficulty}
           <select
             id="domino-ai-level"
             value={state.difficultyId}
@@ -759,7 +1492,7 @@ function DominoStrategyGame() {
         </label>
 
         <label htmlFor="domino-target-score">
-          Puntuacion objetivo
+          {T.ui.targetScore}
           <select
             id="domino-target-score"
             value={state.targetScore}
@@ -776,73 +1509,109 @@ function DominoStrategyGame() {
         </label>
 
         <p className="domino-config-note">
-          Controles: flechas para seleccionar ficha y lado, Enter para jugar, P para pasar, N para avanzar ronda y R para reiniciar.
+          {T.ui.controlsNote}
         </p>
       </div>
 
       <div className="status-row">
         <span className={`status-pill ${state.phase === "playing" ? "playing" : "finished"}`}>{phaseLabel}</span>
-        <span>Ronda: {state.roundNumber}</span>
-        <span>Turno: {state.turn === "player" ? "Tu" : state.turn === "ai" ? "IA" : "cerrado"}</span>
-        <span>Dificultad: {AI_LEVELS[state.difficultyId]?.label || AI_LEVELS.medium.label}</span>
-        <span>Pases seguidos: {state.consecutivePasses}</span>
-        <span>Salida sig.: {state.nextStarter === "player" ? "Tu" : "IA"}</span>
-        {aiThinking ? <span>IA pensando...</span> : null}
+        <span>{T.ui.round}: {state.roundNumber}</span>
+        <span>{T.ui.turn}: {state.turn ? SEAT_META[state.turn].name : T.ui.closed}</span>
+        <span>{T.ui.modeTag}: {modeConfig.rulesLabel}</span>
+        <span>{T.ui.difficulty}: {AI_LEVELS[state.difficultyId]?.label || AI_LEVELS.medium.label}</span>
+        <span>{T.ui.passes}: {state.consecutivePasses}/{modeConfig.seats.length}</span>
+        <span>{T.ui.nextStarter}: {SEAT_META[state.nextStarterSeat]?.name}</span>
       </div>
 
-      <div className="domino-scoreboard">
-        <article className="domino-scorecard"><p>Tu marcador</p><strong>{state.scores.player}</strong></article>
-        <article className="domino-scorecard"><p>Marcador IA</p><strong>{state.scores.ai}</strong></article>
-        <article className="domino-scorecard"><p>Meta</p><strong>{state.targetScore}</strong></article>
+      <div className="domino-scoreboard domino-team-scoreboard">
+        {modeConfig.teamIds.map((teamId) => (
+          <article
+            key={teamId}
+            className={`domino-scorecard ${teamId === playerTeamId ? "team-us" : "team-rivals"}`}
+          >
+            <p>{modeConfig.teams[teamId]?.label ?? teamId}</p>
+            <strong>{state.scores[teamId] ?? 0}</strong>
+            <span>{T.ui.hand}: {teamPips[teamId] ?? 0}</span>
+          </article>
+        ))}
+        <article className="domino-scorecard team-target">
+          <p>{T.ui.target}</p>
+          <strong>{state.targetScore}</strong>
+          <span>{T.ui.chain}: {state.chain.length}</span>
+        </article>
       </div>
 
       <div className="domino-table">
         <div className="domino-table-head">
-          <span className="domino-variant-chip">Modalidad 7+7</span>
-          <span className="domino-table-note">Dobles perpendiculares | Tranca puntua total bloqueado</span>
+          <span className="domino-variant-chip">{modeConfig.rulesLabel}</span>
+          <span className="domino-table-note">{T.ui.tableNote}</span>
         </div>
+
         <div className="domino-edge-readout">
-          <span>Extremo izq: {state.chain[0]?.left ?? "--"}</span>
-          <span>Extremo der: {state.chain[state.chain.length - 1]?.right ?? "--"}</span>
+          <span>{T.ui.leftEdge}: {state.chain[0]?.left ?? "--"}</span>
+          <span>{T.ui.rightEdge}: {state.chain[state.chain.length - 1]?.right ?? "--"}</span>
+          <span>{T.ui.tilesOnTable}: {state.chain.length}/28</span>
         </div>
-        <div className="domino-chain" role="list" aria-label="Cadena de domino en mesa">
-          {state.chain.map((tile, index) => (
-            <span
-              key={`${tile.id}-${index}`}
-              role="listitem"
-              className={[
-                "domino-tile",
-                tile.left === tile.right ? "is-double" : "",
-                index === 0 && state.selectedSide === "left" ? "active-edge" : "",
-                index === state.chain.length - 1 && state.selectedSide === "right" ? "active-edge" : ""
-              ].filter(Boolean).join(" ")}
+
+        <div className="domino-arena-shell">
+          {modeConfig.seats.includes("partner") ? (
+            <div className="domino-seat-slot slot-top">{renderSeat("partner", "domino-seat-top")}</div>
+          ) : null}
+          {modeConfig.seats.includes("left") ? (
+            <div className="domino-seat-slot slot-left">{renderSeat("left", "domino-seat-left")}</div>
+          ) : null}
+          {modeConfig.seats.includes("right") ? (
+            <div className="domino-seat-slot slot-right">{renderSeat("right", "domino-seat-right")}</div>
+          ) : null}
+          <div className="domino-chain-scroll">
+            <div
+              className="domino-chain domino-chain-stage"
+              role="list"
+              aria-label={T.ui.chainAria}
+              style={{ width: `${chainLayout.width}px`, height: `${chainLayout.height}px` }}
             >
-              <span className="domino-half"><DominoPips value={tile.left} /><strong>{tile.left}</strong></span>
-              <span className="domino-divider" />
-              <span className="domino-half"><DominoPips value={tile.right} /><strong>{tile.right}</strong></span>
-            </span>
-          ))}
+              {chainLayout.positions.map((node) => (
+                <span
+                  key={`${node.tile.id}-${node.index}`}
+                  className={`domino-chain-node ${node.axis === "vertical" ? "axis-vertical" : "axis-horizontal"}`}
+                  style={{ left: `${node.leftPx}px`, top: `${node.topPx}px` }}
+                >
+                  <span
+                    role="listitem"
+                    className={[
+                      "domino-tile",
+                      node.tile.left === node.tile.right ? "is-double" : "",
+                      node.axis === "vertical" && node.tile.left !== node.tile.right ? "is-vertical" : "",
+                      node.tile.id === state.lastPlayerMoveTileId ? "last-player-tile" : "",
+                      node.tile.id === state.lastPartnerMoveTileId ? "last-partner-tile" : "",
+                      node.index === 0 && state.selectedSide === "left" ? "active-edge" : "",
+                      node.index === state.chain.length - 1 && state.selectedSide === "right" ? "active-edge" : ""
+                    ].filter(Boolean).join(" ")}
+                  >
+                    {node.tile.id === state.lastPlayerMoveTileId ? (
+                      <span className="domino-board-badge badge-player">{T.ui.lastPlayerBadge}</span>
+                    ) : null}
+                    {node.tile.id === state.lastPartnerMoveTileId ? (
+                      <span className="domino-board-badge badge-partner">{T.ui.lastPartnerBadge}</span>
+                    ) : null}
+                    <span className="domino-half"><DominoPips value={node.tile.left} /><strong>{node.tile.left}</strong></span>
+                    <span className="domino-divider" />
+                    <span className="domino-half"><DominoPips value={node.tile.right} /><strong>{node.tile.right}</strong></span>
+                  </span>
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="domino-seat-slot slot-bottom">{playerSeatChip}</div>
         </div>
       </div>
 
       <div className="domino-player-zones">
-        <section className="domino-zone">
-          <h5>Mano IA ({state.aiHand.length})</h5>
-          <div className="domino-hand domino-ai-hand">
-            {state.aiHand.map((tile, index) => (
-              <span key={`${tile.id}-${index}`} className="domino-hand-tile domino-back" aria-label="Ficha IA oculta">
-                <span className="domino-half" />
-                <span className="domino-divider" />
-                <span className="domino-half" />
-              </span>
-            ))}
-          </div>
-        </section>
-
-        <section className="domino-zone">
-          <h5>Tu mano ({state.playerHand.length})</h5>
-          <div className="domino-hand" aria-label="Fichas del jugador">
-            {state.playerHand.map((tile, index) => {
+        <section className={`domino-zone domino-zone-player ${state.turn === "player" ? "active" : ""}`}>
+          <h5>{SEAT_META.player.name} ({playerHand.length} {T.ui.tiles})</h5>
+          <div className="domino-hand" aria-label={T.ui.playerHandAria}>
+            {playerHand.map((tile, index) => {
+              const isSelected = index === state.selectedIndex;
               const playableSides = playableSidesByTileId.get(tile.id) || [];
               const sideHint =
                 playableSides.length >= 2
@@ -852,24 +1621,25 @@ function DominoStrategyGame() {
                     : playableSides[0] === "right"
                       ? "R"
                       : "";
-
               return (
                 <button
                   key={tile.id}
                   type="button"
                   disabled={!canPlayerPlay}
+                  aria-pressed={isSelected}
                   className={[
                     "domino-hand-tile",
                     tile.a === tile.b ? "is-double" : "",
                     playableSides.length ? "playable" : "",
-                    index === state.selectedIndex ? "selected" : ""
+                    isSelected ? "selected" : ""
                   ].filter(Boolean).join(" ")}
                   onClick={() => setState((previous) => ({
                     ...previous,
-                    selectedIndex: clampSelectedIndex(index, previous.playerHand.length)
+                    selectedIndex: clampSelectedIndex(index, previous.hands.player.length)
                   }))}
                 >
                   {canPlayerPlay && sideHint ? <span className="domino-legal-hint">{sideHint}</span> : null}
+                  {isSelected ? <span className="domino-selected-badge">{T.ui.selected}</span> : null}
                   <span className="domino-half"><DominoPips value={tile.a} /><strong>{tile.a}</strong></span>
                   <span className="domino-divider" />
                   <span className="domino-half"><DominoPips value={tile.b} /><strong>{tile.b}</strong></span>
@@ -881,41 +1651,62 @@ function DominoStrategyGame() {
       </div>
 
       <div className="domino-toolbar">
-        <span>Lado activo: {state.selectedSide === "left" ? "izquierda" : "derecha"}</span>
-        <button type="button" onClick={() => setState((previous) => ({ ...previous, selectedSide: "left" }))}>Izquierda</button>
-        <button type="button" onClick={() => setState((previous) => ({ ...previous, selectedSide: "right" }))}>Derecha</button>
-        <button type="button" onClick={playSelectedTile} disabled={!canPlayerPlay}>Jugar ficha</button>
-        <button type="button" onClick={passTurn} disabled={!canPlayerPass}>Pasar turno</button>
+        <span>{T.ui.activeSide}: {sideLabel(state.selectedSide)}</span>
+        <button type="button" onClick={() => setState((previous) => ({ ...previous, selectedSide: "left" }))}>{T.ui.left}</button>
+        <button type="button" onClick={() => setState((previous) => ({ ...previous, selectedSide: "right" }))}>{T.ui.right}</button>
+        <button type="button" onClick={playSelectedTile} disabled={!canPlayerPlay}>{T.ui.playTile}</button>
+        <button type="button" onClick={passTurn} disabled={!canPlayerPass}>{T.ui.passTurn}</button>
       </div>
 
       <p className="domino-selected">
-        Seleccion: {selectedTile ? formatTile(selectedTile) : "--"}.
+        {T.ui.selectionPrefix}: {selectedTile ? formatTile(selectedTile) : "--"}.
         {" "}
-        Encaja en:
+        {T.ui.fitsOn}:
         {" "}
         {selectedPlacements.length
-          ? selectedPlacements.map((placement) => (placement.side === "left" ? "izquierda" : "derecha")).join(" / ")
-          : "ningun extremo"}
+          ? selectedPlacements.map((placement) => sideLabel(placement.side)).join(" / ")
+          : T.ui.noneEdge}
+        {" "}
+        | {T.ui.yourLastMove}:
+        {" "}
+        {lastPlayerMoveTile
+          ? `${lastPlayerMoveTile.left}|${lastPlayerMoveTile.right} (${sideLabel(state.lastPlayerMoveSide)})`
+          : "--"}
+        {" "}
+        | {T.ui.partnerLastMove}:
+        {" "}
+        {modeConfig.seats.includes("partner")
+          ? (
+            lastPartnerMoveTile
+              ? `${lastPartnerMoveTile.left}|${lastPartnerMoveTile.right} (${sideLabel(state.lastPartnerMoveSide)})`
+              : "--"
+          )
+          : T.ui.notApplicable}
       </p>
 
       {state.roundResult ? (
         <div className="domino-round-summary">
-          <strong>Resumen de ronda</strong>
+          <strong>{T.ui.roundSummary}</strong>
           <p>
-            Ganador: {state.roundResult.winner === "player" ? "Tu" : state.roundResult.winner === "ai" ? "IA" : "Empate"}
+            {T.ui.winner}: {state.roundResult.winnerTeam === "draw" ? T.ui.draw : modeConfig.teams[state.roundResult.winnerTeam]?.label}
             {" "}
-            | Motivo: {state.roundResult.reason === "domino" ? "domino" : "tranca"}
+            | {T.ui.reason}:
             {" "}
-            | Puntos: {state.roundResult.pointsAwarded}
-            {state.roundResult.reason === "block"
-              ? ` | Mano Tu/IA: ${state.roundResult.playerPoints}/${state.roundResult.aiPoints}`
-              : ""}
+            {state.roundResult.reason === "domino"
+              ? T.ui.reasonDomino
+              : state.roundResult.reason === "block-closed"
+                ? T.ui.reasonClosed
+                : T.ui.reasonPasses}
+            {" "}
+            | {T.ui.points}: {state.roundResult.pointsAwarded}
+            {" "}
+            | {T.ui.hand}: {getTeamPipsLabel(state.roundResult.teamPips ?? {}, modeConfig)}
           </p>
         </div>
       ) : null}
 
       <details className="domino-rules">
-        <summary>Reglas del domino (prompt completo)</summary>
+        <summary>{T.ui.rulesSummary}</summary>
         <pre>{RULES_PROMPT}</pre>
       </details>
 
@@ -931,3 +1722,4 @@ function DominoStrategyGame() {
 }
 
 export default DominoStrategyGame;
+
