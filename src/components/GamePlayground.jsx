@@ -9,6 +9,7 @@ import HeadSoccerGame from "../games/HeadSoccerGame";
 import PacmanGame from "../games/PacmanGame";
 import MinesweeperGame from "../games/MinesweeperGame";
 import ChessGame from "../games/ChessGame";
+import CheckersGame from "../games/CheckersGame";
 import DominoStrategyGame from "../games/DominoStrategyGame";
 import PokerTexasHoldemGame from "../games/PokerTexasHoldemGame";
 import ParchisStrategyGame from "../games/ParchisStrategyGame";
@@ -38,6 +39,7 @@ const GAME_COMPONENTS = {
   "knowledge-crucigrama-mini": KnowledgeCrucigramaGame,
   "knowledge-sopa-letras-mega": KnowledgeSopaLetrasGame,
   "strategy-chess-grandmaster": ChessGame,
+  "strategy-damas-clasicas": CheckersGame,
   "strategy-poker-holdem-no-bet": PokerTexasHoldemGame,
   "strategy-parchis-ludoteka": ParchisStrategyGame,
   "rpg-emberfall": RpgGame,
@@ -64,6 +66,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-crucigrama-mini": "Selecciona longitud maxima (6-10), flechas para navegar, letras para escribir, Backspace para borrar, Enter para comprobar y boton de partida aleatoria.",
     "knowledge-sopa-letras-mega": "Arrastra o marca inicio-fin para seleccionar palabras en horizontal, vertical o diagonal (tambien al reves). R carga partida aleatoria.",
     "strategy-chess-grandmaster": "Clic para mover, promocion al coronar, U deshace, D reclama tablas y F alterna pantalla completa.",
+    "strategy-damas-clasicas": "Damas 8x8: clic para mover en diagonal, capturas encadenadas, U deshace, X retiro, R reinicia y F alterna pantalla completa.",
     "strategy-poker-holdem-no-bet": "Poker clasico 5 cartas con apuestas reales: ciegas, bote y acciones call/raise/fold/all-in. Enter accion principal, U subir, A all-in, F retirarse, 1-5 seleccionar descarte, D descartar, S servirse, N siguiente mano y R reiniciar.",
     "strategy-parchis-ludoteka": "S/Enter inicia partida, R/Enter/Space tira dado, 1..9 elige jugada, Enter primera jugada, X continua sin jugada y N nueva partida.",
     "rpg-emberfall": "Explora con WASD/flechas y usa atacar, habilidad, defender, enfocar, invocar (U) y pocion.",
@@ -88,6 +91,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-crucigrama-mini": "Choose max length (6-10), arrows navigate, letters write, Backspace clears, Enter checks, and the random-match button loads another puzzle.",
     "knowledge-sopa-letras-mega": "Drag or click start-end to select words horizontally, vertically, or diagonally (reverse also works). Press R for a random match.",
     "strategy-chess-grandmaster": "Click pieces to move, choose promotion on last rank, U undo, D claim draw, and F toggles fullscreen.",
+    "strategy-damas-clasicas": "8x8 checkers: click to move diagonally, chain captures, U undo, X resign, R restart, and F toggle fullscreen.",
     "strategy-poker-holdem-no-bet": "Classic 5-card draw with real betting: blinds, pot play, and check/call/raise/fold/all-in decisions. Enter main action, U raise, A all-in, F fold, 1-5 select discard, D discard, S stand pat, N next hand, and R restart.",
     "strategy-parchis-ludoteka": "S/Enter starts the match, R/Enter/Space rolls the die, 1..9 picks a move, Enter takes the first move, X continues without move, and N starts a new match.",
     "rpg-emberfall": "Explore with WASD/arrows and use attack, skill, defend, focus, summon (U) and potion.",

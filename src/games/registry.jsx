@@ -31,6 +31,7 @@ import PacmanGame from "./PacmanGame";
 import PongGame from "./PongGame";
 import MinesweeperGame from "./MinesweeperGame";
 import ChessGame from "./ChessGame";
+import CheckersGame from "./CheckersGame";
 import DominoStrategyGame from "./DominoStrategyGame";
 import PokerTexasHoldemGame from "./PokerTexasHoldemGame";
 import ParchisStrategyGame from "./ParchisStrategyGame";
@@ -63,6 +64,7 @@ export const GAME_REGISTRY = {
   "knowledge-crucigrama-mini":   KnowledgeCrucigramaGame,
   "knowledge-sopa-letras-mega":  KnowledgeSopaLetrasGame,
   "strategy-chess-grandmaster":  ChessGame,
+  "strategy-damas-clasicas":     CheckersGame,
   "strategy-poker-holdem-no-bet": PokerTexasHoldemGame,
   "strategy-parchis-ludoteka":   ParchisStrategyGame,
   "rpg-emberfall":               RpgGame,
@@ -95,6 +97,7 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-crucigrama-mini":   "Flechas navegan, letras escriben, Backspace borra, Enter comprueba, botón nueva partida.",
     "knowledge-sopa-letras-mega":  "Arrastra o marca inicio-fin en horizontal, vertical o diagonal (también al revés). R nueva partida.",
     "strategy-chess-grandmaster":  "Clic para mover, U deshace, D reclama tablas, F pantalla completa.",
+    "strategy-damas-clasicas":     "Damas 8x8: clic para mover en diagonal, capturas encadenadas, U deshace, X retiro, R reinicia y F pantalla completa.",
     "strategy-poker-holdem-no-bet": "Poker clasico 5 cartas con apuestas: ciegas, bote y acciones de pasar/igualar/subir/all-in/retirarse. Enter resolver accion principal, U subir, A all-in, F retirarse, 1-5 seleccionar descarte, D descartar, S servirse, N siguiente mano, R reiniciar.",
     "strategy-parchis-ludoteka":  "S/Enter inicia partida, R/Enter/Space tira dado, 1..9 elige jugada, Enter primera jugada, X continua sin jugada y N nueva partida.",
     "rpg-emberfall":               "WASD/flechas para explorar. Atacar, habilidad, defender, enfocar, invocar (U) y poción.",
@@ -120,6 +123,7 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-crucigrama-mini":   "Arrows navigate, letters type, Backspace clears, Enter checks, button for new puzzle.",
     "knowledge-sopa-letras-mega":  "Drag or click start-end horizontally, vertically or diagonally (reverse also works). R new match.",
     "strategy-chess-grandmaster":  "Click to move, U undo, D claim draw, F fullscreen.",
+    "strategy-damas-clasicas":     "8x8 checkers: click to move diagonally, chain captures, U undo, X resign, R restart and F fullscreen.",
     "strategy-poker-holdem-no-bet": "Classic 5-card draw with betting: blinds, real pot and check/call/raise/all-in/fold decisions. Enter resolves main action, U raise, A all-in, F fold, 1-5 select discard, D discard, S stand pat, N next hand, R restart.",
     "strategy-parchis-ludoteka":  "S/Enter starts the match, R/Enter/Space rolls the die, 1..9 picks a move, Enter first move, X continues without move, and N starts a new match.",
     "rpg-emberfall":               "WASD/arrows to explore. Attack, skill, defend, focus, summon (U) and potion.",

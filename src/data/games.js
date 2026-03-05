@@ -18,6 +18,7 @@ import knowledgePuzleImage from "../assets/games/knowledge-puzle.svg";
 import knowledgeCrucigramaImage from "../assets/games/knowledge-crucigrama.svg";
 import knowledgeSopaLetrasImage from "../assets/games/knowledge-sopa-letras.svg";
 import chessGrandmasterArenaImage from "../assets/games/chess-grandmaster-arena.svg";
+import strategyDamasProfesionalImage from "../assets/games/strategy-damas-professional.svg";
 import strategyPokerNoBetImage from "../assets/games/strategy-poker-no-bet.svg";
 import strategyParchisLudotekaImage from "../assets/games/strategy-parchis-ludoteka.svg";
 import race2dproImage from "../assets/games/race2dpro.svg";
@@ -898,6 +899,51 @@ export const games = [
     viability_en: "High: state-driven engine with full traceability of pieces, turns and special rules.",
     visualStyle_en: "Clear tactical board with common track, final lanes and phase/streak telemetry.",
     techFocus_en: "Parchis rules engine with heuristic AI and forward threat estimation.",
+  },
+
+  {
+    id: "strategy-damas-clasicas",
+    image: strategyDamasProfesionalImage,
+    sessionTime: "4-16 min",
+
+    title: "Damas Estrategia Pro",
+    category: "Estrategia",
+    tagline: "Damas 8x8 con IA por niveles, capturas encadenadas, control de errores y reglas configurables de bloqueo.",
+    description:
+      "Implementacion profesional de damas clasicas sobre tablero 8x8: 12 fichas por lado, movimiento diagonal en ambas direcciones, capturas multiples en cadena, coronacion a dama, prioridad de dama al capturar, derrota por 3 errores y modo configurable de bloqueo (pierde/tablas/material).",
+    objective_es: "Captura todas las fichas rivales o bloquea su juego antes de alcanzar el limite de errores.",
+    howToPlay_es: "Haz clic en una ficha y luego en el destino diagonal. Si capturas, continua la cadena con la misma ficha hasta terminar. U deshace, X te retira, R reinicia y F alterna pantalla completa.",
+    highlights: [
+      "Motor de damas determinista con validacion de movimiento y capturas en cadena.",
+      "IA por cuatro niveles (Principiante, Intermedio, Avanzado y Experto).",
+      "Regla de errores competitiva: al tercer error, pierdes la partida.",
+      "Regla de bloqueo configurable: derrota directa, tablas o resolucion por material.",
+      "Bridge QA con render_game_to_text y avance temporal determinista.",
+    ],
+    difficulty: "Variable (4 niveles IA)",
+    multiplayer: "Solo vs IA",
+    viability: "Alta: reglas discretas, estado compacto y decision IA evaluable.",
+    visualStyle: "Mesa tactica con tablero premium de damas, feedback de capturas y panel competitivo.",
+    techFocus: "Motor de reglas + minimax con alpha-beta + telemetria de errores, bloqueo y repeticion.",
+
+    category_en: "Strategy",
+    tagline_en: "8x8 checkers with multi-level AI, chain captures, error control, and configurable block rules.",
+    description_en:
+      "Professional web checkers implementation on an 8x8 board: 12 pieces per side, diagonal movement in both directions, multi-capture chains, king promotion, king-capture priority, defeat after 3 mistakes, and configurable blocked resolution (loss/draw/material).",
+    objective_en: "Capture all opponent pieces or lock their position before reaching the mistake limit.",
+    howToPlay_en: "Click a piece and then its diagonal destination. If you capture, continue the chain with the same piece until it ends. U undo, X resign, R restart, and F toggle fullscreen.",
+    highlights_en: [
+      "Deterministic checkers rules engine with strict move and chain-capture validation.",
+      "Four AI levels (Beginner, Intermediate, Advanced, Expert).",
+      "Competitive mistake rule: lose after the third invalid attempt.",
+      "Configurable blocked resolution: direct loss, draw, or material-based result.",
+      "QA bridge with render_game_to_text and deterministic time stepping.",
+    ],
+    difficulty_en: "Variable (4 AI levels)",
+    multiplayer_en: "Solo vs AI",
+    viability_en: "High: discrete rules, compact state, and evaluable AI decisions.",
+    visualStyle_en: "Tactical checkers table with premium board readability and capture feedback.",
+    techFocus_en: "Rules engine + alpha-beta minimax + telemetry for mistakes, blockage, and repetition.",
   },
 
   {
