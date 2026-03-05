@@ -1460,3 +1460,47 @@
     - `output/arcade-buscaminas-check/competitive-check.png` + `competitive-state.json`.
     - estado confirma `matchMode: competitive`, `ranking`, y `leaderboardTop5` poblado.
   - sin `errors-*.json` en las pasadas.
+
+## 2026-03-05 - Head Soccer overhaul (modos + entorno visual completo)
+- Reestructurado `src/games/HeadSoccerGame.jsx` para soportar 4 modos jugables inspirados en Head Soccer clasico:
+  - `Arcade`: cadena de desafios con eliminacion por derrota/empate.
+  - `Supervivencia`: sin reloj, vidas por gol encajado y progresion por racha.
+  - `Torneo`: fases de eliminacion (Cuartos/Semifinal/Final).
+  - `Liga`: 10 jornadas con puntos (3-1-0), tabla de PJ/G/E/P/GF/GC/Pts.
+- Añadida progresion por ronda con estado interno profesional:
+  - `nextAction`, `seriesOutcome`, `roundResult`, `roundLabel`, `roundObjective`, `roundIndex/roundTotal`, `opponentName/opponentNation`.
+  - Telemetria extendida en `render_game_to_text` (modo, ronda, rival, supervivencia, torneo, liga, objetivo de goles, etc.).
+- Mejorada IA por contexto de modo/ronda con `modeBoost` para escalar reaccion, error, dash y decision de habilidad.
+- UI React ampliada con selector de modo y panel de estado por modo (`head-soccer-mode-board`).
+- `src/styles.css` actualizado con estilos nuevos para modo/progreso (chips, stats por modo y panel limpio).
+
+## 2026-03-05 - Rediseño visual de estadio (referencia pixel art)
+- Entorno del canvas rehecho para que el campo se sienta completo:
+  - cielo con nubes dinamicas,
+  - grada multicapa con publico,
+  - focos laterales,
+  - carteleria tipo arcade,
+  - cesped por franjas,
+  - lineas de campo/areas/centro,
+  - porterias con red detallada.
+- HUD superior limpiado y alineado con la referencia (marcador, tiempo/sin reloj, modo+ronda, rival, barras de momentum).
+
+## 2026-03-05 - QA Playwright ejecutada
+- Validacion principal de modo arcade:
+  - `output/head-soccer-mode-upgrade/shot-0..2.png`
+  - `output/head-soccer-mode-upgrade/state-0..2.json`
+- Validacion de cambio de modos por UI y estado textual:
+  - `output/head-soccer-survival-check/` (incluye estado con `gameMode.id = survival`)
+  - `output/head-soccer-tournament-check/` (incluye estado con `gameMode.id = tournament`)
+  - `output/head-soccer-league-check/` (incluye estado con `gameMode.id = league`)
+- Simulacion completa de jornada de liga hasta fin de partido:
+  - `output/head-soccer-league-fullmatch/state-0.json`
+  - Resultado esperado verificado: `status=finished`, `nextAction=next`, `league.played=1`, `league.points=1` tras empate.
+- QA visual final del estadio rediseñado:
+  - `output/head-soccer-stadium-redesign-v2/shot-0..1.png`
+  - `output/head-soccer-stadium-redesign-v2/state-0..1.json`
+
+## TODO sugerido siguiente iteracion
+- Cambiar sprites de jugador/cabeza por atlas pixel-art (actualmente figuras geometricas) para acercar aun mas el look de referencia.
+- Añadir boton de pausa funcional en HUD superior (actualmente solo estilo de marcador/entorno).
+- Revalidar `npm run build` cuando el entorno permita ejecucion fuera de sandbox sin interrupcion.

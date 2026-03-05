@@ -8,8 +8,12 @@ const GROUND_Y = 468;
 const GRAVITY = 2100;
 const GOAL_W = 132;
 const GOAL_H = 172;
-const MATCH_TIME = 120;
-const WIN_SCORE = 5;
+const MATCH_TIME = 60;
+const WIN_SCORE = 4;
+const SURVIVAL_START_LIVES = 7;
+const LEAGUE_MATCHES = 10;
+const ARCADE_ROUNDS = 8;
+const TOURNAMENT_ROUNDS = ["Cuartos", "Semifinal", "Final"];
 const KICK_CHARGE_WINDOW = 0.7;
 const DASH_COOLDOWN = 1.1;
 const DASH_DURATION = 0.14;
@@ -48,15 +52,53 @@ const CHAR = {
   mega: { id: "mega", name: "Mega Head", ability: "grow", abilityLabel: "Mega tamano", cd: 10.2, color: "#a855f7" }
 };
 
-const cpuCharacter = (playerCharacter) => {
-  const pool = Object.keys(CHAR).filter((id) => id !== playerCharacter);
-  return pool[Math.floor(Math.random() * pool.length)] || "frost";
+const GAME_MODE = {
+  arcade: {
+    id: "arcade",
+    label: "Arcade",
+    rounds: ARCADE_ROUNDS,
+    timer: MATCH_TIME,
+    goalCap: WIN_SCORE,
+    objective: "Gana a todos los rivales seguidos. Empatar o perder te elimina."
+  },
+  survival: {
+    id: "survival",
+    label: "Supervivencia",
+    rounds: Number.POSITIVE_INFINITY,
+    timer: 0,
+    goalCap: 3,
+    objective: "Sin tiempo. Pierdes una vida por cada gol recibido y buscas la mayor racha."
+  },
+  tournament: {
+    id: "tournament",
+    label: "Torneo",
+    rounds: TOURNAMENT_ROUNDS.length,
+    timer: MATCH_TIME,
+    goalCap: WIN_SCORE,
+    objective: "Eliminatorias directas: cuartos, semifinal y final."
+  },
+  league: {
+    id: "league",
+    label: "Liga",
+    rounds: LEAGUE_MATCHES,
+    timer: MATCH_TIME,
+    goalCap: Number.POSITIVE_INFINITY,
+    objective: "10 jornadas con sistema de puntos: 3 victoria, 1 empate."
+  }
 };
 
-const pickCpuPersonality = () => {
-  const ids = Object.keys(CPU_PERSONALITY);
-  return ids[Math.floor(Math.random() * ids.length)] || "aggressive";
-};
+const OPPONENTS = [
+  { id: "kr", name: "Daehan Flash", nation: "Corea", personalityId: "aggressive", characterId: "blaze" },
+  { id: "de", name: "Berlin Wall", nation: "Alemania", personalityId: "defensive", characterId: "frost" },
+  { id: "br", name: "Rio Joga", nation: "Brasil", personalityId: "technical", characterId: "mega" },
+  { id: "es", name: "Iberia Tempo", nation: "Espana", personalityId: "technical", characterId: "titan" },
+  { id: "ar", name: "Pampa Strike", nation: "Argentina", personalityId: "aggressive", characterId: "blaze" },
+  { id: "fr", name: "Paris Guard", nation: "Francia", personalityId: "defensive", characterId: "frost" },
+  { id: "jp", name: "Kyoto Motion", nation: "Japon", personalityId: "technical", characterId: "titan" },
+  { id: "us", name: "Liberty Power", nation: "Estados Unidos", personalityId: "aggressive", characterId: "mega" },
+  { id: "it", name: "Roma Block", nation: "Italia", personalityId: "defensive", characterId: "frost" },
+  { id: "pt", name: "Lisboa Skill", nation: "Portugal", personalityId: "technical", characterId: "blaze" }
+];
 
 const createPlayer = (side, tag, characterId) => ({
   side,
@@ -88,22 +130,48 @@ const createPlayer = (side, tag, characterId) => ({
 
 const createState = () => ({
   mode: "start",
+  gameModeId: "arcade",
+  nextAction: "start",
+  seriesOutcome: "active",
+  roundResult: "",
+  roundIndex: 0,
+  roundTotal: ARCADE_ROUNDS,
+  roundLabel: `Desafio 1/${ARCADE_ROUNDS}`,
+  roundObjective: GAME_MODE.arcade.objective,
+  opponentName: OPPONENTS[0].name,
+  opponentNation: OPPONENTS[0].nation,
   score: { you: 0, cpu: 0 },
   timer: MATCH_TIME,
+  roundElapsed: 0,
+  targetGoals: WIN_SCORE,
   difficultyId: "medium",
   stadiumId: "day",
-  cpuPersonalityId: pickCpuPersonality(),
+  cpuPersonalityId: OPPONENTS[0].personalityId,
   player: createPlayer("left", "YOU", "blaze"),
-  cpu: createPlayer("right", "CPU", "frost"),
+  cpu: createPlayer("right", "CPU", OPPONENTS[0].characterId),
   momentum: {
     left: { stacks: 0, timer: 0 },
     right: { stacks: 0, timer: 0 }
+  },
+  survivalLives: SURVIVAL_START_LIVES,
+  survivalStreak: 0,
+  survivalBest: 0,
+  tournamentWins: 0,
+  league: {
+    played: 0,
+    wins: 0,
+    draws: 0,
+    losses: 0,
+    gf: 0,
+    ga: 0,
+    points: 0
   },
   ball: { x: WIDTH * 0.5, y: GROUND_Y - 70, vx: 120, vy: -140, r: 22, spin: 0, hotT: 0, speed: 0, lastTouch: "none" },
   particles: [],
   logs: ["Head Soccer listo. Enter para empezar."],
   message: "Pulsa Start para jugar.",
-  goalPause: 0
+  goalPause: 0,
+  pendingRoundEnd: false
 });
 
 const resetPlayerForKickoff = (player, x, facing) => {
@@ -183,19 +251,188 @@ const tickMomentum = (state, dt) => {
   });
 };
 
-const startMatch = (state) => {
-  state.mode = "playing";
+const roundLabelFor = (state, roundIndex = state.roundIndex) => {
+  if (state.gameModeId === "survival") return `Racha ${roundIndex + 1}`;
+  if (state.gameModeId === "tournament") {
+    const name = TOURNAMENT_ROUNDS[Math.min(roundIndex, TOURNAMENT_ROUNDS.length - 1)] || "Ronda";
+    return `${name} (${roundIndex + 1}/${TOURNAMENT_ROUNDS.length})`;
+  }
+  if (state.gameModeId === "league") return `Jornada ${roundIndex + 1}/${LEAGUE_MATCHES}`;
+  return `Desafio ${roundIndex + 1}/${ARCADE_ROUNDS}`;
+};
+
+const pickOpponentForRound = (state, roundIndex = state.roundIndex) => {
+  if (state.gameModeId === "survival") {
+    return OPPONENTS[Math.floor(Math.random() * OPPONENTS.length)] || OPPONENTS[0];
+  }
+  return OPPONENTS[roundIndex % OPPONENTS.length] || OPPONENTS[0];
+};
+
+const modeRules = (state) => GAME_MODE[state.gameModeId] || GAME_MODE.arcade;
+
+const configureRound = (state, roundIndex = state.roundIndex) => {
+  const rules = modeRules(state);
+  state.roundIndex = roundIndex;
+  state.roundTotal = Number.isFinite(rules.rounds) ? rules.rounds : roundIndex + 1;
+  state.roundLabel = roundLabelFor(state, roundIndex);
+  state.roundObjective = rules.objective;
+  state.targetGoals = Number.isFinite(rules.goalCap) ? rules.goalCap : Number.POSITIVE_INFINITY;
+
+  const opponent = pickOpponentForRound(state, roundIndex);
+  state.opponentName = opponent.name;
+  state.opponentNation = opponent.nation;
+  state.cpuPersonalityId = opponent.personalityId;
+  state.cpu.characterId = opponent.characterId;
+
+  state.mode = "start";
+  state.nextAction = "start";
+  state.roundResult = "";
   state.score.you = 0;
   state.score.cpu = 0;
-  state.timer = MATCH_TIME;
+  state.timer = rules.timer;
+  state.roundElapsed = 0;
   state.goalPause = 0;
-  state.cpuPersonalityId = pickCpuPersonality();
+  state.pendingRoundEnd = false;
   clearMomentum(state, "left");
   clearMomentum(state, "right");
   resetKickoff(state, Math.random() > 0.5 ? 1 : -1);
   const personality = CPU_PERSONALITY[state.cpuPersonalityId]?.label || "Agresivo";
-  state.message = `Rival IA ${personality}.`;
-  log(state, `Partido nuevo. Rival ${personality}.`);
+  state.message = `${state.roundLabel}. Rival ${opponent.name} (${opponent.nation}) estilo ${personality}.`;
+  log(state, state.message);
+};
+
+const resetModeProgress = (state, modeId = state.gameModeId) => {
+  state.gameModeId = modeId;
+  state.seriesOutcome = "active";
+  state.roundIndex = 0;
+  state.survivalLives = SURVIVAL_START_LIVES;
+  state.survivalStreak = 0;
+  state.survivalBest = Math.max(state.survivalBest, 0);
+  state.tournamentWins = 0;
+  state.league.played = 0;
+  state.league.wins = 0;
+  state.league.draws = 0;
+  state.league.losses = 0;
+  state.league.gf = 0;
+  state.league.ga = 0;
+  state.league.points = 0;
+  configureRound(state, 0);
+};
+
+const beginRound = (state) => {
+  state.mode = "playing";
+  state.nextAction = "none";
+  if (state.gameModeId === "survival") {
+    state.message = `Supervivencia activa: vidas ${state.survivalLives}.`;
+  } else {
+    state.message = `${state.roundLabel} en juego.`;
+  }
+  log(state, `Kickoff ${state.roundLabel}.`);
+};
+
+const concludeRound = (state, winner) => {
+  const score = `${state.score.you}-${state.score.cpu}`;
+  state.mode = "finished";
+  state.pendingRoundEnd = false;
+
+  if (state.gameModeId === "arcade") {
+    if (winner === "you") {
+      if (state.roundIndex + 1 >= ARCADE_ROUNDS) {
+        state.seriesOutcome = "won";
+        state.nextAction = "restart";
+        state.roundResult = "Arcade completado";
+        state.message = `Completaste Arcade. Marcador final ${score}.`;
+      } else {
+        state.roundIndex += 1;
+        state.nextAction = "next";
+        state.roundResult = "Ronda superada";
+        state.message = `Ganaste ${score}. Enter para el siguiente desafio.`;
+      }
+    } else {
+      state.seriesOutcome = "lost";
+      state.nextAction = "restart";
+      state.roundResult = winner === "draw" ? "Empate eliminado" : "Derrota";
+      state.message = winner === "draw"
+        ? `Empate ${score}. En Arcade el empate elimina.`
+        : `Perdiste ${score}. Reinicia el modo Arcade.`;
+    }
+    log(state, state.message);
+    return;
+  }
+
+  if (state.gameModeId === "survival") {
+    if (winner === "you") {
+      const bonus = state.roundElapsed <= 28 ? 2 : state.roundElapsed <= 44 ? 1 : 0;
+      state.survivalStreak += 1;
+      state.survivalBest = Math.max(state.survivalBest, state.survivalStreak);
+      state.survivalLives = clamp(state.survivalLives + bonus, 0, 20);
+      state.roundIndex += 1;
+      state.nextAction = "next";
+      state.roundResult = "Ronda de supervivencia superada";
+      state.message = `Victoria ${score}. Bonus vidas +${bonus}. Vidas ${state.survivalLives}.`;
+    } else {
+      state.survivalBest = Math.max(state.survivalBest, state.survivalStreak);
+      state.survivalStreak = 0;
+      state.seriesOutcome = "lost";
+      state.nextAction = "restart";
+      state.roundResult = "Supervivencia finalizada";
+      state.message = `Fin de supervivencia (${score}). Mejor racha ${state.survivalBest}.`;
+    }
+    log(state, state.message);
+    return;
+  }
+
+  if (state.gameModeId === "tournament") {
+    if (winner === "you") {
+      state.tournamentWins += 1;
+      if (state.roundIndex + 1 >= TOURNAMENT_ROUNDS.length) {
+        state.seriesOutcome = "won";
+        state.nextAction = "restart";
+        state.roundResult = "Torneo ganado";
+        state.message = `Campeon del torneo con ${score}.`;
+      } else {
+        state.roundIndex += 1;
+        state.nextAction = "next";
+        state.roundResult = "Fase superada";
+        state.message = `Avanzas en el torneo (${score}).`;
+      }
+    } else {
+      state.seriesOutcome = "lost";
+      state.nextAction = "restart";
+      state.roundResult = "Eliminado";
+      state.message = winner === "draw"
+        ? `Empate ${score}. Eliminado en torneo.`
+        : `Derrota ${score}. Quedas eliminado.`;
+    }
+    log(state, state.message);
+    return;
+  }
+
+  state.league.played += 1;
+  state.league.gf += state.score.you;
+  state.league.ga += state.score.cpu;
+  if (winner === "you") {
+    state.league.wins += 1;
+    state.league.points += 3;
+  } else if (winner === "draw") {
+    state.league.draws += 1;
+    state.league.points += 1;
+  } else {
+    state.league.losses += 1;
+  }
+
+  if (state.league.played >= LEAGUE_MATCHES) {
+    state.seriesOutcome = "completed";
+    state.nextAction = "restart";
+    state.roundResult = "Liga finalizada";
+    state.message = `Liga terminada con ${state.league.points} puntos.`;
+  } else {
+    state.roundIndex += 1;
+    state.nextAction = "next";
+    state.roundResult = "Jornada cerrada";
+    state.message = `Jornada cerrada (${score}). Puntos ${state.league.points}.`;
+  }
+  log(state, state.message);
 };
 
 const applyAbility = (state, actor, rival, emit) => {
@@ -383,12 +620,20 @@ const updateCpu = (state, dt) => {
   const ball = state.ball;
   const profile = DIFFICULTY[state.difficultyId] || DIFFICULTY.medium;
   const personality = CPU_PERSONALITY[state.cpuPersonalityId] || CPU_PERSONALITY.aggressive;
+  const modeBoostBase = state.gameModeId === "arcade"
+    ? 1 + state.roundIndex * 0.05
+    : state.gameModeId === "survival"
+      ? 1 + Math.min(state.roundIndex * 0.03, 0.28)
+      : state.gameModeId === "tournament"
+        ? 1 + state.roundIndex * 0.08
+        : 1 + state.roundIndex * 0.02;
+  const modeBoost = clamp(modeBoostBase, 0.86, 1.45);
   cpu.ai.react -= dt;
   if (cpu.ai.react > 0) return;
-  cpu.ai.react = profile.react * personality.reactMul;
+  cpu.ai.react = Math.max(0.05, (profile.react * personality.reactMul) / modeBoost);
 
   const prediction = ball.x + ball.vx * (personality.id === "technical" ? 0.22 : 0.13);
-  const tracked = prediction + rand(-profile.error * personality.errorMul, profile.error * personality.errorMul);
+  const tracked = prediction + rand(-(profile.error * personality.errorMul) / modeBoost, (profile.error * personality.errorMul) / modeBoost);
   const holdTarget = WIDTH * personality.holdLine;
   const targetX = personality.id === "defensive" && ball.x < WIDTH * 0.58
     ? holdTarget
@@ -396,39 +641,51 @@ const updateCpu = (state, dt) => {
 
   const delta = clamp(targetX, WIDTH * 0.5 + 32, WIDTH - 40) - cpu.x;
   cpu.ai.axis = Math.abs(delta) < 12 ? 0 : delta > 0 ? 1 : -1;
-  cpu.ai.jump = cpu.onGround && ball.y < cpu.y - 45 && Math.abs(ball.x - cpu.x) < 190 && Math.random() < profile.kick * personality.jumpMul;
-  cpu.ai.kick = Math.abs(ball.x - cpu.x) < 108 && ball.y > cpu.y - 130 && Math.random() < profile.kick * personality.kickMul;
-  cpu.ai.kickPower = clamp(personality.charge + rand(-0.12, 0.14), 0.12, 1);
-  cpu.ai.ability = cpu.abilityCd <= 0 && Math.random() < (0.03 + profile.kick * 0.05) * personality.abilityMul;
+  cpu.ai.jump = cpu.onGround && ball.y < cpu.y - 45 && Math.abs(ball.x - cpu.x) < 190 && Math.random() < clamp(profile.kick * personality.jumpMul * modeBoost, 0.05, 0.98);
+  cpu.ai.kick = Math.abs(ball.x - cpu.x) < 108 && ball.y > cpu.y - 130 && Math.random() < clamp(profile.kick * personality.kickMul * modeBoost, 0.05, 0.99);
+  cpu.ai.kickPower = clamp(personality.charge + rand(-0.12, 0.14) + (modeBoost - 1) * 0.16, 0.12, 1);
+  cpu.ai.ability = cpu.abilityCd <= 0 && Math.random() < clamp((0.03 + profile.kick * 0.05) * personality.abilityMul * modeBoost, 0.02, 0.32);
   cpu.ai.dashDir = 0;
-  if (cpu.dashCd <= 0 && Math.abs(delta) > 58 && Math.abs(delta) < 220 && Math.random() < personality.dashBias) {
+  if (cpu.dashCd <= 0 && Math.abs(delta) > 58 && Math.abs(delta) < 220 && Math.random() < clamp(personality.dashBias * modeBoost, 0.02, 0.35)) {
     cpu.ai.dashDir = delta > 0 ? 1 : -1;
   }
-  cpu.speed = 360 * profile.speed * (1 + state.momentum.right.stacks * 0.04);
+  cpu.speed = 360 * profile.speed * modeBoost * (1 + state.momentum.right.stacks * 0.04);
 };
 
 const step = (state, input, dt, emit) => {
   tickMomentum(state, dt);
+  const winnerByScore = () => (state.score.you > state.score.cpu ? "you" : state.score.cpu > state.score.you ? "cpu" : "draw");
+  const rules = modeRules(state);
 
   if (input.restart) {
-    startMatch(state);
+    resetModeProgress(state, state.gameModeId);
     emit("start");
   }
   if (state.mode === "start" && input.start) {
-    startMatch(state);
+    beginRound(state);
     emit("start");
   }
   if (state.mode === "finished") {
     if (input.start) {
-      startMatch(state);
+      if (state.nextAction === "next") {
+        configureRound(state, state.roundIndex);
+        beginRound(state);
+      } else {
+        resetModeProgress(state, state.gameModeId);
+      }
       emit("start");
     }
   }
   if (state.mode === "goal") {
     state.goalPause = Math.max(0, state.goalPause - dt);
     if (state.goalPause <= 0) {
-      if (state.timer <= 0 || state.score.you >= WIN_SCORE || state.score.cpu >= WIN_SCORE) {
-        state.mode = "finished";
+      if (state.pendingRoundEnd || (rules.timer > 0 && state.timer <= 0)) {
+        let winner = winnerByScore();
+        if (state.gameModeId === "survival" && state.survivalLives <= 0 && state.score.you < state.targetGoals) {
+          winner = "cpu";
+        }
+        concludeRound(state, winner);
+        emit("finish");
       } else {
         state.mode = "playing";
         resetKickoff(state, state.score.you >= state.score.cpu ? -1 : 1);
@@ -437,12 +694,14 @@ const step = (state, input, dt, emit) => {
   }
   if (state.mode !== "playing") return;
 
-  state.timer = Math.max(0, state.timer - dt);
-  if (state.timer <= 0) {
-    state.mode = "finished";
-    state.message = "Tiempo agotado.";
-    emit("finish");
-    return;
+  state.roundElapsed += dt;
+  if (rules.timer > 0) {
+    state.timer = Math.max(0, state.timer - dt);
+    if (state.timer <= 0) {
+      concludeRound(state, winnerByScore());
+      emit("finish");
+      return;
+    }
   }
 
   updateCpu(state, dt);
@@ -521,7 +780,12 @@ const step = (state, input, dt, emit) => {
       state.score.cpu += 1;
       pushMomentum(state, "right", 2);
       clearMomentum(state, "left");
-      state.message = `Gol CPU. Momentum x${state.momentum.right.stacks}.`;
+      if (state.gameModeId === "survival") {
+        state.survivalLives = Math.max(0, state.survivalLives - 1);
+        state.message = `Gol CPU. Vidas restantes ${state.survivalLives}.`;
+      } else {
+        state.message = `Gol CPU. Momentum x${state.momentum.right.stacks}.`;
+      }
       log(state, "CPU marca gol.");
     } else {
       state.score.you += 1;
@@ -529,6 +793,12 @@ const step = (state, input, dt, emit) => {
       clearMomentum(state, "right");
       state.message = `Gol YOU. Momentum x${state.momentum.left.stacks}.`;
       log(state, "YOU marca gol.");
+    }
+    const reachedCap = Number.isFinite(state.targetGoals)
+      && state.targetGoals < Number.POSITIVE_INFINITY
+      && (state.score.you >= state.targetGoals || state.score.cpu >= state.targetGoals);
+    if (reachedCap || (state.gameModeId === "survival" && state.survivalLives <= 0)) {
+      state.pendingRoundEnd = true;
     }
     particles(state, state.ball.x, state.ball.y, inLeft ? "#fb923c" : "#22c55e", 24, 1.5);
     emit("goal");
@@ -543,10 +813,24 @@ const snapshotOf = (state) => {
   const pChar = CHAR[state.player.characterId] || CHAR.blaze;
   const cChar = CHAR[state.cpu.characterId] || CHAR.frost;
   const cpuPersonality = CPU_PERSONALITY[state.cpuPersonalityId] || CPU_PERSONALITY.aggressive;
+  const gameMode = GAME_MODE[state.gameModeId] || GAME_MODE.arcade;
   return {
     mode: state.mode,
+    gameModeId: state.gameModeId,
+    gameModeLabel: gameMode.label,
+    nextAction: state.nextAction,
+    seriesOutcome: state.seriesOutcome,
+    roundResult: state.roundResult,
+    roundLabel: state.roundLabel,
+    roundObjective: state.roundObjective,
+    roundIndex: state.roundIndex,
+    roundTotal: state.roundTotal,
+    opponentName: state.opponentName,
+    opponentNation: state.opponentNation,
     score: { ...state.score },
     timer: Number(state.timer.toFixed(2)),
+    roundElapsed: Number(state.roundElapsed.toFixed(2)),
+    targetGoals: Number.isFinite(state.targetGoals) ? state.targetGoals : null,
     difficultyId: state.difficultyId,
     stadiumId: state.stadiumId,
     cpuPersonalityId: state.cpuPersonalityId,
@@ -564,6 +848,19 @@ const snapshotOf = (state) => {
     momentum: {
       you: { stacks: state.momentum.left.stacks, timer: Number(state.momentum.left.timer.toFixed(2)) },
       cpu: { stacks: state.momentum.right.stacks, timer: Number(state.momentum.right.timer.toFixed(2)) }
+    },
+    survival: {
+      lives: state.survivalLives,
+      streak: state.survivalStreak,
+      best: state.survivalBest
+    },
+    tournament: {
+      wins: state.tournamentWins,
+      rounds: TOURNAMENT_ROUNDS
+    },
+    league: {
+      ...state.league,
+      goalDiff: state.league.gf - state.league.ga
     },
     ball: { x: Number(state.ball.x.toFixed(2)), y: Number(state.ball.y.toFixed(2)), vx: Number(state.ball.vx.toFixed(2)), vy: Number(state.ball.vy.toFixed(2)), speed: Number(state.ball.speed.toFixed(2)), hot: state.ball.hotT > 0.05, lastTouch: state.ball.lastTouch },
     particles: state.particles.length,
@@ -645,14 +942,19 @@ function HeadSoccerGame() {
 
   const applyConfig = useCallback((changes) => {
     const state = stateRef.current;
-    if (changes.difficultyId) state.difficultyId = changes.difficultyId;
+    if (changes.gameModeId && changes.gameModeId !== state.gameModeId) {
+      resetModeProgress(state, changes.gameModeId);
+    }
+    if (changes.difficultyId && changes.difficultyId !== state.difficultyId) {
+      state.difficultyId = changes.difficultyId;
+      resetModeProgress(state, state.gameModeId);
+    }
     if (changes.stadiumId) state.stadiumId = changes.stadiumId;
     if (changes.playerCharacterId) {
       state.player.characterId = changes.playerCharacterId;
-      state.cpu.characterId = cpuCharacter(changes.playerCharacterId);
       state.player.abilityCd = 0;
       state.cpu.abilityCd = 0;
-      resetKickoff(state, 1);
+      configureRound(state, state.roundIndex);
       log(state, "Personaje cambiado.");
     }
     setSnapshot(snapshotOf(state));
@@ -717,43 +1019,142 @@ function HeadSoccerGame() {
       const state = stateRef.current;
       const theme = STADIUM[state.stadiumId] || STADIUM.day;
 
-      const sky = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+      const pitchTop = GROUND_Y - 118;
+
+      const sky = ctx.createLinearGradient(0, 0, 0, pitchTop - 34);
       sky.addColorStop(0, theme.skyA);
       sky.addColorStop(1, theme.skyB);
       ctx.fillStyle = sky;
-      ctx.fillRect(0, 0, WIDTH, GROUND_Y);
+      ctx.fillRect(0, 0, WIDTH, pitchTop - 34);
 
-      for (let i = 0; i < 38; i += 1) {
-        const x = 18 + i * 24;
-        const y = 258 + Math.sin(timestamp * 0.006 + i * 0.5) * 3;
-        ctx.fillStyle = i % 2 === 0 ? "#f59e0b" : "#2563eb";
-        ctx.fillRect(x, y, 10, 8);
+      for (let i = 0; i < 7; i += 1) {
+        const cloudX = 90 + i * 138 + Math.sin(timestamp * 0.00025 + i) * 9;
+        const cloudY = 26 + (i % 3) * 9;
+        ctx.fillStyle = "rgba(236, 253, 255, 0.78)";
+        ctx.beginPath();
+        ctx.arc(cloudX, cloudY, 20, 0, Math.PI * 2);
+        ctx.arc(cloudX + 18, cloudY + 4, 18, 0, Math.PI * 2);
+        ctx.arc(cloudX - 18, cloudY + 6, 14, 0, Math.PI * 2);
+        ctx.fill();
       }
 
+      ctx.fillStyle = "#475569";
+      ctx.fillRect(0, pitchTop - 194, WIDTH, 188);
+      ctx.fillStyle = "#334155";
+      ctx.fillRect(0, pitchTop - 142, WIDTH, 34);
+      ctx.fillRect(0, pitchTop - 94, WIDTH, 30);
+      ctx.fillStyle = "#1e293b";
+      ctx.fillRect(0, pitchTop - 6, WIDTH, 34);
+
+      for (let row = 0; row < 5; row += 1) {
+        const rowY = pitchTop - 176 + row * 34;
+        for (let i = 0; i < 28; i += 1) {
+          const x = 26 + i * 34 + (row % 2) * 10;
+          const y = rowY + Math.sin(timestamp * 0.003 + i * 0.35 + row) * 1.1;
+          ctx.fillStyle = "#111827";
+          ctx.fillRect(x - 10, y + 9, 20, 9);
+          const tone = (i + row) % 5;
+          ctx.fillStyle = tone === 0 ? "#22c55e" : tone === 1 ? "#60a5fa" : tone === 2 ? "#f59e0b" : tone === 3 ? "#e879f9" : "#f87171";
+          ctx.beginPath();
+          ctx.arc(x, y + 7, 6.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#f8fafc";
+          ctx.beginPath();
+          ctx.arc(x - 2.2, y + 6.4, 0.9, 0, Math.PI * 2);
+          ctx.arc(x + 2.2, y + 6.4, 0.9, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      const drawFloodlight = (x, flip = 1) => {
+        ctx.save();
+        ctx.translate(x, pitchTop - 14);
+        ctx.scale(flip, 1);
+        ctx.fillStyle = "#475569";
+        ctx.fillRect(-9, -6, 18, 58);
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(2, 8, 92, 12);
+        ctx.fillStyle = "#fef3c7";
+        for (let r = 0; r < 2; r += 1) {
+          for (let c = 0; c < 6; c += 1) {
+            ctx.beginPath();
+            ctx.arc(8 + c * 13, 14 + r * 8, 2.9, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        ctx.restore();
+      };
+      drawFloodlight(52, 1);
+      drawFloodlight(WIDTH - 52, -1);
+
+      const boardY = pitchTop - 24;
+      ctx.fillStyle = "#334155";
+      ctx.fillRect(0, boardY, WIDTH, 24);
+      ctx.fillStyle = "#ef4444";
+      ctx.fillRect(0, boardY + 6, WIDTH * 0.33, 12);
+      ctx.fillStyle = "#06b6d4";
+      ctx.fillRect(WIDTH * 0.33, boardY + 6, WIDTH * 0.34, 12);
+      ctx.fillStyle = "#ec4899";
+      ctx.fillRect(WIDTH * 0.67, boardY + 6, WIDTH * 0.33, 12);
+      ctx.fillStyle = "rgba(241,245,249,0.7)";
+      ctx.font = "700 10px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("HEAD SOCCER", WIDTH * 0.5, boardY + 16);
+
       ctx.fillStyle = theme.grassA;
+      ctx.fillRect(0, pitchTop, WIDTH, HEIGHT - pitchTop);
+      for (let i = 0; i < 12; i += 1) {
+        ctx.fillStyle = i % 2 === 0 ? "#16a34a" : "#22c55e";
+        ctx.fillRect(i * (WIDTH / 12), pitchTop, WIDTH / 12 + 2, 118);
+      }
+      ctx.fillStyle = "rgba(20, 83, 45, 0.88)";
       ctx.fillRect(0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y);
       for (let i = 0; i < 8; i += 1) {
-        ctx.fillStyle = i % 2 === 0 ? theme.grassA : theme.grassB;
+        ctx.fillStyle = i % 2 === 0 ? "#16a34a" : "#22c55e";
         ctx.fillRect(0, GROUND_Y + i * 9, WIDTH, 10);
       }
 
-      ctx.strokeStyle = "rgba(255,255,255,0.8)";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(30, GROUND_Y - 118, WIDTH - 60, 118);
+      ctx.strokeStyle = "rgba(255,255,255,0.85)";
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(30, pitchTop, WIDTH - 60, 118);
+      ctx.strokeRect(30, pitchTop + 54, 88, 64);
+      ctx.strokeRect(WIDTH - 118, pitchTop + 54, 88, 64);
+      ctx.strokeRect(30, pitchTop + 25, 152, 93);
+      ctx.strokeRect(WIDTH - 182, pitchTop + 25, 152, 93);
       ctx.beginPath();
       ctx.arc(WIDTH / 2, GROUND_Y, 58, Math.PI, Math.PI * 2);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(WIDTH / 2, GROUND_Y - 118);
+      ctx.arc(WIDTH / 2, pitchTop + 59, 6, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(WIDTH / 2, pitchTop);
       ctx.lineTo(WIDTH / 2, GROUND_Y);
       ctx.stroke();
 
       const drawGoal = (x) => {
-        ctx.fillStyle = "rgba(15,23,42,0.18)";
-        ctx.fillRect(x, GROUND_Y - GOAL_H, GOAL_W, GOAL_H);
+        ctx.fillStyle = "rgba(241,245,249,0.2)";
+        ctx.fillRect(x, pitchTop - 2, GOAL_W, GOAL_H);
         ctx.strokeStyle = "#e2e8f0";
         ctx.lineWidth = 3;
-        ctx.strokeRect(x, GROUND_Y - GOAL_H, GOAL_W, GOAL_H);
+        ctx.strokeRect(x, pitchTop - 2, GOAL_W, GOAL_H);
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.58)";
+        ctx.lineWidth = 1;
+        for (let i = 1; i < 7; i += 1) {
+          const gy = pitchTop - 2 + (GOAL_H / 7) * i;
+          ctx.beginPath();
+          ctx.moveTo(x, gy);
+          ctx.lineTo(x + GOAL_W, gy);
+          ctx.stroke();
+        }
+        for (let i = 1; i < 5; i += 1) {
+          const gx = x + (GOAL_W / 5) * i;
+          ctx.beginPath();
+          ctx.moveTo(gx, pitchTop - 2);
+          ctx.lineTo(gx, pitchTop - 2 + GOAL_H);
+          ctx.stroke();
+        }
       };
       drawGoal(20);
       drawGoal(WIDTH - GOAL_W - 20);
@@ -836,35 +1237,46 @@ function HeadSoccerGame() {
       });
       ctx.globalAlpha = 1;
 
+      const modeLabel = GAME_MODE[state.gameModeId]?.label || "Arcade";
+      const timerLabel = modeRules(state).timer > 0 ? `Tiempo ${Math.ceil(state.timer)}s` : "Sin reloj";
+
       ctx.fillStyle = "rgba(15,23,42,0.75)";
-      ctx.fillRect(WIDTH * 0.5 - 120, 18, 240, 92);
+      ctx.fillRect(WIDTH * 0.5 - 178, 18, 356, 106);
       ctx.fillStyle = "#f8fafc";
       ctx.textAlign = "center";
       ctx.font = "700 16px Outfit, sans-serif";
       ctx.fillText(`${state.score.you} : ${state.score.cpu}`, WIDTH * 0.5, 44);
       ctx.font = "600 12px Outfit, sans-serif";
-      ctx.fillText(`Tiempo ${Math.ceil(state.timer)}s`, WIDTH * 0.5, 62);
-      ctx.fillText(`${CPU_PERSONALITY[state.cpuPersonalityId]?.label || "Agresivo"}`, WIDTH * 0.5, 78);
+      ctx.fillText(timerLabel, WIDTH * 0.5, 62);
+      ctx.fillText(`${modeLabel} | ${state.roundLabel}`, WIDTH * 0.5, 78);
+      ctx.fillText(`Rival: ${state.opponentName}`, WIDTH * 0.5, 94);
       ctx.fillStyle = "rgba(241,245,249,0.26)";
-      ctx.fillRect(WIDTH * 0.5 - 102, 84, 84, 10);
-      ctx.fillRect(WIDTH * 0.5 + 18, 84, 84, 10);
+      ctx.fillRect(WIDTH * 0.5 - 102, 104, 84, 10);
+      ctx.fillRect(WIDTH * 0.5 + 18, 104, 84, 10);
       ctx.fillStyle = "#f97316";
-      ctx.fillRect(WIDTH * 0.5 - 102, 84, 84 * (state.momentum.left.stacks / MAX_MOMENTUM), 10);
+      ctx.fillRect(WIDTH * 0.5 - 102, 104, 84 * (state.momentum.left.stacks / MAX_MOMENTUM), 10);
       ctx.fillStyle = "#38bdf8";
-      ctx.fillRect(WIDTH * 0.5 + 18, 84, 84 * (state.momentum.right.stacks / MAX_MOMENTUM), 10);
+      ctx.fillRect(WIDTH * 0.5 + 18, 104, 84 * (state.momentum.right.stacks / MAX_MOMENTUM), 10);
+
+      if (state.gameModeId === "survival") {
+        ctx.fillStyle = "#fef3c7";
+        ctx.font = "700 12px Outfit, sans-serif";
+        ctx.fillText(`Vidas ${state.survivalLives} | Racha ${state.survivalStreak}`, WIDTH * 0.5, 122);
+      }
 
       if (state.mode === "start" || state.mode === "finished") {
         ctx.fillStyle = "rgba(2,6,23,0.58)";
-        ctx.fillRect(WIDTH * 0.5 - 245, HEIGHT * 0.5 - 84, 490, 168);
+        ctx.fillRect(WIDTH * 0.5 - 295, HEIGHT * 0.5 - 104, 590, 208);
         ctx.strokeStyle = "rgba(241,245,249,0.58)";
-        ctx.strokeRect(WIDTH * 0.5 - 245, HEIGHT * 0.5 - 84, 490, 168);
+        ctx.strokeRect(WIDTH * 0.5 - 295, HEIGHT * 0.5 - 104, 590, 208);
         ctx.fillStyle = "#f8fafc";
         ctx.font = "700 26px Bricolage Grotesque, sans-serif";
-        ctx.fillText(state.mode === "start" ? "Head Soccer Arena X" : "Partido finalizado", WIDTH * 0.5, HEIGHT * 0.5 - 30);
+        ctx.fillText(state.mode === "start" ? `${modeLabel} | ${state.roundLabel}` : (state.roundResult || "Partido finalizado"), WIDTH * 0.5, HEIGHT * 0.5 - 40);
         ctx.font = "600 14px Outfit, sans-serif";
-        ctx.fillText(state.message, WIDTH * 0.5, HEIGHT * 0.5 + 2);
-        ctx.fillText("Enter iniciar | Flechas mover/saltar | Space mantener/cargar tiro", WIDTH * 0.5, HEIGHT * 0.5 + 30);
-        ctx.fillText("Doble toque izquierda/derecha para dash | B habilidad", WIDTH * 0.5, HEIGHT * 0.5 + 50);
+        ctx.fillText(state.message, WIDTH * 0.5, HEIGHT * 0.5 - 10);
+        ctx.fillText(state.roundObjective, WIDTH * 0.5, HEIGHT * 0.5 + 14);
+        ctx.fillText("Enter iniciar/continuar | Flechas mover | Space cargar y soltar", WIDTH * 0.5, HEIGHT * 0.5 + 42);
+        ctx.fillText("Doble toque izquierda/derecha dash | B habilidad | R reiniciar modo", WIDTH * 0.5, HEIGHT * 0.5 + 62);
       }
     };
 
@@ -897,11 +1309,33 @@ function HeadSoccerGame() {
   const buildTextPayload = useCallback((current) => ({
     mode: "head_soccer_arcade",
     coordinates: "origin_top_left_x_right_y_down",
+    gameMode: {
+      id: current.gameModeId,
+      label: current.gameModeLabel
+    },
     status: current.mode,
+    nextAction: current.nextAction,
+    seriesOutcome: current.seriesOutcome,
+    round: {
+      index: current.roundIndex,
+      total: current.roundTotal,
+      label: current.roundLabel,
+      objective: current.roundObjective,
+      result: current.roundResult,
+      elapsed: current.roundElapsed
+    },
+    opponent: {
+      name: current.opponentName,
+      nation: current.opponentNation
+    },
     difficulty: current.difficultyId,
     stadium: current.stadiumId,
     score: current.score,
     timer: current.timer,
+    targetGoals: current.targetGoals,
+    survival: current.survival,
+    tournament: current.tournament,
+    league: current.league,
     cpuPersonality: { id: current.cpuPersonalityId, label: current.cpuPersonalityLabel },
     momentum: current.momentum,
     playerCharacter: { id: current.playerCharacterId, name: current.playerCharacterName, ability: current.playerAbilityLabel, cooldown: current.playerCooldown },
@@ -955,20 +1389,31 @@ function HeadSoccerGame() {
     audioRef.current?.play("dash");
   };
 
+  const actionLabel = snapshot.mode === "finished"
+    ? snapshot.nextAction === "next" ? "Siguiente ronda" : "Nueva serie"
+    : snapshot.mode === "start" ? "Iniciar ronda" : "Continue";
+  const modeConfig = GAME_MODE[snapshot.gameModeId] || GAME_MODE.arcade;
+  const timerLabel = modeConfig.timer > 0 ? `${Math.ceil(snapshot.timer)}s` : "Sin limite";
+
   return (
     <div className="mini-game head-soccer-game">
       <div className="mini-head">
         <div>
           <h4>Head Soccer Arena X</h4>
-          <p>Futbol 1v1 arcade con dash, tiro cargado, momentum e IA con personalidad.</p>
+          <p>Futbol 1v1 arcade con progresion profunda: Arcade, Supervivencia, Torneo y Liga.</p>
         </div>
         <div className="head-soccer-actions">
-          <button type="button" onClick={() => { inputRef.current.start = true; audioRef.current?.play("start"); }}>{snapshot.mode === "start" ? "Start match" : "Continue"}</button>
-          <button type="button" onClick={() => { inputRef.current.restart = true; audioRef.current?.play("start"); }}>Restart</button>
+          <button type="button" onClick={() => { inputRef.current.start = true; audioRef.current?.play("start"); }}>{actionLabel}</button>
+          <button type="button" onClick={() => { inputRef.current.restart = true; audioRef.current?.play("start"); }}>Restart mode</button>
         </div>
       </div>
 
       <div className="head-soccer-config">
+        <label htmlFor="hs-mode">Modo
+          <select id="hs-mode" value={snapshot.gameModeId} onChange={(event) => applyConfig({ gameModeId: event.target.value })}>
+            {Object.values(GAME_MODE).map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+          </select>
+        </label>
         <label htmlFor="hs-character">Personaje
           <select id="hs-character" value={snapshot.playerCharacterId} onChange={(event) => applyConfig({ playerCharacterId: event.target.value })}>
             {Object.values(CHAR).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
@@ -986,10 +1431,48 @@ function HeadSoccerGame() {
         </label>
       </div>
 
+      <div className="head-soccer-mode-board">
+        <div className="head-soccer-mode-head">
+          <span className={`head-mode-chip ${snapshot.gameModeId}`}>{snapshot.gameModeLabel}</span>
+          <strong>{snapshot.roundLabel}</strong>
+          <span className="head-opponent-tag">{snapshot.opponentName} ({snapshot.opponentNation})</span>
+        </div>
+        <p>{snapshot.roundObjective}</p>
+        {snapshot.gameModeId === "arcade" && (
+          <div className="head-soccer-mode-stats">
+            <span>Progreso: {snapshot.roundIndex + 1}/{snapshot.roundTotal}</span>
+            <span>Estado: {snapshot.seriesOutcome}</span>
+          </div>
+        )}
+        {snapshot.gameModeId === "survival" && (
+          <div className="head-soccer-mode-stats">
+            <span>Vidas: {snapshot.survival.lives}</span>
+            <span>Racha: {snapshot.survival.streak}</span>
+            <span>Mejor: {snapshot.survival.best}</span>
+          </div>
+        )}
+        {snapshot.gameModeId === "tournament" && (
+          <div className="head-soccer-mode-stats">
+            <span>Fase: {snapshot.roundLabel}</span>
+            <span>Rondas ganadas: {snapshot.tournament.wins}/{snapshot.tournament.rounds.length}</span>
+            <span>Estado: {snapshot.seriesOutcome}</span>
+          </div>
+        )}
+        {snapshot.gameModeId === "league" && (
+          <div className="head-soccer-mode-stats">
+            <span>PJ {snapshot.league.played}</span>
+            <span>G {snapshot.league.wins} E {snapshot.league.draws} P {snapshot.league.losses}</span>
+            <span>GF {snapshot.league.gf} GC {snapshot.league.ga}</span>
+            <span>Pts {snapshot.league.points}</span>
+          </div>
+        )}
+      </div>
+
       <div className="status-row">
         <span className={`status-pill ${snapshot.mode}`}>{snapshot.mode}</span>
+        <span>Modo: {snapshot.gameModeLabel}</span>
         <span>Marcador: {snapshot.score.you} - {snapshot.score.cpu}</span>
-        <span>Tiempo: {Math.ceil(snapshot.timer)}s</span>
+        <span>Tiempo: {timerLabel}</span>
         <span>CPU IA: {snapshot.cpuPersonalityLabel}</span>
         <span>Momentum: YOU {snapshot.momentum.you.stacks} | CPU {snapshot.momentum.cpu.stacks}</span>
       </div>
@@ -1016,6 +1499,13 @@ function HeadSoccerGame() {
           <div className="meter-track"><span className="meter-fill enemy" style={{ width: `${momentumCpuPercent}%` }} /></div>
           <strong>{snapshot.momentum.you.stacks} / {snapshot.momentum.cpu.stacks}</strong>
         </div>
+        {snapshot.gameModeId === "survival" && (
+          <div className="meter-line compact">
+            <p>Vidas supervivencia</p>
+            <div className="meter-track"><span className="meter-fill action" style={{ width: `${clamp(snapshot.survival.lives * 12, 0, 100)}%` }} /></div>
+            <strong>{snapshot.survival.lives}</strong>
+          </div>
+        )}
       </div>
 
       <div className="phaser-canvas-shell">
@@ -1034,7 +1524,7 @@ function HeadSoccerGame() {
       </div>
 
       <p className="game-message">
-        {snapshot.message} Controles: flechas izquierda/derecha, flecha arriba para salto, Space mantener para cargar tiro y soltar para disparar, doble toque izquierda/derecha para dash, B para habilidad, Enter para iniciar.
+        {snapshot.message} Controles: flechas izquierda/derecha, flecha arriba para salto, Space mantener para cargar tiro y soltar para disparar, doble toque izquierda/derecha para dash, B para habilidad, Enter para iniciar o avanzar de ronda y R para reiniciar modo.
       </p>
       <ul className="game-log">
         {snapshot.logs.map((entry, index) => <li key={`${entry}-${index}`}>{entry}</li>)}

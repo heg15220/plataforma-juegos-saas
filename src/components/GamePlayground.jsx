@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useMemo } from "react";
+﻿import React, { Suspense, lazy, useMemo } from "react";
 import AdventureGame from "../games/AdventureGame";
 import ActionGame from "../games/ActionGame";
 import RacingGame from "../games/RacingGame";
@@ -8,6 +8,7 @@ import RpgGame from "../games/RpgGame";
 import HeadSoccerGame from "../games/HeadSoccerGame";
 import PacmanGame from "../games/PacmanGame";
 import MinesweeperGame from "../games/MinesweeperGame";
+import RhythmPlatformerGame from "../games/RhythmPlatformerGame";
 import ChessGame from "../games/ChessGame";
 import DominoStrategyGame from "../games/DominoStrategyGame";
 import PokerTexasHoldemGame from "../games/PokerTexasHoldemGame";
@@ -46,6 +47,7 @@ const GAME_COMPONENTS = {
   "sports-head-soccer-arena": HeadSoccerGame,
   "arcade-pacman-maze-protocol": PacmanGame,
   "arcade-buscaminas-classic": MinesweeperGame,
+  "arcade-pulse-prism-runner": RhythmPlatformerGame,
   "racing-race2dpro": RaceGame2DPro,
 };
 
@@ -72,7 +74,8 @@ const CONTROL_HINTS_BY_LOCALE = {
     "sports-head-soccer-arena": "Flechas izquierda/derecha para mover, arriba para salto, Space para disparo y B para habilidad.",
     "arcade-pacman-maze-protocol": "WASD o flechas para mover, Enter/Espacio para empezar, P/Esc para pausa, R reinicia, M sonido y G debug.",
     "arcade-buscaminas-classic": "Click izq abre, click der o pulsacion larga marca bandera. Flechas mueven cursor, Enter/Espacio abre, F marca, H sugiere IA, A ejecuta IA, R reinicia. En competitivo puntuan celdas + tiempo.",
-    "racing-race2dpro": "Arriba/abajo acelerar/frenar, izq/der girar. Móvil: joystick táctil izq. + botones der. Espacio turbo. R reinicia."
+    "racing-race2dpro": "Arriba/abajo acelerar/frenar, izq/der girar. MÃ³vil: joystick tÃ¡ctil izq. + botones der. Espacio turbo. R reinicia.",
+    "arcade-pulse-prism-runner": "Espacio/arriba salta, E activa Pulse Burst, Enter inicia/reinicia, P pausa, F pantalla completa y O audio."
   },
   en: {
     "adventure-echoes": "Move with WASD/arrows plus search, scan, rations, beacon and jump (B).",
@@ -96,7 +99,8 @@ const CONTROL_HINTS_BY_LOCALE = {
     "sports-head-soccer-arena": "Left/right arrows move, up jumps, Space shoots and B triggers skill.",
     "arcade-pacman-maze-protocol": "Use arrows or WASD to move, Enter/Space to start, P/Esc to pause, R restart, M sound and G debug.",
     "arcade-buscaminas-classic": "Left click reveals, right click or long press marks. Arrows move cursor, Enter/Space reveals, F marks, H asks AI hint, A runs AI move, R restarts. Competitive mode scores cells + time.",
-    "racing-race2dpro": "Up/down throttle/brake, left/right steer. Mobile: left touch joystick + right buttons. Space turbo. R restart."
+    "racing-race2dpro": "Up/down throttle/brake, left/right steer. Mobile: left touch joystick + right buttons. Space turbo. R restart.",
+    "arcade-pulse-prism-runner": "Space/up jumps, E triggers Pulse Burst, Enter starts/restarts, P pauses, F fullscreen, O audio."
   }
 };
 
@@ -153,3 +157,4 @@ function GamePlayground({ game }) {
 }
 
 export default GamePlayground;
+
