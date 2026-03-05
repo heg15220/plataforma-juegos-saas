@@ -10,7 +10,6 @@ import headSoccerArenaImage from "../assets/games/head-soccer-arena.svg";
 import pacmanMazeProtocolImage from "../assets/games/pacman-maze-protocol.svg";
 import pongNeonArenaImage from "../assets/games/pong-neon-arena.svg";
 import arcadeBuscaminasClassicImage from "../assets/games/arcade-buscaminas-classic.svg";
-import arcadePulsePrismRunnerImage from "../assets/games/arcade-pulse-prism-runner.svg";
 import knowledgeSudokuImage from "../assets/games/knowledge-sudoku.svg";
 import knowledgeDominoImage from "../assets/games/knowledge-domino.svg";
 import knowledgeAhorcadoImage from "../assets/games/knowledge-ahorcado.svg";
@@ -372,51 +371,6 @@ export const games = [
     viability_en: "High: deterministic grid engine, compact state and incremental deduction.",
     visualStyle_en: "Premium panel with clean grid, high-contrast numbers and state feedback.",
     techFocus_en: "Safe mine generation, empty-cell flood fill and tiered AI solver.",
-  },
-
-  {
-    id: "arcade-pulse-prism-runner",
-    image: arcadePulsePrismRunnerImage,
-    sessionTime: "3-7 min",
-
-    title: "Pulse Prism Runner",
-    category: "Arcade",
-    tagline: "Plataformas de accion ritmica lateral con arte, audio y reglas 100% originales.",
-    description:
-      "Runner lateral original inspirado en juegos ritmicos: el avatar avanza de forma automatica, salta al pulso del beat y activa una rafaga de energia para destruir obstaculos cercanos. Incluye musica sintetizada en tiempo real (sin pistas externas), arte propio y telemetria QA determinista.",
-    objective_es: "Llega al final del circuito evitando obstaculos, sincronizando saltos al ritmo y gestionando carga de rafaga.",
-    howToPlay_es: "Espacio/Arriba salta, E activa Pulse Burst, Enter inicia o reinicia, P pausa, F pantalla completa y O activa o desactiva audio.",
-    highlights: [
-      "Side-scroller ritmico con avance automatico y timing de salto por ventana de beat.",
-      "Bonus PERFECT por sincronizacion exacta y sistema de combo/progreso.",
-      "Pulse Burst ofensivo para destruir obstaculos cuando hay carga disponible.",
-      "Audio procedural con Web Audio API (original, sin uso de musica de terceros).",
-      "Bridge QA con render_game_to_text y advanceTime para pruebas repetibles.",
-    ],
-    difficulty: "Media-Alta",
-    multiplayer: "Solo",
-    viability: "Alta: canvas 2D ligero con estado compacto y loop fijo para automatizacion.",
-    visualStyle: "Neon organico con prismas, orbes de energia y escenario lateral multicapa.",
-    techFocus: "Integracion ritmo + plataformas + accion con scoring por timing y colisiones deterministas.",
-
-    category_en: "Arcade",
-    tagline_en: "Rhythm-action side-scrolling platformer with fully original art, audio and rules.",
-    description_en:
-      "An original side-scrolling rhythm runner: the avatar auto-runs, jumps on beat windows, and triggers an energy burst to remove nearby obstacles. It ships with real-time synthesized audio (no external tracks), custom visuals, and deterministic QA telemetry.",
-    objective_en: "Reach the end of the track while avoiding obstacles, timing jumps to the beat and managing burst charge.",
-    howToPlay_en: "Space/Up jumps, E triggers Pulse Burst, Enter starts/restarts, P pauses, F toggles fullscreen, and O toggles audio.",
-    highlights_en: [
-      "Rhythm side-scroller with auto-run and beat-window jump timing.",
-      "PERFECT timing bonus with combo and progression scoring.",
-      "Offensive Pulse Burst to clear obstacles when charge is available.",
-      "Procedural Web Audio soundtrack (original, no third-party music usage).",
-      "QA bridge with render_game_to_text and advanceTime for deterministic automation.",
-    ],
-    difficulty_en: "Medium-High",
-    multiplayer_en: "Solo",
-    viability_en: "High: lightweight 2D canvas loop with compact deterministic state.",
-    visualStyle_en: "Organic neon world with prism obstacles, energy orbs and layered side-scroll scenery.",
-    techFocus_en: "Rhythm + platforming + action integration with timing-based scoring and deterministic collisions.",
   },
 
   // ── Sports ─────────────────────────────────────────────────────────────────
@@ -817,18 +771,18 @@ export const games = [
     image: knowledgeCrucigramaImage,
     sessionTime: "4-9 min",
 
-    title: "Crucigrama Mini",
+    title: "Crucigrama Pro",
     category: "Conocimiento",
-    tagline: "Crucigrama compacto con pistas horizontales y verticales.",
+    tagline: "Crucigrama dinamico con mas de 10.000 partidas y selector de longitud maxima.",
     description:
-      "Rellena una rejilla de crucigrama mini siguiendo pistas. El juego valida progreso y permite comprobar resultados en cualquier momento.",
-    objective_es: "Rellena toda la rejilla del crucigrama usando las pistas horizontales y verticales.",
-    howToPlay_es: "Flechas para navegar, letras para escribir, Backspace para borrar, Enter para comprobar. Usa el botón de nueva partida para cambiar el puzle.",
+      "Rellena una rejilla dinamica de crucigrama con pistas naturales. El juego permite elegir longitud maxima de palabra (6-10), valida progreso y mantiene partidas deterministas para rejugar.",
+    objective_es: "Completa la rejilla usando pistas horizontales y verticales, ajustando la longitud maxima segun el reto deseado.",
+    howToPlay_es: "Selecciona la longitud maxima en el desplegable, usa flechas para navegar, escribe letras, Backspace para borrar y Enter para comprobar. El boton de nueva partida carga otro tablero.",
     highlights: [
-      "Casillas bloqueadas y selección activa visible.",
-      "Escritura por teclado con retroceso y desplazamiento.",
-      "Botón de comprobación para detectar errores.",
-      "Bridge QA con rejilla editable completa.",
+      "Mas de 10.000 partidas por idioma con generacion determinista.",
+      "Selector de longitud maxima (6-10) con palabras mixtas por partida.",
+      "Pistas variadas por estilo y dificultad para evitar repeticion.",
+      "Bridge QA con rejilla editable completa y estado serializado.",
     ],
     difficulty: "Media",
     multiplayer: "Solo",
@@ -837,16 +791,16 @@ export const games = [
     techFocus: "Edición celda a celda, navegación por flechas y comprobación de solución.",
 
     category_en: "Knowledge",
-    tagline_en: "Compact crossword with horizontal and vertical clues.",
+    tagline_en: "Dynamic crossword with 10k+ matches and max-length selector.",
     description_en:
-      "Fill a mini crossword grid following clues. The game validates progress and allows checking results at any time.",
-    objective_en: "Fill the entire crossword grid using the horizontal and vertical clues.",
-    howToPlay_en: "Arrows to navigate, letters to type, Backspace to clear, Enter to check. Use the new game button to change the puzzle.",
+      "Fill a dynamic crossword grid with natural clues. You can choose max word length (6-10), keep deterministic replayability, and check progress at any time.",
+    objective_en: "Complete the grid using across and down clues while tuning the max word length for your preferred challenge.",
+    howToPlay_en: "Pick max length from the dropdown, use arrows to navigate, type letters, Backspace to clear, and Enter to check. The random button loads another board.",
     highlights_en: [
-      "Blocked cells and visible active selection.",
-      "Keyboard typing with backspace and scroll.",
-      "Check button to detect errors.",
-      "QA bridge with full editable grid.",
+      "10k+ deterministic matches per locale.",
+      "Max-length selector (6-10) with mixed word lengths per board.",
+      "Varied clue styles by grammar and difficulty.",
+      "QA bridge with full editable grid and serialized state.",
     ],
     difficulty_en: "Medium",
     multiplayer_en: "Solo",

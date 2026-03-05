@@ -1504,3 +1504,92 @@
 - Cambiar sprites de jugador/cabeza por atlas pixel-art (actualmente figuras geometricas) para acercar aun mas el look de referencia.
 - Añadir boton de pausa funcional en HUD superior (actualmente solo estilo de marcador/entorno).
 - Revalidar `npm run build` cuando el entorno permita ejecucion fuera de sandbox sin interrupcion.
+
+## 2026-03-05 - Rebuild crucigrama desde cero (fase implementacion)
+- Reescrito `src/games/knowledge/crosswordGenerator.js` con motor nuevo:
+  - contador propio `CROSSWORD_MATCH_COUNT = 12048` (>10k), independiente del resto de minijuegos.
+  - selector de longitud maxima soportado en generacion (`6..10`).
+  - rejilla coherente con longitudes mixtas por partida (slots diferentes en el mismo tablero).
+  - incorporado lexico extendido para 9-10 letras y metadatos de catalogo (`CROSSWORD_LEXICON_META`).
+- Integrado motor de pistas "prompt-driven" en el generador con estilos variados (indirecta, contexto, metafora, pregunta, cultura, sinonimo indirecto, juego conceptual), adaptacion por dificultad y bloqueo de pistas que revelen la palabra.
+- Reescrito `src/games/knowledge/CrosswordKnowledgeGame.jsx`:
+  - nuevo desplegable de longitud maxima 6-10.
+  - nueva UX de cabecera + estado con max seleccionada.
+  - reinicio aleatorio respetando la longitud seleccionada.
+  - payload `render_game_to_text` actualizado con `maxWordLength` y total de partidas del crucigrama.
+- Ajustados textos de producto/control:
+  - `src/data/games.js` (descripcion del crucigrama actualizado a modo pro 10k+).
+  - `src/components/GamePlayground.jsx` (hint de controles actualizado con selector max).
+- Estilos nuevos para selector del crucigrama en `src/styles.css`.
+- Pendiente inmediato: ejecutar tests/build, correr Playwright del crucigrama y revisar screenshots/estado/errores de consola.
+
+## 2026-03-05 - Rebuild crucigrama (validacion)
+- Test unitario especifico ejecutado: `npm run test -- src/games/knowledge/crosswordGenerator.test.js` (OK, 3/3).
+- Build de produccion ejecutado: `npm run build` (OK).
+- Validacion Playwright del crucigrama rehecho:
+  - URL validada: `http://127.0.0.1:4173/#game=knowledge-crucigrama-mini`.
+  - Artefactos principales:
+    - `output/knowledge-crucigrama-max10-selector/shot-0.png`
+    - `output/knowledge-crucigrama-max10-selector/shot-1.png`
+    - `output/knowledge-crucigrama-max10-selector/state-0.json`
+    - `output/knowledge-crucigrama-max10-selector/state-1.json`
+  - Confirmado en estado serializado: `match.total = 12048` y `maxWordLength = 10` al seleccionar "Hasta 10 letras".
+  - Capturas revisadas manualmente: selector visible, tablero 10x10, pistas renderizadas, escritura/check funcionando.
+- Pendiente opcional futuro: ampliar lexico de 10 letras en ES para aumentar diversidad semantica en niveles maximos.
+- 2026-03-05 (ajuste posterior): se sustituyeron las pistas del estilo de frase incompleta por plantillas directas solicitadas:
+  - "Se dice de algo que ..."
+  - "Persona que ..."
+  - "Objeto usado para ..."
+  Archivo: `src/games/knowledge/crosswordGenerator.js`.
+  Validacion: `npm run test -- src/games/knowledge/crosswordGenerator.test.js` OK (3/3).
+
+## 2026-03-05 - Crucigrama: personalizacion real de plantillas fijas de pistas
+- Ajustado `src/games/knowledge/crosswordGenerator.js` para que el estilo `incomplete_phrase` mantenga exactamente los inicios:
+  - `Se dice de algo que ...`
+  - `Persona que ...`
+  - `Objeto usado para ...`
+- Nuevo pipeline de personalizacion por palabra en esas plantillas usando analisis de `word + pos + definition + synonyms`:
+  - limpieza de conceptos heredados (`concepto relacionado con ...`, etc.),
+  - seleccion de ancla semantica por entrada,
+  - continuaciones distintas segun categoria gramatical (noun/verb/adjective/adverb).
+- Evitado el formato generico no natural (ejemplo anterior: `Persona que amapola`).
+- Test nuevo en `src/games/knowledge/crosswordGenerator.test.js` para validar que las pistas `incomplete_phrase`:
+  - respetan una de las 3 plantillas fijas,
+  - incluyen continuaciones personalizadas (no vacias ni triviales).
+
+### Validacion
+- `npm run test -- src/games/knowledge/crosswordGenerator.test.js` -> OK (4 tests).
+- `npm run build` -> OK.
+- Ronda Playwright de regresion crucigrama:
+  - `output/knowledge-crucigrama-clues-personalized/shot-0.png`
+  - `output/knowledge-crucigrama-clues-personalized/shot-1.png`
+  - `output/knowledge-crucigrama-clues-personalized/state-0.json`
+  - `output/knowledge-crucigrama-clues-personalized/state-1.json`
+- Verificado en estado generado ejemplo de pista personalizada con plantilla fija:
+  - `Se dice de algo que se asocia de forma natural con gallardete.`
+
+## 2026-03-06 - Crucigrama: plantillas fijas tambien en ingles
+- `src/games/knowledge/crosswordGenerator.js` actualizado para `incomplete_phrase` en `en` con las tres plantillas fijas:
+  - `It is said of something that ...`
+  - `Person who ...`
+  - `Object used to ...`
+- Anadida personalizacion por palabra en ingles (analisis de `word + pos + definition + synonyms`) para evitar continuaciones genericas.
+- Se incorporaron helpers de limpieza/ancla semantica en ingles y fallback segun categoria gramatical.
+
+### Validacion
+- `npm run test -- src/games/knowledge/crosswordGenerator.test.js` -> OK (5 tests).
+- `npm run build` -> OK.
+
+## 2026-03-06 - Eliminacion de Pulse Prism Runner
+- Eliminado `arcade-pulse-prism-runner` del catalogo y del playground:
+  - `src/data/games.js`
+  - `src/components/GamePlayground.jsx`
+  - `src/games/registry.jsx`
+- Eliminado el motor y sus recursos:
+  - `src/games/RhythmPlatformerGame.jsx`
+  - `src/games/rhythm-platformer/` (carpeta completa)
+  - `src/assets/games/arcade-pulse-prism-runner.svg`
+- Limpiados artefactos relacionados (acciones Playwright y salidas `output/*` del juego).
+- Limpiado CSS global relacionado en `src/styles.css`.
+- Verificacion final: no quedan referencias textuales a `arcade-pulse-prism-runner`, `Pulse Prism Runner`, `RhythmPlatformerGame` ni `rhythm-platformer` en el repo.
+- Build validado: `npm run build` OK.

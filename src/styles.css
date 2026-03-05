@@ -2429,6 +2429,39 @@ body {
     linear-gradient(160deg, #2f1f12 0%, #3d2816 100%);
 }
 
+.crossword-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.44rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.crossword-length-select {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 150px;
+}
+
+.crossword-length-select span {
+  color: #ffedd5;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.crossword-length-select select {
+  border: 1px solid rgba(251, 191, 36, 0.48);
+  border-radius: 9px;
+  background: linear-gradient(130deg, rgba(15, 23, 42, 0.74), rgba(30, 41, 59, 0.84));
+  color: #e8f2ff;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.42rem 0.52rem;
+}
+
 .knowledge-arcade-game.knowledge-sopa-letras {
   background:
     radial-gradient(circle at 88% -22%, rgba(125, 211, 252, 0.28), transparent 52%),
@@ -5353,131 +5386,6 @@ body {
   color: #1f446f;
 }
 
-/* Pulse Prism Runner */
-.rhythm-platformer-game {
-  border-color: rgba(45, 212, 191, 0.28);
-  background:
-    radial-gradient(circle at 86% -20%, rgba(34, 211, 238, 0.2), transparent 42%),
-    radial-gradient(circle at 12% 118%, rgba(134, 239, 172, 0.15), transparent 45%),
-    linear-gradient(165deg, #ecfeff 0%, #f0fdfa 100%);
-}
-
-.rhythm-platformer-game .mini-head h4 {
-  color: #0f766e;
-  letter-spacing: 0.01em;
-}
-
-.rhythm-platformer-game .mini-head p {
-  color: #134e4a;
-}
-
-.rhythm-runner-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.42rem;
-  margin-top: 0.45rem;
-}
-
-.rhythm-runner-toolbar button,
-.rhythm-runner-touch-controls button {
-  border: 1px solid rgba(20, 184, 166, 0.35);
-  border-radius: 10px;
-  background: rgba(248, 250, 252, 0.88);
-  color: #0f172a;
-  font-family: inherit;
-  font-size: 0.73rem;
-  font-weight: 700;
-  padding: 0.38rem 0.7rem;
-  cursor: pointer;
-  transition: transform 110ms ease, border-color 110ms ease, background 110ms ease;
-}
-
-.rhythm-runner-toolbar button:hover,
-.rhythm-runner-touch-controls button:hover {
-  transform: translateY(-1px);
-  border-color: rgba(13, 148, 136, 0.65);
-  background: #f8fafc;
-}
-
-.rhythm-runner-toolbar button:disabled {
-  cursor: default;
-  opacity: 0.56;
-  transform: none;
-}
-
-.rhythm-runner-hud {
-  margin-top: 0.58rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 0.42rem;
-}
-
-.rhythm-runner-hud > div {
-  border: 1px solid rgba(45, 212, 191, 0.28);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 0.36rem 0.45rem;
-  display: grid;
-  gap: 0.12rem;
-}
-
-.rhythm-runner-hud span {
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #0f766e;
-  font-weight: 700;
-}
-
-.rhythm-runner-hud strong {
-  font-size: 0.88rem;
-  color: #0f172a;
-  font-variant-numeric: tabular-nums;
-}
-
-.rhythm-runner-stage-shell {
-  margin-top: 0.62rem;
-  border-color: rgba(20, 184, 166, 0.34);
-  background:
-    linear-gradient(165deg, rgba(6, 78, 59, 0.08), rgba(15, 118, 110, 0.03));
-}
-
-.rhythm-runner-stage-shell canvas {
-  width: min(100%, 960px);
-  height: auto;
-  border-radius: 8px;
-  background: #0f172a;
-}
-
-.rhythm-runner-status {
-  margin: 0.54rem 0 0;
-  font-size: 0.75rem;
-  color: #134e4a;
-}
-
-.rhythm-runner-status.mode-won {
-  color: #166534;
-  font-weight: 700;
-}
-
-.rhythm-runner-status.mode-lost {
-  color: #b91c1c;
-  font-weight: 700;
-}
-
-.rhythm-runner-touch-controls {
-  margin-top: 0.48rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.42rem;
-}
-
-.rhythm-runner-help {
-  margin-top: 0.52rem;
-  font-size: 0.71rem;
-  color: #134e4a;
-}
-
 @media (min-width: 720px) and (max-width: 959px) {
   .games-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5566,6 +5474,15 @@ body {
 
   .crossword-toolbar {
     grid-template-columns: 1fr;
+  }
+
+  .crossword-head-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .crossword-length-select {
+    width: 100%;
   }
 
   .crossword-layout {

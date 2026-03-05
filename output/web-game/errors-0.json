@@ -1,6 +1,0 @@
-[
-  {
-    "type": "console.error",
-    "text": "Warning: Received NaN for the `%s` attribute. If this is expected, cast the value to a string.%s children \n    at div\n    at article\n    at div\n    at section\n    at div\n    at div\n    at div\n    at RhythmPlatformerGame (http://127.0.0.1:4173/src/games/RhythmPlatformerGame.jsx:255:21)\n    at Suspense\n    at section\n    at div\n    at div\n    at GameLaunchModal (http://127.0.0.1:4173/src/components/GameLaunchModal.jsx?t=1772715281172:4:28)\n    at App (http://127.0.0.1:4173/src/App.jsx?t=1772715281172:14:25)"
-  }
-]

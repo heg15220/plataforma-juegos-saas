@@ -1,4 +1,4 @@
-﻿import React, { Suspense, lazy, useMemo } from "react";
+import React, { Suspense, lazy, useMemo } from "react";
 import AdventureGame from "../games/AdventureGame";
 import ActionGame from "../games/ActionGame";
 import RacingGame from "../games/RacingGame";
@@ -8,7 +8,6 @@ import RpgGame from "../games/RpgGame";
 import HeadSoccerGame from "../games/HeadSoccerGame";
 import PacmanGame from "../games/PacmanGame";
 import MinesweeperGame from "../games/MinesweeperGame";
-import RhythmPlatformerGame from "../games/RhythmPlatformerGame";
 import ChessGame from "../games/ChessGame";
 import DominoStrategyGame from "../games/DominoStrategyGame";
 import PokerTexasHoldemGame from "../games/PokerTexasHoldemGame";
@@ -47,7 +46,6 @@ const GAME_COMPONENTS = {
   "sports-head-soccer-arena": HeadSoccerGame,
   "arcade-pacman-maze-protocol": PacmanGame,
   "arcade-buscaminas-classic": MinesweeperGame,
-  "arcade-pulse-prism-runner": RhythmPlatformerGame,
   "racing-race2dpro": RaceGame2DPro,
 };
 
@@ -63,7 +61,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-ahorcado-flash": "Escribe letras para adivinar y, al terminar, usa Enter o el boton de partida aleatoria.",
     "knowledge-paciencia-lite": "D roba, A selecciona descarte, Q/W/E/R columnas, flechas cambian destino, Enter/Espacio mueven y P lanza partida aleatoria.",
     "knowledge-puzle-deslizante": "Usa flechas para mover el hueco o pulsa fichas adyacentes. R carga partida aleatoria.",
-    "knowledge-crucigrama-mini": "Flechas para navegar, letras para escribir, Backspace para borrar, Enter para comprobar y boton de partida aleatoria.",
+    "knowledge-crucigrama-mini": "Selecciona longitud maxima (6-10), flechas para navegar, letras para escribir, Backspace para borrar, Enter para comprobar y boton de partida aleatoria.",
     "knowledge-sopa-letras-mega": "Arrastra o marca inicio-fin para seleccionar palabras en horizontal, vertical o diagonal (tambien al reves). R carga partida aleatoria.",
     "strategy-chess-grandmaster": "Clic para mover, promocion al coronar, U deshace, D reclama tablas y F alterna pantalla completa.",
     "strategy-poker-holdem-no-bet": "Poker clasico 5 cartas con apuestas reales: ciegas, bote y acciones call/raise/fold/all-in. Enter accion principal, U subir, A all-in, F retirarse, 1-5 seleccionar descarte, D descartar, S servirse, N siguiente mano y R reiniciar.",
@@ -74,8 +72,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "sports-head-soccer-arena": "Flechas izquierda/derecha para mover, arriba para salto, Space para disparo y B para habilidad.",
     "arcade-pacman-maze-protocol": "WASD o flechas para mover, Enter/Espacio para empezar, P/Esc para pausa, R reinicia, M sonido y G debug.",
     "arcade-buscaminas-classic": "Click izq abre, click der o pulsacion larga marca bandera. Flechas mueven cursor, Enter/Espacio abre, F marca, H sugiere IA, A ejecuta IA, R reinicia. En competitivo puntuan celdas + tiempo.",
-    "racing-race2dpro": "Arriba/abajo acelerar/frenar, izq/der girar. MÃ³vil: joystick tÃ¡ctil izq. + botones der. Espacio turbo. R reinicia.",
-    "arcade-pulse-prism-runner": "Espacio/arriba salta, E activa Pulse Burst, Enter inicia/reinicia, P pausa, F pantalla completa y O audio."
+    "racing-race2dpro": "Arriba/abajo acelerar/frenar, izq/der girar. Móvil: joystick táctil izq. + botones der. Espacio turbo. R reinicia.",
   },
   en: {
     "adventure-echoes": "Move with WASD/arrows plus search, scan, rations, beacon and jump (B).",
@@ -88,7 +85,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-ahorcado-flash": "Type letters to guess the word and, after finishing, use Enter or the random-match button.",
     "knowledge-paciencia-lite": "D draws, A selects waste, Q/W/E/R selects columns, arrows change target, Enter/Space moves, and P loads a random match.",
     "knowledge-puzle-deslizante": "Use arrows to move the blank or click adjacent tiles. Press R for a random match.",
-    "knowledge-crucigrama-mini": "Arrows navigate, letters write, Backspace clears, Enter checks, and the random-match button changes puzzle.",
+    "knowledge-crucigrama-mini": "Choose max length (6-10), arrows navigate, letters write, Backspace clears, Enter checks, and the random-match button loads another puzzle.",
     "knowledge-sopa-letras-mega": "Drag or click start-end to select words horizontally, vertically, or diagonally (reverse also works). Press R for a random match.",
     "strategy-chess-grandmaster": "Click pieces to move, choose promotion on last rank, U undo, D claim draw, and F toggles fullscreen.",
     "strategy-poker-holdem-no-bet": "Classic 5-card draw with real betting: blinds, pot play, and check/call/raise/fold/all-in decisions. Enter main action, U raise, A all-in, F fold, 1-5 select discard, D discard, S stand pat, N next hand, and R restart.",
@@ -100,7 +97,6 @@ const CONTROL_HINTS_BY_LOCALE = {
     "arcade-pacman-maze-protocol": "Use arrows or WASD to move, Enter/Space to start, P/Esc to pause, R restart, M sound and G debug.",
     "arcade-buscaminas-classic": "Left click reveals, right click or long press marks. Arrows move cursor, Enter/Space reveals, F marks, H asks AI hint, A runs AI move, R restarts. Competitive mode scores cells + time.",
     "racing-race2dpro": "Up/down throttle/brake, left/right steer. Mobile: left touch joystick + right buttons. Space turbo. R restart.",
-    "arcade-pulse-prism-runner": "Space/up jumps, E triggers Pulse Burst, Enter starts/restarts, P pauses, F fullscreen, O audio."
   }
 };
 
