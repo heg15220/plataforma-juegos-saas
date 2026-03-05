@@ -1,508 +1,385 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useGameRuntimeBridge from "../utils/useGameRuntimeBridge";
+import "./rhythm-platformer/styles/RhythmPlatformerGame.css";
 
-const WIDTH = 960;
-const HEIGHT = 420;
-const CEILING_Y = 28;
-const GROUND_Y = 346;
-const SCREEN_PLAYER_X = 240;
-const START_X = 180;
-const PLAYER_W = 34;
-const PLAYER_H = 34;
-const BASE_SPEED = 314;
-const MAX_SPEED = 420;
-const GRAVITY = 2300;
-const JUMP_VELOCITY = -760;
-const COYOTE = 0.095;
-const INVULN = 1.05;
-const BPM = 132;
-const BEAT = 60 / BPM;
-const PERFECT_WINDOW = 0.09;
-const MAX_CHARGE = 3;
-const BASE_SEED = 781357;
-const DEFAULT_MSG = "Press START and jump on beat to chain combo.";
+import {
+  BASE_SEED,
+  BEAT_SECONDS,
+  BPM,
+  CANVAS_HEIGHT,
+  CANVAS_WIDTH,
+  COLOR_SETS,
+  DEFAULT_SETTINGS,
+  DIFFICULTY_PRESETS,
+  GAME_NAME,
+  MAX_CHARGE,
+  MAX_INTEGRITY,
+  MOBILE_TOUCH_IDS,
+  SNAPSHOT_HZ,
+  START_X,
+} from "./rhythm-platformer/game/constants";
+import { generateTrack } from "./rhythm-platformer/game/trackGen";
+import {
+  createGhostState,
+  createPlayerState,
+  performBurst,
+  resetFrameEvents,
+  resetGhostReplay,
+  stepPhysics,
+  updateGhostReplay,
+} from "./rhythm-platformer/game/physics";
+import {
+  createBeatState,
+  getBeatRating,
+  msToNextBeat,
+  updateBeatState,
+} from "./rhythm-platformer/game/systems/beatSystem";
+import {
+  addRuntimeScore,
+  applyTimingJudgement,
+  computeAccuracy,
+  computeRank,
+  createScoreState,
+  registerDamage,
+  registerPerfectShift,
+  rewardBurst,
+  rewardPickup,
+  tickScoreState,
+} from "./rhythm-platformer/game/systems/scoreSystem";
+import {
+  createFxSystem,
+  pulseBeatFx,
+  spawnBurstFx,
+  spawnDamageFx,
+  spawnPerfectJumpFx,
+  spawnPickupFx,
+  tickFxSystem,
+} from "./rhythm-platformer/game/systems/fxSystem";
+import {
+  createAudioSystem,
+  disposeAudio,
+  getTransportState,
+  playSfx,
+  resumeAudioContext,
+  setAudioEnabled,
+  startMusic,
+  stopMusic,
+  updateMusicScheduler,
+} from "./rhythm-platformer/game/systems/audioSystem";
+import { createCameraState, updateCamera } from "./rhythm-platformer/game/systems/cameraSystem";
+import { createRenderer, drawFrame } from "./rhythm-platformer/game/render/renderer";
 
-function clamp(v, min, max) {
-  return Math.max(min, Math.min(max, v));
+const ALT_NAMES = [
+  "Pulse Prism Runner",
+  "Neon Flux Sprint",
+  "Lumen Rift Glide",
+  "Kinetic Spectrum Run",
+];
+
+const FRAME_STEP = 1 / 60;
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
 }
 
-function makeRng(seed) {
-  let s = seed >>> 0;
-  return () => {
-    s = (Math.imul(1664525, s) + 1013904223) >>> 0;
-    return s / 4294967296;
+function createPhaseState(difficulty) {
+  return {
+    active: "A",
+    timer: 0,
+    cooldown: 0,
+    cooldownMax: difficulty.shiftCooldown,
+    justShiftedTimer: 0,
   };
 }
 
-function makeTrack(seed) {
-  const rand = makeRng(seed);
-  const obstacles = [];
-  const pickups = [];
-  let x = 620;
-  let id = 0;
-  const minLength = 6200;
+function createRuntime(settings, seed, mode = "menu", replaySource = null) {
+  const difficulty = DIFFICULTY_PRESETS[settings.difficultyId] ?? DIFFICULTY_PRESETS.core;
+  const track = generateTrack({ seed, difficultyId: difficulty.id });
 
-  while (x < minLength - 320) {
-    const p = rand();
-    if (p < 0.4) {
-      const w = 56 + Math.floor(rand() * 38);
-      const h = 70 + Math.floor(rand() * 72);
-      obstacles.push({ id: `o-${id++}`, kind: "floor", x, y: GROUND_Y - h, w, h, active: true });
-      if (rand() < 0.85) {
-        pickups.push({
-          id: `p-${id++}`,
-          x: x + w * 0.55,
-          y: GROUND_Y - 126 - Math.floor(rand() * 84),
-          r: 10,
-          collected: false,
-        });
-      }
-      x += 210 + Math.floor(rand() * 130);
-      continue;
-    }
-
-    if (p < 0.72) {
-      const w = 58 + Math.floor(rand() * 34);
-      const h = 132 + Math.floor(rand() * 86);
-      obstacles.push({ id: `o-${id++}`, kind: "ceiling", x, y: CEILING_Y, w, h, active: true });
-      if (rand() < 0.76) {
-        pickups.push({
-          id: `p-${id++}`,
-          x: x + w * 0.45,
-          y: GROUND_Y - 56 - Math.floor(rand() * 38),
-          r: 10,
-          collected: false,
-        });
-      }
-      x += 200 + Math.floor(rand() * 122);
-      continue;
-    }
-
-    const gateW = 32 + Math.floor(rand() * 18);
-    const gapTop = 138 + Math.floor(rand() * 60);
-    const gapH = 118 + Math.floor(rand() * 42);
-    const gapBottom = gapTop + gapH;
-    obstacles.push({
-      id: `o-${id++}`,
-      kind: "gate-ceiling",
-      x,
-      y: CEILING_Y,
-      w: gateW,
-      h: Math.max(44, gapTop - CEILING_Y),
-      active: true,
-    });
-    obstacles.push({
-      id: `o-${id++}`,
-      kind: "gate-floor",
-      x,
-      y: gapBottom,
-      w: gateW,
-      h: Math.max(48, GROUND_Y - gapBottom),
-      active: true,
-    });
-    pickups.push({
-      id: `p-${id++}`,
-      x: x + gateW * 0.5 + 16,
-      y: gapTop + gapH * 0.5,
-      r: 11,
-      collected: false,
-    });
-    x += 220 + Math.floor(rand() * 126);
-  }
-
-  return { obstacles, pickups, length: Math.max(minLength, x + 280) };
-}
-
-function initState(seed) {
-  const track = makeTrack(seed);
-  return {
-    mode: "menu",
+  const runtime = {
+    mode,
+    settings: { ...settings },
+    seed,
+    difficulty,
+    difficultyId: difficulty.id,
     elapsed: 0,
-    beatTimer: 0,
-    beatIndex: 0,
-    beatPulse: 0,
-    score: 0,
-    combo: 0,
-    perfectStreak: 0,
-    integrity: 3,
-    charge: 1.15,
-    player: { x: START_X, y: GROUND_Y - PLAYER_H, vy: 0, onGround: true, coyote: COYOTE },
-    invuln: 0,
+    worldSpeed: difficulty.worldSpeed,
+    beatSeconds: BEAT_SECONDS,
+    beat: createBeatState(),
+    score: createScoreState(),
+    fx: createFxSystem(),
+    camera: createCameraState(),
+    player: createPlayerState(),
+    ghost: createGhostState(),
+    phase: createPhaseState(difficulty),
     obstacles: track.obstacles,
     pickups: track.pickups,
-    effects: [],
-    worldLength: track.length,
+    obstacleCursor: 0,
+    pickupCursor: 0,
+    integrity: MAX_INTEGRITY,
+    charge: 1.24,
+    worldLength: track.worldLength,
+    finishX: track.finishX,
+    message: mode === "menu" ? "Press Play. Jump and Shift to the pulse." : "Run started",
+    messageTtl: mode === "menu" ? 3 : 1.1,
+    jumpVelocityScale: 1,
+    pendingJumpRating: { rating: "good", offset: 0 },
+    input: { jumpPressed: false, burstPressed: false, shiftPressed: false },
+    frameEvents: {
+      jumped: false,
+      landed: false,
+      damage: false,
+      collidedObstacle: null,
+      collectedPickups: 0,
+      lastCollectedValue: 0,
+    },
+    replayRecording: { events: [] },
+    results: null,
+    outcome: "none",
+    fps: {
+      frameMs: 16.7,
+      fps: 60,
+      reportTimer: 0,
+      frameCount: 0,
+      frameAccumulator: 0,
+    },
     fullscreen: false,
-    audioEnabled: true,
-    message: DEFAULT_MSG,
-    messageTtl: 0,
-    lastJump: "none",
+  };
+
+  if (mode === "playing" && replaySource && replaySource.seed === seed && replaySource.difficultyId === difficulty.id) {
+    resetGhostReplay(runtime.ghost, replaySource);
+  } else {
+    resetGhostReplay(runtime.ghost, null);
+  }
+
+  return runtime;
+}
+
+function collectObstacles(runtime) {
+  const list = [];
+  for (const obstacle of runtime.obstacles) {
+    if (obstacle.disabled) continue;
+    if (obstacle.x + obstacle.w < runtime.player.x - 48) continue;
+    list.push({
+      id: obstacle.id,
+      type: obstacle.type,
+      phase: obstacle.phase,
+      x: Number(obstacle.x.toFixed(1)),
+      y: Number(obstacle.y.toFixed(1)),
+      w: Number(obstacle.w.toFixed(1)),
+      h: Number(obstacle.h.toFixed(1)),
+      distanceFromPlayer: Number((obstacle.x - runtime.player.x).toFixed(1)),
+    });
+    if (list.length >= 8) break;
+  }
+  return list;
+}
+
+function collectPickups(runtime) {
+  const list = [];
+  for (const pickup of runtime.pickups) {
+    if (pickup.collected) continue;
+    if (pickup.x < runtime.player.x - 42) continue;
+    list.push({
+      id: pickup.id,
+      x: Number(pickup.x.toFixed(1)),
+      y: Number(pickup.y.toFixed(1)),
+      value: pickup.value,
+      distanceFromPlayer: Number((pickup.x - runtime.player.x).toFixed(1)),
+    });
+    if (list.length >= 8) break;
+  }
+  return list;
+}
+
+function buildResult(runtime, won) {
+  const accuracy = computeAccuracy(runtime.score);
+  return {
+    won,
+    rank: computeRank(runtime.score, runtime.difficulty),
+    score: Math.round(runtime.score.score),
+    perfects: runtime.score.perfects,
+    goods: runtime.score.goods,
+    misses: runtime.score.misses,
+    maxCombo: runtime.score.maxCombo,
+    longestPerfectStreak: runtime.score.longestPerfectStreak,
+    damageTaken: runtime.score.damageTaken,
+    accuracyPercent: Number((accuracy * 100).toFixed(2)),
+    elapsedSeconds: Number(runtime.elapsed.toFixed(2)),
   };
 }
 
-function playerRect(player) {
-  return { x: player.x - PLAYER_W * 0.5, y: player.y, w: PLAYER_W, h: PLAYER_H };
-}
-
-function overlapRect(a, b) {
-  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
-}
-
-function overlapCircleRect(circle, rect) {
-  const nx = clamp(circle.x, rect.x, rect.x + rect.w);
-  const ny = clamp(circle.y, rect.y, rect.y + rect.h);
-  const dx = circle.x - nx;
-  const dy = circle.y - ny;
-  return dx * dx + dy * dy <= circle.r * circle.r;
-}
-
-function cameraX(state) {
-  return Math.max(0, state.player.x - SCREEN_PLAYER_X);
-}
-
-function pushFx(state, x, y, color, r = 18, growth = 170, life = 0.38) {
-  state.effects.push({ x, y, color, r, growth, life, maxLife: life });
-}
-
-function setMessage(state, msg, ttl = 0.9) {
-  state.message = msg;
-  state.messageTtl = ttl;
-}
-
-function snapshotOf(state) {
-  const cam = cameraX(state);
-  const progress = clamp((state.player.x - START_X) / Math.max(1, state.worldLength - START_X), 0, 1);
-  const nextBeat = Math.max(0, BEAT - state.beatTimer);
-  const upcomingObstacles = state.obstacles
-    .filter((o) => o.active && o.x + o.w >= state.player.x - 48)
-    .slice(0, 6)
-    .map((o) => ({
-      id: o.id,
-      kind: o.kind,
-      x: Number(o.x.toFixed(1)),
-      y: Number(o.y.toFixed(1)),
-      width: Number(o.w.toFixed(1)),
-      height: Number(o.h.toFixed(1)),
-      distanceFromPlayer: Number((o.x - state.player.x).toFixed(1)),
-    }));
-  const upcomingOrbs = state.pickups
-    .filter((p) => !p.collected && p.x + p.r >= state.player.x - 48)
-    .slice(0, 6)
-    .map((p) => ({
-      id: p.id,
-      x: Number(p.x.toFixed(1)),
-      y: Number(p.y.toFixed(1)),
-      radius: p.r,
-      distanceFromPlayer: Number((p.x - state.player.x).toFixed(1)),
-    }));
+function buildSnapshot(runtime, audio) {
+  const accuracy = computeAccuracy(runtime.score);
+  const progress = clamp((runtime.player.x - START_X) / Math.max(1, runtime.worldLength - START_X), 0, 1);
+  const transport = getTransportState(audio);
 
   return {
-    variant: "pulse-prism-runner",
-    status: state.mode,
-    message: state.message,
-    score: Math.round(state.score),
-    combo: state.combo,
-    perfectStreak: state.perfectStreak,
-    integrity: state.integrity,
-    charge: Number(state.charge.toFixed(2)),
+    mode: runtime.mode,
+    seed: runtime.seed,
+    difficultyId: runtime.difficultyId,
+    difficultyLabel: runtime.difficulty.label,
+    score: Math.round(runtime.score.score),
+    combo: runtime.score.combo,
+    maxCombo: runtime.score.maxCombo,
+    perfects: runtime.score.perfects,
+    goods: runtime.score.goods,
+    misses: runtime.score.misses,
+    integrity: runtime.integrity,
+    charge: runtime.charge,
     progress: Number((progress * 100).toFixed(2)),
-    elapsedSeconds: Number(state.elapsed.toFixed(2)),
-    bpm: BPM,
-    beatIndex: state.beatIndex,
-    nextBeatMs: Math.round(nextBeat * 1000),
-    beatPulse: Number(state.beatPulse.toFixed(3)),
-    lastJumpRating: state.lastJump,
-    player: {
-      worldX: Number(state.player.x.toFixed(2)),
-      screenX: SCREEN_PLAYER_X,
-      y: Number(state.player.y.toFixed(2)),
-      vy: Number(state.player.vy.toFixed(2)),
-      onGround: state.player.onGround,
-      invulnerable: state.invuln > 0,
-    },
-    worldLength: state.worldLength,
-    cameraX: Number(cam.toFixed(2)),
-    fullscreen: state.fullscreen,
-    audioEnabled: state.audioEnabled,
-    upcomingObstacles,
-    upcomingOrbs,
+    accuracy: Number((accuracy * 100).toFixed(2)),
+    beatPulse: runtime.beat.pulse,
+    beatIndex: runtime.beat.index,
+    nextBeatMs: msToNextBeat(runtime.beat),
+    beatSection: runtime.beat.section,
+    phase: runtime.phase.active,
+    phaseCooldown: runtime.phase.cooldown,
+    phaseTimer: runtime.phase.timer,
+    elapsed: runtime.elapsed,
+    worldLength: runtime.worldLength,
+    finishX: runtime.finishX,
+    playerX: runtime.player.x,
+    playerY: runtime.player.y,
+    playerVy: runtime.player.vy,
+    message: runtime.message,
+    rank: runtime.results?.rank ?? "-",
+    resultSummary: runtime.results,
+    replayGhostActive: runtime.ghost.active,
+    fps: runtime.fps.fps,
+    frameMs: runtime.fps.frameMs,
+    audioEnabled: runtime.settings.audioEnabled,
+    reduceMotion: runtime.settings.reduceMotion,
+    colorblindSafe: runtime.settings.colorblindSafe,
+    debugEnabled: runtime.settings.debugEnabled,
+    transport,
+    lastJudgement: runtime.score.lastJudgement,
+    lastJudgementTimer: runtime.score.lastJudgementTimer,
+    visibleObstacles: collectObstacles(runtime),
+    visiblePickups: collectPickups(runtime),
   };
-}
-
-function draw(ctx, state) {
-  const cam = cameraX(state);
-  const sky = ctx.createLinearGradient(0, 0, 0, HEIGHT);
-  sky.addColorStop(0, state.beatPulse > 0.15 ? "#082f49" : "#0f172a");
-  sky.addColorStop(1, state.beatPulse > 0.15 ? "#0f766e" : "#134e4a");
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-  const farShift = (cam * 0.18) % 180;
-  ctx.fillStyle = "rgba(148, 163, 184, 0.24)";
-  for (let x = -farShift - 120; x < WIDTH + 200; x += 180) {
-    ctx.beginPath();
-    ctx.moveTo(x, 286);
-    ctx.lineTo(x + 86, 172);
-    ctx.lineTo(x + 174, 286);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  ctx.strokeStyle = "rgba(125, 211, 252, 0.22)";
-  const spacing = BASE_SPEED * BEAT;
-  const shift = cam % spacing;
-  for (let x = -shift; x < WIDTH + spacing; x += spacing) {
-    ctx.beginPath();
-    ctx.moveTo(x, CEILING_Y);
-    ctx.lineTo(x, GROUND_Y);
-    ctx.stroke();
-  }
-
-  ctx.fillStyle = "#0b1120";
-  ctx.fillRect(0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y);
-  ctx.fillStyle = "#1e293b";
-  for (let x = -((cam * 0.75) % 46); x < WIDTH + 46; x += 46) {
-    ctx.fillRect(x, GROUND_Y + 4, 28, 8);
-  }
-
-  const finishX = state.worldLength - cam;
-  if (finishX > -60 && finishX < WIDTH + 80) {
-    ctx.fillStyle = "rgba(250, 204, 21, 0.24)";
-    ctx.fillRect(finishX - 8, CEILING_Y, 16, GROUND_Y - CEILING_Y);
-    ctx.fillStyle = "#facc15";
-    ctx.fillRect(finishX - 3, CEILING_Y, 6, GROUND_Y - CEILING_Y);
-  }
-
-  for (const o of state.obstacles) {
-    if (!o.active) continue;
-    const x = o.x - cam;
-    if (x + o.w < -80 || x > WIDTH + 120) continue;
-    const isTop = o.kind.includes("ceiling");
-    const g = ctx.createLinearGradient(x, o.y, x + o.w, o.y + o.h);
-    if (isTop) {
-      g.addColorStop(0, "#e0f2fe");
-      g.addColorStop(1, "#0284c7");
-    } else {
-      g.addColorStop(0, "#fde68a");
-      g.addColorStop(1, "#d97706");
-    }
-    const bevel = Math.max(6, Math.min(16, o.w * 0.22));
-    ctx.fillStyle = g;
-    ctx.strokeStyle = "rgba(15, 23, 42, 0.45)";
-    ctx.beginPath();
-    if (isTop) {
-      ctx.moveTo(x, o.y);
-      ctx.lineTo(x + o.w, o.y);
-      ctx.lineTo(x + o.w - bevel, o.y + o.h);
-      ctx.lineTo(x + bevel, o.y + o.h);
-    } else {
-      ctx.moveTo(x + bevel, o.y);
-      ctx.lineTo(x + o.w - bevel, o.y);
-      ctx.lineTo(x + o.w, o.y + o.h);
-      ctx.lineTo(x, o.y + o.h);
-    }
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-  }
-
-  for (const p of state.pickups) {
-    if (p.collected) continue;
-    const x = p.x - cam;
-    if (x + p.r < -40 || x > WIDTH + 40) continue;
-    ctx.save();
-    ctx.translate(x, p.y);
-    ctx.rotate((p.x * 0.006) % (Math.PI * 2));
-    ctx.fillStyle = "#38bdf8";
-    ctx.strokeStyle = "#e0f2fe";
-    ctx.beginPath();
-    ctx.moveTo(0, -p.r);
-    ctx.lineTo(p.r * 0.8, 0);
-    ctx.lineTo(0, p.r);
-    ctx.lineTo(-p.r * 0.8, 0);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  for (const fx of state.effects) {
-    const a = fx.life / fx.maxLife;
-    ctx.strokeStyle = `${fx.color}${Math.round(a * 255).toString(16).padStart(2, "0")}`;
-    ctx.beginPath();
-    ctx.arc(fx.x - cam, fx.y, fx.r, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  if (!(state.invuln > 0 && Math.floor(state.elapsed * 20) % 2 === 0)) {
-    const cx = SCREEN_PLAYER_X;
-    const y = state.player.y;
-    const cy = y + PLAYER_H * 0.5;
-    const t = 4 + Math.min(6, state.combo);
-    for (let i = 0; i < t; i += 1) {
-      const alpha = 0.26 - i * 0.03;
-      ctx.fillStyle = `rgba(125, 211, 252, ${Math.max(0, alpha)})`;
-      ctx.fillRect(cx - 18 - i * 9, cy + Math.sin(state.elapsed * 9 + i) * 2, 8, 3);
-    }
-    const body = ctx.createLinearGradient(cx - PLAYER_W * 0.5, y, cx + PLAYER_W * 0.5, y + PLAYER_H);
-    body.addColorStop(0, "#86efac");
-    body.addColorStop(1, "#22d3ee");
-    ctx.fillStyle = body;
-    ctx.strokeStyle = "#0f172a";
-    ctx.beginPath();
-    ctx.moveTo(cx, y - 8);
-    ctx.lineTo(cx + 14, y + 2);
-    ctx.lineTo(cx + 15, y + 20);
-    ctx.lineTo(cx, y + 30);
-    ctx.lineTo(cx - 15, y + 20);
-    ctx.lineTo(cx - 14, y + 2);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#e0f2fe";
-    ctx.beginPath();
-    ctx.arc(cx, cy, 6, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  if (state.mode !== "playing") {
-    ctx.fillStyle = "rgba(2, 6, 23, 0.52)";
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    let title = "Pulse Prism Runner";
-    let sub = "Press START to begin";
-    if (state.mode === "paused") {
-      title = "Paused";
-      sub = "Press P or RESUME to continue";
-    } else if (state.mode === "won") {
-      title = "Run Complete";
-      sub = "Press START to run a new track";
-    } else if (state.mode === "lost") {
-      title = "Signal Lost";
-      sub = "Press START to retry";
-    }
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#f8fafc";
-    ctx.font = "700 42px 'Bricolage Grotesque', sans-serif";
-    ctx.fillText(title, WIDTH * 0.5, HEIGHT * 0.44);
-    ctx.font = "600 19px 'Bricolage Grotesque', sans-serif";
-    ctx.fillStyle = "#bae6fd";
-    ctx.fillText(sub, WIDTH * 0.5, HEIGHT * 0.52);
-    if (state.mode === "won" || state.mode === "lost") {
-      ctx.font = "600 17px 'Bricolage Grotesque', sans-serif";
-      ctx.fillStyle = "#fef08a";
-      ctx.fillText(`Score ${Math.round(state.score)}`, WIDTH * 0.5, HEIGHT * 0.6);
-    }
-  }
 }
 
 function RhythmPlatformerGame() {
   const canvasRef = useRef(null);
   const shellRef = useRef(null);
-  const gameRef = useRef(initState(BASE_SEED));
-  const runRef = useRef(0);
-  const inputRef = useRef({ jump: false, burst: false });
+  const ctxRef = useRef(null);
+  const rendererRef = useRef(createRenderer());
+  const runtimeRef = useRef(createRuntime(DEFAULT_SETTINGS, BASE_SEED, "menu"));
+  const inputRef = useRef({ jump: false, burst: false, shift: false });
+  const replayRef = useRef(null);
+  const audioRef = useRef(createAudioSystem());
   const rafRef = useRef(0);
   const lastTsRef = useRef(0);
-  const audioRef = useRef({ ctx: null, master: null });
-  const [snapshot, setSnapshot] = useState(() => snapshotOf(gameRef.current));
+  const snapshotTimerRef = useRef(0);
 
-  const drawNow = useCallback((state) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [snapshot, setSnapshot] = useState(() => buildSnapshot(runtimeRef.current, audioRef.current));
+
+  const palette = useMemo(
+    () => (settings.colorblindSafe ? COLOR_SETS.colorblind : COLOR_SETS.normal),
+    [settings.colorblindSafe]
+  );
+
+  const publishSnapshot = useCallback(() => {
+    setSnapshot(buildSnapshot(runtimeRef.current, audioRef.current));
+  }, []);
+
+  const drawNow = useCallback(() => {
+    const ctx = ctxRef.current;
     if (!ctx) return;
-    draw(ctx, state);
+    const runtime = runtimeRef.current;
+    runtime.settings.reduceMotion = settings.reduceMotion;
+    runtime.settings.colorblindSafe = settings.colorblindSafe;
+    drawFrame(ctx, runtime, palette, rendererRef.current);
+  }, [palette, settings.colorblindSafe, settings.reduceMotion]);
+
+  const setRuntimeSettings = useCallback((nextSettings) => {
+    runtimeRef.current.settings = { ...runtimeRef.current.settings, ...nextSettings };
+    setAudioEnabled(audioRef.current, runtimeRef.current.settings.audioEnabled);
   }, []);
 
-  const sync = useCallback(() => setSnapshot(snapshotOf(gameRef.current)), []);
+  const applySettingsPatch = useCallback((patch) => {
+    setSettings((prev) => {
+      const next = { ...prev, ...patch };
+      setRuntimeSettings(next);
+      return next;
+    });
+  }, [setRuntimeSettings]);
 
-  const ensureAudio = useCallback(() => {
-    const state = gameRef.current;
-    if (!state.audioEnabled) return null;
-    if (!audioRef.current.ctx) {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx) return null;
-      const ctx = new Ctx();
-      const master = ctx.createGain();
-      master.gain.value = 0.07;
-      master.connect(ctx.destination);
-      audioRef.current.ctx = ctx;
-      audioRef.current.master = master;
-    }
-    if (audioRef.current.ctx.state === "suspended") {
-      audioRef.current.ctx.resume().catch(() => {});
-    }
-    return audioRef.current.ctx;
+  const queueInput = useCallback((id) => {
+    if (id === MOBILE_TOUCH_IDS.jump) inputRef.current.jump = true;
+    if (id === MOBILE_TOUCH_IDS.burst) inputRef.current.burst = true;
+    if (id === MOBILE_TOUCH_IDS.shift) inputRef.current.shift = true;
   }, []);
 
-  const tone = useCallback((kind, accent = 1) => {
-    const state = gameRef.current;
-    if (!state.audioEnabled) return;
-    const ctx = ensureAudio();
-    if (!ctx || !audioRef.current.master) return;
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    const now = ctx.currentTime;
-    let f = 240;
-    let d = 0.08;
-    let w = "triangle";
-    let v = 0.11;
-    if (kind === "beat") { f = accent > 1 ? 124 : 212; d = 0.055; w = "square"; v = 0.06; }
-    if (kind === "jump") { f = 410; d = 0.09; v = 0.09; }
-    if (kind === "perfect") { f = 640; d = 0.12; w = "sawtooth"; v = 0.11; }
-    if (kind === "pickup") { f = 760; d = 0.08; w = "sine"; v = 0.1; }
-    if (kind === "burst") { f = 180; d = 0.14; w = "square"; v = 0.13; }
-    if (kind === "damage") { f = 140; d = 0.15; w = "sawtooth"; v = 0.13; }
-    if (kind === "win") { f = 530; d = 0.22; w = "triangle"; v = 0.14; }
-    if (kind === "fail") { f = 110; d = 0.1; w = "square"; v = 0.1; }
-    o.type = w;
-    o.frequency.setValueAtTime(f, now);
-    g.gain.setValueAtTime(v, now);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + d);
-    o.connect(g);
-    g.connect(audioRef.current.master);
-    o.start(now);
-    o.stop(now + d + 0.03);
-  }, [ensureAudio]);
+  const finishRun = useCallback((won, silent = false) => {
+    const runtime = runtimeRef.current;
+    if (runtime.mode !== "playing") return;
 
-  const startRun = useCallback(() => {
-    runRef.current += 1;
-    const state = initState(BASE_SEED + runRef.current * 97);
-    state.mode = "playing";
-    setMessage(state, "Sync jumps to beat for PERFECT bonus.", 1.7);
-    gameRef.current = state;
-    ensureAudio();
-    tone("beat", 2);
-    drawNow(state);
-    sync();
-  }, [drawNow, ensureAudio, sync, tone]);
+    runtime.mode = "results";
+    runtime.results = buildResult(runtime, won);
+    runtime.outcome = won ? "win" : "fail";
+    runtime.message = won ? "Run complete." : "Signal lost.";
+    runtime.messageTtl = 2.4;
+
+    replayRef.current = {
+      seed: runtime.seed,
+      difficultyId: runtime.difficultyId,
+      events: runtime.replayRecording.events.slice(),
+      duration: runtime.elapsed,
+      score: runtime.score.score,
+    };
+
+    stopMusic(audioRef.current);
+    if (!silent) playSfx(audioRef.current, won ? "win" : "fail");
+  }, []);
+
+  const startRun = useCallback((forcedSeed = null) => {
+    const seed = forcedSeed ?? (
+      settings.deterministic
+        ? (Number(settings.seed) || BASE_SEED)
+        : ((Date.now() * 2654435761) >>> 0)
+    );
+
+    const runtime = createRuntime(settings, seed, "playing", replayRef.current);
+    runtimeRef.current = runtime;
+    runtime.message = "Flow online.";
+    runtime.messageTtl = 1;
+
+    resumeAudioContext(audioRef.current);
+    startMusic(audioRef.current, runtime.beat.section);
+    playSfx(audioRef.current, "jump");
+
+    drawNow();
+    publishSnapshot();
+  }, [drawNow, publishSnapshot, settings]);
+
+  const restartRun = useCallback(() => startRun(), [startRun]);
+
+  const openMenu = useCallback(() => {
+    runtimeRef.current = createRuntime(settings, Number(settings.seed) || BASE_SEED, "menu");
+    drawNow();
+    publishSnapshot();
+  }, [drawNow, publishSnapshot, settings]);
 
   const togglePause = useCallback(() => {
-    const state = gameRef.current;
-    if (state.mode === "playing") {
-      state.mode = "paused";
-      setMessage(state, "Paused");
-    } else if (state.mode === "paused") {
-      state.mode = "playing";
-      setMessage(state, "Back on beat", 0.9);
-      ensureAudio();
+    const runtime = runtimeRef.current;
+    if (runtime.mode === "playing") {
+      runtime.mode = "paused";
+      runtime.message = "Paused";
+      runtime.messageTtl = 0.8;
+      stopMusic(audioRef.current);
+    } else if (runtime.mode === "paused") {
+      runtime.mode = "playing";
+      runtime.message = "Back on pulse";
+      runtime.messageTtl = 0.8;
+      resumeAudioContext(audioRef.current);
+      startMusic(audioRef.current, runtime.beat.section);
     }
-    drawNow(state);
-    sync();
-  }, [drawNow, ensureAudio, sync]);
-
-  const toggleAudio = useCallback(() => {
-    const state = gameRef.current;
-    state.audioEnabled = !state.audioEnabled;
-    if (state.audioEnabled) {
-      ensureAudio();
-      tone("beat");
-      setMessage(state, "Audio ON", 0.7);
-    } else {
-      setMessage(state, "Audio OFF", 0.7);
-    }
-    sync();
-  }, [ensureAudio, sync, tone]);
+    drawNow();
+    publishSnapshot();
+  }, [drawNow, publishSnapshot]);
 
   const toggleFullscreen = useCallback(() => {
     const shell = shellRef.current;
@@ -515,334 +392,577 @@ function RhythmPlatformerGame() {
   }, []);
 
   const step = useCallback((dt, silent = false) => {
-    const s = gameRef.current;
-    if (s.mode !== "playing") return;
+    const runtime = runtimeRef.current;
 
-    s.elapsed += dt;
-    s.beatTimer += dt;
-    while (s.beatTimer >= BEAT) {
-      s.beatTimer -= BEAT;
-      s.beatIndex += 1;
-      s.beatPulse = 1;
-      if (!silent) tone("beat", s.beatIndex % 4 === 0 ? 2 : 1);
-    }
-    s.beatPulse = Math.max(0, s.beatPulse - dt * 4.1);
-
-    if (s.messageTtl > 0) {
-      s.messageTtl = Math.max(0, s.messageTtl - dt);
-      if (s.messageTtl === 0) s.message = DEFAULT_MSG;
+    runtime.fps.frameMs = runtime.fps.frameMs * 0.82 + dt * 1000 * 0.18;
+    runtime.fps.reportTimer += dt;
+    runtime.fps.frameCount += 1;
+    runtime.fps.frameAccumulator += dt;
+    if (runtime.fps.reportTimer >= 0.3) {
+      runtime.fps.fps = Math.round(runtime.fps.frameCount / runtime.fps.frameAccumulator);
+      runtime.fps.reportTimer = 0;
+      runtime.fps.frameCount = 0;
+      runtime.fps.frameAccumulator = 0;
     }
 
-    if (inputRef.current.jump) {
-      if (s.player.onGround || s.player.coyote > 0) {
-        const nearest = Math.min(s.beatTimer, Math.abs(BEAT - s.beatTimer));
-        const perfect = nearest <= PERFECT_WINDOW;
-        s.player.vy = perfect ? JUMP_VELOCITY * 1.08 : JUMP_VELOCITY;
-        s.player.onGround = false;
-        s.player.coyote = 0;
-        if (perfect) {
-          s.combo = Math.min(40, s.combo + 1);
-          s.perfectStreak += 1;
-          s.score += 118 + s.combo * 8;
-          s.lastJump = "perfect";
-          setMessage(s, "PERFECT jump", 0.7);
-          if (!silent) tone("perfect");
-        } else {
-          s.combo = Math.max(0, s.combo - 1);
-          s.perfectStreak = 0;
-          s.lastJump = "good";
-          if (!silent) tone("jump");
-        }
-      }
-      inputRef.current.jump = false;
+    if (runtime.mode !== "playing") {
+      tickFxSystem(runtime.fx, dt, runtime.settings.reduceMotion);
+      updateCamera(runtime.camera, runtime, runtime.fx, dt);
+      return;
     }
 
-    if (inputRef.current.burst) {
-      if (s.charge < 1) {
-        s.combo = 0;
-        s.lastJump = "none";
-        setMessage(s, "Not enough pulse charge", 0.7);
-        if (!silent) tone("fail");
-      } else {
-        const target = s.obstacles.find((o) => o.active && o.x + o.w > s.player.x + 8 && o.x - s.player.x < 288);
-        if (target) {
-          target.active = false;
-          s.charge = clamp(s.charge - 1, 0, MAX_CHARGE);
-          s.score += 182 + s.combo * 2;
-          s.combo = Math.min(40, s.combo + 2);
-          pushFx(s, target.x + target.w * 0.5, target.y + target.h * 0.5, "#60a5fa", 22, 210, 0.32);
-          setMessage(s, "Pulse burst", 0.62);
-          if (!silent) tone("burst");
-        } else {
-          setMessage(s, "No target in range", 0.6);
-          if (!silent) tone("fail");
-        }
-      }
-      inputRef.current.burst = false;
+    runtime.elapsed += dt;
+
+    if (runtime.messageTtl > 0) {
+      runtime.messageTtl = Math.max(0, runtime.messageTtl - dt);
+      if (runtime.messageTtl === 0) runtime.message = "";
     }
 
-    const speed = Math.min(MAX_SPEED, BASE_SPEED + s.combo * 4.6);
-    s.player.x += speed * dt;
-    s.score += dt * (18 + s.combo * 1.6);
-    s.player.coyote = s.player.onGround ? COYOTE : Math.max(0, s.player.coyote - dt);
-    s.player.vy += GRAVITY * dt;
-    s.player.y += s.player.vy * dt;
-    if (s.player.y < CEILING_Y + 4) {
-      s.player.y = CEILING_Y + 4;
-      s.player.vy = Math.max(0, s.player.vy);
+    runtime.phase.justShiftedTimer = Math.max(0, runtime.phase.justShiftedTimer - dt);
+    if (runtime.phase.timer > 0) {
+      runtime.phase.timer = Math.max(0, runtime.phase.timer - dt);
+      if (runtime.phase.timer === 0) runtime.phase.active = "A";
     }
-    if (s.player.y >= GROUND_Y - PLAYER_H) {
-      s.player.y = GROUND_Y - PLAYER_H;
-      s.player.vy = 0;
-      s.player.onGround = true;
+    runtime.phase.cooldown = Math.max(0, runtime.phase.cooldown - dt);
+
+    const beatHit = updateBeatState(runtime.beat, dt);
+    if (beatHit) pulseBeatFx(runtime.fx, 1);
+
+    tickScoreState(runtime.score, dt);
+    runtime.charge = clamp(runtime.charge + runtime.difficulty.chargeRegen * dt, 0, MAX_CHARGE);
+
+    runtime.input.jumpPressed = inputRef.current.jump;
+    runtime.input.burstPressed = inputRef.current.burst;
+    runtime.input.shiftPressed = inputRef.current.shift;
+    inputRef.current.jump = false;
+    inputRef.current.burst = false;
+    inputRef.current.shift = false;
+
+    if (runtime.input.jumpPressed) {
+      const rating = getBeatRating(runtime.beat, runtime.difficulty);
+      runtime.pendingJumpRating = rating;
+      runtime.jumpVelocityScale = rating.rating === "perfect" ? 1.1 : rating.rating === "good" ? 1.03 : 0.96;
+      runtime.replayRecording.events.push({ time: Number(runtime.elapsed.toFixed(4)), type: "jump" });
     } else {
-      s.player.onGround = false;
+      runtime.jumpVelocityScale = 1;
     }
 
-    s.invuln = Math.max(0, s.invuln - dt);
-    const rect = playerRect(s.player);
+    if (runtime.input.shiftPressed) {
+      const shiftRating = getBeatRating(runtime.beat, runtime.difficulty);
+      if (runtime.phase.cooldown <= 0) {
+        runtime.phase.active = runtime.phase.active === "A" ? "B" : "A";
+        runtime.phase.timer = runtime.difficulty.shiftDuration;
+        runtime.phase.cooldown = runtime.difficulty.shiftCooldown;
+        runtime.phase.justShiftedTimer = 0.34;
+        runtime.messageTtl = 0.65;
 
-    for (const p of s.pickups) {
-      if (p.collected || p.x < s.player.x - 48) continue;
-      if (!overlapCircleRect(p, rect)) continue;
-      p.collected = true;
-      s.charge = clamp(s.charge + 0.42, 0, MAX_CHARGE);
-      s.score += 74 + s.combo * 5;
-      s.combo = Math.min(40, s.combo + 1);
-      pushFx(s, p.x, p.y, "#e0f2fe", 14, 140, 0.26);
-      if (!silent) tone("pickup");
-    }
-
-    if (s.invuln <= 0) {
-      for (const o of s.obstacles) {
-        if (!o.active || o.x + o.w < s.player.x - 12) continue;
-        if (o.x - s.player.x > 190) break;
-        if (!overlapRect(rect, o)) continue;
-        s.integrity -= 1;
-        s.combo = 0;
-        s.perfectStreak = 0;
-        s.charge = clamp(s.charge - 0.4, 0, MAX_CHARGE);
-        s.invuln = INVULN;
-        s.player.vy = -360;
-        pushFx(s, o.x + o.w * 0.5, o.y + o.h * 0.5, "#fb7185", 24, 180, 0.46);
-        if (s.integrity <= 0) {
-          s.mode = "lost";
-          setMessage(s, "Signal lost");
-          if (!silent) { tone("damage"); tone("fail"); }
+        if (shiftRating.rating === "perfect") {
+          registerPerfectShift(runtime.score);
+          runtime.charge = clamp(runtime.charge + 0.24, 0, MAX_CHARGE);
+          spawnPerfectJumpFx(
+            runtime.fx,
+            runtime.player.x,
+            runtime.player.y,
+            settings.colorblindSafe ? "#f8ff7a" : "#90ffc7"
+          );
+          runtime.message = "Perfect Shift";
+        } else if (shiftRating.rating === "miss") {
+          applyTimingJudgement(runtime.score, "miss", 18);
+          runtime.message = "Shift off-beat";
         } else {
-          setMessage(s, `Integrity hit - ${s.integrity} left`, 0.95);
-          if (!silent) tone("damage");
+          runtime.score.score += 42;
+          runtime.message = "Shift online";
         }
-        break;
+        if (!silent) playSfx(audioRef.current, "shift");
+      } else {
+        runtime.message = "Shift cooling down";
+        runtime.messageTtl = 0.42;
       }
     }
 
-    s.effects = s.effects
-      .map((fx) => ({ ...fx, life: fx.life - dt, r: fx.r + fx.growth * dt }))
-      .filter((fx) => fx.life > 0);
-
-    if (s.mode === "playing" && s.player.x >= s.worldLength) {
-      s.mode = "won";
-      s.score += 900 + s.integrity * 180 + s.perfectStreak * 40;
-      setMessage(s, "Run complete");
-      if (!silent) tone("win");
+    if (runtime.input.burstPressed) {
+      if (runtime.charge >= runtime.difficulty.burstCost) {
+        const burstRating = getBeatRating(runtime.beat, runtime.difficulty);
+        const onBeat = burstRating.rating !== "miss";
+        const target = performBurst(runtime, runtime.difficulty, runtime.frameEvents);
+        if (target) {
+          if (onBeat && burstRating.rating === "perfect") {
+            for (const obstacle of runtime.obstacles) {
+              if (obstacle.disabled || obstacle.type === "finish-beacon") continue;
+              if (Math.abs(obstacle.x - target.x) <= 86) obstacle.disabled = true;
+            }
+          }
+          rewardBurst(runtime.score, burstRating.rating, onBeat);
+          spawnBurstFx(runtime.fx, target.x + target.w * 0.5, target.y + target.h * 0.5, onBeat);
+          runtime.message = onBeat ? "Beat Burst" : "Burst fired";
+          runtime.messageTtl = 0.64;
+          if (!silent) playSfx(audioRef.current, "burst");
+        } else {
+          runtime.message = "No burst target";
+          runtime.messageTtl = 0.5;
+        }
+      } else {
+        runtime.message = "Low charge";
+        runtime.messageTtl = 0.45;
+      }
     }
-  }, [tone]);
+
+    resetFrameEvents(runtime.frameEvents);
+    stepPhysics(runtime, dt, runtime.difficulty, runtime.frameEvents);
+
+    if (runtime.frameEvents.jumped) {
+      const rating = runtime.pendingJumpRating?.rating ?? "good";
+      applyTimingJudgement(runtime.score, rating, 108);
+      if (rating === "perfect") {
+        spawnPerfectJumpFx(
+          runtime.fx,
+          runtime.player.x,
+          runtime.player.y,
+          settings.colorblindSafe ? "#f8ff7a" : "#8fffc1"
+        );
+        runtime.message = "Perfect jump";
+        runtime.messageTtl = 0.48;
+        if (!silent) playSfx(audioRef.current, "perfect");
+      } else if (rating === "good") {
+        if (!silent) playSfx(audioRef.current, "jump");
+      } else {
+        runtime.message = "Miss timing";
+        runtime.messageTtl = 0.35;
+      }
+    }
+
+    if (runtime.frameEvents.collectedPickups > 0) {
+      rewardPickup(runtime.score, runtime.frameEvents.lastCollectedValue);
+      spawnPickupFx(runtime.fx, runtime.player.x + 6, runtime.player.y - 12);
+      runtime.message = "Pulse orb +";
+      runtime.messageTtl = 0.45;
+      if (!silent) playSfx(audioRef.current, "pickup");
+    }
+
+    if (runtime.frameEvents.damage) {
+      registerDamage(runtime.score);
+      runtime.charge = clamp(runtime.charge - 0.45, 0, MAX_CHARGE);
+      spawnDamageFx(runtime.fx, runtime.player.x, runtime.player.y);
+      runtime.message = "Integrity hit";
+      runtime.messageTtl = 0.8;
+      if (!silent) playSfx(audioRef.current, "damage");
+    }
+
+    for (const pickup of runtime.pickups) {
+      if (!pickup.collected) pickup.spin += dt;
+    }
+
+    addRuntimeScore(runtime.score, dt, runtime.worldSpeed);
+    updateGhostReplay(runtime.ghost, dt, runtime.elapsed, runtime.worldSpeed);
+
+    if (runtime.integrity <= 0) {
+      finishRun(false, silent);
+    } else if (runtime.player.x >= runtime.finishX) {
+      runtime.score.score += 620 + runtime.integrity * 120 + runtime.score.longestPerfectStreak * 20;
+      finishRun(true, silent);
+    }
+
+    tickFxSystem(runtime.fx, dt, runtime.settings.reduceMotion);
+    updateCamera(runtime.camera, runtime, runtime.fx, dt);
+    updateMusicScheduler(audioRef.current, runtime.beat.section);
+  }, [finishRun, settings.colorblindSafe]);
 
   const advanceTime = useCallback((ms) => {
-    let remaining = Math.max(0, Number(ms) || 0);
+    let remaining = Math.max(0, Number(ms) || 0) / 1000;
     while (remaining > 0) {
-      const stepMs = Math.min(1000 / 60, remaining);
-      step(stepMs / 1000, true);
-      remaining -= stepMs;
+      const dt = Math.min(FRAME_STEP, remaining);
+      step(dt, true);
+      remaining -= dt;
     }
-    drawNow(gameRef.current);
-    sync();
-  }, [drawNow, step, sync]);
+    drawNow();
+    publishSnapshot();
+    return { mode: runtimeRef.current.mode, elapsed: runtimeRef.current.elapsed };
+  }, [drawNow, publishSnapshot, step]);
 
   const buildTextPayload = useCallback((state) => ({
-    mode: "rhythm_platformer_original",
-    status: state.status,
-    coordinateSystem:
-      "origin top-left; x grows right, y grows down; worldX uses same axis and camera follows player",
-    bpm: state.bpm,
+    mode: "pulse_prism_runner_v2",
+    coordinateSystem: "origin top-left; +x right, +y down; world and screen axis match",
+    title: GAME_NAME,
+    status: state.mode,
+    difficulty: state.difficultyLabel,
+    seed: state.seed,
+    bpm: BPM,
     beat: {
       index: state.beatIndex,
       nextBeatMs: state.nextBeatMs,
       pulse: state.beatPulse,
-      perfectWindowMs: Math.round(PERFECT_WINDOW * 1000),
-      lastJumpRating: state.lastJumpRating,
+      section: state.beatSection,
+      windowsMs: {
+        perfect: Math.round((DIFFICULTY_PRESETS[state.difficultyId]?.perfectWindow ?? 0.084) * 1000),
+        good: Math.round((DIFFICULTY_PRESETS[state.difficultyId]?.goodWindow ?? 0.168) * 1000),
+      },
     },
-    player: state.player,
-    score: state.score,
-    combo: state.combo,
-    perfectStreak: state.perfectStreak,
-    integrity: state.integrity,
-    charge: state.charge,
-    progressPercent: state.progress,
-    elapsedSeconds: state.elapsedSeconds,
-    cameraX: state.cameraX,
-    worldLength: state.worldLength,
-    upcomingObstacles: state.upcomingObstacles,
-    upcomingOrbs: state.upcomingOrbs,
+    player: {
+      worldX: Number(state.playerX.toFixed(2)),
+      screenX: 280,
+      y: Number(state.playerY.toFixed(2)),
+      vy: Number(state.playerVy.toFixed(2)),
+      phase: state.phase,
+    },
+    resources: {
+      integrity: state.integrity,
+      charge: Number(state.charge.toFixed(2)),
+    },
+    score: {
+      value: state.score,
+      combo: state.combo,
+      maxCombo: state.maxCombo,
+      perfects: state.perfects,
+      goods: state.goods,
+      misses: state.misses,
+      accuracyPercent: state.accuracy,
+      rank: state.rank,
+      lastJudgement: state.lastJudgement,
+    },
+    progress: {
+      percent: state.progress,
+      elapsedSeconds: Number(state.elapsed.toFixed(2)),
+      worldLength: Number(state.worldLength.toFixed(2)),
+      finishX: Number(state.finishX.toFixed(2)),
+    },
+    shift: {
+      active: state.phase,
+      cooldownSeconds: Number(state.phaseCooldown.toFixed(2)),
+      timerSeconds: Number(state.phaseTimer.toFixed(2)),
+    },
+    replayGhostActive: state.replayGhostActive,
+    visibleObstacles: state.visibleObstacles,
+    visiblePickups: state.visiblePickups,
     message: state.message,
+    settings: {
+      audioEnabled: state.audioEnabled,
+      reduceMotion: state.reduceMotion,
+      colorblindSafe: state.colorblindSafe,
+      debugEnabled: state.debugEnabled,
+    },
+    performance: {
+      fps: state.fps,
+      frameMs: Number(state.frameMs.toFixed(2)),
+    },
     controls: {
       jump: "Space or ArrowUp",
       burst: "E",
-      startRestart: "Enter",
+      shift: "Q",
+      playConfirm: "Enter",
       pause: "P",
+      restart: "R",
       fullscreen: "F",
-      audio: "O",
+      audio: "O or M",
     },
+    resultSummary: state.resultSummary,
   }), []);
 
   useGameRuntimeBridge(snapshot, buildTextPayload, advanceTime);
 
   useEffect(() => {
-    drawNow(gameRef.current);
-    sync();
-  }, [drawNow, sync]);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctxRef.current = ctx;
+    setAudioEnabled(audioRef.current, settings.audioEnabled);
+    drawNow();
+    publishSnapshot();
+  }, [drawNow, publishSnapshot, settings.audioEnabled]);
 
   useEffect(() => {
     const onFs = () => {
-      gameRef.current.fullscreen = Boolean(document.fullscreenElement);
-      sync();
+      runtimeRef.current.fullscreen = Boolean(document.fullscreenElement);
+      publishSnapshot();
     };
     document.addEventListener("fullscreenchange", onFs);
     return () => document.removeEventListener("fullscreenchange", onFs);
-  }, [sync]);
+  }, [publishSnapshot]);
 
   useEffect(() => {
     const onKeyDown = (event) => {
       const target = event.target;
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
-        return;
-      }
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
       const code = event.code;
+      const mode = runtimeRef.current.mode;
+
       if (code === "Space" || code === "ArrowUp") {
         event.preventDefault();
-        if (!event.repeat) inputRef.current.jump = true;
+        if (mode === "menu") startRun();
+        else if (!event.repeat && mode === "playing") queueInput(MOBILE_TOUCH_IDS.jump);
         return;
       }
       if (code === "KeyE") {
         event.preventDefault();
-        if (!event.repeat) inputRef.current.burst = true;
+        if (!event.repeat && mode === "playing") queueInput(MOBILE_TOUCH_IDS.burst);
+        return;
+      }
+      if (code === "KeyQ") {
+        event.preventDefault();
+        if (!event.repeat && mode === "playing") queueInput(MOBILE_TOUCH_IDS.shift);
         return;
       }
       if (code === "Enter") {
         event.preventDefault();
-        const state = gameRef.current;
-        if (state.mode === "playing") return;
-        if (state.mode === "paused") togglePause();
-        else startRun();
+        if (mode === "menu" || mode === "results") startRun();
+        else if (mode === "paused") togglePause();
         return;
       }
-      if (code === "KeyP") { event.preventDefault(); togglePause(); return; }
-      if (code === "KeyF") { event.preventDefault(); toggleFullscreen(); return; }
-      if (code === "KeyO") { event.preventDefault(); toggleAudio(); return; }
-      if (code === "KeyR") { event.preventDefault(); startRun(); }
+      if (code === "KeyP") {
+        event.preventDefault();
+        togglePause();
+        return;
+      }
+      if (code === "KeyR") {
+        event.preventDefault();
+        restartRun();
+        return;
+      }
+      if (code === "KeyF") {
+        event.preventDefault();
+        toggleFullscreen();
+        return;
+      }
+      if (code === "KeyO" || code === "KeyM") {
+        event.preventDefault();
+        applySettingsPatch({ audioEnabled: !runtimeRef.current.settings.audioEnabled });
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [startRun, toggleAudio, toggleFullscreen, togglePause]);
+  }, [applySettingsPatch, queueInput, restartRun, startRun, toggleFullscreen, togglePause]);
 
   useEffect(() => {
     const frame = (ts) => {
       if (!lastTsRef.current) lastTsRef.current = ts;
-      const dt = Math.min(0.05, (ts - lastTsRef.current) / 1000);
+      let dt = (ts - lastTsRef.current) / 1000;
       lastTsRef.current = ts;
+      dt = Math.min(0.05, Math.max(0, dt));
+
       step(dt, false);
-      drawNow(gameRef.current);
-      sync();
+      drawNow();
+
+      snapshotTimerRef.current += dt;
+      if (snapshotTimerRef.current >= 1 / SNAPSHOT_HZ) {
+        snapshotTimerRef.current = 0;
+        publishSnapshot();
+      }
+
       rafRef.current = window.requestAnimationFrame(frame);
     };
+
     rafRef.current = window.requestAnimationFrame(frame);
     return () => {
       window.cancelAnimationFrame(rafRef.current);
       lastTsRef.current = 0;
+      snapshotTimerRef.current = 0;
     };
-  }, [drawNow, step, sync]);
+  }, [drawNow, publishSnapshot, step]);
 
-  useEffect(() => {
-    return () => {
-      if (audioRef.current.ctx && audioRef.current.ctx.state !== "closed") {
-        audioRef.current.ctx.close().catch(() => {});
-      }
-    };
+  useEffect(() => () => {
+    stopMusic(audioRef.current);
+    disposeAudio(audioRef.current);
   }, []);
 
-  const canStart = snapshot.status !== "playing";
-  const startLabel =
-    snapshot.status === "paused"
-      ? "Resume"
-      : snapshot.status === "won" || snapshot.status === "lost"
-        ? "New run"
-        : "Start";
+  const canPause = snapshot.mode === "playing" || snapshot.mode === "paused";
+  const pauseOverlay = snapshot.mode === "paused";
+  const resultOverlay = snapshot.mode === "results" && snapshot.resultSummary;
+  const beatPulseClass = snapshot.beatPulse > 0.55 ? "is-pulse" : "";
+  const comboPopClass = snapshot.lastJudgement === "perfect" && snapshot.lastJudgementTimer > 0 ? "is-pop" : "";
 
   return (
-    <div className="mini-game rhythm-platformer-game">
-      <div className="mini-head">
-        <div>
-          <h4>Pulse Prism Runner</h4>
-          <p>
-            Original rhythm-action side scroller with custom visuals, procedural synth beat,
-            and deterministic QA hooks.
-          </p>
+    <div className="mini-game pulse-prism-runner" data-colorblind={settings.colorblindSafe ? "true" : "false"}>
+      <div className="ppr-shell" ref={shellRef}>
+        <header className="ppr-header">
+          <div className="ppr-title-wrap">
+            <h4>{GAME_NAME}</h4>
+            <p>Runner rítmico original: Canvas 2D + WebAudio procedural + feedback sincronizado.</p>
+            <div className="ppr-title-badge">Original Rhythm Runner</div>
+          </div>
+          <div className="ppr-top-actions">
+            <button type="button" className="ppr-btn is-primary" onClick={() => startRun()}>
+              {snapshot.mode === "playing" ? "Restart" : "Play"}
+            </button>
+            <button type="button" className="ppr-btn" onClick={togglePause} disabled={!canPause}>
+              {snapshot.mode === "paused" ? "Resume" : "Pause"}
+            </button>
+            <button type="button" className="ppr-btn" onClick={toggleFullscreen}>Fullscreen</button>
+          </div>
+        </header>
+
+        <div className="ppr-main">
+          <aside className="ppr-panel">
+            <h5>Main Menu</h5>
+            <p>Casual/Core/Expert, seed determinista y toggles de accesibilidad.</p>
+
+            <div className="ppr-form">
+              <label>
+                Difficulty
+                <select
+                  className="ppr-select"
+                  value={settings.difficultyId}
+                  onChange={(event) => applySettingsPatch({ difficultyId: event.target.value })}
+                >
+                  {Object.values(DIFFICULTY_PRESETS).map((difficulty) => (
+                    <option key={difficulty.id} value={difficulty.id}>{difficulty.label}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Seed
+                <input
+                  className="ppr-input"
+                  type="number"
+                  value={settings.seed}
+                  onChange={(event) => applySettingsPatch({ seed: Number(event.target.value) || BASE_SEED })}
+                />
+              </label>
+
+              <div className="ppr-switch-row">
+                <button
+                  type="button"
+                  className="ppr-toggle"
+                  aria-pressed={settings.audioEnabled}
+                  onClick={() => applySettingsPatch({ audioEnabled: !settings.audioEnabled })}
+                >
+                  Audio {settings.audioEnabled ? "ON" : "OFF"}
+                </button>
+                <button
+                  type="button"
+                  className="ppr-toggle"
+                  aria-pressed={settings.deterministic}
+                  onClick={() => applySettingsPatch({ deterministic: !settings.deterministic })}
+                >
+                  Deterministic {settings.deterministic ? "ON" : "OFF"}
+                </button>
+                <button
+                  type="button"
+                  className="ppr-toggle"
+                  aria-pressed={settings.reduceMotion}
+                  onClick={() => applySettingsPatch({ reduceMotion: !settings.reduceMotion })}
+                >
+                  Reduce Motion {settings.reduceMotion ? "ON" : "OFF"}
+                </button>
+                <button
+                  type="button"
+                  className="ppr-toggle"
+                  aria-pressed={settings.colorblindSafe}
+                  onClick={() => applySettingsPatch({ colorblindSafe: !settings.colorblindSafe })}
+                >
+                  Colorblind {settings.colorblindSafe ? "ON" : "OFF"}
+                </button>
+                <button
+                  type="button"
+                  className="ppr-toggle"
+                  aria-pressed={settings.debugEnabled}
+                  onClick={() => applySettingsPatch({ debugEnabled: !settings.debugEnabled })}
+                >
+                  Debug {settings.debugEnabled ? "ON" : "OFF"}
+                </button>
+              </div>
+            </div>
+
+            <div className="ppr-name-list">
+              {ALT_NAMES.map((name) => (
+                <span key={name} className="ppr-chip">{name}</span>
+              ))}
+            </div>
+
+            <p className="ppr-status-line">{snapshot.message || "Press Play."}</p>
+          </aside>
+
+          <section className="ppr-stage-wrap">
+            <div className="ppr-hud">
+              <article className="ppr-hud-card">
+                <div className="ppr-hud-label">Integrity</div>
+                <div className="ppr-health-grid">
+                  {[0, 1, 2].map((i) => (
+                    <span key={i} className={`ppr-health-cell ${snapshot.integrity > i ? "is-live" : ""}`} />
+                  ))}
+                </div>
+                <div className="ppr-hud-label" style={{ marginTop: "0.34rem" }}>Charge</div>
+                <div className="ppr-charge-track">
+                  <div className="ppr-charge-fill" style={{ width: `${Math.round((snapshot.charge / MAX_CHARGE) * 100)}%` }} />
+                </div>
+              </article>
+
+              <article className="ppr-hud-card">
+                <div className="ppr-hud-label">Combo</div>
+                <div className={`ppr-hud-value ppr-combo ${comboPopClass}`}><span>x{snapshot.combo}</span></div>
+                <div className="ppr-hud-label" style={{ marginTop: "0.26rem" }}>Score</div>
+                <div className="ppr-hud-value">{snapshot.score}</div>
+              </article>
+
+              <article className="ppr-hud-card">
+                <div className="ppr-hud-label">Beat</div>
+                <div className="ppr-beat-meter">
+                  <span className={`ppr-beat-ring ${beatPulseClass}`} />
+                  <div className="ppr-hud-value">{snapshot.nextBeatMs} ms</div>
+                </div>
+                <div className="ppr-hud-label" style={{ marginTop: "0.26rem" }}>Acc / Rank</div>
+                <div className="ppr-hud-value">{snapshot.accuracy}% · {snapshot.rank}</div>
+              </article>
+            </div>
+
+            <div className="ppr-canvas-shell">
+              <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} aria-label="Pulse Prism Runner canvas" />
+
+              {pauseOverlay && (
+                <div className="ppr-overlay">
+                  <div className="ppr-overlay-panel">
+                    <h5>Paused</h5>
+                    <p>Resume, restart o vuelve a settings.</p>
+                    <div className="ppr-overlay-actions">
+                      <button type="button" className="ppr-btn is-primary" onClick={togglePause}>Resume</button>
+                      <button type="button" className="ppr-btn" onClick={restartRun}>Restart</button>
+                      <button type="button" className="ppr-btn" onClick={openMenu}>Settings</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {resultOverlay && (
+                <div className="ppr-overlay">
+                  <div className="ppr-overlay-panel">
+                    <h5>{snapshot.resultSummary.won ? "Run Complete" : "Run Failed"}</h5>
+                    <p>Breakdown final de la carrera.</p>
+                    <div className="ppr-results-grid">
+                      <div className="ppr-results-item"><span>Score</span><strong>{snapshot.resultSummary.score}</strong></div>
+                      <div className="ppr-results-item"><span>Accuracy</span><strong>{snapshot.resultSummary.accuracyPercent}%</strong></div>
+                      <div className="ppr-results-item"><span>Perfects</span><strong>{snapshot.resultSummary.perfects}</strong></div>
+                      <div className="ppr-results-item"><span>Streak</span><strong>{snapshot.resultSummary.longestPerfectStreak}</strong></div>
+                      <div className="ppr-results-item"><span>Damage</span><strong>{snapshot.resultSummary.damageTaken}</strong></div>
+                      <div className="ppr-results-item"><span>Time</span><strong>{snapshot.resultSummary.elapsedSeconds}s</strong></div>
+                    </div>
+                    <div className="ppr-rank-badge">Rank {snapshot.resultSummary.rank}</div>
+                    <div className="ppr-overlay-actions">
+                      <button type="button" className="ppr-btn is-primary" onClick={restartRun}>Restart</button>
+                      <button type="button" className="ppr-btn" onClick={openMenu}>Main Menu</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="ppr-mobile-controls">
+              <button type="button" className="ppr-btn" onPointerDown={() => queueInput(MOBILE_TOUCH_IDS.jump)}>Jump</button>
+              <button type="button" className="ppr-btn" onPointerDown={() => queueInput(MOBILE_TOUCH_IDS.burst)}>Burst</button>
+              <button type="button" className="ppr-btn" onPointerDown={() => queueInput(MOBILE_TOUCH_IDS.shift)}>Shift</button>
+            </div>
+
+            <p className="ppr-footer-help">
+              Space/Up jump · E burst · Q shift · Enter play · P pause · R restart · F fullscreen
+            </p>
+
+            {settings.debugEnabled && (
+              <div className="ppr-debug">
+                FPS {snapshot.fps} · Frame {snapshot.frameMs.toFixed(2)} ms · Ghost {snapshot.replayGhostActive ? "ON" : "OFF"} · Section {snapshot.beatSection}
+              </div>
+            )}
+          </section>
         </div>
-        <div className="rhythm-runner-toolbar">
-          <button
-            type="button"
-            data-rhythm-start
-            onClick={() => (snapshot.status === "paused" ? togglePause() : startRun())}
-            disabled={!canStart}
-          >
-            {startLabel}
-          </button>
-          <button type="button" onClick={startRun}>Restart</button>
-          <button
-            type="button"
-            onClick={togglePause}
-            disabled={snapshot.status !== "playing" && snapshot.status !== "paused"}
-          >
-            {snapshot.status === "paused" ? "Continue" : "Pause"}
-          </button>
-          <button type="button" onClick={toggleAudio}>
-            {snapshot.audioEnabled ? "Audio ON" : "Audio OFF"}
-          </button>
-          <button type="button" onClick={toggleFullscreen}>Fullscreen</button>
-        </div>
       </div>
-
-      <div className="rhythm-runner-hud">
-        <div><span>Status</span><strong>{snapshot.status.toUpperCase()}</strong></div>
-        <div><span>Score</span><strong>{snapshot.score}</strong></div>
-        <div><span>Combo</span><strong>x{snapshot.combo}</strong></div>
-        <div><span>Integrity</span><strong>{snapshot.integrity}/3</strong></div>
-        <div><span>Charge</span><strong>{snapshot.charge.toFixed(2)}</strong></div>
-        <div><span>Progress</span><strong>{snapshot.progress.toFixed(1)}%</strong></div>
-        <div><span>Beat</span><strong>{snapshot.nextBeatMs}ms</strong></div>
-      </div>
-
-      <div className="phaser-canvas-shell rhythm-runner-stage-shell" ref={shellRef}>
-        <div className="phaser-canvas-host">
-          <canvas ref={canvasRef} width={WIDTH} height={HEIGHT} aria-label="Rhythm platformer canvas" />
-        </div>
-      </div>
-
-      <p className={`rhythm-runner-status mode-${snapshot.status}`}>{snapshot.message}</p>
-
-      <div className="rhythm-runner-touch-controls">
-        <button type="button" onClick={() => { inputRef.current.jump = true; }}>Jump</button>
-        <button type="button" onClick={() => { inputRef.current.burst = true; }}>Pulse Burst</button>
-        <button type="button" onClick={togglePause}>
-          {snapshot.status === "paused" ? "Resume" : "Pause"}
-        </button>
-      </div>
-
-      <p className="rhythm-runner-help">
-        Controls: Space/ArrowUp jump, E pulse burst, Enter start/restart, P pause, F fullscreen,
-        O audio.
-      </p>
     </div>
   );
 }
