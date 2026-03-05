@@ -103,16 +103,18 @@ const ENVIRONMENTS = {
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const TRACKS = [
+  // ── neon-city ─────────────────────────────────────────────────────────────
   {
     id: 0,
     envId: "neon-city",
     layout: "flow",
     name: { es: "Metropolitan GP", en: "Metropolitan GP" },
-    trackWidth: 46,
+    trackWidth: 72,
+    // Classic GP layout — balanced corners, modern feel (Bahrain-like)
     raw: [
-      [-1.78, -0.16], [-1.62, -0.68], [-1.10, -1.02], [-0.40, -1.12], [0.36, -1.06], [1.04, -0.82],
-      [1.52, -0.42], [1.74, 0.18], [1.56, 0.72], [1.02, 1.02], [0.30, 1.10], [-0.34, 0.94],
-      [-0.72, 0.58], [-0.60, 0.20], [-0.24, -0.04], [-0.52, -0.30], [-1.00, -0.38], [-1.42, -0.10],
+      [-1.80, -0.15], [-1.62, 0.82], [-0.68, 1.12], [0.52, 1.06],
+      [1.62, 0.72], [1.86, 0.00], [1.62, -0.82], [0.22, -1.12],
+      [-0.78, -1.02], [-1.62, -0.68],
     ],
   },
   {
@@ -120,11 +122,14 @@ const TRACKS = [
     envId: "neon-city",
     layout: "technical",
     name: { es: "Harbor Street", en: "Harbor Street" },
-    trackWidth: 42,
+    trackWidth: 60,
+    // Monaco-style — tight streets, many direction changes, low speed
     raw: [
-      [-1.72, -0.08], [-1.64, -0.64], [-1.22, -1.02], [-0.64, -1.12], [-0.06, -0.96], [0.18, -0.56],
-      [-0.02, -0.16], [0.30, 0.16], [0.90, 0.04], [1.46, -0.30], [1.72, 0.08], [1.56, 0.60],
-      [1.06, 0.96], [0.32, 1.10], [-0.40, 0.98], [-0.82, 0.66], [-0.64, 0.30], [-1.06, 0.18], [-1.42, 0.42],
+      [-1.55, 0.25], [-1.82, -0.30], [-1.38, -0.95],
+      [-0.65, -1.05], [-0.08, -0.78], [0.12, -0.28],
+      [0.62, -0.12], [1.08, -0.48], [1.52, -0.90],
+      [1.78, -0.28], [1.55, 0.42], [0.92, 0.88],
+      [0.08, 0.98], [-0.52, 0.72], [-0.22, 0.42], [-0.82, 0.22],
     ],
   },
   {
@@ -132,23 +137,27 @@ const TRACKS = [
     envId: "neon-city",
     layout: "oval",
     name: { es: "City Speedway", en: "City Speedway" },
-    trackWidth: 52,
+    trackWidth: 90,
+    // Pure oval — wide, fast, minimal cornering (NASCAR-style)
     raw: [
-      [-1.90, -0.30], [-1.90, 0.34], [-1.56, 0.76], [-0.96, 0.94], [-0.14, 0.98], [0.64, 0.90],
-      [1.30, 0.66], [1.76, 0.26], [1.86, -0.20], [1.56, -0.58], [0.96, -0.82], [0.14, -0.92],
-      [-0.62, -0.86], [-1.20, -0.62], [-1.52, -0.22],
+      [-1.90, 0.00], [-1.55, 0.80], [0.00, 1.05],
+      [1.55, 0.80], [1.90, 0.00], [1.55, -0.80],
+      [0.00, -1.05], [-1.55, -0.80],
     ],
   },
+  // ── volcano ────────────────────────────────────────────────────────────────
   {
     id: 3,
     envId: "volcano",
     layout: "flow",
     name: { es: "Caldera GP", en: "Caldera GP" },
-    trackWidth: 46,
+    trackWidth: 74,
+    // Monza-style — two long straights, hairpin at each end, one chicane
     raw: [
-      [-1.80, 0.00], [-1.56, -0.56], [-1.00, -0.96], [-0.24, -1.12], [0.58, -1.02], [1.24, -0.68],
-      [1.66, -0.14], [1.72, 0.46], [1.38, 0.90], [0.78, 1.10], [0.04, 1.06], [-0.54, 0.82],
-      [-0.90, 0.46], [-0.82, 0.10], [-0.42, -0.16], [-0.72, -0.42], [-1.24, -0.32], [-1.56, 0.08],
+      [-1.88, -0.42], [0.12, -0.42], [0.24, -0.68], [0.44, -0.26], [1.88, -0.42],
+      [1.90, 0.00],
+      [1.88, 0.46], [-1.88, 0.46],
+      [-1.90, 0.00],
     ],
   },
   {
@@ -156,12 +165,13 @@ const TRACKS = [
     envId: "volcano",
     layout: "technical",
     name: { es: "Crater Complex", en: "Crater Complex" },
-    trackWidth: 40,
+    trackWidth: 64,
+    // Hungary-like — twisty, no long straights, constant direction changes
     raw: [
-      [-1.72, -0.04], [-1.62, -0.60], [-1.24, -0.98], [-0.74, -1.14], [-0.20, -1.00], [0.06, -0.62],
-      [-0.10, -0.24], [0.24, 0.06], [0.80, -0.06], [1.28, -0.42], [1.60, -0.86], [1.78, -0.36],
-      [1.70, 0.26], [1.36, 0.74], [0.84, 1.04], [0.24, 1.12], [-0.42, 1.02], [-0.94, 0.74],
-      [-1.22, 0.36], [-1.40, 0.62],
+      [-1.65, 0.05], [-1.88, -0.52], [-1.32, -1.02], [-0.68, -0.88],
+      [-0.28, -0.38], [0.08, -0.08], [0.52, -0.22], [1.02, -0.68],
+      [1.58, -0.95], [1.82, -0.38], [1.62, 0.38], [1.02, 0.88],
+      [0.32, 1.08], [-0.42, 0.92], [-0.98, 0.52], [-1.58, 0.68], [-1.78, 0.32],
     ],
   },
   {
@@ -169,23 +179,25 @@ const TRACKS = [
     envId: "volcano",
     layout: "oval",
     name: { es: "Lava Speedway", en: "Lava Speedway" },
-    trackWidth: 50,
+    trackWidth: 82,
+    // D-shaped oval — one flat straight side (Indy-like)
     raw: [
-      [-1.92, -0.28], [-1.92, 0.32], [-1.64, 0.74], [-1.06, 0.90], [-0.20, 0.94], [0.70, 0.86],
-      [1.36, 0.58], [1.78, 0.18], [1.90, -0.18], [1.70, -0.50], [1.30, -0.72], [0.70, -0.86],
-      [-0.08, -0.92], [-0.82, -0.84], [-1.40, -0.62], [-1.72, -0.34],
+      [-1.90, -0.72], [-1.90, 0.72], [0.00, 1.02],
+      [1.72, 0.78], [1.90, 0.00], [1.72, -0.78], [0.00, -1.02],
     ],
   },
+  // ── arctic ─────────────────────────────────────────────────────────────────
   {
     id: 6,
     envId: "arctic",
     layout: "flow",
     name: { es: "North Loop", en: "North Loop" },
-    trackWidth: 48,
+    trackWidth: 72,
+    // Silverstone-like — sweeping high-speed corners throughout
     raw: [
-      [-1.76, -0.12], [-1.52, -0.70], [-0.94, -1.06], [-0.16, -1.14], [0.62, -1.00], [1.26, -0.64],
-      [1.64, -0.08], [1.68, 0.54], [1.30, 0.98], [0.64, 1.14], [-0.12, 1.06], [-0.70, 0.78],
-      [-1.00, 0.36], [-0.86, -0.04], [-0.46, -0.26], [-0.74, -0.52], [-1.28, -0.44], [-1.58, -0.08],
+      [-1.70, 0.15], [-1.35, -0.82], [-0.25, -1.10], [0.82, -0.92],
+      [1.52, -0.22], [1.42, 0.72], [0.58, 1.08],
+      [-0.42, 0.92], [-1.32, 0.62],
     ],
   },
   {
@@ -193,12 +205,14 @@ const TRACKS = [
     envId: "arctic",
     layout: "technical",
     name: { es: "Ice Chicane", en: "Ice Chicane" },
-    trackWidth: 38,
+    trackWidth: 65,
+    // Chicane-heavy — long straights broken by multiple chicanes (Jerez-like)
     raw: [
-      [-1.68, -0.06], [-1.58, -0.58], [-1.20, -0.96], [-0.66, -1.12], [-0.12, -0.96], [0.12, -0.62],
-      [-0.04, -0.28], [0.30, -0.02], [0.84, -0.22], [1.30, -0.64], [1.62, -0.90], [1.78, -0.42],
-      [1.72, 0.22], [1.42, 0.70], [0.92, 1.00], [0.30, 1.10], [-0.34, 0.96], [-0.76, 0.62],
-      [-0.54, 0.24], [-1.04, 0.22], [-1.40, 0.46],
+      [-1.88, -0.46],
+      [-0.78, -0.46], [-0.68, -0.72], [-0.48, -0.28], [-0.28, -0.62], [-0.08, -0.26],
+      [0.82, -0.46], [1.88, -0.46],
+      [1.88, 0.00], [1.88, 0.50],
+      [-1.88, 0.50], [-1.88, 0.00],
     ],
   },
   {
@@ -206,23 +220,26 @@ const TRACKS = [
     envId: "arctic",
     layout: "oval",
     name: { es: "Polar Ring", en: "Polar Ring" },
-    trackWidth: 54,
+    trackWidth: 86,
+    // Compact oval — near-circular, wide banking
     raw: [
-      [-1.88, -0.26], [-1.88, 0.30], [-1.58, 0.70], [-1.02, 0.88], [-0.18, 0.96], [0.72, 0.88],
-      [1.40, 0.62], [1.82, 0.22], [1.90, -0.22], [1.62, -0.60], [1.00, -0.84], [0.16, -0.92],
-      [-0.70, -0.86], [-1.30, -0.64], [-1.66, -0.32],
+      [-1.52, 0.00], [-1.18, 0.76], [0.00, 1.00],
+      [1.18, 0.76], [1.52, 0.00], [1.18, -0.76],
+      [0.00, -1.00], [-1.18, -0.76],
     ],
   },
+  // ── jungle ─────────────────────────────────────────────────────────────────
   {
     id: 9,
     envId: "jungle",
     layout: "flow",
     name: { es: "Rainforest GP", en: "Rainforest GP" },
-    trackWidth: 46,
+    trackWidth: 70,
+    // COTA-like — mix of fast sweeping and slow tight corners
     raw: [
-      [-1.78, 0.04], [-1.58, -0.54], [-1.08, -0.96], [-0.34, -1.14], [0.44, -1.08], [1.08, -0.78],
-      [1.54, -0.30], [1.72, 0.30], [1.50, 0.86], [0.96, 1.10], [0.22, 1.16], [-0.44, 1.00],
-      [-0.88, 0.66], [-0.80, 0.24], [-0.40, -0.02], [-0.64, -0.34], [-1.16, -0.36], [-1.54, -0.08],
+      [-1.78, 0.12], [-1.55, 0.84], [-0.58, 1.10], [0.42, 0.92],
+      [1.02, 0.22], [0.78, -0.52], [1.58, -0.90], [1.88, -0.20],
+      [1.58, 0.48], [0.22, -0.58], [-0.62, -0.95], [-1.38, -0.72],
     ],
   },
   {
@@ -230,12 +247,13 @@ const TRACKS = [
     envId: "jungle",
     layout: "technical",
     name: { es: "Canopy Chicane", en: "Canopy Chicane" },
-    trackWidth: 40,
+    trackWidth: 62,
+    // Complex infield — multiple hairpins, slow and precise
     raw: [
-      [-1.70, 0.00], [-1.62, -0.56], [-1.24, -0.96], [-0.74, -1.12], [-0.18, -1.00], [0.08, -0.66],
-      [-0.08, -0.32], [0.26, -0.02], [0.80, 0.06], [1.34, -0.22], [1.66, -0.62], [1.80, -0.16],
-      [1.66, 0.42], [1.28, 0.84], [0.74, 1.08], [0.10, 1.14], [-0.50, 0.98], [-0.90, 0.60],
-      [-0.66, 0.20], [-1.12, 0.12], [-1.46, 0.46],
+      [-1.72, 0.05], [-1.88, -0.48], [-1.42, -1.00], [-0.82, -0.82],
+      [-0.42, -0.32], [-0.12, -0.08], [0.38, -0.18], [0.88, -0.62],
+      [1.48, -0.95], [1.82, -0.42], [1.72, 0.28], [1.12, 0.88],
+      [0.42, 1.08], [-0.32, 0.98], [-0.78, 0.58], [-0.42, 0.22], [-0.88, 0.02],
     ],
   },
   {
@@ -243,23 +261,29 @@ const TRACKS = [
     envId: "jungle",
     layout: "oval",
     name: { es: "Jungle Sprint", en: "Jungle Sprint" },
-    trackWidth: 50,
+    trackWidth: 92,
+    // Superspeedway — huge oval, very wide, maximum speed
     raw: [
-      [-1.82, -0.24], [-1.82, 0.30], [-1.52, 0.66], [-0.96, 0.84], [-0.10, 0.92], [0.80, 0.86],
-      [1.44, 0.62], [1.78, 0.26], [1.86, -0.12], [1.64, -0.48], [1.20, -0.70], [0.58, -0.84],
-      [-0.18, -0.90], [-0.88, -0.82], [-1.42, -0.62], [-1.70, -0.30],
+      [-1.92, 0.00], [-1.56, 0.86], [0.00, 1.06],
+      [1.56, 0.86], [1.92, 0.00], [1.56, -0.86],
+      [0.00, -1.06], [-1.56, -0.86],
     ],
   },
+  // ── desert ─────────────────────────────────────────────────────────────────
   {
     id: 12,
     envId: "desert",
     layout: "flow",
     name: { es: "Sahara GP", en: "Sahara GP" },
-    trackWidth: 55,
+    trackWidth: 74,
+    // Hockenheim-like — 2 straights, stadium infield chicanes
     raw: [
-      [-1.86, -0.02], [-1.64, -0.60], [-1.04, -0.98], [-0.24, -1.14], [0.62, -1.06], [1.28, -0.74],
-      [1.70, -0.24], [1.82, 0.34], [1.54, 0.86], [0.94, 1.12], [0.16, 1.16], [-0.52, 0.98],
-      [-0.96, 0.62], [-0.86, 0.18], [-0.40, -0.08], [-0.66, -0.40], [-1.24, -0.40], [-1.62, -0.10],
+      [-1.88, -0.42],
+      [-0.28, -0.42], [-0.18, -0.68], [0.02, -0.28], [0.22, -0.62], [0.42, -0.28],
+      [1.88, -0.42],
+      [1.90, 0.00],
+      [1.88, 0.46], [-1.88, 0.46],
+      [-1.90, 0.00],
     ],
   },
   {
@@ -267,12 +291,13 @@ const TRACKS = [
     envId: "desert",
     layout: "technical",
     name: { es: "Dune Technical", en: "Dune Technical" },
-    trackWidth: 42,
+    trackWidth: 64,
+    // Multiple hairpins — Istanbul/Korea style, downforce-dependent
     raw: [
-      [-1.78, -0.04], [-1.66, -0.62], [-1.28, -1.00], [-0.76, -1.14], [-0.22, -0.98], [0.02, -0.60],
-      [-0.12, -0.26], [0.24, 0.04], [0.86, -0.08], [1.40, -0.42], [1.74, -0.82], [1.86, -0.28],
-      [1.72, 0.34], [1.34, 0.78], [0.78, 1.06], [0.12, 1.14], [-0.58, 1.00], [-1.06, 0.70],
-      [-1.34, 0.30], [-1.50, 0.60],
+      [-1.62, 0.12], [-1.82, -0.48], [-1.32, -1.00], [-0.72, -0.88],
+      [-0.28, -0.42], [0.00, -0.12], [0.42, -0.28], [0.88, -0.82],
+      [1.42, -1.00], [1.82, -0.52], [1.72, 0.22], [1.22, 0.82],
+      [0.52, 1.08], [-0.22, 1.02], [-0.82, 0.72], [-1.22, 0.32],
     ],
   },
   {
@@ -280,23 +305,25 @@ const TRACKS = [
     envId: "desert",
     layout: "oval",
     name: { es: "Desert Storm", en: "Desert Storm" },
-    trackWidth: 58,
+    trackWidth: 88,
+    // Tri-oval — like Daytona, banked turns, very fast
     raw: [
-      [-1.96, -0.28], [-1.96, 0.30], [-1.66, 0.72], [-1.08, 0.90], [-0.18, 0.98], [0.74, 0.90],
-      [1.42, 0.64], [1.86, 0.24], [1.94, -0.20], [1.66, -0.60], [1.08, -0.84], [0.24, -0.94],
-      [-0.66, -0.88], [-1.32, -0.66], [-1.74, -0.34],
+      [-1.90, -0.28], [-1.70, 0.68], [0.00, 1.00],
+      [1.70, 0.68], [1.90, -0.28], [0.00, -1.00],
     ],
   },
+  // ── space ──────────────────────────────────────────────────────────────────
   {
     id: 15,
     envId: "space",
     layout: "flow",
     name: { es: "Orbital GP", en: "Orbital GP" },
-    trackWidth: 48,
+    trackWidth: 72,
+    // Modern F1 style — Abu Dhabi/Qatar feel, varied corner types
     raw: [
-      [-1.80, -0.10], [-1.56, -0.64], [-0.98, -1.00], [-0.20, -1.12], [0.58, -1.02], [1.22, -0.70],
-      [1.64, -0.20], [1.72, 0.38], [1.44, 0.88], [0.88, 1.10], [0.14, 1.12], [-0.50, 0.94],
-      [-0.92, 0.58], [-0.82, 0.20], [-0.42, -0.06], [-0.70, -0.34], [-1.22, -0.34], [-1.56, -0.08],
+      [-1.78, -0.10], [-1.58, 0.80], [-0.58, 1.10], [0.58, 1.06],
+      [1.66, 0.74], [1.88, 0.00], [1.66, -0.74], [0.32, -1.10],
+      [-0.72, -1.06], [-1.58, -0.72],
     ],
   },
   {
@@ -304,12 +331,13 @@ const TRACKS = [
     envId: "space",
     layout: "technical",
     name: { es: "Station Complex", en: "Station Complex" },
-    trackWidth: 38,
+    trackWidth: 62,
+    // Spa-like — combination circuit, slow hairpins + fast esses
     raw: [
-      [-1.72, -0.02], [-1.62, -0.60], [-1.24, -0.98], [-0.70, -1.12], [-0.14, -0.96], [0.10, -0.62],
-      [-0.06, -0.26], [0.30, 0.02], [0.86, -0.12], [1.34, -0.46], [1.66, -0.86], [1.80, -0.32],
-      [1.68, 0.28], [1.32, 0.74], [0.82, 1.02], [0.20, 1.12], [-0.46, 1.00], [-0.94, 0.68],
-      [-1.20, 0.30], [-1.42, 0.56],
+      [-1.62, 0.22], [-1.82, -0.42], [-1.22, -0.98], [-0.52, -0.92],
+      [-0.18, -0.48], [0.22, -0.12], [0.72, -0.22], [1.22, -0.68],
+      [1.68, -0.90], [1.88, -0.32], [1.68, 0.38], [1.02, 0.92],
+      [0.22, 1.05], [-0.52, 0.88], [-0.98, 0.48], [-0.58, 0.18],
     ],
   },
   {
@@ -317,11 +345,12 @@ const TRACKS = [
     envId: "space",
     layout: "oval",
     name: { es: "Hyperdrive", en: "Hyperdrive" },
-    trackWidth: 55,
+    trackWidth: 86,
+    // Standard speedway oval — clean and fast
     raw: [
-      [-1.94, -0.26], [-1.94, 0.28], [-1.62, 0.70], [-1.04, 0.88], [-0.18, 0.96], [0.72, 0.88],
-      [1.40, 0.62], [1.86, 0.24], [1.96, -0.18], [1.72, -0.56], [1.20, -0.82], [0.38, -0.92],
-      [-0.48, -0.90], [-1.18, -0.70], [-1.68, -0.36],
+      [-1.88, 0.00], [-1.52, 0.82], [0.00, 1.04],
+      [1.52, 0.82], [1.88, 0.00], [1.52, -0.82],
+      [0.00, -1.04], [-1.52, -0.82],
     ],
   },
 ];
@@ -456,7 +485,61 @@ function buildTrack(trackDef, canvasW, canvasH) {
     });
   }
 
-  return { samples, totalLength, startS: 0.03, trackWidth: trackDef.trackWidth || 48, decorations };
+  const tw = trackDef.trackWidth || 48;
+  const hw2 = tw / 2;
+  const barrierOff2 = hw2 + 36;
+
+  // Pre-compute Path2D objects once — reused every frame via ctx.stroke(path2d)
+  const pCenter = new Path2D();
+  const pLeft = new Path2D();
+  const pRight = new Path2D();
+  const pBLeft = new Path2D();
+  const pBRight = new Path2D();
+
+  for (let i = 0; i <= SAMPLES; i++) {
+    const s = samples[i % SAMPLES];
+    const nx = -Math.sin(s.ang), ny = Math.cos(s.ang);
+    i === 0 ? pCenter.moveTo(s.x, s.y) : pCenter.lineTo(s.x, s.y);
+    const lx = s.x + nx * hw2,        ly = s.y + ny * hw2;
+    const rx = s.x - nx * hw2,        ry = s.y - ny * hw2;
+    i === 0 ? pLeft.moveTo(lx, ly) : pLeft.lineTo(lx, ly);
+    i === 0 ? pRight.moveTo(rx, ry) : pRight.lineTo(rx, ry);
+    const blx = s.x + nx * barrierOff2, bly = s.y + ny * barrierOff2;
+    const brx = s.x - nx * barrierOff2, bry = s.y - ny * barrierOff2;
+    i === 0 ? pBLeft.moveTo(blx, bly) : pBLeft.lineTo(blx, bly);
+    i === 0 ? pBRight.moveTo(brx, bry) : pBRight.lineTo(brx, bry);
+  }
+
+  // Pre-compute kerb paths grouped by color (red vs white)
+  const pKerbA = new Path2D();
+  const pKerbB = new Path2D();
+  {
+    const kerbThreshold = 0.015;
+    const kerbSegLen = 14;
+    let kerbAccum = 0, kerbColorIdx = 0;
+    for (let i = 0; i < SAMPLES - 1; i++) {
+      const a = samples[i], b = samples[i + 1];
+      const curvature = (a.curvature + b.curvature) * 0.5;
+      if (curvature < kerbThreshold) { kerbAccum = 0; continue; }
+      const segPx = Math.hypot(b.x - a.x, b.y - a.y);
+      kerbAccum += segPx;
+      if (kerbAccum > kerbSegLen) { kerbColorIdx++; kerbAccum = 0; }
+      const anX = -Math.sin(a.ang), anY = Math.cos(a.ang);
+      const bnX = -Math.sin(b.ang), bnY = Math.cos(b.ang);
+      for (const side of [-1, 1]) {
+        const ax2 = a.x + anX * hw2 * side, ay2 = a.y + anY * hw2 * side;
+        const bx2 = b.x + bnX * hw2 * side, by2 = b.y + bnY * hw2 * side;
+        const colorFlip = (kerbColorIdx + (side === 1 ? 0 : 1)) % 2 === 0;
+        const pk = colorFlip ? pKerbA : pKerbB;
+        pk.moveTo(ax2, ay2);
+        pk.lineTo(bx2, by2);
+      }
+    }
+  }
+
+  const paths = { center: pCenter, left: pLeft, right: pRight, barrierLeft: pBLeft, barrierRight: pBRight, kerbA: pKerbA, kerbB: pKerbB };
+
+  return { samples, totalLength, startS: 0.03, trackWidth: tw, decorations, paths };
 }
 
 function sampleTrackAt(track, s) {
@@ -489,6 +572,21 @@ function closestS(track, x, y) {
   const lo = bestI - 20, hi = bestI + 20;
   for (let i = lo; i <= hi; i++) {
     const idx = ((i % N) + N) % N;
+    const s = track.samples[idx];
+    const d = Math.hypot(s.x - x, s.y - y);
+    if (d < bestDist) { bestDist = d; bestI = idx; }
+  }
+  return bestI / N;
+}
+
+// Fast version using a known hint — avoids global coarse sweep
+function closestSNear(track, x, y, hintS) {
+  const N = track.samples.length;
+  const hintI = Math.round(((hintS % 1 + 1) % 1) * N);
+  const radius = 55;
+  let bestDist = Infinity, bestI = hintI;
+  for (let di = -radius; di <= radius; di++) {
+    const idx = ((hintI + di) % N + N) % N;
     const s = track.samples[idx];
     const d = Math.hypot(s.x - x, s.y - y);
     if (d < bestDist) { bestDist = d; bestI = idx; }
@@ -542,7 +640,7 @@ function updateSparks(sparks, dt) {
 
 function updateCar(car, dt, input, track, weatherProfile, allCars, startLocked) {
   if (car.finished) return;
-  if (startLocked && car.isPlayer) return;
+  if (startLocked) return; // all cars frozen until semaphore goes off
   car.collided = false;
 
   const offTrackMult = car.offTrack ? lerp(PHYS.OFF_TRACK_GRIP, 1.0, car.offTrackRecovery) : 1.0;
@@ -578,7 +676,7 @@ function updateCar(car, dt, input, track, weatherProfile, allCars, startLocked) 
 
   // Constrain to track + off-track penalty
   const tw = track.trackWidth / 2;
-  const cs = closestS(track, car.x, car.y);
+  const cs = closestSNear(track, car.x, car.y, car.s);
   const closest = sampleTrackAt(track, cs);
   const dx = car.x - closest.x, dy = car.y - closest.y;
   const dist = Math.hypot(dx, dy);
@@ -844,86 +942,54 @@ function applyCameraTransform(ctx, camera, w, h) {
 function renderTrack(ctx, track, env) {
   const samples = track.samples;
   const N = samples.length;
-  const hw = track.trackWidth / 2;
+  const p = track.paths; // pre-computed Path2D objects
 
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
   // ── Layer 1: Wide runoff band ──────────────────────────────────────────
-  const runoffW = track.trackWidth + 70;
   let runoffColor = env.runoffColor;
   if (env.runoffType === "grass") runoffColor = env.grassColor || "#2a6030";
   else if (env.runoffType === "sand") runoffColor = env.runoffColor || "#c8a058";
   else if (env.runoffType === "snow") runoffColor = "#dce8f0";
   else if (env.runoffType === "gravel") runoffColor = "#8a7860";
-
-  ctx.beginPath();
   ctx.strokeStyle = runoffColor;
-  ctx.lineWidth = runoffW;
-  for (let i = 0; i <= N; i++) {
-    const s = samples[i % N];
-    i === 0 ? ctx.moveTo(s.x, s.y) : ctx.lineTo(s.x, s.y);
-  }
-  ctx.stroke();
+  ctx.lineWidth = track.trackWidth + 70;
+  ctx.stroke(p.center);
 
-  // ── Layer 2: Barriers (colored walls) ──────────────────────────────────
-  const barrierOffset = hw + 36;
+  // ── Layer 2: Barriers ─────────────────────────────────────────────────
   ctx.lineWidth = 5;
   ctx.strokeStyle = env.barrierColor || "#1e5eff";
-  for (const side of [-1, 1]) {
-    ctx.beginPath();
-    for (let i = 0; i <= N; i++) {
-      const s = samples[i % N];
-      const nx = -Math.sin(s.ang) * barrierOffset * side;
-      const ny = Math.cos(s.ang) * barrierOffset * side;
-      i === 0 ? ctx.moveTo(s.x + nx, s.y + ny) : ctx.lineTo(s.x + nx, s.y + ny);
-    }
-    ctx.stroke();
-  }
+  ctx.stroke(p.barrierLeft);
+  ctx.stroke(p.barrierRight);
 
-  // ── Layer 3: Asphalt ────────────────────────────────────────────────────
-  ctx.beginPath();
+  // ── Layer 3: Asphalt ──────────────────────────────────────────────────
   ctx.strokeStyle = env.roadColor;
   ctx.lineWidth = track.trackWidth + 2;
-  for (let i = 0; i <= N; i++) {
-    const s = samples[i % N];
-    i === 0 ? ctx.moveTo(s.x, s.y) : ctx.lineTo(s.x, s.y);
-  }
-  ctx.stroke();
+  ctx.stroke(p.center);
 
   // Lighter center strip for depth
   const rc = env.roadColor.replace(/#/, "");
   const rr = parseInt(rc.substring(0, 2), 16);
   const rg = parseInt(rc.substring(2, 4), 16);
   const rb = parseInt(rc.substring(4, 6), 16);
-  ctx.beginPath();
   ctx.strokeStyle = `rgba(${Math.min(255, rr + 18)},${Math.min(255, rg + 18)},${Math.min(255, rb + 18)},0.5)`;
   ctx.lineWidth = track.trackWidth * 0.5;
-  for (let i = 0; i <= N; i++) {
-    const s = samples[i % N];
-    i === 0 ? ctx.moveTo(s.x, s.y) : ctx.lineTo(s.x, s.y);
-  }
-  ctx.stroke();
+  ctx.stroke(p.center);
 
-  // ── Layer 4a: Dashed center line ───────────────────────────────────────
+  // ── Layer 4a: Dashed center line ──────────────────────────────────────
   ctx.setLineDash([20, 15]);
   ctx.strokeStyle = env.centerLineColor;
   ctx.lineWidth = 2.0;
-  ctx.beginPath();
-  for (let i = 0; i <= N; i++) {
-    const s = samples[i % N];
-    i === 0 ? ctx.moveTo(s.x, s.y) : ctx.lineTo(s.x, s.y);
-  }
-  ctx.stroke();
+  ctx.stroke(p.center);
   ctx.setLineDash([]);
 
-  // ── Layer 4b: Finish line (full checker rectangle) ──────────────────────
+  // ── Layer 4b: Finish line ─────────────────────────────────────────────
   const finIdx = Math.floor(0.03 * N);
   const fs = samples[finIdx];
   const sqW = Math.max(6, track.trackWidth / 8);
   const sqH = 10;
   const numSq = Math.round(track.trackWidth / sqW);
-
   ctx.save();
   ctx.translate(fs.x, fs.y);
   ctx.rotate(fs.ang);
@@ -931,66 +997,26 @@ function renderTrack(ctx, track, env) {
     for (let row = 0; row < 2; row++) {
       const isWhite = (col + row) % 2 === 0;
       ctx.fillStyle = isWhite ? "#ffffff" : "#1a1a1a";
-      const fx = -sqH / 2 + row * sqH;
-      const fy = -track.trackWidth / 2 + col * sqW;
-      ctx.fillRect(fx, fy, sqH, sqW);
+      ctx.fillRect(-sqH / 2 + row * sqH, -track.trackWidth / 2 + col * sqW, sqH, sqW);
     }
   }
   ctx.restore();
 
-  // ── Layer 5: Kerbs (wide, on all significant corners) ──────────────────
-  const kerbWidth = 8;
-  const kerbThreshold = 0.015;
-  const kerbSegLen = 14;
+  // ── Layer 5: Kerbs — batch-stroked by color ────────────────────────────
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = env.kerbRed || "#e03030";
+  ctx.stroke(p.kerbA);
+  ctx.strokeStyle = env.kerbWhite || "#f3f3f3";
+  ctx.stroke(p.kerbB);
 
-  let kerbAccum = 0;
-  let kerbColorIdx = 0;
-  ctx.lineWidth = kerbWidth;
-
-  for (let i = 0; i < N - 1; i++) {
-    const a = samples[i];
-    const b = samples[i + 1];
-    const curvature = (a.curvature + b.curvature) * 0.5;
-    if (curvature < kerbThreshold) { kerbAccum = 0; continue; }
-
-    const segPx = Math.hypot(b.x - a.x, b.y - a.y);
-    kerbAccum += segPx;
-    if (kerbAccum > kerbSegLen) { kerbColorIdx++; kerbAccum = 0; }
-
-    const anX = -Math.sin(a.ang), anY = Math.cos(a.ang);
-    const bnX = -Math.sin(b.ang), bnY = Math.cos(b.ang);
-
-    for (const side of [-1, 1]) {
-      const ax = a.x + anX * hw * side;
-      const ay = a.y + anY * hw * side;
-      const bx = b.x + bnX * hw * side;
-      const by = b.y + bnY * hw * side;
-      const colorFlip = (kerbColorIdx + (side === 1 ? 0 : 1)) % 2 === 0;
-      ctx.strokeStyle = colorFlip ? (env.kerbRed || "#e03030") : (env.kerbWhite || "#f3f3f3");
-      ctx.beginPath();
-      ctx.moveTo(ax, ay);
-      ctx.lineTo(bx, by);
-      ctx.stroke();
-    }
-  }
-
-  // ── Layer 6: White track edge lines ────────────────────────────────────
+  // ── Layer 6: White track edge lines ───────────────────────────────────
   ctx.save();
   ctx.shadowBlur = 8;
   ctx.shadowColor = "rgba(255,255,255,0.3)";
   ctx.strokeStyle = env.borderColor;
   ctx.lineWidth = 2.5;
-
-  for (const side of [-1, 1]) {
-    ctx.beginPath();
-    for (let i = 0; i <= N; i++) {
-      const s = samples[i % N];
-      const nx = -Math.sin(s.ang) * hw * side;
-      const ny = Math.cos(s.ang) * hw * side;
-      i === 0 ? ctx.moveTo(s.x + nx, s.y + ny) : ctx.lineTo(s.x + nx, s.y + ny);
-    }
-    ctx.stroke();
-  }
+  ctx.stroke(p.left);
+  ctx.stroke(p.right);
   ctx.restore();
 }
 
@@ -1557,17 +1583,18 @@ export default function RaceGame2DPro() {
     lastRef.current = performance.now();
 
     // â”€â”€ RAF loop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const ctx = canvas.getContext("2d");
+
     const loop = (now) => {
       rafRef.current = requestAnimationFrame(loop);
 
       const rawDt = (now - lastRef.current) / 1000;
       lastRef.current = now;
-      const dt = Math.min(rawDt, 0.05);
+      const dt = Math.min(rawDt, 0.033);
 
       const g = gameRef.current;
       if (!g) return;
 
-      const ctx = canvas.getContext("2d");
       const W = canvas.width, H = canvas.height;
 
       g.time += dt;
@@ -1645,8 +1672,7 @@ export default function RaceGame2DPro() {
               car.turbo = Math.min(1, car.turbo + PHYS.TURBO_FILL_RATE * dt * 0.6);
             }
           } else {
-            // Slight creep AI during countdown
-            carInput = { throttle: 0.05, brake: 0, steer: 0 };
+            carInput = { throttle: 0, brake: 0, steer: 0 };
           }
         }
 
