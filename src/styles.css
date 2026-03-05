@@ -4983,6 +4983,295 @@ body {
   padding: 0.18rem 0.48rem;
 }
 
+/* Minesweeper */
+.minesweeper-game {
+  border-color: rgba(37, 99, 235, 0.26);
+  background:
+    radial-gradient(circle at 84% -26%, rgba(59, 130, 246, 0.2), transparent 44%),
+    radial-gradient(circle at 12% 120%, rgba(16, 185, 129, 0.16), transparent 46%),
+    linear-gradient(165deg, #f8fbff 0%, #eff6ff 100%);
+}
+
+.minesweeper-game .mini-head h4 {
+  color: #1e3a8a;
+  letter-spacing: 0.01em;
+}
+
+.minesweeper-game .mini-head p {
+  color: #1f446f;
+}
+
+.mines-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.45rem;
+}
+
+.mines-toolbar label {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 9rem;
+}
+
+.mines-toolbar label span {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1e3a8a;
+}
+
+.mines-toolbar select,
+.mines-custom-panel input,
+.mines-toolbar button,
+.mines-custom-panel button {
+  border: 1px solid rgba(59, 130, 246, 0.32);
+  border-radius: 9px;
+  background: rgba(248, 250, 252, 0.9);
+  color: #0f172a;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.4rem 0.6rem;
+}
+
+.mines-toolbar button,
+.mines-custom-panel button {
+  cursor: pointer;
+  transition: transform 110ms ease, border-color 110ms ease, background 110ms ease;
+}
+
+.mines-toolbar button:hover,
+.mines-custom-panel button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(29, 78, 216, 0.55);
+  background: #f8fafc;
+}
+
+.mines-toolbar button.active {
+  background: #1d4ed8;
+  color: #f8fafc;
+  border-color: #1d4ed8;
+}
+
+.mines-custom-panel {
+  margin-top: 0.6rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 0.4rem;
+  align-items: end;
+}
+
+.mines-custom-panel label {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.mines-custom-panel label span {
+  font-size: 0.63rem;
+  font-weight: 700;
+  color: #1e40af;
+}
+
+.mines-hud {
+  margin-top: 0.6rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.42rem;
+}
+
+.mines-hud > div {
+  border: 1px solid rgba(59, 130, 246, 0.26);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.75);
+  padding: 0.36rem 0.45rem;
+  display: grid;
+  gap: 0.12rem;
+}
+
+.mines-hud span {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
+.mines-hud strong {
+  font-size: 0.86rem;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.mines-status {
+  margin: 0.55rem 0 0;
+  font-size: 0.76rem;
+  color: #1f446f;
+}
+
+.mines-status.mode-won {
+  color: #166534;
+  font-weight: 700;
+}
+
+.mines-status.mode-lost {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.mines-ai-feedback {
+  margin: 0.3rem 0 0;
+  font-size: 0.74rem;
+  color: #1e3a8a;
+}
+
+.mines-leaderboard {
+  margin-top: 0.44rem;
+  border: 1px solid rgba(30, 64, 175, 0.24);
+  border-radius: 11px;
+  background: rgba(219, 234, 254, 0.52);
+  padding: 0.46rem 0.5rem;
+}
+
+.mines-leaderboard-head {
+  display: grid;
+  gap: 0.14rem;
+}
+
+.mines-leaderboard-head strong {
+  font-size: 0.73rem;
+  color: #1e3a8a;
+}
+
+.mines-leaderboard-head span {
+  font-size: 0.66rem;
+  color: #1f446f;
+}
+
+.mines-leaderboard-table {
+  margin-top: 0.4rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.mines-rank-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 84px 64px;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 0.24rem 0.34rem;
+  font-size: 0.68rem;
+  color: #0f172a;
+}
+
+.mines-rank-row .rank {
+  font-weight: 800;
+  color: #1d4ed8;
+}
+
+.mines-rank-row .name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.mines-rank-row .score {
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.mines-rank-row .time {
+  justify-self: end;
+  color: #334155;
+  font-variant-numeric: tabular-nums;
+}
+
+.mines-rank-row.is-player {
+  border-color: rgba(30, 64, 175, 0.45);
+  background: rgba(191, 219, 254, 0.5);
+}
+
+.mines-board-shell {
+  margin-top: 0.58rem;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 12px;
+  background: rgba(241, 245, 249, 0.78);
+  padding: 0.5rem;
+  overflow: auto;
+  max-height: 62vh;
+}
+
+.mines-board {
+  display: grid;
+  gap: 3px;
+  width: max-content;
+  margin: 0 auto;
+}
+
+.mines-cell {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: 1px solid #94a3b8;
+  border-radius: 6px;
+  background: linear-gradient(165deg, #f8fafc 0%, #e2e8f0 100%);
+  color: #0f172a;
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mines-cell.is-hidden:hover {
+  background: linear-gradient(165deg, #fefce8 0%, #fde68a 100%);
+}
+
+.mines-cell.is-revealed {
+  background: #ffffff;
+  border-color: #cbd5e1;
+}
+
+.mines-cell.is-flagged {
+  background: linear-gradient(165deg, #fee2e2 0%, #fecaca 100%);
+  color: #b91c1c;
+}
+
+.mines-cell.is-question {
+  background: linear-gradient(165deg, #fef9c3 0%, #fde68a 100%);
+  color: #854d0e;
+}
+
+.mines-cell.is-mine {
+  background: linear-gradient(165deg, #fecaca 0%, #fca5a5 100%);
+  color: #111827;
+}
+
+.mines-cell.is-exploded {
+  background: linear-gradient(165deg, #ef4444 0%, #b91c1c 100%);
+  color: #f8fafc;
+}
+
+.mines-cell.is-cursor {
+  outline: 2px solid #2563eb;
+  outline-offset: -1px;
+}
+
+.mines-help {
+  margin-top: 0.55rem;
+  font-size: 0.71rem;
+  color: #1f446f;
+}
+
 @media (min-width: 720px) and (max-width: 959px) {
   .games-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5128,6 +5417,27 @@ body {
 
   .meter-line strong {
     justify-self: end;
+  }
+
+  .mines-toolbar {
+    flex-direction: column;
+  }
+
+  .mines-toolbar label {
+    min-width: 0;
+  }
+
+  .mines-hud {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mines-custom-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mines-rank-row {
+    grid-template-columns: 40px minmax(0, 1fr) 74px 58px;
+    font-size: 0.64rem;
   }
 
   .detail-image {

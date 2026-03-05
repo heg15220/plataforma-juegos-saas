@@ -29,6 +29,7 @@ import RpgGame from "./RpgGame";
 import HeadSoccerGame from "./HeadSoccerGame";
 import PacmanGame from "./PacmanGame";
 import PongGame from "./PongGame";
+import MinesweeperGame from "./MinesweeperGame";
 import ChessGame from "./ChessGame";
 import DominoStrategyGame from "./DominoStrategyGame";
 import PokerTexasHoldemGame from "./PokerTexasHoldemGame";
@@ -70,6 +71,7 @@ export const GAME_REGISTRY = {
   "sports-head-soccer-arena":    HeadSoccerGame,
   "arcade-pacman-maze-protocol": PacmanGame,
   "arcade-pong-neon-arena":      PongGame,
+  "arcade-buscaminas-classic":   MinesweeperGame,
   "racing-race2dpro":            RaceGame2DPro,
 };
 
@@ -101,6 +103,7 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "sports-head-soccer-arena":    "Izq/der mover, arriba saltar, Espacio disparar, B habilidad.",
     "arcade-pacman-maze-protocol": "WASD/flechas mover, Enter/Espacio empezar, P/Esc pausa, R reinicia, M sonido.",
     "arcade-pong-neon-arena":      "W/S o flechas arriba/abajo para mover vertical. A/D o flechas izq/der para avanzar o retroceder (sin cruzar el centro). Ratón también controla vertical. Enter/Espacio empezar, P pausa, R reinicia, M sonido, F pantalla completa.",
+    "arcade-buscaminas-classic":   "Click izq abre, click der o pulsación larga marca bandera. Flechas mueven cursor, Enter/Espacio abre, F marca, H sugiere IA, A ejecuta IA y R reinicia. En competitivo puntúan celdas y tiempo.",
     "racing-race2dpro":            "Arriba/abajo acelerar/frenar, izq/der girar. Móvil: joystick táctil izq. + botones der. Espacio turbo. R reinicia.",
   },
   en: {
@@ -125,6 +128,7 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "sports-head-soccer-arena":    "Left/right move, up jump, Space shoot, B ability.",
     "arcade-pacman-maze-protocol": "WASD/arrows move, Enter/Space start, P/Esc pause, R restart, M sound.",
     "arcade-pong-neon-arena":      "W/S or up/down arrows for vertical. A/D or left/right arrows to advance or retreat (cannot cross centre line). Mouse also controls vertical. Enter/Space start, P pause, R restart, M sound, F fullscreen.",
+    "arcade-buscaminas-classic":   "Left click reveals, right click or long press marks. Arrows move cursor, Enter/Space reveals, F marks, H asks AI hint, A runs AI move, R restarts. Competitive mode scores cells and time.",
     "racing-race2dpro":            "Up/down throttle/brake, left/right steer. Mobile: left touch joystick + right buttons. Space turbo. R restart.",
   },
 };

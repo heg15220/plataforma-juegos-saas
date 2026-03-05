@@ -1,0 +1,59 @@
+<svg width="640" height="360" viewBox="0 0 640 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="640" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0F172A"/>
+      <stop offset="1" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="120" y1="46" x2="520" y2="314" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#DCE9FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" rx="32" fill="url(#bg)"/>
+  <circle cx="564" cy="72" r="84" fill="#22D3EE" fill-opacity="0.18"/>
+  <circle cx="88" cy="306" r="112" fill="#34D399" fill-opacity="0.14"/>
+  <rect x="120" y="46" width="400" height="268" rx="24" fill="url(#panel)" stroke="#BFDBFE" stroke-width="4"/>
+
+  <g opacity="0.95">
+    <rect x="154" y="86" width="48" height="48" rx="8" fill="#E2E8F0" stroke="#94A3B8"/>
+    <rect x="206" y="86" width="48" height="48" rx="8" fill="#F8FAFC" stroke="#94A3B8"/>
+    <rect x="258" y="86" width="48" height="48" rx="8" fill="#E2E8F0" stroke="#94A3B8"/>
+    <rect x="310" y="86" width="48" height="48" rx="8" fill="#F8FAFC" stroke="#94A3B8"/>
+    <rect x="362" y="86" width="48" height="48" rx="8" fill="#E2E8F0" stroke="#94A3B8"/>
+    <rect x="414" y="86" width="48" height="48" rx="8" fill="#F8FAFC" stroke="#94A3B8"/>
+
+    <rect x="154" y="138" width="48" height="48" rx="8" fill="#F8FAFC" stroke="#94A3B8"/>
+    <rect x="206" y="138" width="48" height="48" rx="8" fill="#D1FAE5" stroke="#16A34A" stroke-width="2"/>
+    <rect x="258" y="138" width="48" height="48" rx="8" fill="#D1FAE5" stroke="#16A34A" stroke-width="2"/>
+    <rect x="310" y="138" width="48" height="48" rx="8" fill="#F8FAFC" stroke="#94A3B8"/>
+    <rect x="362" y="138" width="48" height="48" rx="8" fill="#E2E8F0" stroke="#94A3B8"/>
+    <rect x="414" y="138" width="48" height="48" rx="8" fill="#F8FAFC" stroke="#94A3B8"/>
+
+    <rect x="154" y="190" width="48" height="48" rx="8" fill="#F8FAFC" stroke="#94A3B8"/>
+    <rect x="206" y="190" width="48" height="48" rx="8" fill="#FEE2E2" stroke="#DC2626" stroke-width="2"/>
+    <rect x="258" y="190" width="48" height="48" rx="8" fill="#F8FAFC" stroke="#94A3B8"/>
+    <rect x="310" y="190" width="48" height="48" rx="8" fill="#E2E8F0" stroke="#94A3B8"/>
+    <rect x="362" y="190" width="48" height="48" rx="8" fill="#F8FAFC" stroke="#94A3B8"/>
+    <rect x="414" y="190" width="48" height="48" rx="8" fill="#E2E8F0" stroke="#94A3B8"/>
+  </g>
+
+  <path d="M234 164L248 154V177L234 169V164Z" fill="#DC2626"/>
+  <path d="M234 178L241 175L249 179L241 184L234 178Z" fill="#111827"/>
+  <rect x="240" y="153" width="2.5" height="27" rx="1.25" fill="#111827"/>
+
+  <circle cx="230" cy="214" r="11" fill="#111827"/>
+  <circle cx="230" cy="214" r="4" fill="#E5E7EB"/>
+  <circle cx="230" cy="198" r="3" fill="#111827"/>
+  <circle cx="230" cy="230" r="3" fill="#111827"/>
+  <circle cx="214" cy="214" r="3" fill="#111827"/>
+  <circle cx="246" cy="214" r="3" fill="#111827"/>
+
+  <text x="273" y="173" fill="#2563EB" font-family="Arial, sans-serif" font-size="20" font-weight="700">1</text>
+  <text x="324" y="173" fill="#15803D" font-family="Arial, sans-serif" font-size="20" font-weight="700">2</text>
+  <text x="379" y="173" fill="#B91C1C" font-family="Arial, sans-serif" font-size="20" font-weight="700">3</text>
+
+  <rect x="146" y="266" width="348" height="34" rx="10" fill="#0F172A" fill-opacity="0.72" stroke="#60A5FA"/>
+  <text x="170" y="289" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="15" font-weight="600">
+    Buscaminas IA - Click inicial seguro
+  </text>
+</svg>

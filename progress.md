@@ -1408,3 +1408,55 @@
     - rejilla de bloques inferiores en 3 columnas (`actions`, `meta`, `insight`, `rules`, `showdown`, `message`, `log`) con scroll interno por bloque.
 - Validacion:
   - Build OK: `npm run build` (fuera de sandbox por restricciones EPERM del entorno).
+## 2026-03-05 - Arcade Buscaminas IA (nuevo juego)
+- Nuevo juego integrado: `arcade-buscaminas-classic`.
+- Implementado `src/games/MinesweeperGame.jsx` con:
+  - reglas clasicas de Buscaminas (numeros adyacentes, banderas e interrogacion),
+  - primer click seguro garantizado,
+  - flood-fill en celdas vacias,
+  - victoria por apertura de todas las celdas seguras,
+  - tablero por dificultad (Principiante/Intermedio/Experto) y modo Personalizado,
+  - soporte teclado (`flechas`, `Enter/Espacio`, `F`, `A`, `H`, `R`),
+  - bridge QA (`render_game_to_text` + `advanceTime`).
+- IA por niveles incorporada:
+  - basica: heuristica limitada + fallback aleatorio,
+  - tactica: deduccion logica determinista,
+  - avanzada: deduccion logica + estimacion de riesgo probabilistica.
+- Integracion de catalogo/UI:
+  - `src/data/games.js`: nuevo card y metadata ES/EN,
+  - `src/games/registry.jsx`: registro de componente + hints de control ES/EN,
+  - `src/components/GamePlayground.jsx`: mapeo jugable + hints ES/EN,
+  - `src/assets/games/arcade-buscaminas-classic.svg`: nuevo arte de portada,
+  - `src/styles.css`: bloque visual completo para UI/tablero de Buscaminas y ajustes moviles.
+- QA ejecutada:
+  - Build OK (fuera de sandbox por EPERM de esbuild): `npm run build`.
+  - Playwright OK (fuera de sandbox por EPERM de Chromium):
+    - comando con `web_game_playwright_client.mjs`, hash `#game=arcade-buscaminas-classic`, `--click-selector [data-cell='0-0']` y acciones `playwright-actions-arcade-minesweeper.json`.
+    - artefactos: `output/arcade-buscaminas-check/shot-0..2.png` y `state-0..2.json`.
+    - estado confirmado en `mode: playing`, celdas abiertas, banderas colocadas y `aiLastDecision` activo.
+    - sin `errors-*.json` en la pasada.
+- Nota: primera pasada Playwright quedaba en `mode: ready` porque la secuencia terminaba con `R` (reinicio). Se ajusto el payload para capturar estado jugable real.
+- TODO sugerido:
+  - anadir atajo visual para chording (click sobre numero cuando banderas coinciden) en ayudas UI,
+  - ampliar localizacion del texto interno del componente a i18n central si se quiere coherencia total con resto de juegos.
+## 2026-03-05 - Buscaminas reglas ampliadas (scoring + competitivo + movil)
+- `src/games/MinesweeperGame.jsx` actualizado para alinear reglas de Buscaminas:
+  - objetivo y fin de partida: abrir todas las casillas seguras o perder al detonar mina (se mantiene),
+  - puntuacion incorporada por `celdas descubiertas + bonus de victoria - penalizacion por tiempo`,
+  - modo `Competitivo` anadido con clasificacion local frente a 25 rivales y ranking en vivo,
+  - export de estado QA ampliado (`score`, `scoringRule`, `matchMode`, `ranking`, `leaderboardTop5`),
+  - soporte movil: toque rapido abre celda y pulsacion larga coloca bandera,
+  - textos de estado/ayuda adaptados a las nuevas reglas.
+- UX/Copys:
+  - `src/styles.css`: estilos para leaderboard competitiva y ajustes HUD responsive.
+  - `src/data/games.js`: metadata ES/EN del juego actualizada (scoring + competitivo 25 rivales + mobile long press).
+  - `src/components/GamePlayground.jsx` y `src/games/registry.jsx`: hints de control actualizados con pulsacion larga y scoring competitivo.
+- Validacion:
+  - Build OK: `npm run build` (fuera de sandbox por restriccion EPERM de esbuild en sandbox).
+  - Playwright QA OK (`web_game_playwright_client.mjs`) sobre `#game=arcade-buscaminas-classic`:
+    - artefactos: `output/arcade-buscaminas-check/shot-0..2.png` + `state-0..2.json`.
+    - `state-2.json` confirma `score` y `scoringRule` en modo casual.
+  - Probe competitivo adicional (Playwright inline):
+    - `output/arcade-buscaminas-check/competitive-check.png` + `competitive-state.json`.
+    - estado confirma `matchMode: competitive`, `ranking`, y `leaderboardTop5` poblado.
+  - sin `errors-*.json` en las pasadas.

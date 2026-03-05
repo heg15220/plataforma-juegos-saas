@@ -9,6 +9,7 @@ import neonDojoImage from "../assets/games/neon-dojo.svg";
 import headSoccerArenaImage from "../assets/games/head-soccer-arena.svg";
 import pacmanMazeProtocolImage from "../assets/games/pacman-maze-protocol.svg";
 import pongNeonArenaImage from "../assets/games/pong-neon-arena.svg";
+import arcadeBuscaminasClassicImage from "../assets/games/arcade-buscaminas-classic.svg";
 import knowledgeSudokuImage from "../assets/games/knowledge-sudoku.svg";
 import knowledgeDominoImage from "../assets/games/knowledge-domino.svg";
 import knowledgeAhorcadoImage from "../assets/games/knowledge-ahorcado.svg";
@@ -321,6 +322,55 @@ export const games = [
     viability_en: "High: pure 2D Canvas engine with deterministic physics and no external dependencies.",
     visualStyle_en: "Dark neon with cyan/amber paddles, impact particles and ball trail.",
     techFocus_en: "Fixed 120Hz loop + RAF render, dynamic difficulty AI and procedural Web Audio API.",
+  },
+
+  {
+    id: "arcade-buscaminas-classic",
+    image: arcadeBuscaminasClassicImage,
+    sessionTime: "3-12 min",
+
+    title: "Buscaminas IA Classic",
+    category: "Arcade",
+    tagline: "Buscaminas clasico con primer clic seguro, puntuacion por tiempo/celdas y modo competitivo.",
+    description:
+      "Version moderna del Buscaminas con reglas clasicas: abre celdas seguras, interpreta numeros adyacentes y marca minas con banderas. Incluye tres niveles de IA asistente (basica, tactica y avanzada), primer clic garantizado, puntuacion por celdas descubiertas y tiempo, y modo competitivo con clasificacion local contra 25 rivales.",
+    objective_es: "Abre todas las celdas seguras sin detonar minas. Usa banderas y pistas numericas para deducir posiciones peligrosas.",
+    howToPlay_es: "Click izquierdo abre celda, click derecho o pulsacion larga marca bandera/interrogacion. Teclado: flechas mueven cursor, Enter/Espacio abre, F marca, H pide sugerencia IA, A ejecuta jugada IA y R reinicia.",
+    highlights: [
+      "Primer clic siempre seguro y expansion automatica de zonas vacias.",
+      "Reglas clasicas completas: numeros adyacentes, banderas e interrogaciones.",
+      "Cuatro tableros: Principiante, Intermedio, Experto y Personalizado.",
+      "Tres niveles de IA: basica (heuristica simple), tactica (logica pura) y avanzada (logica + riesgo).",
+      "Puntuacion competitiva basada en celdas descubiertas y tiempo empleado.",
+      "Modo competitivo con clasificacion local de 25 rivales sobre la misma partida.",
+      "Bridge QA con render_game_to_text, coordenadas y avance temporal determinista.",
+    ],
+    difficulty: "Variable (4 tableros + 3 niveles IA)",
+    multiplayer: "Solo / Competitivo local (25 rivales)",
+    viability: "Alta: motor de cuadrilla determinista, estado compacto y deduccion incremental.",
+    visualStyle: "Panel premium con rejilla limpia, numeros de alto contraste y feedback de estado.",
+    techFocus: "Generacion segura de minas, flood-fill de celdas vacias y solver IA por niveles.",
+
+    category_en: "Arcade",
+    tagline_en: "Classic Minesweeper with safe first click, score by time/cells, and competitive mode.",
+    description_en:
+      "Modern Minesweeper built on classic rules: reveal safe cells, read adjacent numbers and flag mines. It includes three assistant AI levels (basic, tactical and advanced), guaranteed safe first click, score based on revealed cells plus time, and a competitive mode with a local 25-rival leaderboard.",
+    objective_en: "Reveal every safe cell without detonating mines. Use flags and numeric clues to deduce dangerous spots.",
+    howToPlay_en: "Left click reveals a cell, right click or long press cycles flag/question. Keyboard: arrows move cursor, Enter/Space reveal, F marks, H requests AI hint, A executes AI move, and R restarts.",
+    highlights_en: [
+      "First click is always safe with automatic empty-area expansion.",
+      "Complete classic rules: adjacent numbers, flags and question marks.",
+      "Four board presets: Beginner, Intermediate, Expert and Custom.",
+      "Three AI levels: basic (simple heuristic), tactical (pure logic), advanced (logic + risk estimation).",
+      "Competitive score based on discovered cells and elapsed time.",
+      "Competitive mode with local 25-rival leaderboard on the same board.",
+      "QA bridge with render_game_to_text, coordinates and deterministic time stepping.",
+    ],
+    difficulty_en: "Variable (4 boards + 3 AI tiers)",
+    multiplayer_en: "Solo / Local competitive (25 rivals)",
+    viability_en: "High: deterministic grid engine, compact state and incremental deduction.",
+    visualStyle_en: "Premium panel with clean grid, high-contrast numbers and state feedback.",
+    techFocus_en: "Safe mine generation, empty-cell flood fill and tiered AI solver.",
   },
 
   // ── Sports ─────────────────────────────────────────────────────────────────
