@@ -24,38 +24,16 @@ const normalizeAscii = (value) => String(value || "")
   .trim()
   .toLowerCase();
 
-const getIncompletePhraseContinuation = (text) => {
-  const clue = normalizeAscii(text).replace(/[.!?]+$/g, "");
-  const prefixes = [
-    "se dice de algo que ",
-    "persona que ",
-    "objeto usado para "
-  ];
-
-  for (let index = 0; index < prefixes.length; index += 1) {
-    if (clue.startsWith(prefixes[index])) {
-      return clue.slice(prefixes[index].length).trim();
-    }
-  }
-
-  return "";
-};
-
-const getEnglishIncompletePhraseContinuation = (text) => {
-  const clue = normalizeAscii(text).replace(/[.!?]+$/g, "");
-  const prefixes = [
-    "it is said of something that ",
-    "person who ",
-    "object used to "
-  ];
-
-  for (let index = 0; index < prefixes.length; index += 1) {
-    if (clue.startsWith(prefixes[index])) {
-      return clue.slice(prefixes[index].length).trim();
-    }
-  }
-
-  return "";
+const hasRoboticPattern = (text) => {
+  const normalized = normalizeAscii(text);
+  return [
+    "termino relacionado con",
+    "palabra relacionada con",
+    "entrada lexical vinculada a",
+    "word related to",
+    "term related to",
+    "entry associated with"
+  ].some((pattern) => normalized.includes(pattern));
 };
 
 describe("crosswordGenerator", () => {
@@ -67,7 +45,7 @@ describe("crosswordGenerator", () => {
     expect(CROSSWORD_LEXICON_META.counts.en[10]).toBeGreaterThan(10);
   });
 
-  it("genera tableros validos con longitud maxima configurable y pistas no reveladoras", () => {
+  it("genera tableros validos con pistas jugables, no spoiler y no roboticas", () => {
     const locales = ["es", "en"];
     const sampleMatchIds = [0, 1, 2, 17, 91, 512, 2049, CROSSWORD_MATCH_COUNT - 1];
 
@@ -86,6 +64,10 @@ describe("crosswordGenerator", () => {
           expect(match.clues.across.length).toBeGreaterThanOrEqual(3);
           expect(match.clues.down[0].word.length).toBe(maxWordLength);
 
+          const clues = [...match.clues.across, ...match.clues.down];
+          const clueTextSet = new Set(clues.map((entry) => normalizeAscii(entry.text)));
+          expect(clueTextSet.size).toBe(clues.length);
+
           const { cellWordMap } = buildWordMaps(match.clues);
           for (let row = 0; row < match.solution.length; row += 1) {
             for (let col = 0; col < match.solution[row].length; col += 1) {
@@ -95,11 +77,14 @@ describe("crosswordGenerator", () => {
             }
           }
 
-          [...match.clues.across, ...match.clues.down].forEach((entry) => {
+          clues.forEach((entry) => {
             expect(entry.word).toMatch(/^[A-Z]{5,10}$/);
             expect(entry.word.length).toBeLessThanOrEqual(maxWordLength);
             expect(entry.text.length).toBeGreaterThan(12);
             expect(normalizeAscii(entry.text)).not.toContain(normalizeAscii(entry.word));
+            expect(hasRoboticPattern(entry.text)).toBe(false);
+            expect(Number.isFinite(entry.qualityScore)).toBe(true);
+            expect(entry.qualityScore).toBeGreaterThanOrEqual(40);
           });
         });
 
@@ -157,57 +142,35 @@ describe("crosswordGenerator", () => {
     });
   });
 
-  it("personaliza cada pista de estilo incomplete_phrase con plantillas fijas", () => {
-    let checked = 0;
-    const maxWordLength = 10;
+  it("aplica diversidad real de estrategias y niveles de dificultad", () => {
+    const styles = new Set();
+    const difficulties = new Set();
+    const styleFrequency = {};
+    const locales = ["es", "en"];
 
-    for (let matchId = 0; matchId < 320 && checked < 50; matchId += 1) {
-      const match = createCrosswordMatch(matchId, "es", makeCopy(), { maxWordLength });
-      const clues = [...match.clues.across, ...match.clues.down];
-      const incomplete = clues.filter((entry) => entry.style === "incomplete_phrase");
+    locales.forEach((locale) => {
+      for (let matchId = 0; matchId < 60; matchId += 1) {
+        const match = createCrosswordMatch(matchId, locale, makeCopy(), { maxWordLength: 10 });
+        const clues = [...match.clues.across, ...match.clues.down];
+        const puzzleStyles = new Set(clues.map((entry) => entry.style));
+        expect(puzzleStyles.size).toBeGreaterThanOrEqual(2);
 
-      incomplete.forEach((entry) => {
-        const normalized = normalizeAscii(entry.text);
-        const matchesTemplate = normalized.startsWith("se dice de algo que ")
-          || normalized.startsWith("persona que ")
-          || normalized.startsWith("objeto usado para ");
-        expect(matchesTemplate).toBe(true);
+        clues.forEach((entry) => {
+          styles.add(entry.style);
+          difficulties.add(entry.difficulty);
+          styleFrequency[entry.style] = (styleFrequency[entry.style] || 0) + 1;
+        });
+      }
+    });
 
-        const continuation = getIncompletePhraseContinuation(entry.text);
-        expect(continuation).not.toBe("");
-        expect(continuation.split(" ").length).toBeGreaterThanOrEqual(4);
+    expect(styles.size).toBeGreaterThanOrEqual(8);
+    expect(difficulties.has("easy")).toBe(true);
+    expect(difficulties.has("medium")).toBe(true);
+    expect(difficulties.has("hard")).toBe(true);
 
-        checked += 1;
-      });
-    }
-
-    expect(checked).toBeGreaterThan(0);
-  });
-
-  it("personaliza cada pista de estilo incomplete_phrase en ingles con plantillas fijas", () => {
-    let checked = 0;
-    const maxWordLength = 10;
-
-    for (let matchId = 0; matchId < 320 && checked < 50; matchId += 1) {
-      const match = createCrosswordMatch(matchId, "en", makeCopy(), { maxWordLength });
-      const clues = [...match.clues.across, ...match.clues.down];
-      const incomplete = clues.filter((entry) => entry.style === "incomplete_phrase");
-
-      incomplete.forEach((entry) => {
-        const normalized = normalizeAscii(entry.text);
-        const matchesTemplate = normalized.startsWith("it is said of something that ")
-          || normalized.startsWith("person who ")
-          || normalized.startsWith("object used to ");
-        expect(matchesTemplate).toBe(true);
-
-        const continuation = getEnglishIncompletePhraseContinuation(entry.text);
-        expect(continuation).not.toBe("");
-        expect(continuation.split(" ").length).toBeGreaterThanOrEqual(4);
-
-        checked += 1;
-      });
-    }
-
-    expect(checked).toBeGreaterThan(0);
+    const frequencies = Object.values(styleFrequency);
+    const total = frequencies.reduce((sum, value) => sum + value, 0);
+    const dominant = Math.max(...frequencies);
+    expect(dominant / total).toBeLessThan(0.55);
   });
 });

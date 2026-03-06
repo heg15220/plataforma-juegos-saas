@@ -1650,3 +1650,20 @@
     - `output/knowledge-anagramas-check/`
   - `state-2.json` confirma interaccion activa en ambos (intentos usados > 0) y `lexicon.counts.es/en = 10000`.
   - capturas finales revisadas manualmente (`shot-2.png`) y sin `errors-*.json`.
+
+## 2026-03-06 - Crucigrama (Conocimiento): propuesta de rediseno integral de pistas ES/EN
+- Creado documento tecnico de arquitectura y estrategia en:
+  - `docs/plans/2026-03-06-crossword-clue-engine-redesign.md`
+- Contenido incluido en la propuesta:
+  - diagnostico del sistema actual,
+  - rubrica formal de calidad de pistas (scoring 0-100),
+  - taxonomia profesional de 20 tipos de pista (uso, limites, ejemplos ES/EN),
+  - nuevo modelo de datos lexico enriquecido para JS,
+  - pipeline palabra -> sentido -> estrategia -> pista -> validacion,
+  - modelo de dificultad compuesto (no basado solo en longitud),
+  - arquitectura modular implementable (`lexiconNormalizer`, `clueStrategySelector`, `clueQualityValidator`, etc.),
+  - pseudocodigo orientativo de generacion, validacion y regeneracion,
+  - politica de diversidad intra-partida, por usuario y global,
+  - plan de limpieza total del banco en 5 fases,
+  - ejemplos comparativos antes/despues por tipo de palabra.
+- Esta iteracion fue documental/arquitectonica; no se tocaron componentes de runtime ni se ejecutaron tests.

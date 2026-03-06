@@ -1,9 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import useGameRuntimeBridge from "../../utils/useGameRuntimeBridge";
-import { resolveKnowledgeArcadeLocale } from "./knowledgeArcadeUtils";
 import {
-  CROSSWORD_MATCH_COUNT,
-  CROSSWORD_MAX_WORD_OPTIONS,
+  KNOWLEDGE_ARCADE_MATCH_COUNT,
+  getRandomKnowledgeMatchId,
+  getRandomKnowledgeMatchIdExcept,
+  resolveKnowledgeArcadeLocale
+} from "./knowledgeArcadeUtils";
+import {
   buildWordMaps,
   createCrosswordMatch,
   createEntries,
@@ -18,22 +21,238 @@ import {
   nextCellInRow
 } from "./crosswordGenerator";
 
-const DEFAULT_MAX_WORD_LENGTH = 8;
+const hashText = (text) => {
+  let hash = 2166136261;
+  const source = String(text || "");
+  for (let index = 0; index < source.length; index += 1) {
+    hash ^= source.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+};
 
-const getRandomCrosswordMatchId = () =>
-  Math.floor(Math.random() * CROSSWORD_MATCH_COUNT);
+const pickByWord = (word, options) => {
+  if (!Array.isArray(options) || options.length === 0) return "";
+  return options[hashText(word) % options.length];
+};
 
-const getRandomCrosswordMatchIdExcept = (matchId) => {
-  if (CROSSWORD_MATCH_COUNT <= 1) return 0;
+const stripMojibake = (value) => String(value || "")
+  .replace(/Â/g, "")
+  .replace(/Ã¡/g, "a")
+  .replace(/Ã©/g, "e")
+  .replace(/Ã­/g, "i")
+  .replace(/Ã³/g, "o")
+  .replace(/Ãº/g, "u")
+  .replace(/Ã±/g, "n")
+  .replace(/Ã¼/g, "u")
+  .replace(/Ã/g, "");
 
-  const current = ((Number(matchId) || 0) + CROSSWORD_MATCH_COUNT) % CROSSWORD_MATCH_COUNT;
-  const candidate = getRandomCrosswordMatchId();
-  if (candidate !== current) {
-    return candidate;
+const normalizeAscii = (value) => stripMojibake(value)
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .replace(/\s+/g, " ")
+  .trim();
+
+const ensureSentence = (value, fallback) => {
+  const safe = String(value || "").replace(/\s+/g, " ").trim() || fallback;
+  const first = safe.charAt(0).toUpperCase();
+  const tail = safe.slice(1);
+  const sentence = `${first}${tail}`;
+  return /[.!?]$/.test(sentence) ? sentence : `${sentence}.`;
+};
+
+const detectPosHint = (rawClue, locale) => {
+  const clue = normalizeAscii(rawClue).toLowerCase();
+  if (!clue) return "generic";
+
+  if (locale === "es") {
+    if (clue.startsWith("adjetivo")) return "adjective";
+    if (clue.startsWith("verbo") || clue.startsWith("accion")) return "verb";
+    if (clue.startsWith("adverbio")) return "adverb";
+    if (clue.startsWith("sustantivo")) return "noun";
+    return "generic";
   }
 
-  return (candidate + 1 + Math.floor(Math.random() * (CROSSWORD_MATCH_COUNT - 1)))
-    % CROSSWORD_MATCH_COUNT;
+  if (clue.startsWith("adjective")) return "adjective";
+  if (clue.startsWith("verb") || clue.startsWith("action")) return "verb";
+  if (clue.startsWith("adverb")) return "adverb";
+  if (clue.startsWith("noun")) return "noun";
+  return "generic";
+};
+
+const extractAnchor = (rawClue) => {
+  const normalized = normalizeAscii(rawClue);
+  if (!normalized) return "";
+
+  const quoted = normalized.match(/"([^"]+)"/);
+  if (quoted?.[1]) {
+    return quoted[1].trim().toLowerCase();
+  }
+
+  const tail = normalized.match(/\b(?:de|del|about|for|of)\s+([a-z0-9\s-]+)[.!?]?$/i);
+  if (tail?.[1]) {
+    return tail[1]
+      .trim()
+      .toLowerCase()
+      .replace(/^(el|la|los|las|un|una|the|a|an)\s+/i, "");
+  }
+
+  return "";
+};
+
+const inferAnchorType = (anchor, locale) => {
+  const safe = normalizeAscii(anchor).toLowerCase();
+  if (!safe) return "generic";
+
+  if (locale === "es") {
+    if (/(ar|er|ir)$/.test(safe)) return "verb";
+    if (/mente$/.test(safe)) return "adverb";
+    return "noun";
+  }
+
+  if (/(ate|ify|ise|ize|ing)$/.test(safe)) return "verb";
+  if (/ly$/.test(safe)) return "adverb";
+  return "noun";
+};
+
+const resolveDefinitionType = (posHint, anchorType) => (
+  posHint !== "generic" ? posHint : anchorType
+);
+
+const buildSpanishDefinitionClue = ({ word, anchor, type }) => {
+  const safeAnchor = normalizeAscii(anchor).toLowerCase();
+  if (!safeAnchor) {
+    const generic = pickByWord(word, [
+      `Entrada del espanol de ${word.length} letras`,
+      `Vocablo de uso comun con ${word.length} letras`,
+      `Definicion breve de una palabra de ${word.length} letras`
+    ]);
+    return ensureSentence(generic, `Entrada del espanol de ${word.length} letras.`);
+  }
+
+  if (type === "verb") {
+    const sentence = pickByWord(word, [
+      `Accion de ${safeAnchor}`,
+      `Proceso que implica ${safeAnchor}`,
+      `Acto expresado como ${safeAnchor}`
+    ]);
+    return ensureSentence(sentence, `Accion de ${safeAnchor}.`);
+  }
+
+  if (type === "adjective") {
+    const sentence = pickByWord(word, [
+      `Que presenta rasgos de ${safeAnchor}`,
+      `Cualidad cercana a ${safeAnchor}`,
+      `Describe algo con caracter ${safeAnchor}`
+    ]);
+    return ensureSentence(sentence, `Que presenta rasgos de ${safeAnchor}.`);
+  }
+
+  if (type === "adverb") {
+    const sentence = pickByWord(word, [
+      `De manera ${safeAnchor}`,
+      `Modo vinculado con ${safeAnchor}`,
+      `Forma de actuar relacionada con ${safeAnchor}`
+    ]);
+    return ensureSentence(sentence, `De manera ${safeAnchor}.`);
+  }
+
+  if (type === "noun") {
+    const sentence = pickByWord(word, [
+      `Nombre usado para ${safeAnchor}`,
+      `Concepto del vocabulario comun sobre ${safeAnchor}`,
+      `Elemento de uso comun relacionado con ${safeAnchor}`
+    ]);
+    return ensureSentence(sentence, `Nombre usado para ${safeAnchor}.`);
+  }
+
+  const sentence = pickByWord(word, [
+    `Definicion breve vinculada con ${safeAnchor}`,
+    `Idea del vocabulario comun sobre ${safeAnchor}`,
+    `Significado relacionado con ${safeAnchor}`
+  ]);
+  return ensureSentence(sentence, `Definicion breve vinculada con ${safeAnchor}.`);
+};
+
+const buildEnglishDefinitionClue = ({ word, anchor, type }) => {
+  const safeAnchor = normalizeAscii(anchor).toLowerCase();
+  if (!safeAnchor) {
+    const generic = pickByWord(word, [
+      `Common entry with ${word.length} letters`,
+      `Short definition for a ${word.length} letter word`,
+      `General vocabulary item of ${word.length} letters`
+    ]);
+    return ensureSentence(generic, `Common entry with ${word.length} letters.`);
+  }
+
+  if (type === "verb") {
+    const sentence = pickByWord(word, [
+      `Action of ${safeAnchor}`,
+      `Process involving ${safeAnchor}`,
+      `Act expressed as ${safeAnchor}`
+    ]);
+    return ensureSentence(sentence, `Action of ${safeAnchor}.`);
+  }
+
+  if (type === "adjective") {
+    const sentence = pickByWord(word, [
+      `Having a quality close to ${safeAnchor}`,
+      `Describes something with a ${safeAnchor} trait`,
+      `Quality related to ${safeAnchor}`
+    ]);
+    return ensureSentence(sentence, `Having a quality close to ${safeAnchor}.`);
+  }
+
+  if (type === "adverb") {
+    const sentence = pickByWord(word, [
+      `In a ${safeAnchor} manner`,
+      `Manner linked to ${safeAnchor}`,
+      `Way of acting related to ${safeAnchor}`
+    ]);
+    return ensureSentence(sentence, `In a ${safeAnchor} manner.`);
+  }
+
+  if (type === "noun") {
+    const sentence = pickByWord(word, [
+      `Name used for ${safeAnchor}`,
+      `Common concept about ${safeAnchor}`,
+      `General vocabulary item related to ${safeAnchor}`
+    ]);
+    return ensureSentence(sentence, `Name used for ${safeAnchor}.`);
+  }
+
+  const sentence = pickByWord(word, [
+    `Short definition linked to ${safeAnchor}`,
+    `General meaning connected with ${safeAnchor}`,
+    `Vocabulary idea about ${safeAnchor}`
+  ]);
+  return ensureSentence(sentence, `Short definition linked to ${safeAnchor}.`);
+};
+
+const rewriteCrosswordClue = (meta, locale) => {
+  const rawClue = meta?.clue || "";
+  const fallback = locale === "es"
+    ? "Definicion breve del termino."
+    : "Short definition of the term.";
+  const posHint = detectPosHint(rawClue, locale);
+  const anchor = extractAnchor(rawClue);
+  const anchorType = inferAnchorType(anchor, locale);
+  const type = resolveDefinitionType(posHint, anchorType);
+
+  const rewritten = locale === "es"
+    ? buildSpanishDefinitionClue({
+      word: normalizeAscii(meta?.word || ""),
+      anchor,
+      type
+    })
+    : buildEnglishDefinitionClue({
+      word: normalizeAscii(meta?.word || ""),
+      anchor,
+      type
+    });
+
+  const withoutPrefix = String(rewritten || "").replace(/^(pista|clue)\s*:\s*/i, "").trim();
+  return ensureSentence(withoutPrefix, fallback);
 };
 
 const formatClueStart = (start, locale) => {
@@ -47,8 +266,8 @@ const formatClueStart = (start, locale) => {
 
 const COPY_BY_LOCALE = {
   es: {
-    title: "Crucigrama Pro",
-    subtitle: "Generador dinamico con mas de 10.000 partidas y pistas variadas.",
+    title: "Crucigrama Dinamico",
+    subtitle: "Rellena la rejilla usando pistas horizontales y verticales. El tamano cambia en cada partida.",
     restart: "Partida aleatoria",
     match: "Partida",
     board: "Tablero",
@@ -59,10 +278,7 @@ const COPY_BY_LOCALE = {
     clearCell: "Borrar celda",
     check: "Comprobar",
     clues: "Pistas",
-    maxWordLength: "Longitud maxima",
-    maxWordLengthShort: "Max",
-    startMessage: (maxWordLength) =>
-      `Rellena la rejilla. Longitud maxima seleccionada: ${maxWordLength}.`,
+    startMessage: "Rellena la rejilla con las pistas.",
     pendingCells: "Aun quedan celdas por completar.",
     wrongLetters: "Hay letras incorrectas.",
     solved: "Crucigrama completado.",
@@ -81,15 +297,14 @@ const COPY_BY_LOCALE = {
       count === 1
         ? "Completa la palabra seleccionada antes de comprobar."
         : "Completa todas las palabras seleccionadas antes de comprobar.",
-    optionLabel: (value) => `Hasta ${value} letras`,
-    acrossHint: ({ clue }) => clue,
-    downHint: ({ clue }) => clue,
+    acrossHint: (meta) => rewriteCrosswordClue(meta, "es"),
+    downHint: (meta) => rewriteCrosswordClue(meta, "es"),
     acrossClue: (_id, text, start) => `Pista ${formatClueStart(start, "es")}: ${text}`,
     downClue: (_id, text, start) => `Pista ${formatClueStart(start, "es")}: ${text}`
   },
   en: {
-    title: "Crossword Pro",
-    subtitle: "Dynamic generator with 10k+ matches and varied clues.",
+    title: "Dynamic Crossword",
+    subtitle: "Fill the grid using across and down clues. Board size changes every match.",
     restart: "Random match",
     match: "Match",
     board: "Board",
@@ -100,10 +315,7 @@ const COPY_BY_LOCALE = {
     clearCell: "Clear cell",
     check: "Check",
     clues: "Clues",
-    maxWordLength: "Max length",
-    maxWordLengthShort: "Max",
-    startMessage: (maxWordLength) =>
-      `Fill the grid. Selected max length: ${maxWordLength}.`,
+    startMessage: "Fill the grid with the clues.",
     pendingCells: "There are still empty cells.",
     wrongLetters: "There are incorrect letters.",
     solved: "Crossword solved.",
@@ -122,9 +334,8 @@ const COPY_BY_LOCALE = {
       count === 1
         ? "Complete the selected word before checking."
         : "Complete all selected words before checking.",
-    optionLabel: (value) => `Up to ${value} letters`,
-    acrossHint: ({ clue }) => clue,
-    downHint: ({ clue }) => clue,
+    acrossHint: (meta) => rewriteCrosswordClue(meta, "en"),
+    downHint: (meta) => rewriteCrosswordClue(meta, "en"),
     acrossClue: (_id, text, start) => `Clue ${formatClueStart(start, "en")}: ${text}`,
     downClue: (_id, text, start) => `Clue ${formatClueStart(start, "en")}: ${text}`
   }
@@ -150,10 +361,9 @@ const resolveNextSelection = (solution, selected, direction, step) => {
   return nextCellInRow(solution, selected, step);
 };
 
-const createInitialState = (matchId, locale, copy, maxWordLength) => {
-  const crossword = createCrosswordMatch(matchId, locale, copy, { maxWordLength });
+const createInitialState = (matchId, locale, copy) => {
+  const crossword = createCrosswordMatch(matchId, locale, copy);
   const { wordByKey, cellWordMap } = buildWordMaps(crossword.clues);
-
   return {
     matchId,
     puzzleKey: crossword.puzzleKey,
@@ -165,14 +375,13 @@ const createInitialState = (matchId, locale, copy, maxWordLength) => {
     selected: findFirstCell(crossword.solution),
     moves: 0,
     status: "playing",
-    message: copy.startMessage(maxWordLength),
+    message: copy.startMessage,
     activeDirection: "across",
     wordByKey,
     cellWordMap,
     wordFeedback: {},
     cellFeedback: {},
-    feedbackToken: 0,
-    maxWordLength
+    feedbackToken: 0
   };
 };
 
@@ -182,12 +391,7 @@ function CrosswordKnowledgeGame() {
   const locale = useMemo(resolveKnowledgeArcadeLocale, []);
   const copy = useMemo(() => COPY_BY_LOCALE[locale] ?? COPY_BY_LOCALE.en, [locale]);
   const [state, setState] = useState(() =>
-    createInitialState(
-      getRandomCrosswordMatchId(),
-      locale,
-      copy,
-      DEFAULT_MAX_WORD_LENGTH
-    )
+    createInitialState(getRandomKnowledgeMatchId(), locale, copy)
   );
 
   const selectedWordKeys = useMemo(() => (
@@ -212,36 +416,15 @@ function CrosswordKnowledgeGame() {
 
   const cellSize = useMemo(() => {
     const maxSide = Math.max(state.grid.rows, state.grid.cols);
-    if (maxSide <= 6) return 36;
-    if (maxSide <= 8) return 32;
-    if (maxSide <= 10) return 28;
-    return 26;
+    if (maxSide <= 5) return 40;
+    if (maxSide === 6) return 36;
+    if (maxSide === 7) return 33;
+    return 30;
   }, [state.grid.cols, state.grid.rows]);
 
   const restart = useCallback(() => {
     setState((previous) =>
-      createInitialState(
-        getRandomCrosswordMatchIdExcept(previous.matchId),
-        locale,
-        copy,
-        previous.maxWordLength
-      )
-    );
-  }, [copy, locale]);
-
-  const changeMaxWordLength = useCallback((event) => {
-    const parsed = Number.parseInt(event.target.value, 10);
-    const maxWordLength = CROSSWORD_MAX_WORD_OPTIONS.includes(parsed)
-      ? parsed
-      : DEFAULT_MAX_WORD_LENGTH;
-
-    setState(() =>
-      createInitialState(
-        getRandomCrosswordMatchId(),
-        locale,
-        copy,
-        maxWordLength
-      )
+      createInitialState(getRandomKnowledgeMatchIdExcept(previous.matchId), locale, copy)
     );
   }, [copy, locale]);
 
@@ -348,7 +531,6 @@ function CrosswordKnowledgeGame() {
       if (previousCell.row === row && previousCell.col === col) {
         return previous;
       }
-
       nextEntries[previousCell.row][previousCell.col] = "";
       return {
         ...previous,
@@ -475,13 +657,12 @@ function CrosswordKnowledgeGame() {
     locale,
     match: {
       current: snapshot.matchId + 1,
-      total: CROSSWORD_MATCH_COUNT
+      total: KNOWLEDGE_ARCADE_MATCH_COUNT
     },
     status: snapshot.status,
     activeDirection: snapshot.activeDirection,
     selected: snapshot.selected,
     moves: snapshot.moves,
-    maxWordLength: snapshot.maxWordLength,
     entries: snapshot.entries,
     clues: snapshot.clues,
     grid: snapshot.grid,
@@ -502,26 +683,13 @@ function CrosswordKnowledgeGame() {
           <h4>{copy.title}</h4>
           <p>{copy.subtitle}</p>
         </div>
-
-        <div className="crossword-head-actions">
-          <label className="crossword-length-select">
-            <span>{copy.maxWordLength}</span>
-            <select value={state.maxWordLength} onChange={changeMaxWordLength}>
-              {CROSSWORD_MAX_WORD_OPTIONS.map((option) => (
-                <option key={option} value={option}>{copy.optionLabel(option)}</option>
-              ))}
-            </select>
-          </label>
-
-          <button type="button" onClick={restart}>{copy.restart}</button>
-        </div>
+        <button type="button" onClick={restart}>{copy.restart}</button>
       </div>
 
       <section className="knowledge-mode-shell">
         <div className="knowledge-status-row">
-          <span>{copy.match}: {state.matchId + 1}/{CROSSWORD_MATCH_COUNT}</span>
+          <span>{copy.match}: {state.matchId + 1}/{KNOWLEDGE_ARCADE_MATCH_COUNT}</span>
           <span>{copy.board}: {state.grid.rows}x{state.grid.cols} ({state.grid.openCells})</span>
-          <span>{copy.maxWordLengthShort}: {state.maxWordLength}</span>
           <span>{copy.moves}: {state.moves}</span>
           <span>{copy.status}: {state.status === "won" ? copy.statusWon : copy.statusPlaying}</span>
         </div>
