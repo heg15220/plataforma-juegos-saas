@@ -48,6 +48,8 @@ const KnowledgePacienciaGame = () => <KnowledgeArcadeGame variant="paciencia" />
 const KnowledgePuzleGame     = () => <KnowledgeArcadeGame variant="puzle" />;
 const KnowledgeCrucigramaGame  = () => <KnowledgeArcadeGame variant="crucigrama" />;
 const KnowledgeSopaLetrasGame  = () => <KnowledgeArcadeGame variant="sopa-letras" />;
+const KnowledgeWordleGame      = () => <KnowledgeArcadeGame variant="wordle" />;
+const KnowledgeAnagramasGame   = () => <KnowledgeArcadeGame variant="anagramas" />;
 
 // ─── Registry ─────────────────────────────────────────────────────────────
 export const GAME_REGISTRY = {
@@ -63,6 +65,8 @@ export const GAME_REGISTRY = {
   "knowledge-puzle-deslizante":  KnowledgePuzleGame,
   "knowledge-crucigrama-mini":   KnowledgeCrucigramaGame,
   "knowledge-sopa-letras-mega":  KnowledgeSopaLetrasGame,
+  "knowledge-wordle-pro":        KnowledgeWordleGame,
+  "knowledge-anagramas-pro":     KnowledgeAnagramasGame,
   "strategy-chess-grandmaster":  ChessGame,
   "strategy-damas-clasicas":     CheckersGame,
   "strategy-poker-holdem-no-bet": PokerTexasHoldemGame,
@@ -96,6 +100,8 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-puzle-deslizante":  "Flechas mueven el hueco o pulsa fichas adyacentes. R para nueva partida.",
     "knowledge-crucigrama-mini":   "Flechas navegan, letras escriben, Backspace borra, Enter comprueba, botón nueva partida.",
     "knowledge-sopa-letras-mega":  "Arrastra o marca inicio-fin en horizontal, vertical o diagonal (también al revés). R nueva partida.",
+    "knowledge-wordle-pro":        "Wordle ES/EN con 10k palabras por idioma. Escribe letras, Enter valida, Backspace borra y usa el boton de partida aleatoria.",
+    "knowledge-anagramas-pro":     "Anagramas ES/EN con 10k palabras por idioma. Escribe con las mismas letras, Enter valida, M mezcla y usa el boton de partida aleatoria.",
     "strategy-chess-grandmaster":  "Clic para mover, U deshace, D reclama tablas, F pantalla completa.",
     "strategy-damas-clasicas":     "Damas 8x8: clic para mover en diagonal, capturas encadenadas, U deshace, X retiro, R reinicia y F pantalla completa.",
     "strategy-poker-holdem-no-bet": "Poker clasico 5 cartas con apuestas: ciegas, bote y acciones de pasar/igualar/subir/all-in/retirarse. Enter resolver accion principal, U subir, A all-in, F retirarse, 1-5 seleccionar descarte, D descartar, S servirse, N siguiente mano, R reiniciar.",
@@ -122,6 +128,8 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-puzle-deslizante":  "Arrows move the blank or click adjacent tiles. R for a new match.",
     "knowledge-crucigrama-mini":   "Arrows navigate, letters type, Backspace clears, Enter checks, button for new puzzle.",
     "knowledge-sopa-letras-mega":  "Drag or click start-end horizontally, vertically or diagonally (reverse also works). R new match.",
+    "knowledge-wordle-pro":        "Wordle ES/EN with 10k words per locale. Type letters, Enter submits, Backspace deletes and use the random-match button.",
+    "knowledge-anagramas-pro":     "Anagrams ES/EN with 10k words per locale. Type with the same letters, Enter submits, M shuffles and use the random-match button.",
     "strategy-chess-grandmaster":  "Click to move, U undo, D claim draw, F fullscreen.",
     "strategy-damas-clasicas":     "8x8 checkers: click to move diagonally, chain captures, U undo, X resign, R restart and F fullscreen.",
     "strategy-poker-holdem-no-bet": "Classic 5-card draw with betting: blinds, real pot and check/call/raise/all-in/fold decisions. Enter resolves main action, U raise, A all-in, F fold, 1-5 select discard, D discard, S stand pat, N next hand, R restart.",

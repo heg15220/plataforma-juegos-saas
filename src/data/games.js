@@ -17,6 +17,8 @@ import knowledgePacienciaImage from "../assets/games/knowledge-paciencia.svg";
 import knowledgePuzleImage from "../assets/games/knowledge-puzle.svg";
 import knowledgeCrucigramaImage from "../assets/games/knowledge-crucigrama.svg";
 import knowledgeSopaLetrasImage from "../assets/games/knowledge-sopa-letras.svg";
+import knowledgeWordleImage from "../assets/games/knowledge-wordle.svg";
+import knowledgeAnagramasImage from "../assets/games/knowledge-anagramas.svg";
 import chessGrandmasterArenaImage from "../assets/games/chess-grandmaster-arena.svg";
 import strategyDamasProfesionalImage from "../assets/games/strategy-damas-professional.svg";
 import strategyPokerNoBetImage from "../assets/games/strategy-poker-no-bet.svg";
@@ -854,7 +856,91 @@ export const games = [
     visualStyle_en: "Premium letter panel with wide grid, live tracing and target word list.",
     techFocus_en: "Bilingual 10k-match procedural generation + line detection (horizontal/reverse/vertical/diagonal).",
   },
+  {
+    id: "knowledge-wordle-pro",
+    image: knowledgeWordleImage,
+    sessionTime: "3-7 min",
 
+    title: "Wordle Pro",
+    category: "Conocimiento",
+    tagline: "Adivina la palabra secreta con feedback por letra y banco ES/EN de 10.000 palabras.",
+    description:
+      "Version pro de Wordle para la categoria Conocimiento: cada partida usa una palabra real del banco bilingue (es/en) y te da feedback exacto de letra correcta, letra presente o letra ausente.",
+    objective_es: "Descubre la palabra objetivo antes de agotar los intentos maximos de la ronda.",
+    howToPlay_es: "Escribe letras, pulsa Enter para validar, Backspace para borrar y usa el boton de partida aleatoria para cambiar. Cada color indica correcta/presente/ausente.",
+    highlights: [
+      "10.000 palabras reales por idioma (es/en) como objetivos de partida.",
+      "Feedback tipo Wordle con manejo correcto de letras repetidas.",
+      "Dificultad adaptada por longitud de palabra (5-10 letras).",
+      "Bridge QA con estado serializado de intentos, teclado y progreso.",
+    ],
+    difficulty: "Media-Alta",
+    multiplayer: "Solo",
+    viability: "Alta: motor de validacion discreto, estado compacto y telemetria clara por intento.",
+    visualStyle: "Panel oscuro con rejilla Wordle, teclado virtual y leyenda de feedback cromatico.",
+    techFocus: "Evaluacion determinista por posicion/frecuencia + sincronizacion de estado de teclado.",
+
+    category_en: "Knowledge",
+    tagline_en: "Guess the secret word with per-letter feedback and a bilingual 10,000-word bank.",
+    description_en:
+      "Pro Wordle mode for the Knowledge category: each match uses a real target word from the bilingual bank (es/en) and returns exact feedback for correct, present and absent letters.",
+    objective_en: "Find the target word before running out of maximum attempts.",
+    howToPlay_en: "Type letters, press Enter to submit, Backspace to delete, and use the random-match button for a new match. Colors indicate correct/present/absent letters.",
+    highlights_en: [
+      "10,000 real target words per locale (es/en).",
+      "Wordle-style feedback with proper repeated-letter handling.",
+      "Difficulty tuned by target length (5-10 letters).",
+      "QA bridge with serialized attempts, keyboard state and progress.",
+    ],
+    difficulty_en: "Medium-High",
+    multiplayer_en: "Solo",
+    viability_en: "High: discrete validation engine, compact state and clear per-attempt telemetry.",
+    visualStyle_en: "Dark panel with Wordle grid, virtual keyboard and color-feedback legend.",
+    techFocus_en: "Deterministic position/frequency evaluation + keyboard state synchronization.",
+  },
+
+  {
+    id: "knowledge-anagramas-pro",
+    image: knowledgeAnagramasImage,
+    sessionTime: "3-7 min",
+
+    title: "Anagramas Pro",
+    category: "Conocimiento",
+    tagline: "Reordena letras para encontrar la palabra objetivo con banco ES/EN de 10.000 palabras.",
+    description:
+      "Modo de anagramas con palabras reales del banco bilingue. Recibes letras mezcladas de la solucion y debes reconstruir la palabra correcta en intentos limitados.",
+    objective_es: "Reconstruye la palabra objetivo usando exactamente las letras mostradas antes de agotar los intentos.",
+    howToPlay_es: "Escribe tu propuesta con las mismas letras, Enter valida, M remezcla letras, Backspace borra y usa el boton de partida aleatoria.",
+    highlights: [
+      "10.000 palabras reales por idioma (es/en) como base de retos.",
+      "Mezcla determinista de letras con opcion de remezcla manual.",
+      "Validacion de composicion de letras para evitar respuestas invalidas.",
+      "Bridge QA con estado serializado de intentos, mezclas y solucion final.",
+    ],
+    difficulty: "Media",
+    multiplayer: "Solo",
+    viability: "Alta: mecanica de anagrama de bajo coste computacional y alta rejugabilidad.",
+    visualStyle: "Panel premium con fichas de letras mezcladas, teclado virtual e historial de intentos.",
+    techFocus: "Generacion determinista de anagramas + control de intentos y verificacion por histogramas.",
+
+    category_en: "Knowledge",
+    tagline_en: "Reorder letters to find the target word using a bilingual 10,000-word bank.",
+    description_en:
+      "Anagram mode with real words from the bilingual lexicon. You receive shuffled letters from the solution and must reconstruct the exact target within limited attempts.",
+    objective_en: "Rebuild the target word using exactly the displayed letters before attempts run out.",
+    howToPlay_en: "Type a guess with the same letters, Enter submits, M reshuffles letters, Backspace deletes, and use the random-match button.",
+    highlights_en: [
+      "10,000 real words per locale (es/en) as challenge base.",
+      "Deterministic letter shuffling with manual reshuffle support.",
+      "Letter-composition validation to block invalid proposals.",
+      "QA bridge with serialized attempts, reshuffles and final solution.",
+    ],
+    difficulty_en: "Medium",
+    multiplayer_en: "Solo",
+    viability_en: "High: low-cost anagram mechanics with strong replayability.",
+    visualStyle_en: "Premium panel with shuffled letter tiles, virtual keyboard and guess history.",
+    techFocus_en: "Deterministic anagram generation + attempt flow and histogram-based validation.",
+  },
   // ── Strategy (chess) ───────────────────────────────────────────────────────
   {
     id: "strategy-parchis-ludoteka",
@@ -1126,4 +1212,6 @@ export const games = [
     techFocus_en: "High thematic variety rounds with stable and traceable scoring.",
   },
 ];
+
+
 

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="140" y1="50" x2="880" y2="520" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1E34"/>
+      <stop offset="1" stop-color="#15324F"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="180" y1="90" x2="760" y2="460" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#102742" stop-opacity="0.96"/>
+      <stop offset="1" stop-color="#1E3A5C" stop-opacity="0.96"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="960" height="540" fill="url(#bg)"/>
+  <circle cx="130" cy="94" r="118" fill="#1F8ACF" fill-opacity="0.24"/>
+  <circle cx="838" cy="448" r="168" fill="#2EC4B6" fill-opacity="0.22"/>
+
+  <rect x="150" y="70" width="660" height="400" rx="26" fill="url(#panel)" stroke="#8FC1EE" stroke-opacity="0.35"/>
+  <text x="190" y="145" fill="#E8F2FF" font-size="50" font-family="Outfit, Arial, sans-serif" font-weight="700">WORDLE PRO</text>
+  <text x="192" y="182" fill="#9FC2E8" font-size="21" font-family="Outfit, Arial, sans-serif">10k words ES/EN + deterministic matches</text>
+
+  <g transform="translate(196 220)">
+    <rect x="0" y="0" width="70" height="70" rx="10" fill="#1F9A5E"/>
+    <rect x="80" y="0" width="70" height="70" rx="10" fill="#B38A2A"/>
+    <rect x="160" y="0" width="70" height="70" rx="10" fill="#3D526B"/>
+    <rect x="240" y="0" width="70" height="70" rx="10" fill="#1F9A5E"/>
+    <rect x="320" y="0" width="70" height="70" rx="10" fill="#3D526B"/>
+
+    <rect x="0" y="84" width="70" height="70" rx="10" fill="#3D526B"/>
+    <rect x="80" y="84" width="70" height="70" rx="10" fill="#B38A2A"/>
+    <rect x="160" y="84" width="70" height="70" rx="10" fill="#1F9A5E"/>
+    <rect x="240" y="84" width="70" height="70" rx="10" fill="#3D526B"/>
+    <rect x="320" y="84" width="70" height="70" rx="10" fill="#B38A2A"/>
+
+    <text x="22" y="47" fill="#ECF5FF" font-size="33" font-family="Outfit, Arial, sans-serif" font-weight="800">W</text>
+    <text x="103" y="47" fill="#ECF5FF" font-size="33" font-family="Outfit, Arial, sans-serif" font-weight="800">O</text>
+    <text x="184" y="47" fill="#ECF5FF" font-size="33" font-family="Outfit, Arial, sans-serif" font-weight="800">R</text>
+    <text x="266" y="47" fill="#ECF5FF" font-size="33" font-family="Outfit, Arial, sans-serif" font-weight="800">D</text>
+    <text x="347" y="47" fill="#ECF5FF" font-size="33" font-family="Outfit, Arial, sans-serif" font-weight="800">S</text>
+  </g>
+
+  <rect x="618" y="226" width="144" height="32" rx="8" fill="#0E4B74"/>
+  <rect x="618" y="266" width="144" height="32" rx="8" fill="#0E4B74"/>
+  <rect x="618" y="306" width="144" height="32" rx="8" fill="#0E4B74"/>
+  <text x="642" y="248" fill="#D9EEFF" font-size="16" font-family="Outfit, Arial, sans-serif" font-weight="700">QWERTYUIOP</text>
+  <text x="642" y="288" fill="#D9EEFF" font-size="16" font-family="Outfit, Arial, sans-serif" font-weight="700">ASDFGHJKL</text>
+  <text x="646" y="328" fill="#D9EEFF" font-size="16" font-family="Outfit, Arial, sans-serif" font-weight="700">ZXCVBNM</text>
+</svg>

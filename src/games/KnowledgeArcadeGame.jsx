@@ -6,6 +6,8 @@ import SolitaireKnowledgeGame from "./knowledge/SolitaireKnowledgeGame";
 import PuzzleKnowledgeGame from "./knowledge/PuzzleKnowledgeGame";
 import CrosswordKnowledgeGame from "./knowledge/CrosswordKnowledgeGame";
 import WordSearchKnowledgeGame from "./knowledge/WordSearchKnowledgeGame";
+import WordleKnowledgeGame from "./knowledge/WordleKnowledgeGame";
+import AnagramsKnowledgeGame from "./knowledge/AnagramsKnowledgeGame";
 
 function KnowledgeArcadeGame({ variant }) {
   if (variant === "sudoku") {
@@ -28,6 +30,12 @@ function KnowledgeArcadeGame({ variant }) {
   }
   if (variant === "sopa-letras") {
     return <WordSearchKnowledgeGame />;
+  }
+  if (variant === "wordle") {
+    return <WordleKnowledgeGame />;
+  }
+  if (variant === "anagramas") {
+    return <AnagramsKnowledgeGame />;
   }
 
   return <SudokuKnowledgeGame />;

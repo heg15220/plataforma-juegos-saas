@@ -1593,3 +1593,60 @@
 - Limpiado CSS global relacionado en `src/styles.css`.
 - Verificacion final: no quedan referencias textuales a `arcade-pulse-prism-runner`, `Pulse Prism Runner`, `RhythmPlatformerGame` ni `rhythm-platformer` en el repo.
 - Build validado: `npm run build` OK.
+
+## 2026-03-06 - Base lexico 10k ES/EN para Wordle + Anagramas (fase 1)
+- Nuevo modulo compartido `src/games/knowledge/knowledgeWordLexicon.js`:
+  - deriva palabras desde `crosswordTermBank` y garantiza `10000` entradas por locale (`es`, `en`), longitudes `5..10`.
+  - expone helpers de seleccion por `matchId`, set por locale, normalizacion de guesses, feedback Wordle y mezcla determinista para anagramas.
+- Test nuevo `src/games/knowledge/knowledgeWordLexicon.test.js`:
+  - valida conteo 10k por idioma, forma de entradas, determinismo por `matchId`, feedback con letras repetidas y anagramas.
+- Validacion ejecutada: `npm run test -- src/games/knowledge/knowledgeWordLexicon.test.js` (OK, 5/5).
+
+## 2026-03-06 - Nuevos juegos Conocimiento: Wordle + Anagramas (implementacion completa)
+- Nuevos componentes:
+  - `src/games/knowledge/WordleKnowledgeGame.jsx`
+  - `src/games/knowledge/AnagramsKnowledgeGame.jsx`
+- Integracion de variantes en `src/games/KnowledgeArcadeGame.jsx`:
+  - `variant="wordle"`
+  - `variant="anagramas"`
+- Integracion de catalogo y runtime:
+  - `src/data/games.js`: nuevos IDs `knowledge-wordle-pro` y `knowledge-anagramas-pro` (categoria `Conocimiento`) con copy ES/EN y foco 10k palabras.
+  - `src/games/registry.jsx`: mapeo de componentes + hints ES/EN para ambos juegos.
+  - `src/components/GamePlayground.jsx`: mapeo y hints ES/EN actualizados.
+- Assets nuevos:
+  - `src/assets/games/knowledge-wordle.svg`
+  - `src/assets/games/knowledge-anagramas.svg`
+- Estilos nuevos/responsive en `src/styles.css`:
+  - themes `knowledge-wordle` y `knowledge-anagramas`,
+  - grid/teclado/leyenda Wordle,
+  - fichas y lista de intentos de Anagramas,
+  - ajustes movil (`@media max-width: 640px`).
+- QA actions nuevos:
+  - `playwright-actions-knowledge-wordle.json`
+  - `playwright-actions-knowledge-anagramas.json`
+
+### Validacion tecnica
+- `npm run test` -> OK (12 archivos, 43 tests).
+- `npm run build` -> OK.
+
+### QA Playwright
+- Nota operativa: el cliente del skill en `C:\Users\hugoe\.codex\skills\develop-web-game\scripts\web_game_playwright_client.js` fallo por modo ESM fuera de paquete (`Cannot use import statement outside a module`).
+- Fallback usado: cliente equivalente del repo `web_game_playwright_client.mjs`.
+- Runs ejecutados:
+  - `output/knowledge-wordle-check/` -> `shot-0..2.png`, `state-0..2.json`
+  - `output/knowledge-anagramas-check/` -> `shot-0..2.png`, `state-0..2.json`
+- Sin `errors-*.json` en ambos directorios.
+- Estado serializado revisado: ambos juegos exponen `lexicon.counts.es=10000`, `lexicon.counts.en=10000` y `match.total=10000`.
+- Ajuste posterior UX de entrada:
+  - eliminado atajo conflictivo `R` en juegos de letras (Wordle/Anagramas) para no bloquear escritura de la letra `R`.
+  - textos/hints actualizados en `WordleKnowledgeGame`, `AnagramsKnowledgeGame`, `games.js`, `registry.jsx` y `GamePlayground.jsx`.
+- Anagramas: las propuestas con composicion de letras invalida ahora consumen intento y se registran como `Invalido` en historial.
+- QA actions refinados para automatizacion:
+  - `playwright-actions-knowledge-wordle.json` y `...-anagramas.json` ahora introducen 10 letras (cubre longitudes 5..10) y validan con Enter.
+- Revalidacion final:
+  - `npm run build` OK tras ajustes.
+  - Playwright final (cliente repo) repetida en:
+    - `output/knowledge-wordle-check/`
+    - `output/knowledge-anagramas-check/`
+  - `state-2.json` confirma interaccion activa en ambos (intentos usados > 0) y `lexicon.counts.es/en = 10000`.
+  - capturas finales revisadas manualmente (`shot-2.png`) y sin `errors-*.json`.
