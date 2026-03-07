@@ -8,6 +8,9 @@ import CrosswordKnowledgeGame from "./knowledge/CrosswordKnowledgeGame";
 import WordSearchKnowledgeGame from "./knowledge/WordSearchKnowledgeGame";
 import WordleKnowledgeGame from "./knowledge/WordleKnowledgeGame";
 import AnagramsKnowledgeGame from "./knowledge/AnagramsKnowledgeGame";
+import MentalMathKnowledgeGame from "./knowledge/MentalMathKnowledgeGame";
+import PeriodicTableKnowledgeGame from "./knowledge/PeriodicTableKnowledgeGame";
+import MapsKnowledgeGame from "./knowledge/MapsKnowledgeGame";
 
 function KnowledgeArcadeGame({ variant }) {
   if (variant === "sudoku") {
@@ -36,6 +39,15 @@ function KnowledgeArcadeGame({ variant }) {
   }
   if (variant === "anagramas") {
     return <AnagramsKnowledgeGame />;
+  }
+  if (variant === "calculo-mental") {
+    return <MentalMathKnowledgeGame />;
+  }
+  if (variant === "tabla-periodica") {
+    return <PeriodicTableKnowledgeGame />;
+  }
+  if (variant === "mapas") {
+    return <MapsKnowledgeGame />;
   }
 
   return <SudokuKnowledgeGame />;

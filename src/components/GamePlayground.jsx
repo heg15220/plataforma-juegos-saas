@@ -27,6 +27,9 @@ const KnowledgeCrucigramaGame = () => <KnowledgeArcadeGame variant="crucigrama" 
 const KnowledgeSopaLetrasGame = () => <KnowledgeArcadeGame variant="sopa-letras" />;
 const KnowledgeWordleGame = () => <KnowledgeArcadeGame variant="wordle" />;
 const KnowledgeAnagramasGame = () => <KnowledgeArcadeGame variant="anagramas" />;
+const KnowledgeCalculoMentalGame = () => <KnowledgeArcadeGame variant="calculo-mental" />;
+const KnowledgeTablaPeriodicaGame = () => <KnowledgeArcadeGame variant="tabla-periodica" />;
+const KnowledgeMapasGame = () => <KnowledgeArcadeGame variant="mapas" />;
 
 const GAME_COMPONENTS = {
   "adventure-echoes": AdventureGame,
@@ -43,6 +46,9 @@ const GAME_COMPONENTS = {
   "knowledge-sopa-letras-mega": KnowledgeSopaLetrasGame,
   "knowledge-wordle-pro": KnowledgeWordleGame,
   "knowledge-anagramas-pro": KnowledgeAnagramasGame,
+  "knowledge-calculo-mental-flash10": KnowledgeCalculoMentalGame,
+  "knowledge-tabla-periodica-total": KnowledgeTablaPeriodicaGame,
+  "knowledge-mapas-atlas": KnowledgeMapasGame,
   "strategy-chess-grandmaster": ChessGame,
   "strategy-damas-clasicas": CheckersGame,
   "strategy-sudoku-tecnicas": StrategySudokuGame,
@@ -73,6 +79,9 @@ const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-sopa-letras-mega": "Arrastra o marca inicio-fin para seleccionar palabras en horizontal, vertical o diagonal (tambien al reves). R carga partida aleatoria.",
     "knowledge-wordle-pro": "Wordle ES/EN con 10k palabras por idioma. Escribe letras, Enter valida, Backspace borra y usa el boton de partida aleatoria.",
     "knowledge-anagramas-pro": "Anagramas ES/EN con 10k palabras por idioma. Usa las mismas letras, Enter valida, M mezcla y usa el boton de partida aleatoria.",
+    "knowledge-calculo-mental-flash10": "Partida de 10 rondas en 40s: escribe el resultado, Enter valida y R reinicia.",
+    "knowledge-tabla-periodica-total": "Tabla periodica vacia: flechas para moverte, escribe simbolo o nombre, Enter valida, N salta y R reinicia.",
+    "knowledge-mapas-atlas": "Elige escala (mundo/continente/pais/ciudades), escribe nombres geograficos y pulsa Enter para validar. R reinicia y N carga mapa aleatorio.",
     "strategy-chess-grandmaster": "Clic para mover, promocion al coronar, U deshace, D reclama tablas y F alterna pantalla completa.",
     "strategy-damas-clasicas": "Damas 8x8: clic para mover en diagonal, capturas encadenadas, U deshace, X retiro, R reinicia y F alterna pantalla completa.",
     "strategy-sudoku-tecnicas": "Sudoku 9x9: flechas para mover, 1-9 o QWE/ASD/UIO para escribir, Backspace borra, P aplica pista y R partida aleatoria.",
@@ -101,6 +110,9 @@ const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-sopa-letras-mega": "Drag or click start-end to select words horizontally, vertically, or diagonally (reverse also works). Press R for a random match.",
     "knowledge-wordle-pro": "Wordle ES/EN with 10k words per locale. Type letters, Enter submits, Backspace deletes and use the random-match button.",
     "knowledge-anagramas-pro": "Anagrams ES/EN with 10k words per locale. Use the same letters, Enter submits, M shuffles and use the random-match button.",
+    "knowledge-calculo-mental-flash10": "10 rounds in 40s: type the result, press Enter to submit, and R to restart.",
+    "knowledge-tabla-periodica-total": "Empty periodic table: arrows move cells, type symbol/name, Enter checks, N jumps pending, and R restarts.",
+    "knowledge-mapas-atlas": "Choose scope (world/continent/country/cities), type geographic names and press Enter to validate. R restarts and N loads random map.",
     "strategy-chess-grandmaster": "Click pieces to move, choose promotion on last rank, U undo, D claim draw, and F toggles fullscreen.",
     "strategy-damas-clasicas": "8x8 checkers: click to move diagonally, chain captures, U undo, X resign, R restart, and F toggle fullscreen.",
     "strategy-sudoku-tecnicas": "Sudoku 9x9: arrows move, 1-9 or QWE/ASD/UIO types values, Backspace clears, P applies hint, and R starts a random match.",

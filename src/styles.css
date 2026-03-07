@@ -2483,6 +2483,27 @@ body {
     linear-gradient(160deg, #321b4c 0%, #4c2a68 100%);
 }
 
+.knowledge-arcade-game.knowledge-calculo-mental {
+  background:
+    radial-gradient(circle at 88% -20%, rgba(56, 189, 248, 0.24), transparent 52%),
+    radial-gradient(circle at 10% -16%, rgba(16, 185, 129, 0.22), transparent 48%),
+    linear-gradient(160deg, #10233e 0%, #153455 100%);
+}
+
+.knowledge-arcade-game.knowledge-tabla-periodica {
+  background:
+    radial-gradient(circle at 90% -18%, rgba(34, 197, 94, 0.2), transparent 52%),
+    radial-gradient(circle at 10% -18%, rgba(14, 165, 233, 0.2), transparent 48%),
+    linear-gradient(160deg, #0d243a 0%, #133756 100%);
+}
+
+.knowledge-arcade-game.knowledge-mapas {
+  background:
+    radial-gradient(circle at 88% -16%, rgba(56, 189, 248, 0.24), transparent 50%),
+    radial-gradient(circle at 16% -22%, rgba(34, 197, 94, 0.24), transparent 48%),
+    linear-gradient(160deg, #0b2439 0%, #12405d 100%);
+}
+
 .knowledge-ui-btn {
   border: 1px solid rgba(148, 163, 184, 0.5);
   border-radius: 10px;
@@ -2801,6 +2822,667 @@ body {
   color: #cbd5e1;
 }
 
+.maps-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.36rem;
+}
+
+.maps-head-actions button {
+  min-width: 132px;
+}
+
+.maps-shell {
+  display: grid;
+  gap: 0.62rem;
+}
+
+.maps-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.44rem;
+  margin-top: 0.12rem;
+}
+
+.maps-toolbar label {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 150px;
+  color: #dbeafe;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.maps-toolbar select {
+  border: 1px solid rgba(148, 163, 184, 0.46);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.68);
+  color: #e2e8f0;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.34rem 0.42rem;
+}
+
+.maps-help {
+  margin: 0;
+  color: #cfe7ff;
+  font-size: 0.72rem;
+  line-height: 1.36;
+}
+
+.maps-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.58fr) minmax(260px, 1fr);
+  gap: 0.64rem;
+  align-items: start;
+}
+
+.maps-board {
+  position: relative;
+  border: 1px solid rgba(125, 211, 252, 0.4);
+  border-radius: 14px;
+  min-height: 340px;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 24% 22%, rgba(125, 211, 252, 0.14), transparent 42%),
+    radial-gradient(circle at 78% 26%, rgba(165, 243, 252, 0.14), transparent 44%),
+    linear-gradient(160deg, rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.88));
+}
+
+.maps-board::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(0deg, rgba(186, 230, 253, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(186, 230, 253, 0.08) 1px, transparent 1px);
+  background-size: 44px 44px;
+  pointer-events: none;
+}
+
+.maps-theme-world {
+  background:
+    radial-gradient(ellipse at 18% 34%, rgba(20, 184, 166, 0.24), transparent 36%),
+    radial-gradient(ellipse at 44% 40%, rgba(20, 184, 166, 0.22), transparent 36%),
+    radial-gradient(ellipse at 66% 34%, rgba(20, 184, 166, 0.22), transparent 36%),
+    radial-gradient(ellipse at 84% 62%, rgba(20, 184, 166, 0.2), transparent 28%),
+    linear-gradient(160deg, rgba(2, 132, 199, 0.24), rgba(14, 116, 144, 0.2));
+}
+
+.maps-theme-europe {
+  background:
+    radial-gradient(ellipse at 52% 34%, rgba(34, 197, 94, 0.3), transparent 36%),
+    radial-gradient(ellipse at 24% 58%, rgba(34, 197, 94, 0.18), transparent 22%),
+    linear-gradient(160deg, rgba(2, 132, 199, 0.24), rgba(15, 23, 42, 0.4));
+}
+
+.maps-theme-south-america {
+  background:
+    radial-gradient(ellipse at 48% 52%, rgba(16, 185, 129, 0.3), transparent 32%),
+    radial-gradient(ellipse at 62% 18%, rgba(52, 211, 153, 0.2), transparent 24%),
+    linear-gradient(160deg, rgba(2, 132, 199, 0.24), rgba(15, 23, 42, 0.44));
+}
+
+.maps-theme-spain {
+  background:
+    radial-gradient(ellipse at 48% 44%, rgba(234, 179, 8, 0.2), transparent 30%),
+    radial-gradient(ellipse at 18% 78%, rgba(245, 158, 11, 0.16), transparent 20%),
+    radial-gradient(ellipse at 84% 46%, rgba(59, 130, 246, 0.18), transparent 18%),
+    linear-gradient(160deg, rgba(2, 132, 199, 0.2), rgba(15, 23, 42, 0.46));
+}
+
+.maps-board-caption {
+  position: absolute;
+  top: 0.42rem;
+  left: 0.5rem;
+  margin: 0;
+  z-index: 2;
+  color: #e2e8f0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+}
+
+.maps-silhouette-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.maps-shape {
+  fill: rgba(15, 23, 42, 0.6);
+  stroke: rgba(125, 211, 252, 0.18);
+  stroke-width: 0.22;
+  vector-effect: non-scaling-stroke;
+  transition: fill 180ms ease, stroke 180ms ease, opacity 180ms ease;
+}
+
+.maps-shape.base {
+  fill: rgba(15, 23, 42, 0.34);
+  stroke: rgba(148, 163, 184, 0.42);
+  opacity: 0.95;
+}
+
+.maps-shape.hidden {
+  fill: rgba(15, 23, 42, 0.62);
+  stroke: rgba(125, 211, 252, 0.2);
+  opacity: 0.9;
+}
+
+.maps-shape.revealed {
+  fill: rgba(34, 197, 94, 0.38);
+  stroke: rgba(134, 239, 172, 0.56);
+  opacity: 1;
+}
+
+.maps-shape.revealed.kind-ocean {
+  fill: rgba(56, 189, 248, 0.32);
+  stroke: rgba(125, 211, 252, 0.56);
+}
+
+.maps-shape.revealed.kind-country {
+  fill: rgba(16, 185, 129, 0.34);
+  stroke: rgba(167, 243, 208, 0.52);
+}
+
+.maps-shape.revealed.kind-province {
+  fill: rgba(245, 158, 11, 0.3);
+  stroke: rgba(253, 224, 71, 0.6);
+}
+
+.maps-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: grid;
+  justify-items: center;
+  gap: 0.08rem;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.maps-node-pin {
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(191, 219, 254, 0.84);
+  background: rgba(30, 41, 59, 0.9);
+  color: #dbeafe;
+  display: grid;
+  place-items: center;
+  font-size: 0.66rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.maps-node-label {
+  max-width: 108px;
+  text-align: center;
+  color: #dbeafe;
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-wrap: balance;
+  text-shadow: 0 2px 4px rgba(2, 6, 23, 0.5);
+}
+
+.maps-node.hidden .maps-node-pin {
+  border-color: rgba(148, 163, 184, 0.68);
+  background: rgba(71, 85, 105, 0.85);
+  color: #f8fafc;
+}
+
+.maps-node.hidden .maps-node-label {
+  color: rgba(226, 232, 240, 0.82);
+}
+
+.maps-node.revealed .maps-node-pin {
+  border-color: rgba(134, 239, 172, 0.86);
+  background: linear-gradient(150deg, rgba(22, 163, 74, 0.88), rgba(21, 128, 61, 0.9));
+  color: #dcfce7;
+}
+
+.maps-node.kind-ocean.revealed .maps-node-pin {
+  border-color: rgba(125, 211, 252, 0.9);
+  background: linear-gradient(150deg, rgba(2, 132, 199, 0.88), rgba(3, 105, 161, 0.9));
+  color: #e0f2fe;
+}
+
+.maps-node.kind-province.revealed .maps-node-pin {
+  border-color: rgba(251, 191, 36, 0.84);
+  background: linear-gradient(150deg, rgba(217, 119, 6, 0.88), rgba(180, 83, 9, 0.9));
+  color: #fffbeb;
+}
+
+.maps-node.kind-city.revealed .maps-node-pin {
+  border-color: rgba(248, 113, 113, 0.86);
+  background: linear-gradient(150deg, rgba(220, 38, 38, 0.88), rgba(185, 28, 28, 0.9));
+  color: #fef2f2;
+}
+
+.maps-side {
+  display: grid;
+  gap: 0.54rem;
+  min-height: 0;
+}
+
+.maps-input-shell {
+  border: 1px solid rgba(125, 211, 252, 0.38);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.38);
+  padding: 0.52rem;
+  display: grid;
+  gap: 0.36rem;
+}
+
+.maps-input-shell label {
+  display: grid;
+  gap: 0.2rem;
+  color: #e2e8f0;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.maps-input-shell input {
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.76);
+  color: #f8fbff;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 0.44rem 0.52rem;
+}
+
+.maps-input-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.34rem;
+}
+
+.maps-target-panel {
+  border: 1px solid rgba(125, 211, 252, 0.3);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.32);
+  padding: 0.52rem;
+  display: grid;
+  gap: 0.32rem;
+  min-height: 0;
+}
+
+.maps-target-panel h5 {
+  margin: 0;
+  color: #f8fbff;
+  font-size: 0.76rem;
+}
+
+.maps-target-panel p {
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 0.68rem;
+  line-height: 1.32;
+}
+
+.maps-target-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.22rem;
+  max-height: 268px;
+  overflow: auto;
+  padding-right: 0.12rem;
+}
+
+.maps-target-list li {
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  border-radius: 9px;
+  background: rgba(15, 23, 42, 0.54);
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 70px;
+  align-items: center;
+  gap: 0.34rem;
+  padding: 0.24rem 0.36rem;
+}
+
+.maps-target-list li.revealed {
+  border-color: rgba(134, 239, 172, 0.52);
+  background: rgba(22, 101, 52, 0.24);
+}
+
+.maps-target-list li.hidden {
+  border-color: rgba(148, 163, 184, 0.34);
+}
+
+.maps-target-list .target-index {
+  color: #bae6fd;
+  font-size: 0.64rem;
+  font-weight: 800;
+}
+
+.maps-target-list .target-name {
+  color: #e2e8f0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.maps-target-list li.revealed .target-name {
+  color: #dcfce7;
+}
+
+.maps-target-list .target-kind {
+  justify-self: end;
+  color: #bfdbfe;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.mental-math-shell {
+  display: grid;
+  gap: 0.62rem;
+}
+
+.mental-math-help {
+  margin: 0;
+  color: #cfe7ff;
+  font-size: 0.73rem;
+  line-height: 1.34;
+}
+
+.mental-math-problem {
+  border: 1px solid rgba(125, 211, 252, 0.4);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.5);
+  padding: 0.56rem 0.62rem;
+  display: grid;
+  gap: 0.28rem;
+}
+
+.mental-math-round-tag {
+  margin: 0;
+  color: #93c5fd;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mental-math-expression {
+  margin: 0;
+  color: #f8fbff;
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: clamp(1.2rem, 2.2vw, 1.72rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.mental-math-input-shell {
+  border: 1px solid rgba(125, 211, 252, 0.34);
+  border-radius: 11px;
+  background: rgba(15, 23, 42, 0.42);
+  padding: 0.52rem;
+  display: grid;
+  gap: 0.44rem;
+}
+
+.mental-math-input-label {
+  display: grid;
+  gap: 0.24rem;
+  color: #e2e8f0;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.mental-math-input-label input {
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #f8fbff;
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 0.5rem 0.56rem;
+}
+
+.mental-math-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.38rem;
+}
+
+.mental-math-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.36rem 0.48rem;
+}
+
+.mental-math-metrics span {
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.5);
+  color: #dbeafe;
+  font-size: 0.71rem;
+  font-weight: 700;
+  padding: 0.2rem 0.58rem;
+}
+
+.mental-math-history {
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 11px;
+  background: rgba(15, 23, 42, 0.35);
+  padding: 0.5rem 0.56rem;
+}
+
+.mental-math-history h5 {
+  margin: 0;
+  color: #eaf2ff;
+  font-size: 0.76rem;
+}
+
+.mental-math-history p {
+  margin: 0.45rem 0 0;
+  color: #cbd5e1;
+  font-size: 0.73rem;
+}
+
+.mental-math-history ul {
+  margin: 0.45rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.26rem;
+}
+
+.mental-math-history li {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 46px 46px 40px;
+  gap: 0.24rem;
+  align-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.44);
+  color: #e2e8f0;
+  font-size: 0.69rem;
+  font-weight: 700;
+  padding: 0.26rem 0.36rem;
+}
+
+.mental-math-history li strong {
+  color: #bae6fd;
+}
+
+.mental-math-history li span.ok {
+  color: #86efac;
+}
+
+.mental-math-history li span.ko {
+  color: #fca5a5;
+}
+
+.periodic-shell {
+  display: grid;
+  gap: 0.58rem;
+}
+
+.periodic-help {
+  margin: 0;
+  color: #d2e8ff;
+  font-size: 0.73rem;
+  line-height: 1.34;
+}
+
+.periodic-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  gap: 0.56rem;
+}
+
+.periodic-board-shell {
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.42);
+  padding: 0.44rem;
+  overflow-x: auto;
+}
+
+.periodic-grid {
+  width: max-content;
+  min-width: 100%;
+  display: grid;
+  grid-template-columns: repeat(18, minmax(0, 34px));
+  grid-auto-rows: 36px;
+  gap: 0.14rem;
+}
+
+.periodic-cell,
+.periodic-gap,
+.periodic-placeholder {
+  border-radius: 7px;
+}
+
+.periodic-gap {
+  background: transparent;
+}
+
+.periodic-placeholder {
+  border: 1px dashed rgba(125, 211, 252, 0.35);
+  background: rgba(15, 23, 42, 0.38);
+  color: #93c5fd;
+  display: grid;
+  place-items: center;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.periodic-cell {
+  border: 1px solid rgba(125, 211, 252, 0.42);
+  background: linear-gradient(155deg, rgba(30, 41, 59, 0.84), rgba(15, 23, 42, 0.9));
+  color: #dbeafe;
+  padding: 0.12rem;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.periodic-cell:hover {
+  transform: translateY(-1px);
+  border-color: rgba(56, 189, 248, 0.74);
+  box-shadow: 0 8px 12px rgba(2, 6, 23, 0.28);
+}
+
+.periodic-cell.selected {
+  border-color: rgba(250, 204, 21, 0.92);
+  box-shadow: inset 0 0 0 1px rgba(250, 204, 21, 0.58);
+}
+
+.periodic-cell.correct {
+  border-color: rgba(74, 222, 128, 0.88);
+  background: linear-gradient(155deg, rgba(21, 128, 61, 0.78), rgba(22, 101, 52, 0.82));
+}
+
+.periodic-cell.incorrect {
+  border-color: rgba(248, 113, 113, 0.85);
+  background: linear-gradient(155deg, rgba(153, 27, 27, 0.72), rgba(127, 29, 29, 0.78));
+}
+
+.periodic-atomic {
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: #bfdbfe;
+  line-height: 1;
+}
+
+.periodic-value {
+  align-self: center;
+  justify-self: center;
+  color: #f8fbff;
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.periodic-entry-panel {
+  border: 1px solid rgba(125, 211, 252, 0.4);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.45);
+  padding: 0.5rem 0.56rem;
+  display: grid;
+  gap: 0.34rem;
+}
+
+.periodic-entry-panel h5 {
+  margin: 0;
+  color: #eaf2ff;
+  font-size: 0.8rem;
+}
+
+.periodic-entry-panel p {
+  margin: 0;
+  color: #dbeafe;
+  font-size: 0.72rem;
+}
+
+.periodic-entry-panel label {
+  display: grid;
+  gap: 0.22rem;
+  margin-top: 0.2rem;
+  color: #e2e8f0;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.periodic-entry-panel input {
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.74);
+  color: #f8fbff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.42rem 0.5rem;
+}
+
+.periodic-actions {
+  margin-top: 0.2rem;
+  display: grid;
+  gap: 0.32rem;
+}
+
 @media (max-width: 640px) {
   .wordle-cell {
     font-size: 0.84rem;
@@ -2830,6 +3512,46 @@ body {
     min-width: 0;
   }
 
+  .maps-head-actions {
+    width: 100%;
+  }
+
+  .maps-head-actions button {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .maps-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .maps-board {
+    min-height: 300px;
+  }
+
+  .maps-node-label {
+    max-width: 82px;
+    font-size: 0.52rem;
+  }
+
+  .maps-toolbar label {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .maps-target-list {
+    max-height: 210px;
+  }
+
+  .maps-target-list li {
+    grid-template-columns: 26px minmax(0, 1fr) 56px;
+    padding: 0.22rem 0.28rem;
+  }
+
+  .maps-target-list .target-name {
+    font-size: 0.64rem;
+  }
+
   .anagram-tile {
     font-size: 0.84rem;
   }
@@ -2837,6 +3559,28 @@ body {
   .knowledge-ui-btn {
     font-size: 0.7rem;
     padding: 0.4rem 0.52rem;
+  }
+
+  .mental-math-history li {
+    grid-template-columns: 36px minmax(0, 1fr) 40px 40px 36px;
+    font-size: 0.63rem;
+  }
+
+  .periodic-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .periodic-grid {
+    grid-template-columns: repeat(18, minmax(0, 28px));
+    grid-auto-rows: 30px;
+  }
+
+  .periodic-value {
+    font-size: 0.62rem;
+  }
+
+  .periodic-entry-panel {
+    gap: 0.28rem;
   }
 }
 

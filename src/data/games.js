@@ -19,6 +19,9 @@ import knowledgeCrucigramaImage from "../assets/games/knowledge-crucigrama.svg";
 import knowledgeSopaLetrasImage from "../assets/games/knowledge-sopa-letras.svg";
 import knowledgeWordleImage from "../assets/games/knowledge-wordle.svg";
 import knowledgeAnagramasImage from "../assets/games/knowledge-anagramas.svg";
+import knowledgeCalculoMentalImage from "../assets/games/knowledge-calculo-mental.svg";
+import knowledgeTablaPeriodicaImage from "../assets/games/knowledge-tabla-periodica.svg";
+import knowledgeMapasImage from "../assets/games/knowledge-mapas.svg";
 import chessGrandmasterArenaImage from "../assets/games/chess-grandmaster-arena.svg";
 import strategySudokuTecnicasImage from "../assets/games/strategy-sudoku-tecnicas.svg";
 import strategyDamasProfesionalImage from "../assets/games/strategy-damas-professional.svg";
@@ -944,6 +947,145 @@ export const games = [
   },
   // ── Strategy (chess) ───────────────────────────────────────────────────────
   {
+    id: "knowledge-calculo-mental-flash10",
+    image: knowledgeCalculoMentalImage,
+    sessionTime: "1-4 min",
+
+    title: "Calculo Mental Flash 10",
+    category: "Conocimiento",
+    tagline: "Partidas de 10 rondas con operaciones mixtas y limite global de 40 segundos.",
+    description:
+      "Modo rapido de matematicas mentales: cada sesion genera 10 calculos de dificultad creciente y solo dispones de 40 segundos totales para completarlos.",
+    objective_es: "Resuelve las 10 rondas de calculo antes de que el cronometro de 40 segundos llegue a cero.",
+    howToPlay_es: "Escribe el resultado de cada operacion y pulsa Enter para validar. Cada envio pasa a la siguiente ronda hasta completar 10 o agotar el tiempo.",
+    highlights: [
+      "Formato fijo de 10 rondas por partida con operaciones variadas.",
+      "Cronometro global de 40 segundos para priorizar velocidad mental.",
+      "Generacion determinista de operaciones por semilla de partida.",
+      "Historial de rondas con respuesta enviada, resultado esperado y precision.",
+    ],
+    difficulty: "Media-Alta",
+    multiplayer: "Solo",
+    viability: "Alta: estado compacto, reglas discretas y telemetria directa por ronda.",
+    visualStyle: "Panel oscuro de entrenamiento cognitivo con foco en operacion y tiempo restante.",
+    techFocus: "Generador procedural de operaciones + control de ronda/tiempo + bridge QA serializable.",
+
+    category_en: "Knowledge",
+    tagline_en: "10-round matches with mixed operations and a strict 40-second global timer.",
+    description_en:
+      "Fast mental-math mode: each session builds 10 escalating calculations and gives you only 40 total seconds to finish them.",
+    objective_en: "Solve all 10 calculation rounds before the 40-second timer reaches zero.",
+    howToPlay_en: "Type each result and press Enter to submit. Every submission advances to the next round until you finish all 10 or run out of time.",
+    highlights_en: [
+      "Fixed 10-round match structure with mixed arithmetic operations.",
+      "Global 40-second countdown to enforce rapid mental execution.",
+      "Deterministic operation generation based on match seed.",
+      "Round history with submitted answer, expected result and accuracy.",
+    ],
+    difficulty_en: "Medium-High",
+    multiplayer_en: "Solo",
+    viability_en: "High: compact state, discrete rules and direct per-round telemetry.",
+    visualStyle_en: "Dark cognitive-training panel focused on operation readability and time pressure.",
+    techFocus_en: "Procedural math generation + round/time state machine + serializable QA bridge.",
+  },
+
+  {
+    id: "knowledge-tabla-periodica-total",
+    image: knowledgeTablaPeriodicaImage,
+    sessionTime: "6-20 min",
+
+    title: "Tabla Periodica Total",
+    category: "Conocimiento",
+    tagline: "Tabla periodica completa con 118 casillas vacias para colocar cada elemento.",
+    description:
+      "Reto de memorizacion avanzada: la tabla aparece vacia y debes escribir el elemento correcto en cada posicion hasta completar las 118 casillas.",
+    objective_es: "Completa toda la tabla periodica introduciendo el simbolo o nombre correcto en cada celda.",
+    howToPlay_es: "Selecciona una casilla, escribe simbolo o nombre y valida con Enter. Usa flechas para moverte por la tabla, N para saltar a la siguiente pendiente y R para reiniciar.",
+    highlights: [
+      "Rejilla completa de 118 elementos con distribucion periodica real.",
+      "Casillas inicialmente vacias para entrenar memoria de posicion y nomenclatura.",
+      "Validacion flexible por simbolo, nombre en espanol o nombre en ingles.",
+      "Seguimiento de intentos, errores y progreso hasta completar el 100%.",
+    ],
+    difficulty: "Alta",
+    multiplayer: "Solo",
+    viability: "Alta: dataset cerrado, validacion local y estado serializable por casilla.",
+    visualStyle: "Tablero tecnico de quimica con panel lateral de entrada y feedback por celda.",
+    techFocus: "Motor de validacion de elementos + navegacion de rejilla irregular + bridge QA completo.",
+
+    category_en: "Knowledge",
+    tagline_en: "Complete periodic table with 118 empty cells to place every element.",
+    description_en:
+      "Advanced memory challenge: the table starts empty and you must enter the correct element in every position until all 118 cells are solved.",
+    objective_en: "Complete the full periodic table by entering the correct symbol or name in each cell.",
+    howToPlay_en: "Select a cell, type symbol or name, and press Enter to validate. Use arrows to move, N to jump to the next pending cell, and R to restart.",
+    highlights_en: [
+      "Full 118-element grid with realistic periodic-table structure.",
+      "All cells start empty to train location memory and element naming.",
+      "Flexible validation by symbol, Spanish name, or English name.",
+      "Attempt/mistake/progress tracking until reaching 100% completion.",
+    ],
+    difficulty_en: "High",
+    multiplayer_en: "Solo",
+    viability_en: "High: closed dataset, local validation and per-cell serializable state.",
+    visualStyle_en: "Technical chemistry board with side-entry panel and per-cell feedback.",
+    techFocus_en: "Element-validation engine + irregular-grid navigation + full QA state bridge.",
+  },
+
+  {
+    id: "knowledge-mapas-atlas",
+    image: knowledgeMapasImage,
+    sessionTime: "4-14 min",
+
+    title: "Mapas Atlas",
+    category: "Conocimiento",
+    tagline: "Adivina nombres ocultos en mundo, continentes, paises, provincias y ciudades.",
+    description:
+      "Juego geografico basado en escritura: eliges la escala (mundo, continente, pais o ciudades) y desbloqueas etiquetas ocultas al introducir el nombre correcto de cada objetivo.",
+    objective_es:
+      "Completa el mapa activo descubriendo todos los nombres ocultos: continentes/oceanos en mundo, paises en continente, provincias/estados en pais y ciudades principales en modo ciudades.",
+    howToPlay_es:
+      "Selecciona escala y mapa, escribe un nombre geografico y valida con Enter. Cada acierto revela la etiqueta. Usa R para reiniciar y N para mapa aleatorio.",
+    highlights: [
+      "Modo Mundo con continentes y oceanos ocultos para entrenamiento global.",
+      "Modo Continente con paises ocultos (incluye Europa completa y Sudamerica).",
+      "Modo Continente ampliado: Europa, Sudamerica, America completa, Asia y Oceania por siluetas de paises.",
+      "Modo Pais ampliado con decenas de paises y sus subdivisiones (estados/provincias/departamentos).",
+      "Modo Ciudades con lista amplia de paises y ciudades principales desbloqueables sobre su silueta.",
+      "Feedback inmediato con progreso, precision, intentos y listado desbloqueable.",
+      "Bridge QA con estado serializado de objetivos, entradas y progreso visible.",
+    ],
+    difficulty: "Media-Alta",
+    multiplayer: "Solo",
+    viability: "Alta: reglas discretas, dataset local y validacion textual en cliente.",
+    visualStyle: "Atlas interactivo con nodos geoposicionados, panel lateral y objetivos ocultos.",
+    techFocus: "Normalizacion de texto multilenguaje + motor de desbloqueo por mapa + runtime bridge.",
+
+    category_en: "Knowledge",
+    tagline_en: "Guess hidden names across world, continents, countries, provinces and cities.",
+    description_en:
+      "Typing-based geography challenge: choose scope (world, continent, country, or cities) and unlock hidden labels by entering each correct name.",
+    objective_en:
+      "Complete the active map by revealing all hidden labels: continents/oceans in world mode, countries in continent mode, provinces/states in country mode, and major cities in city mode.",
+    howToPlay_en:
+      "Select scope and map, type a geographic name, and press Enter to validate. Each hit reveals one label. Use R to restart and N for a random map.",
+    highlights_en: [
+      "World mode with hidden continents and oceans for broad training.",
+      "Continent mode with hidden countries (includes full Europe and South America).",
+      "Expanded continent mode: Europe, South America, full Americas, Asia and Oceania country silhouettes.",
+      "Expanded country mode with dozens of countries and their subdivisions (states/provinces/departments).",
+      "City mode with a broad list of countries and unlockable major-city targets over the country silhouette.",
+      "Immediate feedback via progress, accuracy, attempts and unlock list.",
+      "QA bridge with serialized targets, input state and visible progression.",
+    ],
+    difficulty_en: "Medium-High",
+    multiplayer_en: "Solo",
+    viability_en: "High: discrete rules, local datasets and client-side text validation.",
+    visualStyle_en: "Interactive atlas with geolocated nodes, side panel and hidden targets.",
+    techFocus_en: "Multilingual text normalization + map unlock engine + runtime bridge.",
+  },
+
+  {
     id: "strategy-sudoku-tecnicas",
     image: strategySudokuTecnicasImage,
     sessionTime: "5-15 min",
@@ -1258,6 +1400,3 @@ export const games = [
     techFocus_en: "High thematic variety rounds with stable and traceable scoring.",
   },
 ];
-
-
-

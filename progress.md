@@ -1695,3 +1695,70 @@
   - `output/strategy-sudoku-tecnicas/mobile-game-shot.png`
   - `output/strategy-sudoku-tecnicas/mobile-state.json`
 - Comprobado visualmente: tablero 9x9 visible, controles funcionales, panel de tecnicas visible, layout responsive operativo.
+
+## 2026-03-07 - Nuevos juegos de Conocimiento (calculo mental + tabla periodica)
+- Anadido `knowledge-calculo-mental-flash10`:
+  - Componente nuevo `src/games/knowledge/MentalMathKnowledgeGame.jsx`.
+  - Formato de 10 rondas con operaciones mixtas y cronometro global de 40 segundos.
+  - Historial de rondas, precision, mensajes de estado y bridge QA (`render_game_to_text` + `advanceTime`).
+- Anadido `knowledge-tabla-periodica-total`:
+  - Dataset nuevo `src/games/knowledge/periodicTableElements.js` con 118 elementos y layout completo de tabla periodica.
+  - Componente nuevo `src/games/knowledge/PeriodicTableKnowledgeGame.jsx` con casillas vacias, validacion por simbolo/nombre (ES/EN), navegacion por flechas y panel lateral.
+  - Bridge QA completo con snapshot de celdas y progreso.
+- Integracion de ambos juegos en:
+  - `src/games/KnowledgeArcadeGame.jsx` (nuevas variantes).
+  - `src/games/registry.jsx` (registro jugable + control hints ES/EN en modal).
+  - `src/components/GamePlayground.jsx` (mapeo/hints en playground legacy).
+  - `src/data/games.js` (fichas de catalogo nuevas).
+  - `src/assets/games/knowledge-calculo-mental.svg` y `src/assets/games/knowledge-tabla-periodica.svg`.
+  - `src/styles.css` (estilos dedicados para ambos minijuegos).
+- Artefactos de pruebas:
+  - Payloads Playwright: `playwright-actions-knowledge-calculo-mental.json`, `playwright-actions-knowledge-tabla-periodica.json`.
+  - Capturas y estado:
+    - `output/knowledge-calculo-mental-audit/shot-0.png`, `shot-1.png`, `state-0.json`, `state-1.json`.
+    - `output/knowledge-tabla-periodica-audit/shot-0.png`, `shot-1.png`, `state-0.json`, `state-1.json`.
+- Verificacion:
+  - `npm run build` OK (tras elevar permisos por limitaciones sandbox con esbuild).
+  - Auditoria Playwright OK tras elevar permisos para lanzamiento de Chromium.
+
+### TODO sugerido
+- Ajustar payload Playwright del calculo mental para enviar respuestas numericas reales (el cliente actual de la skill solo mapea un subconjunto de teclas) y cubrir happy path de rondas completadas.
+## 2026-03-07 - Nuevo juego Conocimiento: Mapas Atlas (mundo/continente/pais)
+- Implementado nuevo juego `knowledge-mapas-atlas` con modo de adivinanza por escritura y desbloqueo progresivo de etiquetas ocultas.
+- Nuevo componente: `src/games/knowledge/MapsKnowledgeGame.jsx`.
+  - Escala `Mundo`: continentes + oceanos ocultos.
+  - Escala `Continente`: mapas de `Europa` (paises) y `Sudamerica` (paises).
+  - Escala `Pais`: `Espana` con sus 50 provincias.
+  - Input con validacion por normalizacion (case-insensitive y tolerante a acentos), mensajes de feedback, precision, intentos, estado y listado de objetivos.
+  - Atajos globales fuera de campos de texto: `R` reinicia mapa actual y `N` carga uno aleatorio dentro de la escala.
+  - Bridge QA completo (`render_game_to_text` + `advanceTime`).
+- Dataset geografico nuevo: `src/games/knowledge/mapsKnowledgeData.js`.
+- Integracion de variante y runtime:
+  - `src/games/KnowledgeArcadeGame.jsx` (nueva variante `mapas`).
+  - `src/games/registry.jsx` y `src/components/GamePlayground.jsx` (registro jugable + hints ES/EN).
+  - `src/data/games.js` (alta de metadata id `knowledge-mapas-atlas`).
+- Asset nuevo de catalogo: `src/assets/games/knowledge-mapas.svg`.
+- Estilos nuevos en `src/styles.css`:
+  - Tema `knowledge-mapas`.
+  - Layout responsive del tablero + panel lateral.
+  - Nodos ocultos/revelados por tipo (`continent`, `ocean`, `country`, `province`).
+  - Formularios, lista de objetivos y ajustes moviles.
+- Payload Playwright nuevo: `playwright-actions-knowledge-mapas.json`.
+
+### Validacion tecnica
+- Build OK: `npm run build` (ejecutado con permisos elevados por restriccion EPERM del sandbox sobre esbuild).
+
+### QA Playwright
+- Auditoria principal (desktop):
+  - URL: `http://127.0.0.1:4173/#game=knowledge-mapas-atlas`
+  - Artefactos: `output/knowledge-mapas-audit/shot-0..2.png`, `state-0..2.json`.
+  - Sin archivos `errors-*.json`.
+  - Estado final auditado: objetivos descubiertos en mundo (`Europa`, `Asia`) y `variant=mapas` con payload consistente.
+- Verificacion movil adicional (390x844):
+  - `output/knowledge-mapas-audit/mobile-game-shot.png`
+  - `output/knowledge-mapas-audit/mobile-shot.png`
+  - `output/knowledge-mapas-audit/mobile-state.json`
+  - Layout comprobado en columna unica con controles y panel visibles.
+
+### Nota operativa
+- El cliente Playwright del repo solo mapea un subconjunto de teclas, por lo que en esta pasada automatizada se validaron entradas compatibles (`Europa`, `Asia`) y flujo de estado.
