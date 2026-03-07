@@ -11,6 +11,7 @@ import MinesweeperGame from "../games/MinesweeperGame";
 import ChessGame from "../games/ChessGame";
 import CheckersGame from "../games/CheckersGame";
 import DominoStrategyGame from "../games/DominoStrategyGame";
+import StrategySudokuGame from "../games/StrategySudokuGame";
 import PokerTexasHoldemGame from "../games/PokerTexasHoldemGame";
 import ParchisStrategyGame from "../games/ParchisStrategyGame";
 import RaceGame2DPro from "../games/RaceGame2DPro";
@@ -44,6 +45,7 @@ const GAME_COMPONENTS = {
   "knowledge-anagramas-pro": KnowledgeAnagramasGame,
   "strategy-chess-grandmaster": ChessGame,
   "strategy-damas-clasicas": CheckersGame,
+  "strategy-sudoku-tecnicas": StrategySudokuGame,
   "strategy-poker-holdem-no-bet": PokerTexasHoldemGame,
   "strategy-parchis-ludoteka": ParchisStrategyGame,
   "rpg-emberfall": RpgGame,
@@ -73,6 +75,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-anagramas-pro": "Anagramas ES/EN con 10k palabras por idioma. Usa las mismas letras, Enter valida, M mezcla y usa el boton de partida aleatoria.",
     "strategy-chess-grandmaster": "Clic para mover, promocion al coronar, U deshace, D reclama tablas y F alterna pantalla completa.",
     "strategy-damas-clasicas": "Damas 8x8: clic para mover en diagonal, capturas encadenadas, U deshace, X retiro, R reinicia y F alterna pantalla completa.",
+    "strategy-sudoku-tecnicas": "Sudoku 9x9: flechas para mover, 1-9 o QWE/ASD/UIO para escribir, Backspace borra, P aplica pista y R partida aleatoria.",
     "strategy-poker-holdem-no-bet": "Poker clasico 5 cartas con apuestas reales: ciegas, bote y acciones call/raise/fold/all-in. Enter accion principal, U subir, A all-in, F retirarse, 1-5 seleccionar descarte, D descartar, S servirse, N siguiente mano y R reiniciar.",
     "strategy-parchis-ludoteka": "S/Enter inicia partida, R/Enter/Space tira dado, 1..9 elige jugada, Enter primera jugada, X continua sin jugada y N nueva partida.",
     "rpg-emberfall": "Explora con WASD/flechas y usa atacar, habilidad, defender, enfocar, invocar (U) y pocion.",
@@ -100,6 +103,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-anagramas-pro": "Anagrams ES/EN with 10k words per locale. Use the same letters, Enter submits, M shuffles and use the random-match button.",
     "strategy-chess-grandmaster": "Click pieces to move, choose promotion on last rank, U undo, D claim draw, and F toggles fullscreen.",
     "strategy-damas-clasicas": "8x8 checkers: click to move diagonally, chain captures, U undo, X resign, R restart, and F toggle fullscreen.",
+    "strategy-sudoku-tecnicas": "Sudoku 9x9: arrows move, 1-9 or QWE/ASD/UIO types values, Backspace clears, P applies hint, and R starts a random match.",
     "strategy-poker-holdem-no-bet": "Classic 5-card draw with real betting: blinds, pot play, and check/call/raise/fold/all-in decisions. Enter main action, U raise, A all-in, F fold, 1-5 select discard, D discard, S stand pat, N next hand, and R restart.",
     "strategy-parchis-ludoteka": "S/Enter starts the match, R/Enter/Space rolls the die, 1..9 picks a move, Enter takes the first move, X continues without move, and N starts a new match.",
     "rpg-emberfall": "Explore with WASD/arrows and use attack, skill, defend, focus, summon (U) and potion.",

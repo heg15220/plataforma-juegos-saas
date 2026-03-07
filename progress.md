@@ -1667,3 +1667,31 @@
   - plan de limpieza total del banco en 5 fases,
   - ejemplos comparativos antes/despues por tipo de palabra.
 - Esta iteracion fue documental/arquitectonica; no se tocaron componentes de runtime ni se ejecutaron tests.
+## 2026-03-07 - Nuevo juego Estrategia: Sudoku Tecnicas Pro (9x9)
+- Implementado nuevo juego `strategy-sudoku-tecnicas` en `src/games/StrategySudokuGame.jsx`.
+  - Sudoku 9x9 con reglas clasicas de fila/columna/recuadro 3x3.
+  - Generador determinista de partidas con solucion unica y 3 dificultades (`easy/normal/hard`).
+  - Deteccion de conflictos en tiempo real.
+  - Pistas logicas aplicables con etiqueta de tecnica: `Grupo completo`, `Barrido`, `Barrido sobre una linea`, `Recuento`.
+  - Bridge QA completo (`render_game_to_text` + `advanceTime`).
+- Integracion de plataforma completada:
+  - Catalogo: alta de metadata en `src/data/games.js` (categoria `Estrategia`, id `strategy-sudoku-tecnicas`).
+  - Registro/runtime: alta en `src/games/registry.jsx` y `src/components/GamePlayground.jsx`.
+  - Hints ES/EN actualizados en ambos mapeos de controles.
+  - Asset nuevo: `src/assets/games/strategy-sudoku-tecnicas.svg`.
+  - Estilos dedicados y responsive: `src/styles.css` (`.strategy-sudoku-*`).
+  - Payload de acciones QA: `playwright-actions-strategy-sudoku.json`.
+
+### Validacion tecnica
+- Build OK: `npm run build` (ejecutado fuera de sandbox por restriccion EPERM de esbuild en sandbox).
+
+### QA Playwright
+- Run principal (desktop):
+  - URL: `http://127.0.0.1:4173/#game=strategy-sudoku-tecnicas`
+  - Artefactos: `output/strategy-sudoku-tecnicas/shot-0..2.png` y `state-0..2.json`.
+  - Sin archivos `errors-*.json`.
+- Verificacion movil adicional:
+  - `output/strategy-sudoku-tecnicas/mobile-shot.png`
+  - `output/strategy-sudoku-tecnicas/mobile-game-shot.png`
+  - `output/strategy-sudoku-tecnicas/mobile-state.json`
+- Comprobado visualmente: tablero 9x9 visible, controles funcionales, panel de tecnicas visible, layout responsive operativo.

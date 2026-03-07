@@ -20,6 +20,7 @@ import knowledgeSopaLetrasImage from "../assets/games/knowledge-sopa-letras.svg"
 import knowledgeWordleImage from "../assets/games/knowledge-wordle.svg";
 import knowledgeAnagramasImage from "../assets/games/knowledge-anagramas.svg";
 import chessGrandmasterArenaImage from "../assets/games/chess-grandmaster-arena.svg";
+import strategySudokuTecnicasImage from "../assets/games/strategy-sudoku-tecnicas.svg";
 import strategyDamasProfesionalImage from "../assets/games/strategy-damas-professional.svg";
 import strategyPokerNoBetImage from "../assets/games/strategy-poker-no-bet.svg";
 import strategyParchisLudotekaImage from "../assets/games/strategy-parchis-ludoteka.svg";
@@ -942,6 +943,51 @@ export const games = [
     techFocus_en: "Deterministic anagram generation + attempt flow and histogram-based validation.",
   },
   // ── Strategy (chess) ───────────────────────────────────────────────────────
+  {
+    id: "strategy-sudoku-tecnicas",
+    image: strategySudokuTecnicasImage,
+    sessionTime: "5-15 min",
+
+    title: "Sudoku Tecnicas Pro",
+    category: "Estrategia",
+    tagline: "Sudoku clasico 9x9 con pistas logicas basadas en tecnicas tradicionales.",
+    description:
+      "Version estrategica del Sudoku: completa la rejilla 9x9 sin repetir numeros en filas, columnas ni recuadros 3x3. Incluye pistas aplicadas por logica (grupo completo, barrido, barrido en linea y recuento) para guiar la resolucion sin fuerza bruta.",
+    objective_es: "Completa el tablero 9x9 sin conflictos usando deduccion logica y tecnicas clasicas de Sudoku.",
+    howToPlay_es: "Selecciona casilla con raton o flechas, escribe 1-9 (o QWE/ASD/UIO), Backspace borra, P aplica pista y R carga partida aleatoria.",
+    highlights: [
+      "Generador determinista de tableros con solucion unica por partida.",
+      "Tres niveles de dificultad por cantidad de pistas iniciales.",
+      "Detector de conflictos en tiempo real para filas, columnas y recuadros 3x3.",
+      "Sistema de pistas con etiquetas de tecnica logica usada.",
+      "Bridge QA con render_game_to_text y estado completo del tablero.",
+    ],
+    difficulty: "Variable (Facil/Media/Dificil)",
+    multiplayer: "Solo",
+    viability: "Alta: reglas discretas, estado compacto y alta rejugabilidad por semilla.",
+    visualStyle: "Panel tactico oscuro con rejilla 9x9 de alta legibilidad y foco estrategico.",
+    techFocus: "Generacion con unicidad, validacion de restricciones y motor de pistas por tecnicas Sudoku.",
+
+    category_en: "Strategy",
+    tagline_en: "Classic 9x9 Sudoku with logical hints based on traditional techniques.",
+    description_en:
+      "Strategic Sudoku mode: complete the 9x9 grid with no repeated digits in rows, columns, or 3x3 boxes. Includes logic-driven hints (complete group, box scan, line scan, counting) to support solving without brute force.",
+    objective_en: "Complete the 9x9 board without conflicts using logical deduction and classic Sudoku techniques.",
+    howToPlay_en: "Select a cell with mouse or arrows, type 1-9 (or QWE/ASD/UIO), Backspace clears, P applies hint, and R loads a random match.",
+    highlights_en: [
+      "Deterministic board generator with unique solution per match.",
+      "Three difficulty tiers based on initial clues.",
+      "Real-time conflict detection for rows, columns and 3x3 boxes.",
+      "Hint system labeled by the logical technique used.",
+      "QA bridge with render_game_to_text and full board state.",
+    ],
+    difficulty_en: "Variable (Easy/Medium/Hard)",
+    multiplayer_en: "Solo",
+    viability_en: "High: discrete rules, compact state and strong seed-based replayability.",
+    visualStyle_en: "Dark tactical panel with high-readability 9x9 board and strategy focus.",
+    techFocus_en: "Uniqueness-aware generation, constraint validation and technique-based hint engine.",
+  },
+
   {
     id: "strategy-parchis-ludoteka",
     image: strategyParchisLudotekaImage,
