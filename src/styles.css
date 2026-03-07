@@ -2879,16 +2879,29 @@ body {
 }
 
 .maps-board {
+  --maps-shape-base-fill: rgba(15, 23, 42, 0.34);
+  --maps-shape-base-stroke: rgba(148, 163, 184, 0.42);
+  --maps-shape-hidden-fill: rgba(15, 23, 42, 0.62);
+  --maps-shape-hidden-stroke: rgba(125, 211, 252, 0.2);
+  --maps-shape-revealed-fill: rgba(34, 197, 94, 0.38);
+  --maps-shape-revealed-stroke: rgba(134, 239, 172, 0.56);
+  --maps-shape-country-fill: rgba(16, 185, 129, 0.34);
+  --maps-shape-country-stroke: rgba(167, 243, 208, 0.52);
+  --maps-shape-province-fill: rgba(245, 158, 11, 0.3);
+  --maps-shape-province-stroke: rgba(253, 224, 71, 0.6);
   position: relative;
   border: 1px solid rgba(125, 211, 252, 0.4);
-  border-radius: 14px;
+  border-radius: 8px;
   min-height: 340px;
   aspect-ratio: 16 / 10;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 24% 22%, rgba(125, 211, 252, 0.14), transparent 42%),
-    radial-gradient(circle at 78% 26%, rgba(165, 243, 252, 0.14), transparent 44%),
-    linear-gradient(160deg, rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.88));
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.maps-board-flat {
+  aspect-ratio: 1 / 1;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.96);
 }
 
 .maps-board::before {
@@ -2903,34 +2916,72 @@ body {
 }
 
 .maps-theme-world {
-  background:
-    radial-gradient(ellipse at 18% 34%, rgba(20, 184, 166, 0.24), transparent 36%),
-    radial-gradient(ellipse at 44% 40%, rgba(20, 184, 166, 0.22), transparent 36%),
-    radial-gradient(ellipse at 66% 34%, rgba(20, 184, 166, 0.22), transparent 36%),
-    radial-gradient(ellipse at 84% 62%, rgba(20, 184, 166, 0.2), transparent 28%),
-    linear-gradient(160deg, rgba(2, 132, 199, 0.24), rgba(14, 116, 144, 0.2));
+  background: rgba(6, 78, 59, 0.9);
 }
 
 .maps-theme-europe {
-  background:
-    radial-gradient(ellipse at 52% 34%, rgba(34, 197, 94, 0.3), transparent 36%),
-    radial-gradient(ellipse at 24% 58%, rgba(34, 197, 94, 0.18), transparent 22%),
-    linear-gradient(160deg, rgba(2, 132, 199, 0.24), rgba(15, 23, 42, 0.4));
+  background: rgba(20, 83, 45, 0.9);
 }
 
 .maps-theme-south-america {
-  background:
-    radial-gradient(ellipse at 48% 52%, rgba(16, 185, 129, 0.3), transparent 32%),
-    radial-gradient(ellipse at 62% 18%, rgba(52, 211, 153, 0.2), transparent 24%),
-    linear-gradient(160deg, rgba(2, 132, 199, 0.24), rgba(15, 23, 42, 0.44));
+  background: rgba(6, 95, 70, 0.9);
+}
+
+.maps-theme-countries-america {
+  background: rgba(6, 95, 70, 0.9);
+}
+
+.maps-theme-countries-asia {
+  background: rgba(30, 64, 175, 0.9);
+}
+
+.maps-theme-countries-oceania {
+  background: rgba(8, 145, 178, 0.9);
 }
 
 .maps-theme-spain {
-  background:
-    radial-gradient(ellipse at 48% 44%, rgba(234, 179, 8, 0.2), transparent 30%),
-    radial-gradient(ellipse at 18% 78%, rgba(245, 158, 11, 0.16), transparent 20%),
-    radial-gradient(ellipse at 84% 46%, rgba(59, 130, 246, 0.18), transparent 18%),
-    linear-gradient(160deg, rgba(2, 132, 199, 0.2), rgba(15, 23, 42, 0.46));
+  background: rgba(113, 63, 18, 0.9);
+}
+
+.maps-scope-country.maps-region-europe,
+.maps-scope-city.maps-region-europe {
+  background: rgba(30, 58, 138, 0.9);
+  --maps-shape-country-fill: rgba(37, 99, 235, 0.34);
+  --maps-shape-country-stroke: rgba(147, 197, 253, 0.58);
+  --maps-shape-province-fill: rgba(59, 130, 246, 0.3);
+  --maps-shape-province-stroke: rgba(147, 197, 253, 0.62);
+}
+
+.maps-scope-country.maps-region-america,
+.maps-scope-city.maps-region-america {
+  background: rgba(20, 83, 45, 0.9);
+  --maps-shape-country-fill: rgba(22, 163, 74, 0.34);
+  --maps-shape-country-stroke: rgba(134, 239, 172, 0.54);
+  --maps-shape-province-fill: rgba(16, 185, 129, 0.32);
+  --maps-shape-province-stroke: rgba(110, 231, 183, 0.62);
+}
+
+.maps-scope-country.maps-region-asia,
+.maps-scope-city.maps-region-asia {
+  background: rgba(49, 46, 129, 0.9);
+  --maps-shape-country-fill: rgba(99, 102, 241, 0.34);
+  --maps-shape-country-stroke: rgba(165, 180, 252, 0.54);
+  --maps-shape-province-fill: rgba(129, 140, 248, 0.32);
+  --maps-shape-province-stroke: rgba(199, 210, 254, 0.62);
+}
+
+.maps-scope-country.maps-region-oceania,
+.maps-scope-city.maps-region-oceania {
+  background: rgba(15, 118, 110, 0.9);
+  --maps-shape-country-fill: rgba(6, 182, 212, 0.34);
+  --maps-shape-country-stroke: rgba(103, 232, 249, 0.54);
+  --maps-shape-province-fill: rgba(45, 212, 191, 0.32);
+  --maps-shape-province-stroke: rgba(153, 246, 228, 0.62);
+}
+
+.maps-scope-country.maps-region-global,
+.maps-scope-city.maps-region-global {
+  background: rgba(30, 41, 59, 0.9);
 }
 
 .maps-board-caption {
@@ -2964,20 +3015,20 @@ body {
 }
 
 .maps-shape.base {
-  fill: rgba(15, 23, 42, 0.34);
-  stroke: rgba(148, 163, 184, 0.42);
+  fill: var(--maps-shape-base-fill);
+  stroke: var(--maps-shape-base-stroke);
   opacity: 0.95;
 }
 
 .maps-shape.hidden {
-  fill: rgba(15, 23, 42, 0.62);
-  stroke: rgba(125, 211, 252, 0.2);
+  fill: var(--maps-shape-hidden-fill);
+  stroke: var(--maps-shape-hidden-stroke);
   opacity: 0.9;
 }
 
 .maps-shape.revealed {
-  fill: rgba(34, 197, 94, 0.38);
-  stroke: rgba(134, 239, 172, 0.56);
+  fill: var(--maps-shape-revealed-fill);
+  stroke: var(--maps-shape-revealed-stroke);
   opacity: 1;
 }
 
@@ -2987,13 +3038,13 @@ body {
 }
 
 .maps-shape.revealed.kind-country {
-  fill: rgba(16, 185, 129, 0.34);
-  stroke: rgba(167, 243, 208, 0.52);
+  fill: var(--maps-shape-country-fill);
+  stroke: var(--maps-shape-country-stroke);
 }
 
 .maps-shape.revealed.kind-province {
-  fill: rgba(245, 158, 11, 0.3);
-  stroke: rgba(253, 224, 71, 0.6);
+  fill: var(--maps-shape-province-fill);
+  stroke: var(--maps-shape-province-stroke);
 }
 
 .maps-node {

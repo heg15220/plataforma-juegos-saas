@@ -398,9 +398,11 @@ export const MAP_COUNTRY_GROUPS = {
     },
     {
       "id": "united-kingdom",
-      "labelEs": "Reino Unido",
-      "labelEn": "United Kingdom",
+      "labelEs": "Inglaterra",
+      "labelEn": "England",
       "aliases": [
+        "United Kingdom",
+        "Reino Unido",
         "United Kingdom of Great Britain and Northern Ireland",
         "Reino Unido de Gran Bretana e Irlanda del Norte",
         "Great Britain"

@@ -15,6 +15,12 @@ const MIN_SUBDIVISIONS = 4;
 const MAX_SUBDIVISIONS = 120;
 const MAX_COUNTRIES = 120;
 const SKIP_COUNTRY_IDS = new Set(["spain"]);
+const COUNTRY_DISPLAY_OVERRIDES = {
+  "united-kingdom": {
+    labelEs: "Inglaterra",
+    labelEn: "England"
+  }
+};
 
 const ensureDir = (directory) => fs.mkdirSync(directory, { recursive: true });
 
@@ -407,16 +413,17 @@ const main = async () => {
     const { labelEn, labelEs } = resolveCountryNames(chosen.countryName);
     const countryId = slugify(labelEn) || countrySlug;
     if (!countryId || SKIP_COUNTRY_IDS.has(countryId)) continue;
+    const displayNames = COUNTRY_DISPLAY_OVERRIDES[countryId] ?? { labelEs, labelEn };
 
     const normalizedGeoPath = path.join(GEO_OUTPUT_DIR, `${countryId}.geojson`);
     writeJson(normalizedGeoPath, chosenGeo);
 
-    const subtitleEs = `Subdivisiones de ${labelEs} ocultas`;
-    const subtitleEn = `Hidden subdivisions of ${labelEn}`;
+    const subtitleEs = `Subdivisiones de ${displayNames.labelEs} ocultas`;
+    const subtitleEn = `Hidden subdivisions of ${displayNames.labelEn}`;
 
     catalog.push({
       id: countryId,
-      name: { es: labelEs, en: labelEn },
+      name: { es: displayNames.labelEs, en: displayNames.labelEn },
       subtitle: { es: subtitleEs, en: subtitleEn },
       source: toForwardSlashes(path.relative(ROOT, normalizedGeoPath)),
       targets

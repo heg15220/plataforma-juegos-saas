@@ -10,6 +10,9 @@ const OUTPUT_PATH = path.join(ROOT, "src/games/knowledge/mapsCitiesData.js");
 const MIN_CITIES = 5;
 const MAX_CITIES = 12;
 const PROJECT_PADDING_PERCENT = 4.8;
+const COUNTRY_CODE_OVERRIDES = {
+  "united-kingdom": ["GBR", "UK"]
+};
 
 const toAscii = (value) =>
   String(value ?? "")
@@ -132,9 +135,35 @@ const citiesSource = readJson(CITIES_SOURCE_PATH);
 const resolveCountryCodes = buildCountryCodeResolver();
 
 const cityMaps = [];
+const cityBaseCountries = [
+  ...MAP_COUNTRY_PROVINCE_CATALOG.map((country) => ({
+    ...country,
+    baseSilhouetteTheme: country.id,
+    baseSilhouetteIds: (country.targets ?? []).map((target) => target.id)
+  })),
+  {
+    id: "spain",
+    name: { es: "Espana", en: "Spain" },
+    source: "tmp-spain-provinces.geojson",
+    targets: [],
+    baseSilhouetteTheme: "spain",
+    baseSilhouetteIds: []
+  }
+];
 
-for (const country of MAP_COUNTRY_PROVINCE_CATALOG) {
-  const countryCodes = new Set(resolveCountryCodes(country.name.en));
+const uniqueBaseCountries = dedupeByToken(
+  cityBaseCountries,
+  (country) => normalizeToken(country.id)
+);
+
+for (const country of uniqueBaseCountries) {
+  const overrideCodes = (COUNTRY_CODE_OVERRIDES[country.id] ?? []).map((code) =>
+    String(code).toUpperCase()
+  );
+  const countryCodes = new Set([
+    ...resolveCountryCodes(country.name.en),
+    ...overrideCodes
+  ]);
   const countryPolygons = collectCountryPolygons(country.source);
   const bounds = computeBounds(countryPolygons);
   if (!bounds) continue;
@@ -216,8 +245,8 @@ for (const country of MAP_COUNTRY_PROVINCE_CATALOG) {
       en: `Hidden major cities of ${country.name.en}`
     },
     baseSilhouette: {
-      theme: country.id,
-      ids: country.targets.map((target) => target.id)
+      theme: country.baseSilhouetteTheme ?? country.id,
+      ids: country.baseSilhouetteIds ?? country.targets.map((target) => target.id)
     },
     targets: uniqueCities
   });

@@ -14,7 +14,8 @@ import {
   DEFAULT_COUNTRY_ID,
   DEFAULT_CITY_ID,
   MAP_SCOPE_OPTIONS,
-  resolveMapDefinition
+  resolveMapDefinition,
+  resolveMapVisualRegion
 } from "./mapsKnowledgeData";
 import { MAP_SILHOUETTES_BY_THEME } from "./mapsSilhouettesData";
 
@@ -174,8 +175,20 @@ function MapsKnowledgeGame() {
     () => resolveMapDefinition(state.scopeMode, state.continentId, state.countryId, state.cityId),
     [state.scopeMode, state.continentId, state.countryId, state.cityId]
   );
+  const visualRegion = useMemo(
+    () => resolveMapVisualRegion(state.scopeMode, state.continentId, state.countryId, state.cityId),
+    [state.scopeMode, state.continentId, state.countryId, state.cityId]
+  );
   const mapTitle = resolveLocalizedText(activeMap.name, locale);
   const mapSubtitle = resolveLocalizedText(activeMap.subtitle, locale);
+  const isFlatSilhouetteScope = state.scopeMode === "country" || state.scopeMode === "city";
+  const boardClassName = [
+    "maps-board",
+    `maps-theme-${activeMap.theme}`,
+    `maps-scope-${state.scopeMode}`,
+    `maps-region-${visualRegion}`,
+    isFlatSilhouetteScope ? "maps-board-flat" : ""
+  ].filter(Boolean).join(" ");
   const activeSilhouettes = useMemo(
     () => MAP_SILHOUETTES_BY_THEME[activeMap.theme] ?? {},
     [activeMap.theme]
@@ -594,7 +607,7 @@ function MapsKnowledgeGame() {
 
         <div className="maps-layout">
           <div
-            className={`maps-board maps-theme-${activeMap.theme}`.trim()}
+            className={boardClassName}
             role="img"
             aria-label={`${mapTitle}. ${mapSubtitle}`}
           >

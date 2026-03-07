@@ -2,6 +2,11 @@ import { MAP_COUNTRY_GROUPS } from "./mapsCountryGroupsData.js";
 import { MAP_COUNTRY_PROVINCE_CATALOG } from "./mapsCountryProvincesData.js";
 import { MAP_CITY_COUNTRY_MAPS } from "./mapsCitiesData.js";
 
+const normalizeMapId = (value) =>
+  String(value ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
 const createTarget = ({
   id,
   labelEs,
@@ -157,9 +162,9 @@ const WORLD_TARGETS = [
 const EUROPE_TARGETS = [
   country("iceland", "Islandia", 13, 11, { labelEn: "Iceland" }),
   country("ireland", "Irlanda", 18, 28, { labelEn: "Ireland" }),
-  country("united-kingdom", "Reino Unido", 25, 24, {
-    labelEn: "United Kingdom",
-    aliases: ["UK", "Gran Bretana"]
+  country("united-kingdom", "Inglaterra", 25, 24, {
+    labelEn: "England",
+    aliases: ["UK", "United Kingdom", "Reino Unido", "Gran Bretana"]
   }),
   country("portugal", "Portugal", 23, 56, { labelEn: "Portugal" }),
   country("spain", "Espana", 29, 58, {
@@ -426,6 +431,51 @@ export const MAP_SCOPE_OPTIONS = [
   { id: "country", label: { es: "Pais", en: "Country" } },
   { id: "city", label: { es: "Ciudades", en: "Cities" } }
 ];
+
+const CONTINENT_VISUAL_REGION_BY_ID = {
+  europe: "europe",
+  "south-america": "south-america",
+  america: "america",
+  asia: "asia",
+  oceania: "oceania"
+};
+
+const COUNTRY_VISUAL_REGION_BY_ID = (() => {
+  const byId = new Map();
+  for (const [groupId, entries] of Object.entries(MAP_COUNTRY_GROUPS ?? {})) {
+    const visualRegion = groupId === "america" ? "america" : groupId;
+    for (const entry of entries ?? []) {
+      byId.set(normalizeMapId(entry.id), visualRegion);
+    }
+  }
+  const aliases = {
+    "bosnia-herzegovina": "europe",
+    "bosnia-and-herzegovina": "europe",
+    "united-states": "america",
+    usa: "america"
+  };
+  for (const [aliasId, visualRegion] of Object.entries(aliases)) {
+    byId.set(normalizeMapId(aliasId), visualRegion);
+  }
+  return byId;
+})();
+
+const resolveCountryVisualRegion = (countryId) =>
+  COUNTRY_VISUAL_REGION_BY_ID.get(normalizeMapId(countryId)) ?? "global";
+
+export const resolveMapVisualRegion = (scopeMode, continentId, countryId, cityId) => {
+  if (scopeMode === "world") return "world";
+  if (scopeMode === "continent") {
+    return CONTINENT_VISUAL_REGION_BY_ID[continentId] ?? "global";
+  }
+  if (scopeMode === "country") {
+    return resolveCountryVisualRegion(countryId);
+  }
+  if (scopeMode === "city") {
+    return resolveCountryVisualRegion(cityId);
+  }
+  return "global";
+};
 
 export const resolveMapDefinition = (scopeMode, continentId, countryId, cityId) => {
   if (scopeMode === "continent") {

@@ -1554,6 +1554,125 @@ export const MAP_CITY_COUNTRY_MAPS = [
     ]
   },
   {
+    "id": "spain",
+    "name": {
+      "es": "Espana",
+      "en": "Spain"
+    },
+    "subtitle": {
+      "es": "Ciudades principales de Espana ocultas",
+      "en": "Hidden major cities of Spain"
+    },
+    "baseSilhouette": {
+      "theme": "spain",
+      "ids": []
+    },
+    "targets": [
+      {
+        "id": "madrid",
+        "labelEs": "Madrid",
+        "labelEn": "Madrid",
+        "x": 63.11,
+        "y": 23.53,
+        "aliases": []
+      },
+      {
+        "id": "barcelona",
+        "labelEs": "Barcelona",
+        "labelEn": "Barcelona",
+        "x": 86.912,
+        "y": 17.976,
+        "aliases": []
+      },
+      {
+        "id": "seville",
+        "labelEs": "Sevilla",
+        "labelEn": "Seville",
+        "x": 53.8,
+        "y": 40.459,
+        "aliases": [
+          "Sevilla"
+        ]
+      },
+      {
+        "id": "bilbao",
+        "labelEs": "Bilbao",
+        "labelEn": "Bilbao",
+        "x": 66.175,
+        "y": 7.443,
+        "aliases": []
+      },
+      {
+        "id": "valencia",
+        "labelEs": "Valencia",
+        "labelEn": "Valencia",
+        "x": 76.431,
+        "y": 28.699,
+        "aliases": []
+      },
+      {
+        "id": "zaragoza",
+        "labelEs": "Zaragoza",
+        "labelEn": "Zaragoza",
+        "x": 74.451,
+        "y": 16.481,
+        "aliases": []
+      },
+      {
+        "id": "malaga",
+        "labelEs": "Malaga",
+        "labelEn": "Malaga",
+        "x": 60.13,
+        "y": 44.326,
+        "aliases": []
+      },
+      {
+        "id": "murcia",
+        "labelEs": "Murcia",
+        "labelEn": "Murcia",
+        "x": 73.478,
+        "y": 37.211,
+        "aliases": []
+      },
+      {
+        "id": "granada",
+        "labelEs": "Granada",
+        "labelEn": "Granada",
+        "x": 63.517,
+        "y": 41.815,
+        "aliases": []
+      },
+      {
+        "id": "vigo",
+        "labelEs": "Vigo",
+        "labelEn": "Vigo",
+        "x": 42.643,
+        "y": 13.261,
+        "aliases": []
+      },
+      {
+        "id": "las-palmas-de-gran-canaria",
+        "labelEs": "Las Palmas de Gran Canaria",
+        "labelEn": "Las Palmas de Gran Canaria",
+        "x": 15.46,
+        "y": 93.02,
+        "aliases": [
+          "Las Palmas"
+        ]
+      },
+      {
+        "id": "palma-de-mallorca",
+        "labelEs": "Palma de Mallorca",
+        "labelEn": "Palma de Mallorca",
+        "x": 88.831,
+        "y": 28.206,
+        "aliases": [
+          "Palma"
+        ]
+      }
+    ]
+  },
+  {
     "id": "united-states",
     "name": {
       "es": "Estados Unidos",
@@ -2378,6 +2497,133 @@ export const MAP_CITY_COUNTRY_MAPS = [
         "labelEn": "Kanpur",
         "x": 44.289,
         "y": 33.245,
+        "aliases": []
+      }
+    ]
+  },
+  {
+    "id": "united-kingdom",
+    "name": {
+      "es": "Inglaterra",
+      "en": "England"
+    },
+    "subtitle": {
+      "es": "Ciudades principales de Inglaterra ocultas",
+      "en": "Hidden major cities of England"
+    },
+    "baseSilhouette": {
+      "theme": "united-kingdom",
+      "ids": [
+        "east-midlands",
+        "east-of-england",
+        "london",
+        "north-east",
+        "north-west",
+        "south-east",
+        "south-west",
+        "west-midlands",
+        "yorkshire-and-the-humber"
+      ]
+    },
+    "targets": [
+      {
+        "id": "london",
+        "labelEs": "Londres",
+        "labelEn": "London",
+        "x": 74.588,
+        "y": 70.502,
+        "aliases": [
+          "Londres"
+        ]
+      },
+      {
+        "id": "birmingham",
+        "labelEs": "Birmingham",
+        "labelEn": "Birmingham",
+        "x": 54.493,
+        "y": 55.543,
+        "aliases": []
+      },
+      {
+        "id": "manchester",
+        "labelEs": "Manchester",
+        "labelEn": "Manchester",
+        "x": 50.838,
+        "y": 39.81,
+        "aliases": []
+      },
+      {
+        "id": "leeds",
+        "labelEs": "Leeds",
+        "labelEn": "Leeds",
+        "x": 58.282,
+        "y": 34.754,
+        "aliases": []
+      },
+      {
+        "id": "sheffield",
+        "labelEs": "Sheffield",
+        "labelEn": "Sheffield",
+        "x": 59.195,
+        "y": 41.892,
+        "aliases": []
+      },
+      {
+        "id": "glasgow",
+        "labelEs": "Glasgow",
+        "labelEn": "Glasgow",
+        "x": 28.52,
+        "y": 3.387,
+        "aliases": []
+      },
+      {
+        "id": "newcastle-upon-tyne",
+        "labelEs": "Newcastle upon Tyne",
+        "labelEn": "Newcastle upon Tyne",
+        "x": 58.059,
+        "y": 16.797,
+        "aliases": [
+          "Newcastle"
+        ]
+      },
+      {
+        "id": "cardiff",
+        "labelEs": "Cardiff",
+        "labelEn": "Cardiff",
+        "x": 39.972,
+        "y": 70.532,
+        "aliases": []
+      },
+      {
+        "id": "nottingham",
+        "labelEs": "Nottingham",
+        "labelEn": "Nottingham",
+        "x": 62.872,
+        "y": 47.973,
+        "aliases": []
+      },
+      {
+        "id": "liverpool",
+        "labelEs": "Liverpool",
+        "labelEn": "Liverpool",
+        "x": 43.372,
+        "y": 41.106,
+        "aliases": []
+      },
+      {
+        "id": "southend-on-sea",
+        "labelEs": "Southend-on-Sea",
+        "labelEn": "Southend-on-Sea",
+        "x": 83.934,
+        "y": 69.765,
+        "aliases": []
+      },
+      {
+        "id": "bristol",
+        "labelEs": "Bristol",
+        "labelEn": "Bristol",
+        "x": 47.123,
+        "y": 71.299,
         "aliases": []
       }
     ]
@@ -4316,133 +4562,6 @@ export const MAP_CITY_COUNTRY_MAPS = [
         "labelEn": "Braganca",
         "x": 80.258,
         "y": 10.463,
-        "aliases": []
-      }
-    ]
-  },
-  {
-    "id": "united-kingdom",
-    "name": {
-      "es": "Reino Unido",
-      "en": "United Kingdom"
-    },
-    "subtitle": {
-      "es": "Ciudades principales de Reino Unido ocultas",
-      "en": "Hidden major cities of United Kingdom"
-    },
-    "baseSilhouette": {
-      "theme": "united-kingdom",
-      "ids": [
-        "east-midlands",
-        "east-of-england",
-        "london",
-        "north-east",
-        "north-west",
-        "south-east",
-        "south-west",
-        "west-midlands",
-        "yorkshire-and-the-humber"
-      ]
-    },
-    "targets": [
-      {
-        "id": "london",
-        "labelEs": "Londres",
-        "labelEn": "London",
-        "x": 74.588,
-        "y": 70.502,
-        "aliases": [
-          "Londres"
-        ]
-      },
-      {
-        "id": "birmingham",
-        "labelEs": "Birmingham",
-        "labelEn": "Birmingham",
-        "x": 54.493,
-        "y": 55.543,
-        "aliases": []
-      },
-      {
-        "id": "manchester",
-        "labelEs": "Manchester",
-        "labelEn": "Manchester",
-        "x": 50.838,
-        "y": 39.81,
-        "aliases": []
-      },
-      {
-        "id": "leeds",
-        "labelEs": "Leeds",
-        "labelEn": "Leeds",
-        "x": 58.282,
-        "y": 34.754,
-        "aliases": []
-      },
-      {
-        "id": "sheffield",
-        "labelEs": "Sheffield",
-        "labelEn": "Sheffield",
-        "x": 59.195,
-        "y": 41.892,
-        "aliases": []
-      },
-      {
-        "id": "glasgow",
-        "labelEs": "Glasgow",
-        "labelEn": "Glasgow",
-        "x": 28.52,
-        "y": 3.387,
-        "aliases": []
-      },
-      {
-        "id": "newcastle-upon-tyne",
-        "labelEs": "Newcastle upon Tyne",
-        "labelEn": "Newcastle upon Tyne",
-        "x": 58.059,
-        "y": 16.797,
-        "aliases": [
-          "Newcastle"
-        ]
-      },
-      {
-        "id": "cardiff",
-        "labelEs": "Cardiff",
-        "labelEn": "Cardiff",
-        "x": 39.972,
-        "y": 70.532,
-        "aliases": []
-      },
-      {
-        "id": "nottingham",
-        "labelEs": "Nottingham",
-        "labelEn": "Nottingham",
-        "x": 62.872,
-        "y": 47.973,
-        "aliases": []
-      },
-      {
-        "id": "liverpool",
-        "labelEs": "Liverpool",
-        "labelEn": "Liverpool",
-        "x": 43.372,
-        "y": 41.106,
-        "aliases": []
-      },
-      {
-        "id": "southend-on-sea",
-        "labelEs": "Southend-on-Sea",
-        "labelEn": "Southend-on-Sea",
-        "x": 83.934,
-        "y": 69.765,
-        "aliases": []
-      },
-      {
-        "id": "bristol",
-        "labelEs": "Bristol",
-        "labelEn": "Bristol",
-        "x": 47.123,
-        "y": 71.299,
         "aliases": []
       }
     ]

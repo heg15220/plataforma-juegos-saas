@@ -5162,6 +5162,74 @@ export const MAP_COUNTRY_PROVINCE_CATALOG = [
     ]
   },
   {
+    "id": "united-kingdom",
+    "name": {
+      "es": "Inglaterra",
+      "en": "England"
+    },
+    "subtitle": {
+      "es": "Subdivisiones de Inglaterra ocultas",
+      "en": "Hidden subdivisions of England"
+    },
+    "source": "tmp-click-country-subdivisions/united-kingdom.geojson",
+    "targets": [
+      {
+        "id": "east-midlands",
+        "labelEs": "East Midlands",
+        "labelEn": "East Midlands",
+        "aliases": []
+      },
+      {
+        "id": "east-of-england",
+        "labelEs": "East of England",
+        "labelEn": "East of England",
+        "aliases": []
+      },
+      {
+        "id": "london",
+        "labelEs": "London",
+        "labelEn": "London",
+        "aliases": []
+      },
+      {
+        "id": "north-east",
+        "labelEs": "North East",
+        "labelEn": "North East",
+        "aliases": []
+      },
+      {
+        "id": "north-west",
+        "labelEs": "North West",
+        "labelEn": "North West",
+        "aliases": []
+      },
+      {
+        "id": "south-east",
+        "labelEs": "South East",
+        "labelEn": "South East",
+        "aliases": []
+      },
+      {
+        "id": "south-west",
+        "labelEs": "South West",
+        "labelEn": "South West",
+        "aliases": []
+      },
+      {
+        "id": "west-midlands",
+        "labelEs": "West Midlands",
+        "labelEn": "West Midlands",
+        "aliases": []
+      },
+      {
+        "id": "yorkshire-and-the-humber",
+        "labelEs": "Yorkshire and The Humber",
+        "labelEn": "Yorkshire and The Humber",
+        "aliases": []
+      }
+    ]
+  },
+  {
     "id": "iran",
     "name": {
       "es": "Iran",
@@ -9113,74 +9181,6 @@ export const MAP_COUNTRY_PROVINCE_CATALOG = [
         "id": "viseu",
         "labelEs": "Viseu",
         "labelEn": "Viseu",
-        "aliases": []
-      }
-    ]
-  },
-  {
-    "id": "united-kingdom",
-    "name": {
-      "es": "Reino Unido",
-      "en": "United Kingdom"
-    },
-    "subtitle": {
-      "es": "Subdivisiones de Reino Unido ocultas",
-      "en": "Hidden subdivisions of United Kingdom"
-    },
-    "source": "tmp-click-country-subdivisions/united-kingdom.geojson",
-    "targets": [
-      {
-        "id": "east-midlands",
-        "labelEs": "East Midlands",
-        "labelEn": "East Midlands",
-        "aliases": []
-      },
-      {
-        "id": "east-of-england",
-        "labelEs": "East of England",
-        "labelEn": "East of England",
-        "aliases": []
-      },
-      {
-        "id": "london",
-        "labelEs": "London",
-        "labelEn": "London",
-        "aliases": []
-      },
-      {
-        "id": "north-east",
-        "labelEs": "North East",
-        "labelEn": "North East",
-        "aliases": []
-      },
-      {
-        "id": "north-west",
-        "labelEs": "North West",
-        "labelEn": "North West",
-        "aliases": []
-      },
-      {
-        "id": "south-east",
-        "labelEs": "South East",
-        "labelEn": "South East",
-        "aliases": []
-      },
-      {
-        "id": "south-west",
-        "labelEs": "South West",
-        "labelEn": "South West",
-        "aliases": []
-      },
-      {
-        "id": "west-midlands",
-        "labelEs": "West Midlands",
-        "labelEn": "West Midlands",
-        "aliases": []
-      },
-      {
-        "id": "yorkshire-and-the-humber",
-        "labelEs": "Yorkshire and The Humber",
-        "labelEn": "Yorkshire and The Humber",
         "aliases": []
       }
     ]

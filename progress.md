@@ -1762,3 +1762,33 @@
 
 ### Nota operativa
 - El cliente Playwright del repo solo mapea un subconjunto de teclas, por lo que en esta pasada automatizada se validaron entradas compatibles (`Europa`, `Asia`) y flujo de estado.
+
+## 2026-03-07 - Mapas: ciudades de Espana + silueta mas plana
+- Regenerado catalogo de ciudades con `node scripts/generate-maps-cities.mjs`:
+  - Resultado: `countries=36`, `cities=420`.
+  - `src/games/knowledge/mapsCitiesData.js` ahora incluye `id: "spain"` con 12 ciudades principales.
+- Pipeline de generacion actualizado (`scripts/generate-maps-cities.mjs`):
+  - Se agrega `spain` como base explicita para el modo `Ciudades` usando `tmp-spain-provinces.geojson`.
+  - Se evita duplicado por `id` con `dedupeByToken`.
+- Ajuste visual para vista mas plana de siluetas en juego de mapas:
+  - `MapsKnowledgeGame.jsx`: nueva clase condicional `maps-board-flat` cuando la escala es `country` o `city`.
+  - `styles.css`: tablero y temas de mapas sin degradados radiales (acabado plano), y relacion 1:1 para `maps-board-flat`.
+- Validaciones:
+  - `npm run build` OK (requirio ejecucion elevada por EPERM del sandbox en esbuild).
+  - QA Playwright del modo mapas ejecutada con cliente local `web_game_playwright_client.mjs` sin errores de consola.
+  - Comprobado estado en `scopeMode=country` con mapa de `spain` y siluetas activas de provincias.
+
+## 2026-03-07 - Mapas: estilos extendidos por region (paises/continentes/ciudades)
+- Extendida la aplicacion de estilos para cubrir mas mapas automaticamente:
+  - Nuevo resolver visual por region en `mapsKnowledgeData.js` (`resolveMapVisualRegion`).
+  - Clasificacion por `europe`, `america`, `asia`, `oceania` y fallback `global` para mapas de `Pais` y `Ciudades`.
+  - Clasificacion por region tambien para `Continente` (`europe`, `south-america`, `america`, `asia`, `oceania`).
+- `MapsKnowledgeGame.jsx` ahora anade clases dinamicas al tablero:
+  - `maps-scope-{scope}` y `maps-region-{region}` junto al tema actual.
+- `styles.css` actualizado:
+  - Temas faltantes en continentes: `maps-theme-countries-america`, `maps-theme-countries-asia`, `maps-theme-countries-oceania`.
+  - Paletas por region para `Pais` y `Ciudades` (Europa/America/Asia/Oceania + fallback global).
+  - Variables CSS para coloreado de siluetas (`base/hidden/revealed/country/province`) y aplicacion uniforme.
+- Verificacion:
+  - `npm run build` OK (con permisos elevados por EPERM sandbox en esbuild).
+  - QA Playwright de `knowledge-mapas-atlas` ejecutada sin `errors-*.json`.
