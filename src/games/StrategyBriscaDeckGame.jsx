@@ -87,7 +87,7 @@ const TEXT = {
     round: "Round",
     trick: "Trick",
     stock: "Stock",
-    trump: "Trump",
+    trump: "Triumph",
     deck: "Deck",
     points: "Points",
     lastTrick: "Last trick",
@@ -114,8 +114,8 @@ const RULES = {
   es: `Modos: Brisca Duelo, Brisca Equipos, Tute Equipos (asistir/montar/fallar simplificado).
 IA: ajusta riesgo por marcador, puntos en mesa, triunfo y fase final.
 Equipo: evita romper baza ganadora del companero y usa clave corta (PUNTOS/CORTA/RIESGO/GUARDA/ARRASTRA).`,
-  en: `Modes: Brisca Duel, Brisca Teams, Team Tute (simplified forced follow/overtake/trump).
-AI: adapts risk with score pressure, trick value, trump control, and endgame phase.
+  en: `Modes: Brisca Duel, Brisca Teams, Team Tute (simplified forced follow/overtake/triumph).
+AI: adapts risk with score pressure, trick value, triumph control, and endgame phase.
 Team: avoids breaking teammate-winning tricks and emits short cue words.`,
 };
 
