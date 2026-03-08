@@ -1,0 +1,25 @@
+{
+  "alternativeFound": true,
+  "consoleErrors": [],
+  "finalStatus": "playing",
+  "finalRoute": [
+    {
+      "index": 0,
+      "countryId": "netherlands",
+      "country": "Paises Bajos",
+      "status": "origin"
+    },
+    {
+      "index": 1,
+      "countryId": "belgium",
+      "country": "Belgica",
+      "status": "ideal"
+    },
+    {
+      "index": 2,
+      "countryId": "germany",
+      "country": "Alemania",
+      "status": "alternative"
+    }
+  ]
+}

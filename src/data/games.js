@@ -1086,6 +1086,57 @@ export const games = [
   },
 
   {
+    id: "knowledge-mapas-camino-corto",
+    image: knowledgeMapasImage,
+    sessionTime: "3-10 min",
+
+    title: "Adivina el camino mas corto",
+    category: "Conocimiento",
+    tagline: "Conecta origen y destino por frontera (paises o provincias) usando la ruta minima.",
+    description:
+      "Reto geografico por adyacencia con dos apartados: paises por continente y provincias por pais. Recibes un origen y un destino y debes escribir nodos vecinos para construir la ruta mas corta.",
+    objective_es:
+      "Llega al destino usando el menor numero posible de pasos. Los nodos del camino ideal se muestran en verde y las alternativas no optimas en naranja.",
+    howToPlay_es:
+      "Elige modo (paises o provincias), escribe el siguiente vecino y valida con Enter. Solo cuentan fronteras directas con tu posicion actual. Usa R para reiniciar la misma ruta y N para generar una nueva.",
+    highlights: [
+      "Dos apartados jugables: paises por continente y provincias por pais.",
+      "Silueta inicial visible del origen y destino fijado por partida.",
+      "Motor de caminos minimos sobre grafos de fronteras de paises y provincias.",
+      "Feedback visual por paso: verde (ideal) vs naranja (alternativo).",
+      "Historial de ruta paso a paso con intentos, pasos usados y minimo restante.",
+      "Bridge QA con estado serializado de ruta, progreso y paises revelados.",
+    ],
+    difficulty: "Media-Alta",
+    multiplayer: "Solo",
+    viability: "Alta: reglas discretas de grafo, validacion textual local y estado compacto.",
+    visualStyle: "Mapa de siluetas geograficas con trazado progresivo de ruta por colores.",
+    techFocus: "BFS para camino minimo + validacion de vecinos en paises/provincias + telemetria de ruta.",
+
+    category_en: "Knowledge",
+    tagline_en: "Connect origin and destination through borders (countries or provinces) using shortest path.",
+    description_en:
+      "Adjacency-based geography challenge with two sections: countries by continent and provinces by country. Each match gives origin and destination and you must type neighboring nodes to build the shortest route.",
+    objective_en:
+      "Reach destination with the fewest possible steps. Ideal-path nodes are shown in green and non-optimal alternatives in orange.",
+    howToPlay_en:
+      "Choose mode (countries or provinces), type the next neighboring node and press Enter to validate. Only direct border neighbors of your current position are accepted. Use R to restart and N to generate a new route.",
+    highlights_en: [
+      "Two playable sections: countries by continent and provinces by country.",
+      "Visible origin silhouette with a fixed destination per match.",
+      "Shortest-path engine over country and province border graphs.",
+      "Per-step visual feedback: green (ideal) vs orange (alternative).",
+      "Step-by-step route log with attempts, used steps and best remaining distance.",
+      "QA bridge with serialized route, progress and revealed countries.",
+    ],
+    difficulty_en: "Medium-High",
+    multiplayer_en: "Solo",
+    viability_en: "High: discrete graph rules, local text validation and compact state.",
+    visualStyle_en: "Geographic silhouette board with progressive color-coded route tracing.",
+    techFocus_en: "BFS shortest path + neighbor validation for countries/provinces + route telemetry.",
+  },
+
+  {
     id: "strategy-sudoku-tecnicas",
     image: strategySudokuTecnicasImage,
     sessionTime: "5-15 min",

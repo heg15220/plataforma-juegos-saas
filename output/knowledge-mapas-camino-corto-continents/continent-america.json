@@ -1,0 +1,375 @@
+{
+  "mode": "knowledge-arcade",
+  "variant": "mapas-camino-corto",
+  "coordinates": "map_percent_origin_top_left",
+  "locale": "es",
+  "match": {
+    "current": 2356,
+    "total": 10000
+  },
+  "continent": {
+    "id": "america",
+    "name": "America",
+    "theme": "countries-america"
+  },
+  "challenge": {
+    "startId": "saint-vincent-and-the-grenadines",
+    "startName": "San Vicente y Granadinas",
+    "destinationId": "costa-rica",
+    "destinationName": "Costa Rica",
+    "optimalSteps": 7,
+    "idealPath": [
+      "saint-vincent-and-the-grenadines",
+      "grenada",
+      "trinidad-and-tobago",
+      "guyana",
+      "brazil",
+      "colombia",
+      "panama",
+      "costa-rica"
+    ]
+  },
+  "progress": {
+    "status": "playing",
+    "attempts": 1,
+    "takenSteps": 1,
+    "idealSteps": 1,
+    "alternativeSteps": 0,
+    "remainingBest": 6
+  },
+  "input": {
+    "draft": "",
+    "message": "Paso ideal: Grenada. Te quedan 6 pasos minimos."
+  },
+  "route": [
+    {
+      "index": 0,
+      "countryId": "saint-vincent-and-the-grenadines",
+      "country": "San Vicente y Granadinas",
+      "status": "origin"
+    },
+    {
+      "index": 1,
+      "countryId": "grenada",
+      "country": "Grenada",
+      "status": "ideal"
+    }
+  ],
+  "visibleCountries": [
+    {
+      "id": "antigua-and-barbuda",
+      "country": "Antigua y Barbuda",
+      "x": 74.313,
+      "y": 47.745,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "argentina",
+      "country": "Argentina",
+      "x": 73.255,
+      "y": 83.773,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "bahamas",
+      "country": "Bahamas",
+      "x": 65.337,
+      "y": 43.309,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "barbados",
+      "country": "Barbados",
+      "x": 75.724,
+      "y": 50.24,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "belize",
+      "country": "Belice",
+      "x": 57.382,
+      "y": 47.679,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "bolivia",
+      "country": "Bolivia",
+      "x": 73.222,
+      "y": 69.316,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "brazil",
+      "country": "Brasil",
+      "x": 79.024,
+      "y": 67.933,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "canada",
+      "country": "Canada",
+      "x": 52.236,
+      "y": 18.392,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "chile",
+      "country": "Chile",
+      "x": 68.278,
+      "y": 82.506,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "colombia",
+      "country": "Colombia",
+      "x": 67.317,
+      "y": 56.029,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "costa-rica",
+      "country": "Costa Rica",
+      "x": 60.134,
+      "y": 52.573,
+      "visible": false,
+      "status": "hidden",
+      "destination": true
+    },
+    {
+      "id": "cuba",
+      "country": "Cuba",
+      "x": 63.164,
+      "y": 44.873,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "dominica",
+      "country": "Dominica",
+      "x": 74.576,
+      "y": 48.821,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "ecuador",
+      "country": "Ecuador",
+      "x": 60.723,
+      "y": 59.971,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "el-salvador",
+      "country": "El Salvador",
+      "x": 57.224,
+      "y": 49.876,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "united-states",
+      "country": "Estados Unidos",
+      "x": 37.825,
+      "y": 29.663,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "grenada",
+      "country": "Grenada",
+      "x": 74.393,
+      "y": 50.956,
+      "visible": true,
+      "status": "ideal",
+      "destination": false
+    },
+    {
+      "id": "guatemala",
+      "country": "Guatemala",
+      "x": 56.373,
+      "y": 48.572,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "guyana",
+      "country": "Guyana",
+      "x": 76.142,
+      "y": 55.695,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "haiti",
+      "country": "Haiti",
+      "x": 67.209,
+      "y": 46.474,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "honduras",
+      "country": "Honduras",
+      "x": 58.897,
+      "y": 49.425,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "jamaica",
+      "country": "Jamaica",
+      "x": 64.553,
+      "y": 47.032,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "mexico",
+      "country": "Mexico",
+      "x": 49.02,
+      "y": 43.406,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "nicaragua",
+      "country": "Nicaragua",
+      "x": 59.419,
+      "y": 50.469,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "panama",
+      "country": "Panama",
+      "x": 62.745,
+      "y": 53.362,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "paraguay",
+      "country": "Paraguay",
+      "x": 76.412,
+      "y": 74,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "peru",
+      "country": "Peru",
+      "x": 65.954,
+      "y": 64.737,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "dominican-republic",
+      "country": "Republica Dominicana",
+      "x": 69.002,
+      "y": 46.636,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "saint-kitts-and-nevis",
+      "country": "San Cristobal y Nieves",
+      "x": 73.706,
+      "y": 47.591,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "saint-vincent-and-the-grenadines",
+      "country": "San Vicente y Granadinas",
+      "x": 74.677,
+      "y": 50.221,
+      "visible": true,
+      "status": "origin",
+      "destination": false
+    },
+    {
+      "id": "saint-lucia",
+      "country": "Santa Lucia",
+      "x": 74.828,
+      "y": 49.807,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "suriname",
+      "country": "Surinam",
+      "x": 77.944,
+      "y": 56.271,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "trinidad-and-tobago",
+      "country": "Trinidad y Tobago",
+      "x": 74.546,
+      "y": 52.042,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "uruguay",
+      "country": "Uruguay",
+      "x": 78.094,
+      "y": 79.881,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "venezuela",
+      "country": "Venezuela",
+      "x": 71.265,
+      "y": 54.686,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    }
+  ]
+}

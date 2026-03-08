@@ -16,6 +16,7 @@ const MAP_REGION_BOUNDS = {
   europe: { minLon: -32, maxLon: 46, minLat: 26, maxLat: 73 },
   "south-america": { minLon: -93, maxLon: -28, minLat: -58, maxLat: 18 },
   spain: { minLon: -19.5, maxLon: 5.5, minLat: 27, maxLat: 45.5 },
+  "countries-africa": { minLon: -25, maxLon: 60, minLat: -38, maxLat: 40 },
   "countries-america": { minLon: -171, maxLon: -28, minLat: -58, maxLat: 84 },
   "countries-asia": { minLon: 24, maxLon: 181, minLat: -12, maxLat: 82 },
   "countries-oceania": { minLon: 109, maxLon: 181, minLat: -50, maxLat: 32 }
@@ -26,6 +27,7 @@ const MAP_SIMPLIFICATION = {
   europe: { minDistance: 0.18, maxPoints: 90, minArea: 0.02, paddingPercent: 5 },
   "south-america": { minDistance: 0.16, maxPoints: 90, minArea: 0.02, paddingPercent: 5 },
   spain: { minDistance: 0.1, maxPoints: 70, minArea: 0.01, paddingPercent: 4.2 },
+  "countries-africa": { minDistance: 0.14, maxPoints: 92, minArea: 0.015, paddingPercent: 5.5 },
   "countries-america": { minDistance: 0.14, maxPoints: 92, minArea: 0.015, paddingPercent: 5.5 },
   "countries-asia": { minDistance: 0.14, maxPoints: 92, minArea: 0.015, paddingPercent: 5.5 },
   "countries-oceania": { minDistance: 0.13, maxPoints: 90, minArea: 0.012, paddingPercent: 5.5 }
@@ -513,7 +515,7 @@ for (const mapDefinition of CONTINENT_MAPS) {
     rawPolygonsByTargetId,
     simplification:
       MAP_SIMPLIFICATION[mapDefinition.theme] ??
-      (usesProvinces ? MAP_SIMPLIFICATION.spain : MAP_SIMPLIFICATION.europe),
+      MAP_SIMPLIFICATION.europe,
     regionBounds: MAP_REGION_BOUNDS[mapDefinition.theme]
   });
   unresolved[mapDefinition.theme] = mapDefinition.targets

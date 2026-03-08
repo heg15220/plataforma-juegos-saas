@@ -8,6 +8,7 @@ const OUTPUT_PATH = path.join(ROOT, "src/games/knowledge/mapsCountryGroupsData.j
 
 const SUPPORTED_REGIONS = new Map([
   ["Europe", "europe"],
+  ["Africa", "africa"],
   ["Americas", "america"],
   ["Asia", "asia"],
   ["Oceania", "oceania"]
@@ -111,6 +112,7 @@ const lookups = buildFeatureLookups(geometry.features);
 
 const groups = {
   europe: [],
+  africa: [],
   america: [],
   asia: [],
   oceania: []

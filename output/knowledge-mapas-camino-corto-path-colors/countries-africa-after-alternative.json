@@ -1,0 +1,547 @@
+{
+  "mode": "knowledge-arcade",
+  "variant": "mapas-camino-corto",
+  "coordinates": "map_percent_origin_top_left",
+  "locale": "es",
+  "match": {
+    "current": 2716,
+    "total": 10000
+  },
+  "scopeMode": "countries",
+  "continent": {
+    "id": "africa",
+    "name": "Africa",
+    "theme": "countries-africa"
+  },
+  "challenge": {
+    "startId": "uganda",
+    "startName": "Uganda",
+    "destinationId": "cape-verde",
+    "destinationName": "Cabo Verde",
+    "optimalSteps": 7,
+    "idealPath": [
+      "uganda",
+      "dr-congo",
+      "central-african-republic",
+      "chad",
+      "niger",
+      "mali",
+      "senegal",
+      "cape-verde"
+    ]
+  },
+  "progress": {
+    "status": "playing",
+    "attempts": 1,
+    "takenSteps": 1,
+    "idealSteps": 0,
+    "alternativeSteps": 1,
+    "remainingBest": 7
+  },
+  "input": {
+    "draft": "",
+    "message": "Ruta alternativa: Kenia. Aun quedan 7 pasos minimos."
+  },
+  "route": [
+    {
+      "index": 0,
+      "countryId": "uganda",
+      "country": "Uganda",
+      "status": "origin"
+    },
+    {
+      "index": 1,
+      "countryId": "kenya",
+      "country": "Kenia",
+      "status": "alternative"
+    }
+  ],
+  "visibleCountries": [
+    {
+      "id": "angola",
+      "country": "Angola",
+      "x": 51.725,
+      "y": 65.549,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "algeria",
+      "country": "Argelia",
+      "x": 33.873,
+      "y": 16.559,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "benin",
+      "country": "Benin",
+      "x": 34.73,
+      "y": 39.99,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "botswana",
+      "country": "Botswana",
+      "x": 58.956,
+      "y": 79.439,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "burkina-faso",
+      "country": "Burkina Faso",
+      "x": 30.55,
+      "y": 36.3,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "burundi",
+      "country": "Burundi",
+      "x": 64.737,
+      "y": 55.813,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "cape-verde",
+      "country": "Cabo Verde",
+      "x": 6.585,
+      "y": 31.934,
+      "visible": false,
+      "status": "hidden",
+      "destination": true
+    },
+    {
+      "id": "cameroon",
+      "country": "Camerun",
+      "x": 45.68,
+      "y": 42.355,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "chad",
+      "country": "Chad",
+      "x": 52.603,
+      "y": 32.297,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "comoros",
+      "country": "Comoras",
+      "x": 79.919,
+      "y": 66.38,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "congo",
+      "country": "Congo",
+      "x": 48.404,
+      "y": 52.434,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "dr-congo",
+      "country": "Congo (Rep. Dem.)",
+      "x": 55.855,
+      "y": 56.567,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "ivory-coast",
+      "country": "Costa de Marfil",
+      "x": 26.239,
+      "y": 42.209,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "djibouti",
+      "country": "Djibouti",
+      "x": 78.508,
+      "y": 36.813,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "egypt",
+      "country": "Egipto",
+      "x": 65.671,
+      "y": 18.112,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "eritrea",
+      "country": "Eritrea",
+      "x": 75.464,
+      "y": 32.605,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "eswatini",
+      "country": "Esuatini",
+      "x": 66.411,
+      "y": 84.701,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "ethiopia",
+      "country": "Etiopia",
+      "x": 76.191,
+      "y": 40.196,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "gabon",
+      "country": "Gabon",
+      "x": 44.814,
+      "y": 52.501,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "gambia",
+      "country": "Gambia",
+      "x": 15.559,
+      "y": 34.808,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "ghana",
+      "country": "Ghana",
+      "x": 31.053,
+      "y": 41.646,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "guinea",
+      "country": "Guinea",
+      "x": 19.919,
+      "y": 39.143,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "equatorial-guinea",
+      "country": "Guinea Ecuatorial",
+      "x": 42.974,
+      "y": 48.617,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "guinea-bissau",
+      "country": "Guinea-Bisau",
+      "x": 15.751,
+      "y": 36.832,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "kenya",
+      "country": "Kenia",
+      "x": 73.344,
+      "y": 51.377,
+      "visible": true,
+      "status": "alternative",
+      "destination": false
+    },
+    {
+      "id": "lesotho",
+      "country": "Lesotho",
+      "x": 62.886,
+      "y": 88.558,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "liberia",
+      "country": "Liberia",
+      "x": 21.977,
+      "y": 43.535,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "libya",
+      "country": "Libia",
+      "x": 50.886,
+      "y": 18.695,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "madagascar",
+      "country": "Madagascar",
+      "x": 83.156,
+      "y": 75.061,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "malawi",
+      "country": "Malawi",
+      "x": 69.499,
+      "y": 68.141,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "mali",
+      "country": "Mali",
+      "x": 27.866,
+      "y": 29.59,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "morocco",
+      "country": "Marruecos",
+      "x": 22.341,
+      "y": 15.807,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "mauritius",
+      "country": "Mauricio",
+      "x": 94.78,
+      "y": 76.85,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "mauritania",
+      "country": "Mauritania",
+      "x": 20.273,
+      "y": 25.327,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "mozambique",
+      "country": "Mozambique",
+      "x": 70.845,
+      "y": 74.91,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "namibia",
+      "country": "Namibia",
+      "x": 52.197,
+      "y": 80.198,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "niger",
+      "country": "Niger",
+      "x": 40.969,
+      "y": 29.645,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "nigeria",
+      "country": "Nigeria",
+      "x": 41.627,
+      "y": 40.264,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "central-african-republic",
+      "country": "Republica Centroafricana",
+      "x": 54.949,
+      "y": 43.223,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "rwanda",
+      "country": "Ruanda",
+      "x": 64.678,
+      "y": 53.989,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "sao-tome-and-principe",
+      "country": "Santo Tome y Principe",
+      "x": 39.415,
+      "y": 51.302,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "senegal",
+      "country": "Senegal",
+      "x": 16.573,
+      "y": 33.475,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "seychelles",
+      "country": "Seychelles",
+      "x": 92.517,
+      "y": 57.483,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "sierra-leone",
+      "country": "Sierra Leone",
+      "x": 19.413,
+      "y": 41.004,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "somalia",
+      "country": "Somalia",
+      "x": 82.36,
+      "y": 45.092,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "south-africa",
+      "country": "Sudafrica",
+      "x": 59.065,
+      "y": 87.119,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "sudan",
+      "country": "Sudan",
+      "x": 64.957,
+      "y": 32.349,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "south-sudan",
+      "country": "Sudan del Sur",
+      "x": 64.918,
+      "y": 41.754,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "tanzania",
+      "country": "Tanzania",
+      "x": 70.139,
+      "y": 59.509,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "togo",
+      "country": "Togo",
+      "x": 33.107,
+      "y": 40.796,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "tunisia",
+      "country": "Tunez",
+      "x": 42.573,
+      "y": 9.351,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "uganda",
+      "country": "Uganda",
+      "x": 67.306,
+      "y": 49.87,
+      "visible": true,
+      "status": "origin",
+      "destination": false
+    },
+    {
+      "id": "zambia",
+      "country": "Zambia",
+      "x": 62.469,
+      "y": 67.983,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "zimbabwe",
+      "country": "Zimbabue",
+      "x": 63.888,
+      "y": 75.299,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    }
+  ]
+}

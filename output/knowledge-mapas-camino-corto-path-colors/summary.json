@@ -1,0 +1,22 @@
+{
+  "countriesAlternative": {
+    "success": true,
+    "candidate": "Kenia",
+    "status": "alternative",
+    "scopeMode": "countries",
+    "mapId": "africa",
+    "attempts": 1,
+    "routeLength": 2
+  },
+  "provincesAlternative": {
+    "success": true,
+    "candidate": "Berlin",
+    "status": "alternative",
+    "scopeMode": "provinces",
+    "mapId": "germany",
+    "attempts": 2,
+    "routeLength": 2
+  },
+  "finalStatus": "playing",
+  "consoleErrors": []
+}

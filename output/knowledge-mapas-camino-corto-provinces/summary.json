@@ -1,0 +1,17 @@
+{
+  "countriesMode": {
+    "scopeMode": "countries",
+    "continentId": "africa",
+    "idealAccepted": true,
+    "reason": "checked"
+  },
+  "provincesMode": {
+    "scopeMode": "provinces",
+    "mapId": "germany",
+    "nodeCount": 16,
+    "idealAccepted": true,
+    "reason": "checked"
+  },
+  "finalStatus": "playing",
+  "consoleErrors": []
+}

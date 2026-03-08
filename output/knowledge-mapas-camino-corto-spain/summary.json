@@ -1,0 +1,41 @@
+{
+  "hasSpainOption": true,
+  "selectedMapId": "spain",
+  "selectedMapName": "Espana",
+  "nodeCount": 52,
+  "consoleErrors": [],
+  "firstOptions": [
+    {
+      "value": "germany",
+      "label": "Alemania"
+    },
+    {
+      "value": "argentina",
+      "label": "Argentina"
+    },
+    {
+      "value": "australia",
+      "label": "Australia"
+    },
+    {
+      "value": "austria",
+      "label": "Austria"
+    },
+    {
+      "value": "belgium",
+      "label": "Belgica"
+    },
+    {
+      "value": "brazil",
+      "label": "Brasil"
+    },
+    {
+      "value": "canada",
+      "label": "Canada"
+    },
+    {
+      "value": "czechia",
+      "label": "Chequia"
+    }
+  ]
+}

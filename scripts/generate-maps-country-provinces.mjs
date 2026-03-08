@@ -14,7 +14,7 @@ const OUTPUT_PATH = path.join(ROOT, "src/games/knowledge/mapsCountryProvincesDat
 const MIN_SUBDIVISIONS = 4;
 const MAX_SUBDIVISIONS = 120;
 const MAX_COUNTRIES = 120;
-const SKIP_COUNTRY_IDS = new Set(["spain"]);
+const SKIP_COUNTRY_IDS = new Set();
 const COUNTRY_DISPLAY_OVERRIDES = {
   "united-kingdom": {
     labelEs: "Inglaterra",

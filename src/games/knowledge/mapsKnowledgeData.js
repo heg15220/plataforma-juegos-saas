@@ -98,6 +98,7 @@ const cityGroupTarget = (entry) =>
   });
 
 const EUROPE_COUNTRIES_TARGETS = (MAP_COUNTRY_GROUPS.europe ?? []).map(countryGroupTarget);
+const AFRICA_COUNTRIES_TARGETS = (MAP_COUNTRY_GROUPS.africa ?? []).map(countryGroupTarget);
 const AMERICA_COUNTRIES_TARGETS = (MAP_COUNTRY_GROUPS.america ?? []).map(countryGroupTarget);
 const ASIA_COUNTRIES_TARGETS = (MAP_COUNTRY_GROUPS.asia ?? []).map(countryGroupTarget);
 const OCEANIA_COUNTRIES_TARGETS = (MAP_COUNTRY_GROUPS.oceania ?? []).map(countryGroupTarget);
@@ -356,6 +357,16 @@ export const CONTINENT_MAPS = [
     targets: SOUTH_AMERICA_TARGETS
   },
   {
+    id: "africa",
+    name: { es: "Africa", en: "Africa" },
+    subtitle: {
+      es: "Todos los paises de Africa ocultos",
+      en: "All African countries hidden"
+    },
+    theme: "countries-africa",
+    targets: AFRICA_COUNTRIES_TARGETS
+  },
+  {
     id: "america",
     name: { es: "America", en: "Americas" },
     subtitle: {
@@ -435,6 +446,7 @@ export const MAP_SCOPE_OPTIONS = [
 const CONTINENT_VISUAL_REGION_BY_ID = {
   europe: "europe",
   "south-america": "south-america",
+  africa: "africa",
   america: "america",
   asia: "asia",
   oceania: "oceania"

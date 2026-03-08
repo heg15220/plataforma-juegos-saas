@@ -1,0 +1,201 @@
+{
+  "mode": "knowledge-arcade",
+  "variant": "mapas-camino-corto",
+  "coordinates": "map_percent_origin_top_left",
+  "locale": "es",
+  "match": {
+    "current": 3061,
+    "total": 10000
+  },
+  "scopeMode": "provinces",
+  "continent": {
+    "id": "germany",
+    "name": "Alemania",
+    "theme": "germany"
+  },
+  "challenge": {
+    "startId": "sachsen",
+    "startName": "Sachsen",
+    "destinationId": "nordrhein-westfalen",
+    "destinationName": "Nordrhein-Westfalen",
+    "optimalSteps": 3,
+    "idealPath": [
+      "sachsen",
+      "bayern",
+      "hessen",
+      "nordrhein-westfalen"
+    ]
+  },
+  "progress": {
+    "status": "playing",
+    "attempts": 1,
+    "takenSteps": 1,
+    "idealSteps": 1,
+    "alternativeSteps": 0,
+    "remainingBest": 2
+  },
+  "input": {
+    "draft": "",
+    "message": "Paso ideal: Bayern. Te quedan 2 pasos minimos."
+  },
+  "route": [
+    {
+      "index": 0,
+      "countryId": "sachsen",
+      "country": "Sachsen",
+      "status": "origin"
+    },
+    {
+      "index": 1,
+      "countryId": "bayern",
+      "country": "Bayern",
+      "status": "ideal"
+    }
+  ],
+  "visibleCountries": [
+    {
+      "id": "baden-wurttemberg",
+      "country": "Baden-Wurttemberg",
+      "x": 35.615,
+      "y": 79.194,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "bayern",
+      "country": "Bayern",
+      "x": 59.426,
+      "y": 76.422,
+      "visible": true,
+      "status": "ideal",
+      "destination": false
+    },
+    {
+      "id": "berlin",
+      "country": "Berlin",
+      "x": 79.438,
+      "y": 34.405,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "brandenburg",
+      "country": "Brandenburg",
+      "x": 75.346,
+      "y": 35.087,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "bremen",
+      "country": "Bremen",
+      "x": 32.999,
+      "y": 24.965,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "hamburg",
+      "country": "Hamburg",
+      "x": 39.606,
+      "y": 20.831,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "hessen",
+      "country": "Hessen",
+      "x": 35.774,
+      "y": 57.544,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "mecklenburg-vorpommern",
+      "country": "Mecklenburg-Vorpommern",
+      "x": 70.419,
+      "y": 18.032,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "niedersachsen",
+      "country": "Niedersachsen",
+      "x": 36.789,
+      "y": 33.266,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "nordrhein-westfalen",
+      "country": "Nordrhein-Westfalen",
+      "x": 22.521,
+      "y": 46.852,
+      "visible": false,
+      "status": "hidden",
+      "destination": true
+    },
+    {
+      "id": "rheinland-pfalz",
+      "country": "Rheinland-Pfalz",
+      "x": 18.941,
+      "y": 64.196,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "saarland",
+      "country": "Saarland",
+      "x": 14.556,
+      "y": 70.888,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "sachsen",
+      "country": "Sachsen",
+      "x": 79.727,
+      "y": 52.684,
+      "visible": true,
+      "status": "origin",
+      "destination": false
+    },
+    {
+      "id": "sachsen-anhalt",
+      "country": "Sachsen-Anhalt",
+      "x": 63.988,
+      "y": 40.417,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "schleswig-holstein",
+      "country": "Schleswig-Holstein",
+      "x": 43.514,
+      "y": 14.444,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "thuringen",
+      "country": "Thuringen",
+      "x": 58.189,
+      "y": 52.755,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    }
+  ]
+}

@@ -1,0 +1,183 @@
+{
+  "mode": "knowledge-arcade",
+  "variant": "mapas-camino-corto",
+  "coordinates": "map_percent_origin_top_left",
+  "locale": "es",
+  "match": {
+    "current": 810,
+    "total": 10000
+  },
+  "continent": {
+    "id": "oceania",
+    "name": "Oceania",
+    "theme": "countries-oceania"
+  },
+  "challenge": {
+    "startId": "papua-new-guinea",
+    "startName": "Papua Nueva Guinea",
+    "destinationId": "fiji",
+    "destinationName": "Fiyi",
+    "optimalSteps": 4,
+    "idealPath": [
+      "papua-new-guinea",
+      "solomon-islands",
+      "vanuatu",
+      "australia",
+      "fiji"
+    ]
+  },
+  "progress": {
+    "status": "playing",
+    "attempts": 1,
+    "takenSteps": 1,
+    "idealSteps": 1,
+    "alternativeSteps": 0,
+    "remainingBest": 3
+  },
+  "input": {
+    "draft": "",
+    "message": "Paso ideal: Islas Salomon. Te quedan 3 pasos minimos."
+  },
+  "route": [
+    {
+      "index": 0,
+      "countryId": "papua-new-guinea",
+      "country": "Papua Nueva Guinea",
+      "status": "origin"
+    },
+    {
+      "index": 1,
+      "countryId": "solomon-islands",
+      "country": "Islas Salomon",
+      "status": "ideal"
+    }
+  ],
+  "visibleCountries": [
+    {
+      "id": "australia",
+      "country": "Australia",
+      "x": 83.192,
+      "y": 63.772,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "fiji",
+      "country": "Fiyi",
+      "x": 94.698,
+      "y": 49.501,
+      "visible": false,
+      "status": "hidden",
+      "destination": true
+    },
+    {
+      "id": "marshall-islands",
+      "country": "Islas Marshall",
+      "x": 92.424,
+      "y": 17.145,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "solomon-islands",
+      "country": "Islas Salomon",
+      "x": 89.826,
+      "y": 38.358,
+      "visible": true,
+      "status": "ideal",
+      "destination": false
+    },
+    {
+      "id": "kiribati",
+      "country": "Kiribati",
+      "x": 93.714,
+      "y": 27.096,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "micronesia",
+      "country": "Micronesia",
+      "x": 90.73,
+      "y": 17.959,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "nauru",
+      "country": "Nauru",
+      "x": 91.733,
+      "y": 26.145,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "new-zealand",
+      "country": "Nueva Zelanda",
+      "x": 93.148,
+      "y": 82.68,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "palau",
+      "country": "Palau",
+      "x": 83.529,
+      "y": 14.85,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "papua-new-guinea",
+      "country": "Papua Nueva Guinea",
+      "x": 87.036,
+      "y": 34.903,
+      "visible": true,
+      "status": "origin",
+      "destination": false
+    },
+    {
+      "id": "samoa",
+      "country": "Samoa",
+      "x": 5.686,
+      "y": 44.506,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "tonga",
+      "country": "Tonga",
+      "x": 4.993,
+      "y": 55.06,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "tuvalu",
+      "country": "Tuvalu",
+      "x": 94.844,
+      "y": 37.321,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "vanuatu",
+      "country": "Vanuatu",
+      "x": 91.985,
+      "y": 48.922,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    }
+  ]
+}

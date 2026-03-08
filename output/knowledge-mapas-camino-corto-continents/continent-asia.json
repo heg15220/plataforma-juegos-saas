@@ -1,0 +1,489 @@
+{
+  "mode": "knowledge-arcade",
+  "variant": "mapas-camino-corto",
+  "coordinates": "map_percent_origin_top_left",
+  "locale": "es",
+  "match": {
+    "current": 9810,
+    "total": 10000
+  },
+  "continent": {
+    "id": "asia",
+    "name": "Asia",
+    "theme": "countries-asia"
+  },
+  "challenge": {
+    "startId": "timor-leste",
+    "startName": "Timor Oriental",
+    "destinationId": "laos",
+    "destinationName": "Laos",
+    "optimalSteps": 4,
+    "idealPath": [
+      "timor-leste",
+      "indonesia",
+      "malaysia",
+      "thailand",
+      "laos"
+    ]
+  },
+  "progress": {
+    "status": "playing",
+    "attempts": 1,
+    "takenSteps": 1,
+    "idealSteps": 1,
+    "alternativeSteps": 0,
+    "remainingBest": 3
+  },
+  "input": {
+    "draft": "",
+    "message": "Paso ideal: Indonesia. Te quedan 3 pasos minimos."
+  },
+  "route": [
+    {
+      "index": 0,
+      "countryId": "timor-leste",
+      "country": "Timor Oriental",
+      "status": "origin"
+    },
+    {
+      "index": 1,
+      "countryId": "indonesia",
+      "country": "Indonesia",
+      "status": "ideal"
+    }
+  ],
+  "visibleCountries": [
+    {
+      "id": "afghanistan",
+      "country": "Afganistan",
+      "x": 34.435,
+      "y": 34.158,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "saudi-arabia",
+      "country": "Arabia Saudi",
+      "x": 18.618,
+      "y": 47.213,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "armenia",
+      "country": "Armenia",
+      "x": 18.541,
+      "y": 25.77,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "azerbaijan",
+      "country": "Azerbaiyan",
+      "x": 20.328,
+      "y": 25.72,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "bahrain",
+      "country": "Bahrein",
+      "x": 22.421,
+      "y": 44.862,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "bangladesh",
+      "country": "Bangladesh",
+      "x": 50.377,
+      "y": 48.022,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "brunei",
+      "country": "Brunei",
+      "x": 67.474,
+      "y": 74.076,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "bhutan",
+      "country": "Butan",
+      "x": 50.418,
+      "y": 42.836,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "cambodia",
+      "country": "Camboya",
+      "x": 60.629,
+      "y": 63.119,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "qatar",
+      "country": "Catar",
+      "x": 22.87,
+      "y": 45.788,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "china",
+      "country": "China",
+      "x": 59.895,
+      "y": 31.514,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "north-korea",
+      "country": "Corea del Norte",
+      "x": 76.428,
+      "y": 25.355,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "south-korea",
+      "country": "Corea del Sur",
+      "x": 76.681,
+      "y": 31.442,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "united-arab-emirates",
+      "country": "Emiratos Arabes Unidos",
+      "x": 24.833,
+      "y": 47.164,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "philippines",
+      "country": "Filipinas",
+      "x": 72.433,
+      "y": 63.607,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "georgia",
+      "country": "Georgia",
+      "x": 17.383,
+      "y": 22.801,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "india",
+      "country": "India",
+      "x": 45.019,
+      "y": 51.541,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "indonesia",
+      "country": "Indonesia",
+      "x": 69.852,
+      "y": 83.803,
+      "visible": true,
+      "status": "ideal",
+      "destination": false
+    },
+    {
+      "id": "iraq",
+      "country": "Irak",
+      "x": 17.557,
+      "y": 35.139,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "iran",
+      "country": "Iran",
+      "x": 24.591,
+      "y": 36.165,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "israel",
+      "country": "Israel",
+      "x": 11.547,
+      "y": 37.501,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "japan",
+      "country": "Japon",
+      "x": 81.666,
+      "y": 32.876,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "jordan",
+      "country": "Jordania",
+      "x": 12.998,
+      "y": 37.74,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "kazakhstan",
+      "country": "Kazajistan",
+      "x": 34.03,
+      "y": 14.849,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "kyrgyzstan",
+      "country": "Kirguizistan",
+      "x": 39.416,
+      "y": 24.243,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "kuwait",
+      "country": "Kuwait",
+      "x": 20.264,
+      "y": 40.415,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "laos",
+      "country": "Laos",
+      "x": 59.873,
+      "y": 55.556,
+      "visible": false,
+      "status": "hidden",
+      "destination": true
+    },
+    {
+      "id": "lebanon",
+      "country": "Libano",
+      "x": 12.097,
+      "y": 34.255,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "malaysia",
+      "country": "Malasia",
+      "x": 63.787,
+      "y": 74.587,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "maldives",
+      "country": "Maldivas",
+      "x": 38.534,
+      "y": 74.51,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "mongolia",
+      "country": "Mongolia",
+      "x": 59.802,
+      "y": 16.721,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "myanmar",
+      "country": "Myanmar",
+      "x": 54.75,
+      "y": 53.986,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "nepal",
+      "country": "Nepal",
+      "x": 45.973,
+      "y": 41.71,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "oman",
+      "country": "Oman",
+      "x": 26.186,
+      "y": 51.02,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "pakistan",
+      "country": "Pakistan",
+      "x": 35.362,
+      "y": 38.991,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "palestine",
+      "country": "Palestina",
+      "x": 11.683,
+      "y": 36.852,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "singapore",
+      "country": "Singapur",
+      "x": 59.815,
+      "y": 78.392,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "syria",
+      "country": "Siria",
+      "x": 14.358,
+      "y": 32.99,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "sri-lanka",
+      "country": "Sri Lanka",
+      "x": 43.658,
+      "y": 69.523,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "thailand",
+      "country": "Tailandia",
+      "x": 58.231,
+      "y": 62.575,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "taiwan",
+      "country": "Taiwan",
+      "x": 71.906,
+      "y": 48.184,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "tajikistan",
+      "country": "Tayikistan",
+      "x": 36.974,
+      "y": 27.517,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "timor-leste",
+      "country": "Timor Oriental",
+      "x": 75.166,
+      "y": 92.311,
+      "visible": true,
+      "status": "origin",
+      "destination": false
+    },
+    {
+      "id": "turkmenistan",
+      "country": "Turkmenistan",
+      "x": 28.739,
+      "y": 27.288,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "turkiye",
+      "country": "Turquia",
+      "x": 11.626,
+      "y": 27.209,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "uzbekistan",
+      "country": "Uzbekistan",
+      "x": 32.204,
+      "y": 24.069,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "vietnam",
+      "country": "Vietnam",
+      "x": 61.194,
+      "y": 58.545,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    },
+    {
+      "id": "yemen",
+      "country": "Yemen",
+      "x": 21.026,
+      "y": 58.971,
+      "visible": false,
+      "status": "hidden",
+      "destination": false
+    }
+  ]
+}

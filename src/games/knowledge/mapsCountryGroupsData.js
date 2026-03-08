@@ -398,11 +398,9 @@ export const MAP_COUNTRY_GROUPS = {
     },
     {
       "id": "united-kingdom",
-      "labelEs": "Inglaterra",
-      "labelEn": "England",
+      "labelEs": "Reino Unido",
+      "labelEn": "United Kingdom",
       "aliases": [
-        "United Kingdom",
-        "Reino Unido",
         "United Kingdom of Great Britain and Northern Ireland",
         "Reino Unido de Gran Bretana e Irlanda del Norte",
         "Great Britain"
@@ -476,6 +474,562 @@ export const MAP_COUNTRY_GROUPS = {
       "labelEn": "Ukraine",
       "aliases": [
         "Ukrayina"
+      ]
+    }
+  ],
+  "africa": [
+    {
+      "id": "angola",
+      "labelEs": "Angola",
+      "labelEn": "Angola",
+      "aliases": [
+        "Republic of Angola",
+        "Republica de Angola",
+        "publika de an'la"
+      ]
+    },
+    {
+      "id": "algeria",
+      "labelEs": "Argelia",
+      "labelEn": "Algeria",
+      "aliases": [
+        "People's Democratic Republic of Algeria",
+        "Republica Argelina Democratica y Popular",
+        "Dzayer",
+        "Algerie"
+      ]
+    },
+    {
+      "id": "benin",
+      "labelEs": "Benin",
+      "labelEn": "Benin",
+      "aliases": [
+        "Republic of Benin",
+        "Republica de Benin",
+        "Republique du Benin"
+      ]
+    },
+    {
+      "id": "botswana",
+      "labelEs": "Botswana",
+      "labelEn": "Botswana",
+      "aliases": [
+        "Republic of Botswana",
+        "Republica de Botswana",
+        "Lefatshe la Botswana"
+      ]
+    },
+    {
+      "id": "burkina-faso",
+      "labelEs": "Burkina Faso",
+      "labelEn": "Burkina Faso",
+      "aliases": []
+    },
+    {
+      "id": "burundi",
+      "labelEs": "Burundi",
+      "labelEn": "Burundi",
+      "aliases": [
+        "Republic of Burundi",
+        "Republica de Burundi",
+        "Republika y'Uburundi",
+        "Republique du Burundi"
+      ]
+    },
+    {
+      "id": "cape-verde",
+      "labelEs": "Cabo Verde",
+      "labelEn": "Cape Verde",
+      "aliases": [
+        "Republic of Cabo Verde",
+        "Republica de Cabo Verde"
+      ]
+    },
+    {
+      "id": "cameroon",
+      "labelEs": "Camerun",
+      "labelEn": "Cameroon",
+      "aliases": [
+        "Republic of Cameroon",
+        "Republica de Camerun",
+        "Republique du Cameroun"
+      ]
+    },
+    {
+      "id": "chad",
+      "labelEs": "Chad",
+      "labelEn": "Chad",
+      "aliases": [
+        "Republic of Chad",
+        "Republica de Chad",
+        "Tchad",
+        "Republique du Tchad"
+      ]
+    },
+    {
+      "id": "comoros",
+      "labelEs": "Comoras",
+      "labelEn": "Comoros",
+      "aliases": [
+        "Union of the Comoros",
+        "Union de las Comoras",
+        "Union des Comores",
+        "Udzima wa Komori",
+        "al-Ittihad al-Qumuri"
+      ]
+    },
+    {
+      "id": "congo",
+      "labelEs": "Congo",
+      "labelEn": "Congo",
+      "aliases": [
+        "Republic of the Congo",
+        "Republica del Congo",
+        "Congo-Brazzaville"
+      ]
+    },
+    {
+      "id": "dr-congo",
+      "labelEs": "Congo (Rep. Dem.)",
+      "labelEn": "DR Congo",
+      "aliases": [
+        "Democratic Republic of the Congo",
+        "Republica Democratica del Congo",
+        "Congo-Kinshasa",
+        "Congo, the Democratic Republic of the",
+        "Democratic Republic of Congo",
+        "DRC"
+      ]
+    },
+    {
+      "id": "ivory-coast",
+      "labelEs": "Costa de Marfil",
+      "labelEn": "Ivory Coast",
+      "aliases": [
+        "Republic of Cote d'Ivoire",
+        "Republica de Cote d'Ivoire",
+        "Cote d'Ivoire",
+        "Republique de Cote d'Ivoire"
+      ]
+    },
+    {
+      "id": "djibouti",
+      "labelEs": "Djibouti",
+      "labelEn": "Djibouti",
+      "aliases": [
+        "Republic of Djibouti",
+        "Republica de Djibouti",
+        "Jabuuti",
+        "Gabuuti",
+        "Republique de Djibouti",
+        "Gabuutih Ummuuno",
+        "Jamhuuriyadda Jabuuti"
+      ]
+    },
+    {
+      "id": "egypt",
+      "labelEs": "Egipto",
+      "labelEn": "Egypt",
+      "aliases": [
+        "Arab Republic of Egypt",
+        "Republica Arabe de Egipto"
+      ]
+    },
+    {
+      "id": "eritrea",
+      "labelEs": "Eritrea",
+      "labelEn": "Eritrea",
+      "aliases": [
+        "State of Eritrea",
+        "Estado de Eritrea",
+        "Dawlat Iritriya",
+        "Ertra",
+        "Iritriya"
+      ]
+    },
+    {
+      "id": "eswatini",
+      "labelEs": "Esuatini",
+      "labelEn": "Eswatini",
+      "aliases": [
+        "Kingdom of Eswatini",
+        "Reino de eSwatini",
+        "Swaziland",
+        "weSwatini",
+        "Swatini",
+        "Ngwane",
+        "Umbuso weSwatini"
+      ]
+    },
+    {
+      "id": "ethiopia",
+      "labelEs": "Etiopia",
+      "labelEn": "Ethiopia",
+      "aliases": [
+        "Federal Democratic Republic of Ethiopia",
+        "Republica Democratica Federal de Etiopia",
+        "Ityoppya"
+      ]
+    },
+    {
+      "id": "gabon",
+      "labelEs": "Gabon",
+      "labelEn": "Gabon",
+      "aliases": [
+        "Gabonese Republic",
+        "Republica de Gabon",
+        "Republique Gabonaise"
+      ]
+    },
+    {
+      "id": "gambia",
+      "labelEs": "Gambia",
+      "labelEn": "Gambia",
+      "aliases": [
+        "Republic of the Gambia",
+        "Republica de Gambia"
+      ]
+    },
+    {
+      "id": "ghana",
+      "labelEs": "Ghana",
+      "labelEn": "Ghana",
+      "aliases": [
+        "Republic of Ghana",
+        "Republica de Ghana"
+      ]
+    },
+    {
+      "id": "guinea",
+      "labelEs": "Guinea",
+      "labelEn": "Guinea",
+      "aliases": [
+        "Republic of Guinea",
+        "Republica de Guinea",
+        "Republique de Guinee"
+      ]
+    },
+    {
+      "id": "equatorial-guinea",
+      "labelEs": "Guinea Ecuatorial",
+      "labelEn": "Equatorial Guinea",
+      "aliases": [
+        "Republic of Equatorial Guinea",
+        "Republica de Guinea Ecuatorial",
+        "Republique de Guinee equatoriale",
+        "Republica da Guine Equatorial"
+      ]
+    },
+    {
+      "id": "guinea-bissau",
+      "labelEs": "Guinea-Bisau",
+      "labelEn": "Guinea-Bissau",
+      "aliases": [
+        "Republic of Guinea-Bissau",
+        "Republica de Guinea-Bissau",
+        "Republica da Guine-Bissau"
+      ]
+    },
+    {
+      "id": "kenya",
+      "labelEs": "Kenia",
+      "labelEn": "Kenya",
+      "aliases": [
+        "Republic of Kenya",
+        "Republica de Kenya",
+        "Jamhuri ya Kenya"
+      ]
+    },
+    {
+      "id": "lesotho",
+      "labelEs": "Lesotho",
+      "labelEn": "Lesotho",
+      "aliases": [
+        "Kingdom of Lesotho",
+        "Reino de Lesotho",
+        "Muso oa Lesotho"
+      ]
+    },
+    {
+      "id": "liberia",
+      "labelEs": "Liberia",
+      "labelEn": "Liberia",
+      "aliases": [
+        "Republic of Liberia",
+        "Republica de Liberia"
+      ]
+    },
+    {
+      "id": "libya",
+      "labelEs": "Libia",
+      "labelEn": "Libya",
+      "aliases": [
+        "State of Libya",
+        "Estado de Libia",
+        "Dawlat Libya"
+      ]
+    },
+    {
+      "id": "madagascar",
+      "labelEs": "Madagascar",
+      "labelEn": "Madagascar",
+      "aliases": [
+        "Republic of Madagascar",
+        "Republica de Madagascar",
+        "Repoblikan'i Madagasikara",
+        "Republique de Madagascar"
+      ]
+    },
+    {
+      "id": "malawi",
+      "labelEs": "Malawi",
+      "labelEn": "Malawi",
+      "aliases": [
+        "Republic of Malawi",
+        "Republica de Malawi"
+      ]
+    },
+    {
+      "id": "mali",
+      "labelEs": "Mali",
+      "labelEn": "Mali",
+      "aliases": [
+        "Republic of Mali",
+        "Republica de Mali",
+        "Republique du Mali"
+      ]
+    },
+    {
+      "id": "morocco",
+      "labelEs": "Marruecos",
+      "labelEn": "Morocco",
+      "aliases": [
+        "Kingdom of Morocco",
+        "Reino de Marruecos",
+        "Al-Mamlakah al-Magribiyah"
+      ]
+    },
+    {
+      "id": "mauritius",
+      "labelEs": "Mauricio",
+      "labelEn": "Mauritius",
+      "aliases": [
+        "Republic of Mauritius",
+        "Republica de Mauricio",
+        "Republique de Maurice"
+      ]
+    },
+    {
+      "id": "mauritania",
+      "labelEs": "Mauritania",
+      "labelEn": "Mauritania",
+      "aliases": [
+        "Islamic Republic of Mauritania",
+        "Republica Islamica de Mauritania",
+        "al-Jumhuriyyah al-Islamiyyah al-Muritaniyyah"
+      ]
+    },
+    {
+      "id": "mozambique",
+      "labelEs": "Mozambique",
+      "labelEn": "Mozambique",
+      "aliases": [
+        "Republic of Mozambique",
+        "Republica de Mozambique",
+        "Republica de Mocambique"
+      ]
+    },
+    {
+      "id": "namibia",
+      "labelEs": "Namibia",
+      "labelEn": "Namibia",
+      "aliases": [
+        "Republic of Namibia",
+        "Republica de Namibia",
+        "Namibie"
+      ]
+    },
+    {
+      "id": "niger",
+      "labelEs": "Niger",
+      "labelEn": "Niger",
+      "aliases": [
+        "Republic of Niger",
+        "Republica de Niger",
+        "Nijar"
+      ]
+    },
+    {
+      "id": "nigeria",
+      "labelEs": "Nigeria",
+      "labelEn": "Nigeria",
+      "aliases": [
+        "Federal Republic of Nigeria",
+        "Republica Federal de Nigeria",
+        "Nijeriya",
+        "Naijiria"
+      ]
+    },
+    {
+      "id": "central-african-republic",
+      "labelEs": "Republica Centroafricana",
+      "labelEn": "Central African Republic",
+      "aliases": [
+        "Republique centrafricaine"
+      ]
+    },
+    {
+      "id": "rwanda",
+      "labelEs": "Ruanda",
+      "labelEn": "Rwanda",
+      "aliases": [
+        "Republic of Rwanda",
+        "Republica de Rwanda",
+        "Repubulika y'u Rwanda",
+        "Republique du Rwanda"
+      ]
+    },
+    {
+      "id": "sao-tome-and-principe",
+      "labelEs": "Santo Tome y Principe",
+      "labelEn": "Sao Tome and Principe",
+      "aliases": [
+        "Democratic Republic of Sao Tome and Principe",
+        "Republica Democratica de Santo Tome y Principe",
+        "Republica Democratica de Sao Tome e Principe"
+      ]
+    },
+    {
+      "id": "senegal",
+      "labelEs": "Senegal",
+      "labelEn": "Senegal",
+      "aliases": [
+        "Republic of Senegal",
+        "Republica de Senegal",
+        "Republique du Senegal"
+      ]
+    },
+    {
+      "id": "seychelles",
+      "labelEs": "Seychelles",
+      "labelEn": "Seychelles",
+      "aliases": [
+        "Republic of Seychelles",
+        "Republica de las Seychelles",
+        "Repiblik Sesel",
+        "Republique des Seychelles"
+      ]
+    },
+    {
+      "id": "sierra-leone",
+      "labelEs": "Sierra Leone",
+      "labelEn": "Sierra Leone",
+      "aliases": [
+        "Republic of Sierra Leone",
+        "Republica de Sierra Leona"
+      ]
+    },
+    {
+      "id": "somalia",
+      "labelEs": "Somalia",
+      "labelEn": "Somalia",
+      "aliases": [
+        "Federal Republic of Somalia",
+        "Republica Federal de Somalia",
+        "as-Sumal",
+        "Jamhuuriyadda Federaalka Soomaaliya",
+        "Jumhuriyyat as-Sumal al-Fideraliyya"
+      ]
+    },
+    {
+      "id": "south-africa",
+      "labelEs": "Sudafrica",
+      "labelEn": "South Africa",
+      "aliases": [
+        "Republic of South Africa",
+        "Republica de Sudafrica",
+        "RSA",
+        "Suid-Afrika"
+      ]
+    },
+    {
+      "id": "sudan",
+      "labelEs": "Sudan",
+      "labelEn": "Sudan",
+      "aliases": [
+        "Republic of the Sudan",
+        "Republica de Sudan",
+        "Jumhuriyat as-Sudan"
+      ]
+    },
+    {
+      "id": "south-sudan",
+      "labelEs": "Sudan del Sur",
+      "labelEn": "South Sudan",
+      "aliases": [
+        "Republic of South Sudan",
+        "Republica de Sudan del Sur"
+      ]
+    },
+    {
+      "id": "tanzania",
+      "labelEs": "Tanzania",
+      "labelEn": "Tanzania",
+      "aliases": [
+        "United Republic of Tanzania",
+        "Republica Unida de Tanzania",
+        "Tanzania, United Republic of",
+        "Jamhuri ya Muungano wa Tanzania"
+      ]
+    },
+    {
+      "id": "togo",
+      "labelEs": "Togo",
+      "labelEn": "Togo",
+      "aliases": [
+        "Togolese Republic",
+        "Republica de Togo",
+        "Togolese",
+        "Republique Togolaise"
+      ]
+    },
+    {
+      "id": "tunisia",
+      "labelEs": "Tunez",
+      "labelEn": "Tunisia",
+      "aliases": [
+        "Tunisian Republic",
+        "Republica de Tunez",
+        "Republic of Tunisia",
+        "al-Jumhuriyyah at-Tunisiyyah"
+      ]
+    },
+    {
+      "id": "uganda",
+      "labelEs": "Uganda",
+      "labelEn": "Uganda",
+      "aliases": [
+        "Republic of Uganda",
+        "Republica de Uganda",
+        "Jamhuri ya Uganda"
+      ]
+    },
+    {
+      "id": "zambia",
+      "labelEs": "Zambia",
+      "labelEn": "Zambia",
+      "aliases": [
+        "Republic of Zambia",
+        "Republica de Zambia"
+      ]
+    },
+    {
+      "id": "zimbabwe",
+      "labelEs": "Zimbabue",
+      "labelEn": "Zimbabwe",
+      "aliases": [
+        "Republic of Zimbabwe",
+        "Republica de Zimbabue"
       ]
     }
   ],

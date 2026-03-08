@@ -3088,6 +3088,347 @@ export const MAP_COUNTRY_PROVINCE_CATALOG = [
     ]
   },
   {
+    "id": "spain",
+    "name": {
+      "es": "Espana",
+      "en": "Spain"
+    },
+    "subtitle": {
+      "es": "Subdivisiones de Espana ocultas",
+      "en": "Hidden subdivisions of Spain"
+    },
+    "source": "tmp-click-country-subdivisions/spain.geojson",
+    "targets": [
+      {
+        "id": "a-coruna",
+        "labelEs": "A Coruna",
+        "labelEn": "A Coruna",
+        "aliases": []
+      },
+      {
+        "id": "alicante",
+        "labelEs": "Alicante",
+        "labelEn": "Alicante",
+        "aliases": [
+          "Alacant",
+          "Alacant/Alicante"
+        ]
+      },
+      {
+        "id": "albacete",
+        "labelEs": "Albacete",
+        "labelEn": "Albacete",
+        "aliases": []
+      },
+      {
+        "id": "almeria",
+        "labelEs": "Almeria",
+        "labelEn": "Almeria",
+        "aliases": []
+      },
+      {
+        "id": "alava",
+        "labelEs": "Alava",
+        "labelEn": "Alava",
+        "aliases": [
+          "Araba",
+          "Araba/Alava"
+        ]
+      },
+      {
+        "id": "asturias",
+        "labelEs": "Asturias",
+        "labelEn": "Asturias",
+        "aliases": []
+      },
+      {
+        "id": "avila",
+        "labelEs": "Avila",
+        "labelEn": "Avila",
+        "aliases": []
+      },
+      {
+        "id": "badajoz",
+        "labelEs": "Badajoz",
+        "labelEn": "Badajoz",
+        "aliases": []
+      },
+      {
+        "id": "barcelona",
+        "labelEs": "Barcelona",
+        "labelEn": "Barcelona",
+        "aliases": []
+      },
+      {
+        "id": "bizkaia",
+        "labelEs": "Bizkaia",
+        "labelEn": "Bizkaia",
+        "aliases": [
+          "Vizcaya",
+          "Bizkaia/Vizcaya"
+        ]
+      },
+      {
+        "id": "burgos",
+        "labelEs": "Burgos",
+        "labelEn": "Burgos",
+        "aliases": []
+      },
+      {
+        "id": "caceres",
+        "labelEs": "Caceres",
+        "labelEn": "Caceres",
+        "aliases": []
+      },
+      {
+        "id": "cadiz",
+        "labelEs": "Cadiz",
+        "labelEn": "Cadiz",
+        "aliases": []
+      },
+      {
+        "id": "cantabria",
+        "labelEs": "Cantabria",
+        "labelEn": "Cantabria",
+        "aliases": []
+      },
+      {
+        "id": "castellon",
+        "labelEs": "Castellon",
+        "labelEn": "Castellon",
+        "aliases": [
+          "Castello",
+          "Castello/Castellon"
+        ]
+      },
+      {
+        "id": "ceuta",
+        "labelEs": "Ceuta",
+        "labelEn": "Ceuta",
+        "aliases": []
+      },
+      {
+        "id": "ciudad-real",
+        "labelEs": "Ciudad Real",
+        "labelEn": "Ciudad Real",
+        "aliases": []
+      },
+      {
+        "id": "cordoba",
+        "labelEs": "Cordoba",
+        "labelEn": "Cordoba",
+        "aliases": []
+      },
+      {
+        "id": "cuenca",
+        "labelEs": "Cuenca",
+        "labelEn": "Cuenca",
+        "aliases": []
+      },
+      {
+        "id": "gipuzkoa",
+        "labelEs": "Gipuzkoa",
+        "labelEn": "Gipuzkoa",
+        "aliases": [
+          "Guipuzcoa",
+          "Gipuzkoa/Guipuzcoa"
+        ]
+      },
+      {
+        "id": "girona",
+        "labelEs": "Girona",
+        "labelEn": "Girona",
+        "aliases": []
+      },
+      {
+        "id": "granada",
+        "labelEs": "Granada",
+        "labelEn": "Granada",
+        "aliases": []
+      },
+      {
+        "id": "guadalajara",
+        "labelEs": "Guadalajara",
+        "labelEn": "Guadalajara",
+        "aliases": []
+      },
+      {
+        "id": "huelva",
+        "labelEs": "Huelva",
+        "labelEn": "Huelva",
+        "aliases": []
+      },
+      {
+        "id": "huesca",
+        "labelEs": "Huesca",
+        "labelEn": "Huesca",
+        "aliases": []
+      },
+      {
+        "id": "illes-balears",
+        "labelEs": "Illes Balears",
+        "labelEn": "Illes Balears",
+        "aliases": []
+      },
+      {
+        "id": "jaen",
+        "labelEs": "Jaen",
+        "labelEn": "Jaen",
+        "aliases": []
+      },
+      {
+        "id": "la-rioja",
+        "labelEs": "La Rioja",
+        "labelEn": "La Rioja",
+        "aliases": []
+      },
+      {
+        "id": "las-palmas",
+        "labelEs": "Las Palmas",
+        "labelEn": "Las Palmas",
+        "aliases": []
+      },
+      {
+        "id": "leon",
+        "labelEs": "Leon",
+        "labelEn": "Leon",
+        "aliases": []
+      },
+      {
+        "id": "lleida",
+        "labelEs": "Lleida",
+        "labelEn": "Lleida",
+        "aliases": []
+      },
+      {
+        "id": "lugo",
+        "labelEs": "Lugo",
+        "labelEn": "Lugo",
+        "aliases": []
+      },
+      {
+        "id": "madrid",
+        "labelEs": "Madrid",
+        "labelEn": "Madrid",
+        "aliases": []
+      },
+      {
+        "id": "malaga",
+        "labelEs": "Malaga",
+        "labelEn": "Malaga",
+        "aliases": []
+      },
+      {
+        "id": "melilla",
+        "labelEs": "Melilla",
+        "labelEn": "Melilla",
+        "aliases": []
+      },
+      {
+        "id": "murcia",
+        "labelEs": "Murcia",
+        "labelEn": "Murcia",
+        "aliases": []
+      },
+      {
+        "id": "navarra",
+        "labelEs": "Navarra",
+        "labelEn": "Navarra",
+        "aliases": []
+      },
+      {
+        "id": "ourense",
+        "labelEs": "Ourense",
+        "labelEn": "Ourense",
+        "aliases": []
+      },
+      {
+        "id": "palencia",
+        "labelEs": "Palencia",
+        "labelEn": "Palencia",
+        "aliases": []
+      },
+      {
+        "id": "pontevedra",
+        "labelEs": "Pontevedra",
+        "labelEn": "Pontevedra",
+        "aliases": []
+      },
+      {
+        "id": "salamanca",
+        "labelEs": "Salamanca",
+        "labelEn": "Salamanca",
+        "aliases": []
+      },
+      {
+        "id": "santa-cruz-de-tenerife",
+        "labelEs": "Santa Cruz De Tenerife",
+        "labelEn": "Santa Cruz De Tenerife",
+        "aliases": []
+      },
+      {
+        "id": "segovia",
+        "labelEs": "Segovia",
+        "labelEn": "Segovia",
+        "aliases": []
+      },
+      {
+        "id": "sevilla",
+        "labelEs": "Sevilla",
+        "labelEn": "Sevilla",
+        "aliases": []
+      },
+      {
+        "id": "soria",
+        "labelEs": "Soria",
+        "labelEn": "Soria",
+        "aliases": []
+      },
+      {
+        "id": "tarragona",
+        "labelEs": "Tarragona",
+        "labelEn": "Tarragona",
+        "aliases": []
+      },
+      {
+        "id": "teruel",
+        "labelEs": "Teruel",
+        "labelEn": "Teruel",
+        "aliases": []
+      },
+      {
+        "id": "toledo",
+        "labelEs": "Toledo",
+        "labelEn": "Toledo",
+        "aliases": []
+      },
+      {
+        "id": "valencia",
+        "labelEs": "Valencia",
+        "labelEn": "Valencia",
+        "aliases": []
+      },
+      {
+        "id": "valladolid",
+        "labelEs": "Valladolid",
+        "labelEn": "Valladolid",
+        "aliases": []
+      },
+      {
+        "id": "zamora",
+        "labelEs": "Zamora",
+        "labelEn": "Zamora",
+        "aliases": []
+      },
+      {
+        "id": "zaragoza",
+        "labelEs": "Zaragoza",
+        "labelEn": "Zaragoza",
+        "aliases": []
+      }
+    ]
+  },
+  {
     "id": "united-states",
     "name": {
       "es": "Estados Unidos",
@@ -10928,3 +11269,4 @@ export const MAP_COUNTRY_PROVINCE_CATALOG = [
     ]
   }
 ];
+

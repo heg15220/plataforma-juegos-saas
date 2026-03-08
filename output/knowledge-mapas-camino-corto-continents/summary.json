@@ -1,0 +1,50 @@
+{
+  "report": [
+    {
+      "continentId": "europe",
+      "activeContinent": "europe",
+      "startId": "malta",
+      "destinationId": "poland",
+      "optimalSteps": 4,
+      "idealPathLength": 5,
+      "idealAccepted": true
+    },
+    {
+      "continentId": "africa",
+      "activeContinent": "africa",
+      "startId": "guinea",
+      "destinationId": "burundi",
+      "optimalSteps": 6,
+      "idealPathLength": 7,
+      "idealAccepted": true
+    },
+    {
+      "continentId": "america",
+      "activeContinent": "america",
+      "startId": "saint-vincent-and-the-grenadines",
+      "destinationId": "costa-rica",
+      "optimalSteps": 7,
+      "idealPathLength": 8,
+      "idealAccepted": true
+    },
+    {
+      "continentId": "asia",
+      "activeContinent": "asia",
+      "startId": "timor-leste",
+      "destinationId": "laos",
+      "optimalSteps": 4,
+      "idealPathLength": 5,
+      "idealAccepted": true
+    },
+    {
+      "continentId": "oceania",
+      "activeContinent": "oceania",
+      "startId": "papua-new-guinea",
+      "destinationId": "fiji",
+      "optimalSteps": 4,
+      "idealPathLength": 5,
+      "idealAccepted": true
+    }
+  ],
+  "consoleErrors": []
+}

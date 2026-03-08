@@ -1792,3 +1792,118 @@
 - Verificacion:
   - `npm run build` OK (con permisos elevados por EPERM sandbox en esbuild).
   - QA Playwright de `knowledge-mapas-atlas` ejecutada sin `errors-*.json`.
+
+## 2026-03-08 - Nuevo juego: camino mas corto entre paises
+- Implementado `knowledge-mapas-camino-corto` como nuevo minijuego de Conocimiento con ruta por fronteras en Europa.
+- Flujo principal: se muestra silueta del pais origen, destino fijo por partida, y el jugador introduce paises vecinos hasta alcanzar el destino.
+- Motor de validacion por grafo:
+  - BFS para ruta minima (camino ideal).
+  - Paso ideal pintado en verde.
+  - Paso alternativo no ideal pintado en naranja.
+- Se anadio estado serializado `render_game_to_text` con ruta, progreso, paises visibles y telemetria de pasos.
+- Integracion completa en plataforma:
+  - `src/games/KnowledgeArcadeGame.jsx` (nuevo variant `mapas-camino-corto`).
+  - `src/games/registry.jsx` (nuevo id y controles ES/EN).
+  - `src/components/GamePlayground.jsx` (paridad de mapeo/hints).
+  - `src/data/games.js` (ficha visible en catalogo).
+  - `src/styles.css` (tema visual + estados verde/naranja + leyenda/ruta).
+- Build validado con `npm run build`.
+- QA Playwright:
+  - Skill client: `output/knowledge-mapas-camino-corto/`.
+  - Validacion dirigida de pasos ideal+alternativo: `output/knowledge-mapas-camino-corto-manual/`.
+  - Resultado: sin errores de consola y estados confirmados (`ideal` y `alternative`) en `after-ideal-step.json` y `after-alternative-step.json`.
+
+### TODO sugerido
+- Permitir seleccion explicita de dificultad por distancia minima/maxima del destino.
+- Ampliar alias de paises (abreviaturas y exonomos) para reducir falsos negativos en escritura libre.
+## 2026-03-08 - Mapas camino corto: expansion multi-continente (Europa + Africa + America + Asia + Oceania)
+- Restaurado/creado `src/games/knowledge/MapsShortestPathKnowledgeGame.jsx` (faltaba el archivo en disco).
+- El minijuego ahora soporta selector de continente para `europe`, `africa`, `america`, `asia` y `oceania`.
+- Motor de grafo actualizado por continente:
+  - base desde `src/games/knowledge/mapsCountryAdjacencyData.js`,
+  - refuerzo por proximidad para nodos aislados,
+  - union automatica de componentes para asegurar rutas jugables (clave en Oceania).
+- Generacion de retos por distancia BFS + camino ideal determinista por `matchId`.
+- Validacion de paso:
+  - verde (`path-ideal`) cuando coincide con el siguiente nodo del camino ideal,
+  - naranja (`path-alternative`) para rutas alternativas validas,
+  - revelado progresivo de siluetas desde origen hasta destino.
+- Bridge QA `render_game_to_text` actualizado para exponer continente, reto, progreso, ruta y `visibleCountries`.
+- Estilos extendidos en `src/styles.css` para Africa:
+  - `maps-theme-countries-africa`
+  - `maps-scope-country.maps-region-africa` / `maps-scope-city.maps-region-africa`.
+
+### Validacion tecnica
+- Build OK: `npm run build` (necesito ejecutar fuera de sandbox por `spawn EPERM` de esbuild).
+
+### QA Playwright
+- Script nuevo: `output/validate-mapas-camino-corto-continents.mjs`.
+- Evidencias: `output/knowledge-mapas-camino-corto-continents/`.
+  - `summary.json` confirma para los 5 continentes:
+    - `activeContinent` correcto,
+    - `idealPathLength >= 2`,
+    - `idealAccepted = true`,
+    - sin `consoleErrors`.
+- Revalidacion de alternativa (naranja):
+  - `output/validate-mapas-camino-corto.mjs`
+  - `output/knowledge-mapas-camino-corto-manual/summary.json` -> `alternativeFound: true` y paso con `status: "alternative"`.
+
+### Nota
+- Permanece un warning de chunk grande en build (`index-*.js`) no relacionado con este cambio funcional.
+
+## 2026-03-08 - Juego de mapas camino corto: modo provincias por pais
+- Reforzada `MapsShortestPathKnowledgeGame` para operar en dos scopes:
+  - `countries` (paises por continente: Europa, Africa, America, Asia, Oceania).
+  - `provinces` (provincias/estados por pais usando el catalogo del sistema).
+- Integradas fuentes de datos de provincias:
+  - `MAP_COUNTRY_PROVINCE_CATALOG` (nodos + aliases por pais).
+  - `MAP_PROVINCE_ADJACENCY` (fronteras/proximidad entre provincias).
+- Anadido selector de modo (`Paises por continente` / `Provincias por pais`) y selector dinamico de continente o pais segun scope activo.
+- El render del tablero ahora adapta theme/region al scope y mantiene coloreado de ruta:
+  - verde para pasos del camino ideal (`path-ideal`),
+  - naranja para pasos alternativos (`path-alternative`),
+  - nodo destino marcado mientras permanece oculto.
+- Mejorado copy UX para modo provincias con etiquetas neutrales (`territorio`) evitando textos confusos tipo "pais siguiente".
+- Nuevo script de generacion de adyacencias de provincias:
+  - `scripts/generate-maps-province-adjacency.mjs`
+  - salida: `src/games/knowledge/mapsProvinceAdjacencyData.js`
+- Metadatos/control hints actualizados para reflejar el modo dual en:
+  - `src/data/games.js`
+  - `src/components/GamePlayground.jsx`
+  - `src/games/registry.jsx`
+
+### QA ejecutada
+- Build: `npm run build` OK (fuera de sandbox por `spawn EPERM` de esbuild).
+- Playwright (ideal path) OK:
+  - `output/validate-mapas-camino-corto-provinces.mjs`
+  - artefactos en `output/knowledge-mapas-camino-corto-provinces/summary.json`.
+- Playwright (alternative path naranja) OK:
+  - `output/validate-mapas-camino-corto-path-colors.mjs`
+  - artefactos en `output/knowledge-mapas-camino-corto-path-colors/summary.json`.
+- Resultado clave QA:
+  - `idealAccepted: true` en modo continentes y provincias.
+  - `status: alternative` validado en ambos modos.
+  - sin `consoleErrors` en las corridas.
+
+### TODO sugerido
+- Ejecutar una pasada manual en 3-4 paises de provincias grandes (ej. Brazil, India, Mexico) para revisar legibilidad visual de siluetas densas.
+- Si se detectan mapas con demasiada superposicion de labels, aplicar ajuste fino de offset por nodo en esos paises.
+
+## 2026-03-08 - Fix solicitado: incluir Espana en provincias por pais
+- Causa raiz identificada: `scripts/generate-maps-country-provinces.mjs` excluia Espana con `SKIP_COUNTRY_IDS = new Set(["spain"])`.
+- Fix aplicado: eliminada la exclusion (`SKIP_COUNTRY_IDS = new Set()`).
+- Regenerado catalogo de provincias con Espana incluida:
+  - comando: `node scripts/generate-maps-country-provinces.mjs`
+  - resultado: `src/games/knowledge/mapsCountryProvincesData.js` con `countries: 43` y `subdivisions: 1732`.
+- Regenerada adyacencia de provincias:
+  - comando: `node scripts/generate-maps-province-adjacency.mjs`
+  - resultado: `spain` presente con `nodes: 52`, `edges: 106`, `unresolved: []`.
+- QA UI especifica de selector/provincia Espana:
+  - script: `output/validate-mapas-camino-corto-spain.mjs`
+  - evidencia: `output/knowledge-mapas-camino-corto-spain/summary.json`
+  - check: `hasSpainOption: true`, `selectedMapId: "spain"`, `nodeCount: 52`, `consoleErrors: []`.
+- Build final: `npm run build` OK (fuera de sandbox por EPERM de esbuild).
+- Ajuste adicional de calidad para Espana tras regeneracion:
+  - normalizados IDs bilingues de provincias para alinear con siluetas (`alicante`, `alava`, `bizkaia`, `castellon`, `gipuzkoa`, `valencia`).
+  - actualizado tambien `mapsProvinceAdjacencyData.js` con los nuevos IDs.
+  - resultado de consistencia: 50/50 provincias con silueta emparejada (quedan sin silueta solo `ceuta` y `melilla`).
