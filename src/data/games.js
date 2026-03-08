@@ -27,6 +27,7 @@ import strategySudokuTecnicasImage from "../assets/games/strategy-sudoku-tecnica
 import strategyDamasProfesionalImage from "../assets/games/strategy-damas-professional.svg";
 import strategyPokerNoBetImage from "../assets/games/strategy-poker-no-bet.svg";
 import strategyParchisLudotekaImage from "../assets/games/strategy-parchis-ludoteka.svg";
+import strategyBarajaIaImage from "../assets/games/strategy-baraja-ia.svg";
 import race2dproImage from "../assets/games/race2dpro.svg";
 
 /**
@@ -1318,6 +1319,55 @@ export const games = [
     viability_en: "High: deterministic card engine with compact state and full traceability.",
     visualStyle_en: "Casino-inspired green poker table with tactical HUD and clear phase readability.",
     techFocus_en: "Classic 5-card draw pipeline with betting economy (pot/blinds/raise/call/all-in) and AI tuned for per-hand risk management.",
+  },
+
+  {
+    id: "strategy-baraja-ia-arena",
+    image: strategyBarajaIaImage,
+    sessionTime: "3-8 min",
+
+    title: "Baraja IA Arena",
+    category: "Estrategia",
+    tagline: "Brisca 1v1 contra IA con baraja espanola real (es*) y contexto estrategico Brisca/Tute.",
+    description:
+      "Juego de bazas independiente del Poker: tablero propio, IA dedicada y reglas de brisca simplificadas. Si el navegador empieza por \"es\" usa baraja espanola real de 40 cartas (assets externos integrados); en cualquier otro caso usa baraja inglesa de 52 cartas.",
+    objective_es: "Suma mas puntos de baza que la IA y gana 3 rondas antes que tu rival.",
+    howToPlay_es: "Juega una carta desde tu mano (click o teclas 1-3). La IA responde, se resuelve la baza y roba primero quien gana. R reinicia y N pasa de ronda cuando termina.",
+    highlights: [
+      "Juego independiente en categoria Estrategia con tablero propio y ritmo rapido.",
+      "Baraja automatica por idioma del navegador: espanola (es*) o inglesa (resto).",
+      "Prompt visible de estrategia IA con contexto de Brisca y referencia de Tute para evolucion futura.",
+      "IA de bazas con heuristicas de riesgo para liderar o responder jugada.",
+      "Fuente de imagenes de cartas espanolas: mcmd/playingcards.io-spanish.playing.cards.",
+      "Sistema de rondas al mejor de 5 (primer jugador en llegar a 3).",
+      "Bridge QA con render_game_to_text y avance temporal determinista.",
+    ],
+    difficulty: "Media",
+    multiplayer: "Solo vs IA",
+    viability: "Alta: estado compacto, motor de bazas y reglas discretas.",
+    visualStyle: "Mesa de cartas tactica con zonas de mano, triunfo, mazo y centro de baza.",
+    techFocus: "Motor de bazas con robo por prioridad de ganador, soporte de cartas reales en baraja espanola y prompt estrategico IA Brisca/Tute.",
+
+    category_en: "Strategy",
+    tagline_en: "1v1 Brisca vs AI with real Spanish deck assets on es* locale and Brisca/Tute strategy context.",
+    description_en:
+      "Standalone trick-taking game, independent from Poker: dedicated board, dedicated AI, and simplified Brisca rules. If browser language starts with \"es\", it uses real 40-card Spanish deck assets; otherwise, a 52-card English deck.",
+    objective_en: "Score more trick points than the AI and win 3 rounds before your opponent.",
+    howToPlay_en: "Play one card from your hand (click or keys 1-3). AI answers, the trick is resolved, and the winner draws first. R restarts and N advances round when it ends.",
+    highlights_en: [
+      "Independent Strategy game with its own board and fast pacing.",
+      "Automatic deck by browser language: Spanish (es*) or English (others).",
+      "Visible AI strategy prompt with active Brisca rules and future Tute context.",
+      "Trick-taking AI using risk heuristics for lead and response decisions.",
+      "Spanish card art source: mcmd/playingcards.io-spanish.playing.cards.",
+      "Best-of-5 round structure (first player to 3 rounds wins).",
+      "QA bridge with render_game_to_text and deterministic time stepping.",
+    ],
+    difficulty_en: "Medium",
+    multiplayer_en: "Solo vs AI",
+    viability_en: "High: compact state, discrete trick-taking rules, and deterministic flow.",
+    visualStyle_en: "Tactical card table with dedicated hand, trump, stock, and trick zones.",
+    techFocus_en: "Trick-taking engine with winner-priority draw order, real Spanish card assets support, and Brisca/Tute AI strategy prompt context.",
   },
 
   {

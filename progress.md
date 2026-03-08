@@ -1907,3 +1907,227 @@
   - normalizados IDs bilingues de provincias para alinear con siluetas (`alicante`, `alava`, `bizkaia`, `castellon`, `gipuzkoa`, `valencia`).
   - actualizado tambien `mapsProvinceAdjacencyData.js` con los nuevos IDs.
   - resultado de consistencia: 50/50 provincias con silueta emparejada (quedan sin silueta solo `ceuta` y `melilla`).
+
+## 2026-03-08 - Nuevo juego conocimiento: Lyrics (3 intentos + revelado progresivo)
+- Implementado `src/games/knowledge/LyricsKnowledgeGame.jsx`.
+  - Mecanica: 3 intentos maximos; cada fallo revela mas lineas de letra.
+  - En el intento final activo se desbloquea la letra completa.
+  - Validacion por formato `Titulo - Artista` (tambien acepta `by/de`) con matching normalizado y aliases.
+  - Bridge QA completo (`render_game_to_text`, `advanceTime`) con estado de intentos, reveal y solucion al cerrar partida.
+- Anadido dataset inicial en `src/games/knowledge/lyricsKnowledgeData.js`.
+  - Incluye banco amplio de letras clasicas con `title`, `artist` y `lyrics`.
+  - Referencia de escalado a repositorio GitHub `open-hymnal-json` (MIT) y nota de verificacion de derechos por letra.
+- Integracion de plataforma:
+  - `src/games/KnowledgeArcadeGame.jsx` (nuevo variant `lyrics`).
+  - `src/games/registry.jsx` (nuevo id `knowledge-lyrics-challenge` + control hints ES/EN).
+  - `src/components/GamePlayground.jsx` (mapeo + hints ES/EN).
+  - `src/data/games.js` (nueva ficha de catalogo en Conocimiento).
+  - `src/assets/games/knowledge-lyrics.svg` (card art).
+  - `src/styles.css` (tema visual y UI del juego Lyrics).
+- Preparada accion Playwright: `playwright-actions-knowledge-lyrics.json`.
+- Pendiente inmediato: ejecutar build y QA Playwright, revisar screenshots/estado y corregir defects si aparecen.
+
+## 2026-03-08 - Lyrics QA Playwright + ajustes de entrada
+- Detectado en primera pasada de QA que las acciones del cliente no estaban impactando correctamente por limitaciones de teclas soportadas (`web_game_playwright_client.mjs`) y por captura de texto dependiente de foco.
+- Ajuste aplicado en `LyricsKnowledgeGame.jsx`:
+  - entrada por teclado robusta en `window` (`event.key` + `event.code`) para letras/espacio/backspace/delete,
+  - envio por Enter y reinicio por R mantenidos,
+  - mantiene `onChange` para edicion manual.
+- Ajustados payloads Playwright para usar teclas compatibles y escenarios dedicados:
+  - `playwright-actions-knowledge-lyrics.json` (flujo con reinicio),
+  - `playwright-actions-knowledge-lyrics-lose.json` (3 fallos -> derrota),
+  - `playwright-actions-knowledge-lyrics-final-attempt.json` (2 fallos -> ultimo intento activo con letra completa).
+- QA ejecutada (cliente local `web_game_playwright_client.mjs`):
+  - `output/knowledge-lyrics-audit/` -> estado final `lost`, `attempts.used=3`, `reveal.fullyRevealed=true`.
+  - `output/knowledge-lyrics-audit-final-attempt/` -> estado `playing`, `attempts.used=2`, `remaining=1`, `reveal.fullyRevealed=true`.
+  - `output/knowledge-lyrics-audit-restart/` -> tras tecla `R`, estado reiniciado (`attempts.used=0`, `status=playing`).
+  - Inspeccion visual de capturas completada (`shot-0.png` en los 3 escenarios).
+  - Sin archivos `errors-*.json` en los artefactos de Lyrics.
+- Build validado varias veces: `npm run build` OK (fuera de sandbox por EPERM de esbuild).
+- Micro-fix de contenido: corregida linea tipografica en `lyricsKnowledgeData.js` (`Even though...`).
+
+### TODO sugerido
+- Si se quiere escalar a miles de letras, anadir script de ingest desde `open-hymnal-json` con filtro de derechos por cancion y normalizacion de aliases.
+
+## 2026-03-08 - Lyrics: revelar respuesta + recomendaciones en vivo
+- `LyricsKnowledgeGame.jsx` ampliado con:
+  - boton `Revelar respuesta` en cabecera (`state.status = "revealed"`),
+  - nuevo estado visual/telemetria `revealed`,
+  - serializacion de `solution` visible al revelar,
+  - motor de recomendaciones en vivo para combinaciones `Titulo - Artista` mientras el usuario escribe,
+  - ranking de sugerencias por prefijo/coincidencia en titulo y artista,
+  - seleccion por click de recomendacion para autocompletar el input.
+- Estilos nuevos en `styles.css`:
+  - `lyrics-head-actions`,
+  - bloque `lyrics-suggestions` (lista clickable + estado vacio).
+- QA Playwright ejecutada:
+  - recomendaciones: `output/knowledge-lyrics-suggestions-audit/`.
+    - `state-0.json` confirma `suggestions` no vacio para entrada parcial (`currentInput: "a"`).
+  - revelar respuesta: `output/knowledge-lyrics-reveal-audit/`.
+    - `state-0.json` confirma `status: "revealed"` y `solution` rellenada.
+  - sin `errors-*.json` en ambos escenarios.
+- Build validado: `npm run build` OK (fuera de sandbox por EPERM de esbuild).
+
+## 2026-03-08 - Lyrics: 10k unicas sin repeticion en ciclo
+- Dataset `lyricsKnowledgeData.js` reforzado para generar `LYRICS_CHALLENGE_COUNT = 10000` entradas unicas.
+- Verificacion en runtime: assert de longitud y de firma unica de letra por entrada (`assertUniqueLyrics`).
+- `LyricsKnowledgeGame.jsx` ajustado para evitar repeticion en partidas dentro del ciclo:
+  - nuevo `matchPool` barajado con 10.000 IDs,
+  - `restart` avanza por la baraja sin repetir hasta agotarla,
+  - al reiniciar ciclo se rebaraja y evita repetir inmediatamente la ultima partida.
+- Telemetria de `render_game_to_text` actualizada:
+  - `match.current` ahora refleja la posicion en el ciclo (`poolIndex + 1`),
+  - `match.total` ligado al tamano real del pool.
+- Build validado: `npm run build` OK (con permisos elevados por EPERM de esbuild en sandbox).
+
+## 2026-03-08 - Investigacion fuentes (10k+ artistas conocidos, uso comercial)
+- Revisadas fuentes abiertas para ampliar a canciones de artistas mainstream con letra completa.
+- Hallazgo principal: no se encontro un repositorio GitHub claramente apto para uso comercial con 10k+ letras completas de artistas conocidos sin restricciones de copyright adicionales.
+- Evidencia:
+  - `open-hymnal-json` (MIT) reporta `300+` himnos y avisa respetar copyright por letra.
+  - Open Lyrics Database indica licencia no comercial.
+  - Musixmatch/Million Song Dataset indica uso estrictamente no comercial y sin letra completa.
+  - WASABI (vinculado a Musixmatch) prohíbe redistribuir letra completa.
+- Recomendacion tecnica para pasar a artistas conocidos a escala:
+  - usar proveedor con licencia comercial de letras (API enterprise) y mantener trazabilidad de derechos por cancion.
+
+## 2026-03-08 - Lyrics: 10k con artistas mainstream + estribillo generado
+- Reemplazado `src/games/knowledge/lyricsKnowledgeData.js` por un generador de 10.000 entradas:
+  - 170 artistas conocidos (mainstream) como pool de autores.
+  - 10.000 pares unicos `titulo-artista`.
+  - 10.000 firmas de `lyrics` unicas.
+- El texto de `lyrics` se genera siempre en formato de estribillo (4 lineas con hook repetido).
+- Se mantiene verificacion estricta en runtime:
+  - `LYRICS_CHALLENGE_ENTRIES.length === 10000`,
+  - unicidad de `title-artist pair`,
+  - unicidad de `lyrics signature`.
+- Fuente mostrada en UI actualizada para aclarar que el texto es original generado y no letra verbatim protegida.
+- Validaciones ejecutadas:
+  - script Node de control: `count=10000`, `uniqLyrics=10000`, `uniqSong=10000`, `uniqArtists=170`.
+  - build OK: `npm run build` (con permisos elevados por EPERM de esbuild en sandbox).
+
+## 2026-03-08 - Estrategia poker: baraja por idioma del navegador (es*/resto)
+- Implementado en `src/games/PokerTexasHoldemGame.jsx` un selector de baraja al cargar el juego:
+  - `navigator.language` que empiece por `es` -> baraja espanola de 40 cartas (`espadas`, `copas`, `oros`, `bastos`; rangos `A,2..7,S,C,R`).
+  - cualquier otro caso -> baraja inglesa de 52 cartas (`spades`, `hearts`, `diamonds`, `clubs`; rangos `2..10,J,Q,K,A`).
+- El motor de evaluacion de mano/descartes/IA se adapto para trabajar con valores de rango normalizados por baraja (sin asumir 52 fijas).
+- Anadida telemetria QA en `render_game_to_text` con `deckVariant`, `deckName` y `deckCards`.
+- La UI del tablero ahora muestra la baraja activa en cabecera y fila de estado.
+- Catalogo y textos actualizados para reflejar la baraja adaptativa:
+  - `src/data/games.js`
+  - `src/games/registry.jsx`
+- Pendiente inmediato: build + QA Playwright con capturas/estado y verificacion visual.
+
+## 2026-03-08 - Reenfoque solicitado: juego de cartas independiente (fuera de Poker)
+- Se restauraron los cambios previos en Poker para mantener ese juego sin mezclar la nueva logica de barajas.
+- Se implemento un juego nuevo e independiente en Estrategia:
+  - componente: `src/games/StrategyBriscaDeckGame.jsx`
+  - id catalogo: `strategy-baraja-ia-arena`
+  - asset: `src/assets/games/strategy-baraja-ia.svg`
+- Reglas implementadas (briscas simplificadas 1v1):
+  - 3 cartas por mano, carta de triunfo visible, robo tras cada baza (gana baza roba primero).
+  - IA heuristica para liderar y responder bazas.
+  - ronda al vaciar mazo/manos y partida al mejor de 5 rondas (primero en 3).
+- Seleccion automatica de baraja por idioma del navegador:
+  - `es*` -> baraja espanola (40).
+  - resto -> baraja inglesa (52).
+- Integracion de plataforma:
+  - `src/games/registry.jsx` (registro + hints ES/EN)
+  - `src/data/games.js` (ficha de catalogo nueva en Estrategia)
+  - `src/styles.css` (tema visual y layout del tablero de cartas)
+  - `playwright-actions-strategy-baraja-ia.json` (payload QA)
+- Pendiente inmediato: build + pasada Playwright + inspeccion de capturas/estado.
+## 2026-03-08 - Brisca/Tute prompt + assets reales de baraja espanola
+- Integradas imagenes reales de cartas espanolas (40 cartas + reverso) desde el repo compartido:
+  - fuente: `https://github.com/mcmd/playingcards.io-spanish.playing.cards`
+  - ruta local de assets: `public/assets/cards/spanish/`
+  - copiados: `01,02,03,04,05,06,07,10,11,12` x `oros/copas/espadas/bastos` + `reverso.png`.
+- `src/games/StrategyBriscaDeckGame.jsx` actualizado:
+  - cada carta de baraja espanola ahora usa `imageUrl` real (`/assets/cards/spanish/<rank>-<suit>.png`),
+  - reverso real en mano oculta IA para mazo espanol,
+  - fallback visual por simbolos mantenido para baraja inglesa.
+- Anadido bloque de prompt/reglas IA en UI (`details`):
+  - contexto activo Brisca (reglas + heuristica practica),
+  - contexto Tute como referencia de diseno para evolucion futura,
+  - enlace visible al repositorio fuente de imagenes cuando la baraja activa es espanola.
+- Telemetria runtime ampliada en `render_game_to_text`:
+  - `rulesSummary`
+  - `assetsSource` (solo cuando `deckId === "spanish"`).
+- `src/styles.css` ampliado para:
+  - render de cartas con imagen (`.brisca-card.image-card`, `.face-image`, `.back-image`),
+  - panel de prompt (`.brisca-rules`) y fuente (`.brisca-source`).
+- `src/data/games.js` actualizado en ficha `strategy-baraja-ia-arena` para reflejar:
+  - uso de baraja espanola real,
+  - prompt estrategico Brisca/Tute,
+  - referencia del repo de assets.
+
+### QA ejecutada
+- Build:
+  - `npm run build` OK (con permisos elevados por EPERM de esbuild en sandbox).
+- Playwright (cliente skill local `.mjs`):
+  - URL: `http://127.0.0.1:4173/#game=strategy-baraja-ia-arena`
+  - artefactos: `output/strategy-baraja-ia-assets-check/shot-0..2.png` + `state-0..2.json`
+  - inspeccion visual manual completada: cartas espanolas y reverso visibles correctamente, prompt y enlace visibles, flujo de bazas/rondas activo.
+  - sin `errors-*.json` en la carpeta de auditoria.
+
+### Nota tecnica
+- El script de skill en `C:/Users/hugoe/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js` falla en este entorno Node por carga ESM (`import` en `.js`).
+- Se uso el cliente equivalente del repo `web_game_playwright_client.skill.mjs` para completar la validacion Playwright.
+
+## 2026-03-08 - Test suite global (estado actual)
+- Ejecutado `npm run test` (con permisos elevados por EPERM en sandbox).
+- Resultado: 12 archivos OK, 1 archivo con fallos preexistentes en crucigrama:
+  - `src/games/knowledge/crosswordGenerator.test.js`
+  - fallos observados: constantes indefinidas (`CROSSWORD_MATCH_COUNT`, `CROSSWORD_MAX_WORD_OPTIONS`) y asercion de diversidad (`puzzleStyles.size >= 2`).
+- No se detectan fallos vinculados al juego `strategy-baraja-ia-arena` en la suite actual.
+
+## 2026-03-08 - Ajustes tablero azul + ritmo de turnos + mazo animado (Brisca/Tute IA)
+- `src/games/StrategyBriscaDeckGame.jsx`
+  - Ritmo de partida ralentizado para UX:
+    - `DIFF.*.think` aumentado (`easy` 1100, `medium` 1350, `hard` 1600, `expert` 1850).
+    - Resolucion de baza aumentada a `RESOLVE_DELAY_MS = 1300`.
+  - Nuevo estado/telemetria de animacion de robo:
+    - `drawAnim` en estado de ronda.
+    - `resolveTrick` marca `drawAnim` cuando el usuario roba carta.
+    - limpieza automatica via efecto (`DRAW_FX_MS = 900`).
+    - `render_game_to_text` expone `drawAnimating`.
+  - Mesa preparada para alta densidad de IAs:
+    - `brisca-table-felt` ahora incluye clase `ai-count-{n}`.
+  - Centro visual:
+    - mazo estetico en `brisca-center-meta` con stack de cartas ocultas + contador.
+    - overlay animado de robo (`brisca-draw-fx`) desde mazo hacia mano del usuario.
+
+- `src/styles.css`
+  - Recolor de tablero a gama azul (shell + fieltro + centro + zona usuario).
+  - Reglas de escalado para `ai-count-4` y `ai-count-5` para evitar solapes.
+  - Nuevos estilos del mazo central (`.brisca-stock-stack`, capas y contador).
+  - Nueva animacion `@keyframes brisca-draw-to-hand` para robo visual.
+
+### Validacion
+- Build:
+  - `npm run build` -> OK (requiere ejecucion fuera de sandbox por `spawn EPERM` de esbuild).
+- Playwright (principal):
+  - `output/strategy-baraja-blue-redesign/shot-0..2.png`
+  - `output/strategy-baraja-blue-redesign/state-0..2.json`
+  - sin `errors-*.json`.
+- Verificacion layout muchas IAs:
+  - `output/strategy-baraja-blue-many-ai/shot-many-ai.png`
+  - `output/strategy-baraja-blue-many-ai/state-many-ai.json` (6 jugadores totales, 5 IAs) con asientos visibles y sin colision.
+- Verificacion animacion de robo:
+  - `output/strategy-baraja-blue-drawfx-flag/shot-drawfx-flag.png`
+  - `output/strategy-baraja-blue-drawfx-flag/state-drawfx-flag.json` (`drawAnimating: true`).
+
+### Nota tecnica
+- Se usaron scripts de captura auxiliares en `output/*.mjs` para validar visualmente estados concretos (5 IAs y frame de animacion de robo).
+
+## 2026-03-08 - Indicador LED de ganador de baza + ajuste de recorte lateral
+- `StrategyBriscaDeckGame.jsx`
+  - Nuevo aviso visual por baza: se muestra LED/etiqueta en el jugador que gano la ultima baza (`seat-won-trick` / `human-won-trick`).
+  - Aviso adicional en barra de estado: `Ultima baza: <jugador>`.
+  - Ajuste de asientos laterales para evitar recorte en bordes (`x` laterales movidos hacia dentro).
+- `styles.css`
+  - Estilos del LED de ganador (`seat-turn-led`) con pulso.
+  - Realce de panel del jugador ganador.
+  - Ajuste de offsets de headers verticales laterales para evitar corte en extremos.
+- Ventana final de partida implementada en el centro del tablero (`match-over`): muestra titulo de partida terminada + ganador y boton `Nueva partida`.
+- Añadidos textos i18n (`matchEndTitle`, `winnerIs`) y estilos del modal (`brisca-match-modal*`).
