@@ -2131,3 +2131,68 @@
   - Ajuste de offsets de headers verticales laterales para evitar corte en extremos.
 - Ventana final de partida implementada en el centro del tablero (`match-over`): muestra titulo de partida terminada + ganador y boton `Nueva partida`.
 - Añadidos textos i18n (`matchEndTitle`, `winnerIs`) y estilos del modal (`brisca-match-modal*`).
+
+## 2026-03-09 - Modalidad Mus añadida sin reemplazar Brisca/Tute
+- Se mantiene el juego existente `StrategyBriscaDeckGame` (Brisca/Tute) y se agrega Mus como modalidad adicional en el mismo juego de baraja.
+- Nuevo contenedor `src/games/StrategyBarajaModesGame.jsx` con selector superior de modalidad (`Brisca/Tute` | `Mus`).
+- Registro actualizado en `src/games/registry.jsx` para usar el contenedor y mantener ID `strategy-baraja-ia-arena`.
+
+### Implementacion Mus
+- Nuevo archivo `src/games/StrategyMusDeckGame.jsx` con motor Mus simplificado por parejas (4 jugadores):
+  - baraja espanola clasica (40) y version adaptada inglesa (52),
+  - fases `mus-decision` -> `discard-select` -> `lance-resolving` -> `round-over/match-over`,
+  - lances implementados: Grande, Chica, Pares y Juego/Punto,
+  - tanteo acumulado a 40 piedras (amarrakos derivados),
+  - IA configurable por dificultad para decision de Mus y descarte,
+  - bridge QA completo (`render_game_to_text` + `advanceTime`).
+- Se añadieron atajos compatibles con cliente Playwright del skill:
+  - Mus: `A`/`M`, No Mus: `B`/`X`,
+  - descarte: `1-4` o flechas,
+  - confirmar: `Enter`/`Space`.
+
+### Catalogo y UX
+- `src/data/games.js` actualizado para reflejar modalidad dual (Brisca/Tute + Mus), objetivo, controles y foco tecnico.
+- `src/styles.css` ampliado con estilos de selector de modalidad y UI Mus (acciones, resumen de mano, resaltado de descarte).
+- Nuevo payload de acciones Playwright para Mus: `playwright-actions-strategy-mus.json`.
+
+### QA ejecutada
+- Build:
+  - `npm run build` OK (ejecucion fuera de sandbox por `spawn EPERM` de esbuild en sandbox).
+- Playwright (preview + captura):
+  - Brisca/Tute regresion:
+    - `output/strategy-baraja-mus-check/brisca/shot-0..2.png`
+    - `output/strategy-baraja-mus-check/brisca/state-0..2.json`
+  - Mus nuevo modo:
+    - `output/strategy-baraja-mus-check/mus/shot-0..2.png`
+    - `output/strategy-baraja-mus-check/mus/state-0..2.json`
+- Inspeccion visual manual completada en ambos modos; sin `errors-*.json` en la auditoria.
+
+### TODO sugeridos
+- Afinar reglas avanzadas de Mus (envites, ordago, dejes y cobro completo segun reglamento tradicional).
+- Mejorar IA de Mus para estrategia por lance y no solo heuristica global de mano.
+- Añadir test unitarios para comparadores de lances (Grande/Chica/Pares/Juego) y empates por mano.
+
+## 2026-03-09 - Mus IA cierre de ronda + tanteo secuencial + configuracion de jugadores
+- Se anadio modal de fin de ronda en Mus (fase `round-over`) con: ganador de ronda, motivo por lance y boton de `Siguiente mano`.
+- Se corrigio el cobro para respetar el reglamento en orden de lances: ahora las piedras se aplican secuencialmente y se corta en el momento en que una pareja alcanza 40 (`gana quien llega primero`).
+- Se mejoro legibilidad del resumen de lances y se fijo el modal de ronda al viewport para evitar recortes visuales.
+- Se anadio marcador acumulado visible dentro del tablero (`Marcador acumulado`) con piedras y amarrakos por campo.
+- Mus ahora permite configurar numero de jugadores en IA para formatos de dos campos: 2, 4 o 6 (duelo, parejas, 3v3).
+- Se adaptaron asientos/nombres IA para 2/4/6 jugadores y se mantuvo Brisca/Tute como modalidad separada sin reemplazo.
+- Actualizados metadatos y ayudas de control para reflejar soporte 2/4/6 en Mus.
+
+Validacion:
+- `npm run build` OK.
+- Playwright Mus (`output/strategy-baraja-mus-check/mus-round-over-summary`) OK: `phase=round-over`, modal visible, `lastRound` con ganador/motivos y sin errores de consola.
+- Playwright Brisca regresion (`output/strategy-baraja-mus-check/brisca-regression-after-mus`) OK, sin errores de consola.
+
+Pendiente sugerido:
+- Si se requiere estrictamente modalidad individual completa para 3 o 5 jugadores (todos contra todos), hay que extender el motor de dos campos actual a n-campos (score/envites por jugador).
+
+## 2026-03-09 - UX Mus: reparto animado, bucle de Mus y controles en pantalla
+- Inicio de mano cambiado a fase `dealing`: el reparto ahora es carta a carta desde mazo central, comenzando por `mano`.
+- Anadido mazo visible en el centro del tablero + animacion de paso de carta hacia el asiento de destino.
+- Ajustado descarte para Mus real por ciclos: tras descarte de todos, se vuelve a preguntar Mus/No Mus (no se resuelven lances automaticamente), permitiendo repetir descartes.
+- Anadidos mensajes sobre jugadores para Mus/No Mus y, en fase descarte, contador de descarte de cada IA (incluyendo 0 cuando se sirve).
+- Anadido panel de lectura de mano del usuario (boton tras Mus/No Mus): Grande, Chica, Pares y Juego/Punto.
+- Anadidos controles en pantalla para las acciones de teclado: botones 1-4 y flechas de descarte, mas accesos `Siguiente mano (N)` y `Nueva partida (R)`.

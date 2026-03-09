@@ -11875,6 +11875,30 @@ button.brisca-card.playable:disabled {
   cursor: pointer;
 }
 
+.strategy-mus-game .mus-round-modal {
+  width: min(480px, 92vw);
+}
+
+.strategy-mus-game .mus-round-modal-wrap {
+  position: fixed !important;
+  inset: 0;
+  z-index: 80;
+  background: rgba(2, 6, 23, 0.52);
+}
+
+.strategy-mus-game .mus-round-modal p + p {
+  margin-top: 0.38rem;
+}
+
+.strategy-mus-game .mus-round-modal ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  text-align: left;
+  display: grid;
+  gap: 0.24rem;
+  font-size: 0.78rem;
+}
+
 @keyframes brisca-modal-in {
   from {
     opacity: 0;
@@ -12076,4 +12100,277 @@ button.brisca-card.playable:disabled {
     width: 70px;
     min-height: 98px;
   }
+}
+
+.strategy-baraja-modes {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.baraja-mode-switch {
+  display: inline-flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.baraja-mode-switch button {
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #1e293b;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.4rem 0.72rem;
+  cursor: pointer;
+}
+
+.baraja-mode-switch button.active {
+  border-color: rgba(14, 116, 144, 0.9);
+  background: rgba(14, 116, 144, 0.12);
+  color: #0f5268;
+}
+
+.strategy-mus-game .mus-action-group {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.strategy-mus-game .mus-board-score {
+  border: 1px solid rgba(125, 211, 252, 0.42);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.5);
+  color: #e2e8f0;
+  padding: 0.4rem 0.56rem;
+  margin-bottom: 0.4rem;
+}
+
+.strategy-mus-game .mus-board-score h6 {
+  margin: 0 0 0.28rem;
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #bae6fd;
+}
+
+.strategy-mus-game .mus-board-score p {
+  margin: 0;
+  font-size: 0.75rem;
+}
+
+.strategy-mus-game .mus-board-score p + p {
+  margin-top: 0.18rem;
+}
+
+.strategy-mus-game .mus-center-deck {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.42rem;
+  padding: 0.22rem 0.42rem;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(15, 23, 42, 0.46);
+  color: #e2e8f0;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.strategy-mus-game .mus-center-deck .brisca-card.compact {
+  width: 40px;
+  min-height: 58px;
+}
+
+.strategy-mus-game .mus-dealing-message {
+  margin: 0 0 0.42rem;
+  font-size: 0.74rem;
+  color: #bae6fd;
+  font-weight: 700;
+}
+
+.strategy-mus-game .mus-deal-fx {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 11;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: mus-deal-pass 160ms ease-out forwards;
+}
+
+.strategy-mus-game .mus-deal-fx .brisca-card.compact {
+  width: 40px;
+  min-height: 58px;
+}
+
+@keyframes mus-deal-pass {
+  from {
+    left: 50%;
+    top: 50%;
+    opacity: 0.98;
+  }
+  to {
+    left: var(--to-x, 50%);
+    top: var(--to-y, 50%);
+    opacity: 0;
+  }
+}
+
+.strategy-mus-game .mus-action-group button {
+  border: 1px solid rgba(148, 163, 184, 0.68);
+  border-radius: 10px;
+  background: rgba(248, 250, 252, 0.95);
+  color: #1e293b;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.46rem 0.72rem;
+  cursor: pointer;
+}
+
+.strategy-mus-game .mus-discard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.32rem;
+  width: min(260px, 90%);
+  margin: 0 auto 0.4rem;
+}
+
+.strategy-mus-game .mus-discard-grid button {
+  border: 1px solid rgba(125, 211, 252, 0.5);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.68);
+  color: #e2e8f0;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.3rem 0.2rem;
+  cursor: pointer;
+}
+
+.strategy-mus-game .mus-discard-grid button.active {
+  border-color: rgba(251, 191, 36, 0.88);
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.44);
+  color: #fef3c7;
+}
+
+.strategy-mus-game .mus-info-toggle {
+  margin-bottom: 0.36rem;
+}
+
+.strategy-mus-game .mus-info-toggle button {
+  border: 1px solid rgba(125, 211, 252, 0.55);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.68);
+  color: #e0f2fe;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.34rem 0.58rem;
+  cursor: pointer;
+}
+
+.strategy-mus-game .mus-hand-readout {
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.62);
+  color: #e2e8f0;
+  padding: 0.42rem 0.56rem;
+  margin-bottom: 0.36rem;
+  text-align: left;
+}
+
+.strategy-mus-game .mus-hand-readout h6 {
+  margin: 0 0 0.28rem;
+  font-size: 0.75rem;
+  color: #bae6fd;
+}
+
+.strategy-mus-game .mus-hand-readout p {
+  margin: 0;
+  font-size: 0.74rem;
+}
+
+.strategy-mus-game .mus-hand-readout p + p {
+  margin-top: 0.14rem;
+}
+
+.strategy-mus-game .mus-round-summary {
+  border: 1px solid rgba(59, 130, 246, 0.46);
+  border-radius: 11px;
+  background: rgba(248, 250, 252, 0.93);
+  color: #0f172a;
+  padding: 0.48rem 0.58rem;
+  margin-top: 0.35rem;
+}
+
+.strategy-mus-game .mus-round-summary h6 {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.strategy-mus-game .mus-round-summary ul {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.24rem;
+  font-size: 0.75rem;
+  color: #1e3a8a;
+}
+
+.strategy-mus-game .mus-shortcuts {
+  display: flex;
+  gap: 0.34rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 0.34rem;
+}
+
+.strategy-mus-game .mus-shortcuts button {
+  border: 1px solid rgba(148, 163, 184, 0.58);
+  border-radius: 9px;
+  background: rgba(248, 250, 252, 0.92);
+  color: #0f172a;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0.26rem 0.5rem;
+  cursor: pointer;
+}
+
+.strategy-mus-game .mus-adaptation-note {
+  margin: 0.36rem 0 0;
+  font-size: 0.74rem;
+  color: #7c2d12;
+}
+
+.strategy-mus-game .mus-discard-counter,
+.strategy-mus-game .mus-human-vote {
+  margin: 0.4rem 0 0;
+  font-size: 0.76rem;
+  color: #155e75;
+  font-weight: 700;
+}
+
+.strategy-mus-game .seat-open-hand .brisca-card.compact {
+  width: 52px;
+  min-height: 74px;
+}
+
+.strategy-mus-game .ai-count-1 .brisca-seat {
+  width: min(190px, 46vw);
+}
+
+.strategy-mus-game .ai-count-5 .brisca-seat {
+  width: min(150px, 33vw);
+}
+
+.strategy-mus-game .ai-count-5 .seat-open-hand .brisca-card.compact,
+.strategy-mus-game .ai-count-5 .seat-hidden-hand .brisca-card.compact {
+  width: 40px;
+  min-height: 60px;
+}
+
+.strategy-mus-game .selected-for-discard {
+  border-color: rgba(217, 119, 6, 0.95) !important;
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.42);
+  transform: translateY(-5px);
 }
