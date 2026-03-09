@@ -1,0 +1,58 @@
+{
+  "mode": "strategy-mus-ai",
+  "variant": "mus_classic",
+  "deck": "spanish",
+  "playerCount": 4,
+  "phase": "dealing",
+  "round": 1,
+  "mano": "ai-2",
+  "stones": {
+    "user": 0,
+    "rival": 0
+  },
+  "amarrakos": {
+    "user": 0,
+    "rival": 0
+  },
+  "players": [
+    {
+      "id": "human",
+      "side": "user",
+      "isHuman": true,
+      "handCount": 0
+    },
+    {
+      "id": "ai-1",
+      "side": "rival",
+      "isHuman": false,
+      "handCount": 0
+    },
+    {
+      "id": "ai-2",
+      "side": "user",
+      "isHuman": false,
+      "handCount": 1
+    },
+    {
+      "id": "ai-3",
+      "side": "rival",
+      "isHuman": false,
+      "handCount": 1
+    }
+  ],
+  "hands": {
+    "human": [],
+    "aiVisible": false
+  },
+  "votes": null,
+  "discardSelected": [],
+  "dealingRemaining": 14,
+  "lastRound": null,
+  "actions": {
+    "canAskMus": false,
+    "canDiscard": false,
+    "canNextRound": false,
+    "canRestart": true
+  },
+  "message": "Repartiendo cartas..."
+}

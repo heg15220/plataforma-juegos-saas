@@ -2196,3 +2196,107 @@ Pendiente sugerido:
 - Anadidos mensajes sobre jugadores para Mus/No Mus y, en fase descarte, contador de descarte de cada IA (incluyendo 0 cuando se sirve).
 - Anadido panel de lectura de mano del usuario (boton tras Mus/No Mus): Grande, Chica, Pares y Juego/Punto.
 - Anadidos controles en pantalla para las acciones de teclado: botones 1-4 y flechas de descarte, mas accesos `Siguiente mano (N)` y `Nueva partida (R)`.
+
+## 2026-03-09 - Nuevo modo Escoba (implementacion inicial)
+- Se anadio `src/games/StrategyEscobaDeckGame.jsx` como nueva modalidad jugable dentro de Baraja IA Arena.
+- Reglas implementadas de Escoba del 15 con baraja inglesa adaptada a 40 cartas:
+  - eliminacion de rangos 8/9/10,
+  - valores A..7, J=8, Q=9, K=10,
+  - mapeo de palos: Diamantes=Oros, Corazones=Copas, Treboles=Bastos, Picas=Espadas.
+- Flujo de mano implementado: reparto (3 por jugador + 4 mesa), capturas por suma 15, escoba al limpiar mesa, redistribucion de tandas, arrastre final de mesa al ultimo capturador y cierre de mano.
+- Puntuacion implementada al cerrar mano: escobas, siete de oros, mayoria de sietes, mayoria de cartas y mayoria de oros (con empates puntuables).
+- Selector de modos actualizado en `StrategyBarajaModesGame.jsx` para incluir `Escoba` junto a Brisca/Tute y Mus.
+- Ficha de catalogo y ayudas actualizadas (`src/data/games.js`, `src/games/registry.jsx`) para reflejar la tercera modalidad.
+- CSS extendido en `src/styles.css` para panel/mesa/resumen de Escoba.
+- Pendiente inmediato: build + validacion Playwright (capturas/estado/consola) del modo Escoba y regresion rapida de selector.
+
+## 2026-03-09 - QA Escoba + regresion modos baraja
+### Build
+- `npm run build`:
+  - primer intento en sandbox fallo por `spawn EPERM` (esbuild),
+  - segundo intento fuera de sandbox OK.
+
+### Playwright Escoba
+- Nuevo payload de acciones: `playwright-actions-strategy-escoba.json`.
+- Preview levantado en `http://127.0.0.1:4175`.
+- Ejecucion QA:
+  - URL: `http://127.0.0.1:4175/#game=strategy-baraja-ia-arena`
+  - selector inicial: `button[data-mode='escoba']`
+  - artefactos: `output/strategy-baraja-escoba-check/escoba/shot-0..3.png` + `state-0..3.json`
+- Resultado:
+  - sin `errors-*.json` en la carpeta de Escoba,
+  - `render_game_to_text` devuelve modo `strategy-escoba-15` y estado coherente (turno, mesa, capturas, escobas, marcador),
+  - inspeccion visual manual completada para shot inicial y de juego.
+
+### Regresion rapida de modos existentes
+- Brisca:
+  - `output/strategy-baraja-escoba-check/brisca-regression/shot-0.png` + `state-0.json`
+  - estado OK, sin errores de consola.
+- Mus:
+  - `output/strategy-baraja-escoba-check/mus-regression/shot-0.png` + `state-0.json`
+  - estado OK (round-over modal visible), sin errores de consola.
+
+### TODO sugeridos
+- Afinar IA de Escoba para decidir tambien entre jugar defensivo/ofensivo cuando `recogida obligatoria = no`.
+- Añadir tests unitarios para calculo de puntuacion final (7 de oros, mayorias y empates).
+- Añadir accion Playwright que seleccione explicitamente combinaciones de mesa para cubrir el caso de `recogida obligatoria` con multiples opciones.
+
+## 2026-03-09 - Escoba: baraja por idioma (es* => espanola)
+- `src/games/StrategyEscobaDeckGame.jsx` actualizado para seleccionar baraja automaticamente por locale del navegador:
+  - `es*` -> `spanish` (40 cartas: A..7,S,C,R).
+  - resto -> `english_adapted` (40 cartas: A..7,J,Q,K).
+- Nuevo modelo de mazos (`DECKS`) con nombre mostrado en UI y serializado en bridge QA:
+  - `deck` y `deckName` ahora salen en `render_game_to_text`.
+- En Escoba se muestra en estado la baraja activa (`Baraja: Espanola (40)` / adaptada).
+- Reglas/subtitulo dinamicos segun baraja activa.
+- Cartas espanolas en Escoba usan assets reales (`/assets/cards/spanish/...`) y reverso cuando estan ocultas.
+- `src/data/games.js` y `src/games/registry.jsx` actualizados para documentar que Escoba usa baraja espanola cuando el idioma del navegador empieza por `es`.
+
+### Validacion
+- Build:
+  - `npm run build` OK (fuera de sandbox por EPERM de esbuild en sandbox).
+- Playwright Escoba (locale actual es):
+  - carpeta: `output/strategy-baraja-escoba-locale-check/escoba-es`
+  - artefactos: `shot-0..2.png`, `state-0..2.json`, sin `errors-*.json`.
+  - comprobacion clave: `state-0.json` reporta `"deck":"spanish"` y `"deckName":"Espanola (40)"`.
+
+## 2026-03-09 - Baraja modes UI: desplegable unico + nueva paleta del wrapper
+- `src/games/StrategyBarajaModesGame.jsx`:
+  - selector de modalidad sustituido: de 3 botones (`Brisca/Tute`, `Mus`, `Escoba`) a un unico `<select id="baraja-mode-select">`.
+  - anadido chip de estado `Activo: <modo>` en cabecera del wrapper.
+- `src/styles.css`:
+  - redisenado del contenedor `.strategy-baraja-modes` con paleta nueva (base crema + acentos teal/naranja), borde y fondo degradado.
+  - redisenado de `.baraja-mode-switch` para layout de formulario (label + select) y estilo del chip de modo activo.
+  - ajustes responsive para mantener legibilidad en movil.
+
+### Validacion
+- Build: `npm run build` OK (fuera de sandbox por restricciones EPERM previas de esbuild).
+- QA visual Playwright (script dirigido):
+  - `output/strategy-baraja-wrapper-redesign/shot-wrapper.png`
+  - `output/strategy-baraja-wrapper-redesign/state-escoba.json`
+  - `output/strategy-baraja-wrapper-redesign/state-mus.json`
+- Confirmado en estado serializado:
+  - al seleccionar `escoba` en el desplegable -> `mode: "strategy-escoba-15"`.
+  - al seleccionar `mus` en el desplegable -> `mode: "strategy-mus-ai"`.
+
+## 2026-03-09 - Escoba: LED de seleccion, ganador de ronda y ajuste de layout central
+- `src/games/StrategyEscobaDeckGame.jsx`:
+  - anadido calculo y persistencia de ganador(es) de ronda/mano en `lastHand` (`winnerOwners`, `winnerLabel`).
+  - indicador visual de ganador en asientos IA (`seat-won-trick` + `seat-turn-led`) y en zona humana (`human-won-trick`).
+  - barra de estado ampliada con `Ganador de ronda` / `Empate de ronda` cuando existe `lastHand`.
+  - modal de fin de mano muestra explicitamente ganador de ronda.
+  - runtime bridge actualizado para serializar `lastHand.winnerOwners` y `lastHand.winnerLabel`.
+  - notas largas (recogida obligatoria + controles) movidas fuera del bloque central de mesa para evitar solape con la zona de mano/mazo del usuario.
+- `src/styles.css`:
+  - LED visual en cartas seleccionadas de mesa (`.strategy-escoba-game .brisca-card.selected-for-discard`) con glow y punto activo.
+  - `escoba-center-zone` ajustada con top/width/max-height/scroll para contener contenido sin invadir el mazo del usuario.
+  - nuevo bloque externo `.escoba-layout-notes` para ayudas y controles.
+
+### Validacion
+- Build: `npm run build` OK.
+- Playwright QA (iteraciones largas + capturas manuales):
+  - `output/strategy-baraja-escoba-led-layout-check/escoba-long/`
+  - `output/strategy-baraja-escoba-led-layout-check/manual/state-final.json`
+  - `output/strategy-baraja-escoba-led-layout-check/manual/shot-final.png`
+- Confirmado en `state-final.json`:
+  - `phase: "hand-over"` y `lastHand.winnerOwners/winnerLabel` presentes.

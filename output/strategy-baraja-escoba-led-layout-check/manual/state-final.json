@@ -1,0 +1,130 @@
+{
+  "mode": "strategy-escoba-15",
+  "deck": "spanish",
+  "deckName": "Espanola (40)",
+  "phase": "hand-over",
+  "hand": 1,
+  "dealer": "ai-2",
+  "mano": "ai-1",
+  "turn": "ai-1",
+  "playerCount": 4,
+  "teamMode": false,
+  "targetPoints": 15,
+  "mandatoryCapture": false,
+  "difficulty": "medium",
+  "coordinates": "Seat coordinates are percentages on table felt (origin top-left, +x right, +y down).",
+  "stockCount": 0,
+  "table": [],
+  "selectedTable": [],
+  "hands": {
+    "human": [],
+    "counts": {
+      "human": 0,
+      "ai-1": 0,
+      "ai-2": 0,
+      "ai-3": 0
+    }
+  },
+  "captures": {
+    "counts": {
+      "human": 0,
+      "ai-1": 30,
+      "ai-2": 5,
+      "ai-3": 5
+    },
+    "escobas": {
+      "human": 0,
+      "ai-1": 1,
+      "ai-2": 0,
+      "ai-3": 1
+    }
+  },
+  "owners": [
+    {
+      "id": "human",
+      "score": 0
+    },
+    {
+      "id": "ai-1",
+      "score": 5
+    },
+    {
+      "id": "ai-2",
+      "score": 0
+    },
+    {
+      "id": "ai-3",
+      "score": 1
+    }
+  ],
+  "lastCapturerId": "ai-1",
+  "lastHand": {
+    "pointsByOwner": {
+      "human": 0,
+      "ai-1": 5,
+      "ai-2": 0,
+      "ai-3": 1
+    },
+    "breakdown": [
+      {
+        "key": "escobas",
+        "label": "Escobas",
+        "owner": "ai-1",
+        "points": 1,
+        "detail": "1"
+      },
+      {
+        "key": "escobas",
+        "label": "Escobas",
+        "owner": "ai-3",
+        "points": 1,
+        "detail": "1"
+      },
+      {
+        "key": "seven-oros",
+        "label": "Siete de oros",
+        "owner": "ai-1",
+        "points": 1,
+        "detail": "7♦"
+      },
+      {
+        "key": "most-sevens",
+        "label": "Mayoria de sietes",
+        "owner": "ai-1",
+        "points": 1,
+        "detail": "2"
+      },
+      {
+        "key": "most-cards",
+        "label": "Mayoria de cartas",
+        "owner": "ai-1",
+        "points": 1,
+        "detail": "30"
+      },
+      {
+        "key": "most-oros",
+        "label": "Mayoria de oros",
+        "owner": "ai-1",
+        "points": 1,
+        "detail": "9"
+      }
+    ],
+    "scoresAfter": {
+      "human": 0,
+      "ai-1": 5,
+      "ai-2": 0,
+      "ai-3": 1
+    },
+    "winnerOwners": [
+      "ai-1"
+    ],
+    "winnerLabel": "IA 1"
+  },
+  "actions": {
+    "canPlayHuman": false,
+    "canNextHand": true,
+    "canRestart": true,
+    "canToggleTable": false
+  },
+  "message": "Mano terminada. Revisa el reparto de puntos."
+}
