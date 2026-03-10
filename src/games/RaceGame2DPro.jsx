@@ -6,6 +6,10 @@ import "./RaceGame2DPro.css";
 const STEP_MS = 1000 / 60;
 const SEM_LIGHTS = 5;
 const SPEED_TO_KMH = 0.55;
+const FIXED_WEATHER_KEY = "dry";
+const FINISH_PRESENTATION_DURATION = 2.25;
+const FINISH_COAST_DECEL = 64;
+const FINISH_COAST_MIN_SPEED = 54;
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -163,14 +167,14 @@ const WEATHER_PROFILES = {
 
 const PHYS = {
   MAX_SPEED: 470,
-  ENGINE_ACCEL: 265,
+  ENGINE_ACCEL: 320,
   BRAKE_DECEL: 560,
   ENGINE_BRAKE: 92,
   ROLLING_DRAG: 28,
   AERO_DRAG: 0.00085,
   STEER_RATE: 2.45,
   STEER_RESPONSE: 8.2,
-  THROTTLE_RESPONSE: 7.0,
+  THROTTLE_RESPONSE: 9.0,
   BRAKE_RESPONSE: 10.0,
   YAW_RESPONSE: 7.0,
   LATERAL_GRIP: 12.5,
@@ -186,6 +190,46 @@ const PHYS = {
   OFF_TRACK_MAX_SPEED_FACTOR: 0.60,
   OFF_TRACK_RECOVERY: 1.2,
 };
+
+function getTrackUsableHalfWidth(track) {
+  return Math.max(PHYS.CAR_RADIUS * 1.5, track.trackWidth * 0.5 - PHYS.CAR_RADIUS * 1.75);
+}
+
+function buildTrackSlots(track, startS, totalCars, {
+  poleSide = "left",
+  direction = -1,
+  rowSpacing,
+  lateralScale = 0.56,
+  stagger = 0.42,
+  leadOffsetRows = 0,
+} = {}) {
+  const primarySideSign = poleSide === "left" ? -1 : 1;
+  const secondarySideSign = -primarySideSign;
+  const usableHalfWidth = getTrackUsableHalfWidth(track);
+  const effectiveRowSpacing = rowSpacing ?? Math.max(44, track.trackWidth * 0.62);
+  const lateralOffsetMagnitude = usableHalfWidth * lateralScale;
+
+  return Array.from({ length: totalCars }, (_, index) => {
+    const row = Math.floor(index / 2);
+    const onPrimarySide = index % 2 === 0;
+    const sideSign = onPrimarySide ? primarySideSign : secondarySideSign;
+    const rowOffset = leadOffsetRows + row + (onPrimarySide ? 0 : stagger);
+    const slotS = wrap01(startS + direction * ((rowOffset * effectiveRowSpacing) / Math.max(1, track.totalLength)));
+    const slotPoint = sampleTrackAt(track, slotS);
+    const normalX = -Math.sin(slotPoint.ang);
+    const normalY = Math.cos(slotPoint.ang);
+    const trackOffset = sideSign * lateralOffsetMagnitude;
+    return {
+      x: slotPoint.x + normalX * trackOffset,
+      y: slotPoint.y + normalY * trackOffset,
+      a: slotPoint.ang,
+      s: slotS,
+      trackOffset,
+      slot: index + 1,
+      side: sideSign < 0 ? "left" : "right",
+    };
+  });
+}
 
 function buildTrack(trackDef, canvasWidth, canvasHeight) {
   const raw = trackDef.raw;
@@ -570,8 +614,18 @@ function buildRaceViewModel(screen, game, weatherKey, aiDifficulty, lang, t) {
   const playerPosition = playerCar.finishOrder || getRacePosition(game, playerCar);
   const startOverlay = buildStartOverlay(game.startProcedure, t, screen);
   const leaderboard = game.pendingLeaderboard || buildLeaderboard(game, t);
+  const finishPresentation = screen !== "end" && game.finishPresentation?.active
+    ? {
+        title: t.finishBanner,
+        detail: playerCar?.finished
+          ? `P${playerPosition}/${game.cars.length} | ${t.finishBannerDetail}`
+          : t.finishBannerDetail,
+      }
+    : null;
   const message = startOverlay.phase !== "off"
     ? startOverlay.detail
+    : finishPresentation
+      ? finishPresentation.detail
     : playerCar?.finished
       ? t.finishMessage
       : playerCar?.offTrack
@@ -584,7 +638,7 @@ function buildRaceViewModel(screen, game, weatherKey, aiDifficulty, lang, t) {
     mode: "race2dpro",
     coordinates: "origin_top_left_x_right_y_down",
     screen,
-    phase: screen === "end" ? "finished" : game.startProcedure.phase,
+    phase: screen === "end" ? "finished" : finishPresentation ? "finish" : game.startProcedure.phase,
     track: buildTrackInfo(game.trackDef, weatherKey, aiDifficulty, game.totalLaps, game.cars.length - 1, lang, t),
     format: {
       startType: t.standingStart,
@@ -634,6 +688,7 @@ function buildRaceViewModel(screen, game, weatherKey, aiDifficulty, lang, t) {
       speedKmh: Math.round(car.speed * SPEED_TO_KMH),
       gridSlot: car.gridSlot,
     })),
+    finishPresentation,
     leaderboard,
     message,
   };
@@ -695,34 +750,19 @@ function createCar(id, isPlayer, aiDifficulty, seedBase) {
     gridA: 0,
     gridSlot: id + 1,
     gridSide: "left",
+    trackOffset: 0,
+    finishCoastSpeed: 0,
+    awaitingStartCross: true,
   };
 }
 
 function buildGridSlots(track, trackDef, totalCars) {
-  const startPoint = sampleTrackAt(track, track.startS);
-  const normalX = -Math.sin(startPoint.ang);
-  const normalY = Math.cos(startPoint.ang);
-  const backX = -Math.cos(startPoint.ang);
-  const backY = -Math.sin(startPoint.ang);
-  const poleOffset = trackDef.poleSide === "left" ? -0.56 : 0.56;
-  const secondaryOffset = -poleOffset;
-  const lateralSpacing = track.trackWidth * 0.34;
-  const rowSpacing = Math.max(42, track.trackWidth * 0.58);
-
-  return Array.from({ length: totalCars }, (_, index) => {
-    const row = Math.floor(index / 2);
-    const onPoleSide = index % 2 === 0;
-    const laneFactor = onPoleSide ? poleOffset : secondaryOffset;
-    const stagger = onPoleSide ? 0 : 0.42;
-    const x = startPoint.x + normalX * laneFactor * lateralSpacing + backX * (row + stagger) * rowSpacing;
-    const y = startPoint.y + normalY * laneFactor * lateralSpacing + backY * (row + stagger) * rowSpacing;
-    return {
-      x,
-      y,
-      a: startPoint.ang,
-      slot: index + 1,
-      side: onPoleSide ? (poleOffset < 0 ? "left" : "right") : (poleOffset < 0 ? "right" : "left"),
-    };
+  return buildTrackSlots(track, track.startS, totalCars, {
+    poleSide: trackDef.poleSide,
+    direction: -1,
+    rowSpacing: Math.max(46, track.trackWidth * 0.66),
+    lateralScale: 0.54,
+    stagger: 0.42,
   });
 }
 
@@ -758,32 +798,34 @@ function placeCarsOnGrid(cars, track, trackDef, playerGridIndex = 0) {
     car.surfaceGrip = 1;
     car.collided = false;
     car.collisionCooldown = 0;
-    car.s = closestS(track, car.x, car.y);
+    car.s = slot.s;
     car.gridX = slot.x;
     car.gridY = slot.y;
     car.gridA = slot.a;
     car.gridSlot = slot.slot;
     car.gridSide = slot.side;
+    car.trackOffset = slot.trackOffset;
+    car.finishCoastSpeed = 0;
+    car.awaitingStartCross = true;
   }
 }
 
 function parkCarsOnFinish(track, orderedCars) {
-  const finishPoint = sampleTrackAt(track, track.startS + 0.002);
-  const normalX = -Math.sin(finishPoint.ang);
-  const normalY = Math.cos(finishPoint.ang);
-  const alongX = Math.cos(finishPoint.ang);
-  const alongY = Math.sin(finishPoint.ang);
-  const rowSpacing = Math.max(46, track.trackWidth * 0.62);
-  const lateralSpacing = track.trackWidth * 0.34;
+  const slots = buildTrackSlots(track, track.startS + 0.002, orderedCars.length, {
+    poleSide: "left",
+    direction: 1,
+    rowSpacing: Math.max(52, track.trackWidth * 0.78),
+    lateralScale: 0.42,
+    stagger: 0.35,
+    leadOffsetRows: 0.78,
+  });
 
   for (let index = 0; index < orderedCars.length; index += 1) {
     const car = orderedCars[index];
-    const row = Math.floor(index / 2);
-    const laneSide = index % 2 === 0 ? -1 : 1;
-    const alongOffset = (row + 0.35) * rowSpacing;
-    car.x = finishPoint.x + alongX * alongOffset + normalX * laneSide * lateralSpacing;
-    car.y = finishPoint.y + alongY * alongOffset + normalY * laneSide * lateralSpacing;
-    car.a = finishPoint.ang;
+    const slot = slots[index];
+    car.x = slot.x;
+    car.y = slot.y;
+    car.a = slot.a;
     car.vx = 0;
     car.vy = 0;
     car.speed = 0;
@@ -792,11 +834,13 @@ function parkCarsOnFinish(track, orderedCars) {
     car.steerState = 0;
     car.yawRate = 0;
     car.slipAngle = 0;
-    car.s = closestSNear(track, car.x, car.y, track.startS);
+    car.s = slot.s;
+    car.trackOffset = slot.trackOffset;
+    car.finishCoastSpeed = 0;
   }
 }
 
-function finalizeRaceResults(game, t) {
+function finalizeRaceResults(game, t, { parkCars = true } = {}) {
   const orderedCars = getOrderedCars(game);
 
   orderedCars.forEach((car, index) => {
@@ -810,8 +854,65 @@ function finalizeRaceResults(game, t) {
   });
 
   game.finishOrder = orderedCars.map((car) => car.id);
-  parkCarsOnFinish(game.track, orderedCars);
+  if (parkCars) {
+    parkCarsOnFinish(game.track, orderedCars);
+  }
   game.pendingLeaderboard = buildLeaderboard(game, t);
+}
+
+function beginFinishPresentation(game, playerCar, t) {
+  if (game._endTriggered) return;
+  finalizeRaceResults(game, t, { parkCars: false });
+  game._endTriggered = true;
+  game.endCountdown = FINISH_PRESENTATION_DURATION;
+  game.finishPresentation = {
+    active: true,
+    playerOrder: playerCar?.finishOrder || null,
+  };
+  if (!playerCar) return;
+
+  const usableHalfWidth = getTrackUsableHalfWidth(game.track) * 0.58;
+  playerCar.trackOffset = clamp(playerCar.trackOffset, -usableHalfWidth, usableHalfWidth);
+  playerCar.finishCoastSpeed = clamp(playerCar.speed * 0.78, FINISH_COAST_MIN_SPEED, 220);
+}
+
+function advanceFinishedCar(car, track, dt, straightenToCenter = true) {
+  if (!car.finished || car.finishCoastSpeed <= 0) return;
+
+  const usableHalfWidth = getTrackUsableHalfWidth(track) * 0.58;
+  car.trackOffset = straightenToCenter
+    ? clamp(car.trackOffset * Math.max(0, 1 - dt * 1.2), -usableHalfWidth, usableHalfWidth)
+    : clamp(car.trackOffset, -usableHalfWidth, usableHalfWidth);
+
+  const travel = car.finishCoastSpeed * dt;
+  car.finishCoastSpeed = Math.max(0, car.finishCoastSpeed - FINISH_COAST_DECEL * dt);
+  car.s = wrap01(car.s + travel / Math.max(1, track.totalLength));
+  const sample = sampleTrackAt(track, car.s);
+  const normalX = -Math.sin(sample.ang);
+  const normalY = Math.cos(sample.ang);
+  const forwardX = Math.cos(sample.ang);
+  const forwardY = Math.sin(sample.ang);
+
+  car.a = sample.ang;
+  car.x = sample.x + normalX * car.trackOffset;
+  car.y = sample.y + normalY * car.trackOffset;
+  car.vx = forwardX * car.finishCoastSpeed;
+  car.vy = forwardY * car.finishCoastSpeed;
+  car.speed = car.finishCoastSpeed;
+  car.throttleState = 0;
+  car.brakeState = 0;
+  car.steerState = 0;
+  car.yawRate = 0;
+  car.slipAngle = 0;
+  car.trail.unshift({ x: car.x, y: car.y, a: car.a });
+  if (car.trail.length > 28) car.trail.pop();
+}
+
+function advanceFinishPresentation(game, dt) {
+  if (!game.finishPresentation?.active) return;
+  const playerCar = game.cars.find((car) => car.isPlayer);
+  if (!playerCar) return;
+  advanceFinishedCar(playerCar, game.track, dt, true);
 }
 
 function updateCar(car, dt, input, track, weatherProfile, allCars, startLocked) {
@@ -877,6 +978,7 @@ function updateCar(car, dt, input, track, weatherProfile, allCars, startLocked) 
   const dx = car.x - closestPoint.x;
   const dy = car.y - closestPoint.y;
   const distance = Math.hypot(dx, dy);
+  car.trackOffset = dx * (-Math.sin(closestPoint.ang)) + dy * Math.cos(closestPoint.ang);
 
   if (distance > halfWidth + 4) {
     car.offTrack = true;
@@ -1069,9 +1171,14 @@ function computeAiInput(car, track, weatherProfile, allCars) {
 function checkLapCross(car, prevS, totalLaps, clockMs, onFinish) {
   const crossed = prevS > 0.85 && car.s < 0.15;
   if (!crossed) return;
+  if (car.awaitingStartCross) {
+    car.awaitingStartCross = false;
+    return;
+  }
   if (car.lap >= totalLaps) {
     car.finished = true;
     car.finishTime = clockMs;
+    car.finishCoastSpeed = clamp(car.speed * 0.82, FINISH_COAST_MIN_SPEED, 220);
     onFinish(car);
   } else {
     car.lap += 1;
@@ -1142,8 +1249,16 @@ function stepRaceState(game, dt, playerInput, t) {
   game.time += dt;
 
   if (game._endTriggered) {
+    for (const car of game.cars) {
+      if (!car.isPlayer) advanceFinishedCar(car, game.track, dt, false);
+    }
+    advanceFinishPresentation(game, dt);
     game.endCountdown -= dt;
     if (game.endCountdown <= 0) {
+      if (game.finishPresentation?.active) {
+        parkCarsOnFinish(game.track, getOrderedCars(game));
+        game.finishPresentation.active = false;
+      }
       return { requestScreen: "end", importantChange: true };
     }
     return { importantChange: false };
@@ -1178,6 +1293,10 @@ function stepRaceState(game, dt, playerInput, t) {
     resolveCarCollisions(game.cars);
   }
 
+  for (const car of game.cars) {
+    if (!car.isPlayer) advanceFinishedCar(car, game.track, dt, false);
+  }
+
   if (game.startProcedure.phase === "racing" && game._raceStartTime != null) {
     game.raceElapsed = Math.max(0, (game.clockMs - game._raceStartTime) / 1000);
   }
@@ -1185,7 +1304,11 @@ function stepRaceState(game, dt, playerInput, t) {
   if (game.startProcedure.phase === "racing") {
     const playerFinished = Boolean(playerCar && playerCar.finished);
     const allFinished = game.cars.every((car) => car.finished);
-    if (playerFinished || allFinished) {
+    if (playerFinished) {
+      beginFinishPresentation(game, playerCar, t);
+      return { importantChange: true };
+    }
+    if (allFinished) {
       finalizeRaceResults(game, t);
       game._endTriggered = true;
       game.endCountdown = 0.8;
@@ -1525,6 +1648,31 @@ function renderCar(ctx, car, isPlayer) {
   ctx.restore();
 }
 
+function renderPlayerTag(ctx, car, label) {
+  ctx.save();
+  ctx.translate(car.x, car.y - 30);
+  ctx.font = "bold 10px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const textWidth = ctx.measureText(label).width;
+  const bubbleWidth = textWidth + 16;
+  const bubbleHeight = 18;
+  ctx.fillStyle = "rgba(8, 14, 20, 0.92)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.22)";
+  ctx.lineWidth = 1;
+  ctx.shadowBlur = 16;
+  ctx.shadowColor = "rgba(79, 214, 255, 0.34)";
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(-bubbleWidth / 2, -bubbleHeight / 2, bubbleWidth, bubbleHeight, 999);
+  else ctx.rect(-bubbleWidth / 2, -bubbleHeight / 2, bubbleWidth, bubbleHeight);
+  ctx.fill();
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#bdf4ff";
+  ctx.fillText(label, 0, 0);
+  ctx.restore();
+}
+
 function renderMinimap(ctx, track, cars, width, height) {
   ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = "rgba(4,4,12,0.92)";
@@ -1656,7 +1804,9 @@ export default function RaceGame2DPro() {
       watchLightsDetail: "Cada luz roja se enciende de forma secuencial. No muevas el coche hasta el apagado.",
       lightsOut: "GO!",
       lightsOutDetail: "Luces fuera. Gestiona la traccion y busca la referencia de frenada de T1.",
-      finishMessage: "Bandera a cuadros. Resultado fijado en parrilla final.",
+      finishMessage: "Bandera a cuadros. Clasificacion final confirmada.",
+      finishBanner: "BANDERA A CUADROS",
+      finishBannerDetail: "Cruce confirmado. Mantente en la recta mientras cerramos la clasificacion.",
       trackLimits: "Fuera de pista: el agarre cae, la frenada se alarga y el coche pierde velocidad.",
       balanceCaution: "El coche esta deslizando. Suelta direccion y recupera apoyo antes de volver a acelerar.",
       distanceLabel: "Longitud",
@@ -1694,7 +1844,9 @@ export default function RaceGame2DPro() {
       watchLightsDetail: "Each red light illuminates in sequence. Do not release the car before lights out.",
       lightsOut: "GO!",
       lightsOutDetail: "Lights out. Manage traction and commit to the first braking point.",
-      finishMessage: "Chequered flag. Final result locked in.",
+      finishMessage: "Chequered flag. Final classification confirmed.",
+      finishBanner: "CHEQUERED FLAG",
+      finishBannerDetail: "Finish confirmed. Hold the straight while we lock the final classification.",
       trackLimits: "Off track: grip drops, braking distances grow, and the car sheds speed.",
       balanceCaution: "The car is sliding. Open the steering and let the platform settle before reapplying throttle.",
       distanceLabel: "Distance",
@@ -1707,7 +1859,7 @@ export default function RaceGame2DPro() {
   const [screen, setScreen] = useState("setup");
   const [selectedTrackId, setSelectedTrackId] = useState(RACE2DPRO_CIRCUITS[0].id);
   const [aiDifficulty, setAiDifficulty] = useState("medium");
-  const [weatherKey, setWeatherKey] = useState("dry");
+  const weatherKey = FIXED_WEATHER_KEY;
   const [laps, setLaps] = useState(3);
   const [rivals, setRivals] = useState(5);
   const [joyKnob, setJoyKnob] = useState({ dx: 0, dy: 0 });
@@ -1785,6 +1937,7 @@ export default function RaceGame2DPro() {
       _endTriggered: false,
       endCountdown: 0,
       pendingLeaderboard: null,
+      finishPresentation: null,
       camera: { x: startPoint.x, y: startPoint.y, zoom: 1, shakeX: 0, shakeY: 0 },
       startProcedure: createStartProcedure(selectedTrack.id, laps, rivals, aiDifficulty),
     };
@@ -1874,8 +2027,10 @@ export default function RaceGame2DPro() {
       if (game.startProcedure.phase === "racing") {
         for (const car of game.cars) {
           const sample = sampleTrackAt(rebuiltTrack, car.s);
-          car.x = sample.x;
-          car.y = sample.y;
+          const normalX = -Math.sin(sample.ang);
+          const normalY = Math.cos(sample.ang);
+          car.x = sample.x + normalX * (car.trackOffset || 0);
+          car.y = sample.y + normalY * (car.trackOffset || 0);
           car.a = sample.ang;
         }
       } else {
@@ -1920,7 +2075,10 @@ export default function RaceGame2DPro() {
       for (const car of game.cars) {
         if (!car.isPlayer) renderCar(ctx, car, false);
       }
-      if (playerCar) renderCar(ctx, playerCar, true);
+      if (playerCar) {
+        renderCar(ctx, playerCar, true);
+        renderPlayerTag(ctx, playerCar, "YOU");
+      }
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       renderMinimap(minimapCtx, game.track, game.cars, miniWidth, miniHeight);
     };
@@ -1984,6 +2142,43 @@ export default function RaceGame2DPro() {
     return undefined;
   }, [weatherKey, aiDifficulty, lang, t]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const debugApi = {
+      forcePlayerFinish: () => {
+        const game = gameRef.current;
+        if (!game) return false;
+        const playerCar = game.cars.find((car) => car.isPlayer);
+        if (!playerCar) return false;
+        const targetS = wrap01(game.track.startS - 0.0015);
+        const sample = sampleTrackAt(game.track, targetS);
+        const normalX = -Math.sin(sample.ang);
+        const normalY = Math.cos(sample.ang);
+        const usableHalfWidth = getTrackUsableHalfWidth(game.track) * 0.5;
+        const lateralOffset = clamp(playerCar.trackOffset, -usableHalfWidth, usableHalfWidth);
+        playerCar.lap = game.totalLaps;
+        playerCar.s = targetS;
+        playerCar.a = sample.ang;
+        playerCar.x = sample.x + normalX * lateralOffset;
+        playerCar.y = sample.y + normalY * lateralOffset;
+        playerCar.vx = Math.cos(sample.ang) * 160;
+        playerCar.vy = Math.sin(sample.ang) * 160;
+        playerCar.speed = 160;
+        playerCar.trackOffset = lateralOffset;
+        playerCar.finished = false;
+        playerCar.finishOrder = null;
+        playerCar.finishCoastSpeed = 0;
+        return true;
+      },
+    };
+    window.__race2dproDebug = debugApi;
+    return () => {
+      if (window.__race2dproDebug === debugApi) {
+        delete window.__race2dproDebug;
+      }
+    };
+  }, []);
+
   useGameRuntimeBridge(viewModel, useCallback((snapshot) => snapshot, []), advanceTime);
 
   if (screen === "setup") {
@@ -1999,8 +2194,10 @@ export default function RaceGame2DPro() {
             </div>
             <div className="r2p__setupDivider" />
 
-            <div className="r2p__sectionLabel">{t.selectTrack}</div>
-            <div className="r2p__trackGrid">
+            <div className="r2p__setupMain">
+              <div className="r2p__setupPanel r2p__setupPanelTracks">
+                <div className="r2p__sectionLabel">{t.selectTrack}</div>
+                <div className="r2p__trackGrid">
               {RACE2DPRO_CIRCUITS.map((track) => (
                 <div
                   key={track.id}
@@ -2022,9 +2219,11 @@ export default function RaceGame2DPro() {
                   <div className="r2p__trackLayout">{track.profile[lang]}</div>
                 </div>
               ))}
-            </div>
+                </div>
+              </div>
 
-            <div className="r2p__selectedTrack">
+              <div className="r2p__setupPanel r2p__setupPanelConfig">
+                <div className="r2p__selectedTrack">
               <div className="r2p__selectedTrackTitle">{viewModel.track.name}</div>
               <div className="r2p__selectedTrackFacts">
                 <span>{t.distanceLabel}: {viewModel.track.distanceKm}</span>
@@ -2037,26 +2236,11 @@ export default function RaceGame2DPro() {
                 <span className="r2p__formatChip">{t.standingStart}</span>
                 <span className="r2p__formatChip">{t.fiveLights}</span>
                 <span className="r2p__formatChip">{t.staggeredGrid}</span>
+                <span className="r2p__formatChip">{WEATHER_PROFILES[FIXED_WEATHER_KEY].icon} {WEATHER_PROFILES[FIXED_WEATHER_KEY].label[lang]}</span>
               </div>
             </div>
 
             <div className="r2p__optionsRow">
-              <div className="r2p__optBlock">
-                <div className="r2p__sectionLabel">{t.selectWeather}</div>
-                <div className="r2p__choiceGroup">
-                  {Object.entries(WEATHER_PROFILES).map(([key, weather]) => (
-                    <button
-                      key={key}
-                      type="button"
-                      className={`r2p__choiceBtn${weatherKey === key ? " isActive" : ""}`}
-                      onClick={() => setWeatherKey(key)}
-                    >
-                      {weather.icon} {weather.label[lang]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               <div className="r2p__optBlock">
                 <div className="r2p__sectionLabel">{t.selectDifficulty}</div>
                 <div className="r2p__choiceGroup">
@@ -2089,7 +2273,7 @@ export default function RaceGame2DPro() {
                 </div>
               </div>
 
-              <div className="r2p__optBlock">
+              <div className="r2p__optBlock r2p__optBlockWide">
                 <div className="r2p__sectionLabel">{t.rivals}</div>
                 <div className="r2p__choiceGroup">
                   {[3, 5, 7].map((count) => (
@@ -2109,6 +2293,8 @@ export default function RaceGame2DPro() {
             <button id="start-btn" className="r2p__startBtn" type="button" onClick={startRace}>
               {t.startRace}
             </button>
+          </div>
+        </div>
           </div>
         </div>
       </div>
@@ -2197,7 +2383,13 @@ export default function RaceGame2DPro() {
           <div className={`r2p__semCaption${viewModel.startOverlay.phase === "go" ? " isGo" : ""}`}>
             {viewModel.startOverlay.caption}
           </div>
-          <div className="r2p__semDetail">{viewModel.startOverlay.detail}</div>
+        </div>
+      )}
+
+      {viewModel.finishPresentation && (
+        <div className="r2p__finishBanner">
+          <div className="r2p__finishTitle">{viewModel.finishPresentation.title}</div>
+          <div className="r2p__finishDetail">{viewModel.finishPresentation.detail}</div>
         </div>
       )}
 

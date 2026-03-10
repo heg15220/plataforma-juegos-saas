@@ -2468,3 +2468,38 @@ Pendiente sugerido:
   - Anadidos `parkCarsOnFinish` y `finalizeRaceResults` para fijar la clasificacion final y detener los coches sobre la zona de meta al terminar la carrera.
 - Verificacion tecnica:
   - `npx esbuild src/games/RaceGame2DPro.jsx --bundle ...` OK.
+
+## 2026-03-10 - Race 2D Pro: aceleracion base incrementada
+- `src/games/RaceGame2DPro.jsx`
+  - Aumentado `PHYS.ENGINE_ACCEL` de `265` a `320` para que todos los coches ganen velocidad antes a la salida de curvas y desde parrilla.
+  - Aumentado `PHYS.THROTTLE_RESPONSE` de `7.0` a `9.0` para reducir el retardo al aplicar gas.
+- Pendiente inmediato:
+  - validar la nueva sensacion de aceleracion con la pasada Playwright del circuito y comprobar que no aparece sobreviraje artificial ni errores de consola.
+
+## 2026-03-10 - Race 2D Pro: setup seco + parrilla en asfalto + final mas amable
+- `src/games/RaceGame2DPro.jsx`
+  - El setup pasa a mostrar condiciones fijas en seco; se elimina la seleccion de lluvia/crepusculo.
+  - Reorganizado el setup en dos paneles para que las previews de circuito encajen mejor y respiren dentro del componente.
+  - La parrilla y la formacion final usan ahora slots alineados con la geometria real de la pista, con margen util de asfalto para evitar coches fuera de la calzada.
+  - Anadida etiqueta `YOU` sobre el coche del jugador.
+  - La meta del jugador activa una breve secuencia de celebracion/coasting antes de abrir la clasificacion final.
+  - Anadido hook QA `window.__race2dproDebug.forcePlayerFinish()` para validar la llegada con Playwright sin depender de una vuelta manual completa.
+- Verificacion tecnica parcial:
+  - `npx esbuild src/games/RaceGame2DPro.jsx --bundle ...` OK.
+- Pendiente inmediato:
+  - validar visualmente setup, etiqueta `YOU`, colocacion de parrilla y secuencia de meta con Playwright.
+
+## 2026-03-10 - Race 2D Pro: fix de vuelta inicial en parrilla
+- `src/games/RaceGame2DPro.jsx`
+  - Anadido flag `awaitingStartCross` por coche para ignorar el primer cruce de meta tras arrancar desde parrilla.
+  - `placeCarsOnGrid` resetea ese flag en cada nueva salida para evitar que el HUD suba de `1/x` a `2/x` nada mas lanzar carrera.
+- Verificacion tecnica:
+  - `npx esbuild src/games/RaceGame2DPro.jsx --bundle ...` OK.
+
+## 2026-03-10 - Race 2D Pro: coasting en meta + limpieza del semaforo
+- `src/games/RaceGame2DPro.jsx`
+  - Los coches que ya han cruzado meta mantienen una pequena inercia (`finishCoastSpeed`) en vez de detenerse en seco justo al pasar la linea.
+  - Esto evita que una IA ya clasificada por delante se quede clavada en meta y que el jugador la rebase visualmente de forma extrana.
+  - Eliminado el bloque visual de texto secundario bajo el semaforo / `GO!` de la salida.
+- Verificacion tecnica:
+  - `npx esbuild src/games/RaceGame2DPro.jsx --bundle ...` OK.

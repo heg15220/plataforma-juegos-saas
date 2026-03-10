@@ -1,4 +1,5 @@
-﻿:root {
+/* src/games/RaceGame2DPro.css */
+:root {
   --r2p-ui-bg: rgba(8, 10, 14, 0.78);
   --r2p-ui-border: rgba(255, 255, 255, 0.2);
   --r2p-ui-text: rgba(255, 255, 255, 0.92);
@@ -7,7 +8,6 @@
   --r2p-accent-2: #ffcc4d;
   --r2p-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
 }
-
 .r2p {
   position: relative;
   width: 100%;
@@ -21,11 +21,9 @@
   box-shadow: var(--r2p-shadow);
   touch-action: none;
 }
-
 .r2p canvas {
   display: block;
 }
-
 .r2p__setup,
 .r2p__endOverlay {
   position: absolute;
@@ -37,7 +35,6 @@
   background: linear-gradient(135deg, rgba(8, 12, 20, 0.94), rgba(18, 30, 46, 0.92));
   overflow: auto;
 }
-
 .r2p__setupCard {
   width: min(1240px, 98vw);
   background: rgba(9, 13, 20, 0.86);
@@ -49,14 +46,12 @@
   flex-direction: column;
   gap: 14px;
 }
-
 .r2p__setupMain {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.95fr);
   gap: 16px;
   align-items: start;
 }
-
 .r2p__setupPanel {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
@@ -67,35 +62,29 @@
   gap: 12px;
   min-height: 0;
 }
-
 .r2p__setupPanelConfig {
   min-height: 100%;
 }
-
 .r2p__setupHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-
 .r2p__setupTitle {
   margin: 0;
   font-size: clamp(1.2rem, 1.5vw + 0.9rem, 2.1rem);
   letter-spacing: 0.02em;
   font-weight: 900;
 }
-
 .r2p__setupSub {
   margin-top: 4px;
   color: var(--r2p-ui-muted);
   font-size: 0.94rem;
 }
-
 .r2p__setupDivider {
   height: 1px;
   background: rgba(255, 255, 255, 0.14);
 }
-
 .r2p__sectionLabel {
   margin: 0;
   font-size: 0.78rem;
@@ -104,7 +93,6 @@
   color: rgba(210, 230, 255, 0.82);
   font-weight: 700;
 }
-
 .r2p__trackGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -113,7 +101,6 @@
   overflow: auto;
   padding-right: 4px;
 }
-
 .r2p__trackCard {
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 12px;
@@ -124,41 +111,37 @@
   flex-direction: column;
   gap: 10px;
   cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
-
 .r2p__trackCard:hover {
   transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.32);
 }
-
 .r2p__trackCard.isActive {
   border-color: var(--r2p-accent);
   box-shadow: 0 0 0 2px rgba(79, 214, 255, 0.28);
 }
-
 .r2p__trackPreview {
   width: 100%;
   aspect-ratio: 16 / 10;
   border-radius: 8px;
 }
-
 .r2p__trackName {
   font-size: 0.86rem;
   font-weight: 700;
 }
-
 .r2p__trackEnv,
 .r2p__trackLayout {
   font-size: 0.74rem;
   color: rgba(225, 233, 245, 0.78);
 }
-
 .r2p__trackMeta {
   font-size: 0.73rem;
   color: rgba(200, 220, 245, 0.72);
 }
-
 .r2p__selectedTrack {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
@@ -168,12 +151,10 @@
   flex-direction: column;
   gap: 8px;
 }
-
 .r2p__selectedTrackTitle {
   font-size: 1rem;
   font-weight: 800;
 }
-
 .r2p__selectedTrackFacts {
   display: flex;
   flex-wrap: wrap;
@@ -181,19 +162,16 @@
   font-size: 0.78rem;
   color: rgba(220, 230, 245, 0.82);
 }
-
 .r2p__trackNote {
   font-size: 0.82rem;
   color: rgba(235, 240, 248, 0.88);
   line-height: 1.45;
 }
-
 .r2p__formatRow {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
-
 .r2p__formatChip {
   border: 1px solid rgba(79, 214, 255, 0.25);
   border-radius: 999px;
@@ -203,29 +181,24 @@
   font-size: 0.74rem;
   font-weight: 700;
 }
-
 .r2p__optionsRow {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
-
 .r2p__optBlock {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-
 .r2p__optBlockWide {
   grid-column: 1 / -1;
 }
-
 .r2p__choiceGroup {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
-
 .r2p__choiceBtn {
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 10px;
@@ -237,31 +210,25 @@
   cursor: pointer;
   transition: all 0.15s ease;
 }
-
 .r2p__choiceBtn:hover {
   border-color: rgba(255, 255, 255, 0.32);
 }
-
 .r2p__choiceBtn.isActive {
   border-color: var(--r2p-accent);
   background: rgba(79, 214, 255, 0.15);
 }
-
 .r2p__choiceBtn.diff-easy.isActive {
   border-color: #63f07b;
   background: rgba(99, 240, 123, 0.18);
 }
-
 .r2p__choiceBtn.diff-medium.isActive {
   border-color: #ffcc4d;
   background: rgba(255, 204, 77, 0.18);
 }
-
 .r2p__choiceBtn.diff-hard.isActive {
   border-color: #ff6f61;
   background: rgba(255, 111, 97, 0.18);
 }
-
 .r2p__startBtn {
   border: none;
   border-radius: 14px;
@@ -275,12 +242,10 @@
   margin-top: auto;
   width: 100%;
 }
-
 .r2p__startBtn:hover {
   transform: translateY(-1px);
   filter: brightness(1.04);
 }
-
 .r2p__hud {
   position: absolute;
   inset: 12px 12px auto 12px;
@@ -291,7 +256,6 @@
   gap: 12px;
   pointer-events: none;
 }
-
 .r2p__hudPanel {
   background: var(--r2p-ui-bg);
   border: 1px solid var(--r2p-ui-border);
@@ -301,25 +265,21 @@
   padding: 10px 12px;
   min-width: 160px;
 }
-
 .r2p__hudPos {
   font-size: 2rem;
   line-height: 1;
   font-weight: 900;
   color: var(--r2p-accent);
 }
-
 .r2p__hudTrack {
   font-size: 0.92rem;
   font-weight: 800;
   margin-bottom: 6px;
 }
-
 .r2p__hudPos sub {
   font-size: 0.9rem;
   color: var(--r2p-ui-muted);
 }
-
 .r2p__hudPosLabel {
   font-size: 0.7rem;
   text-transform: uppercase;
@@ -327,7 +287,6 @@
   color: var(--r2p-ui-muted);
   font-weight: 700;
 }
-
 .r2p__hudLap,
 .r2p__hudSpeed,
 .r2p__hudWeather,
@@ -335,7 +294,6 @@
   font-size: 0.84rem;
   font-weight: 600;
 }
-
 .r2p__hudMessage {
   margin-top: 8px;
   font-size: 0.75rem;
@@ -343,7 +301,6 @@
   line-height: 1.4;
   max-width: 280px;
 }
-
 .r2p__minimapWrap {
   width: 180px;
   height: 120px;
@@ -354,12 +311,10 @@
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
   overflow: hidden;
 }
-
 .r2p__minimapCanvas {
   width: 100%;
   height: 100%;
 }
-
 .r2p__semaphore {
   position: absolute;
   top: 28%;
@@ -372,7 +327,6 @@
   z-index: 30;
   pointer-events: none;
 }
-
 .r2p__semLights {
   display: flex;
   gap: 6px;
@@ -380,23 +334,20 @@
   border: 1.5px solid rgba(255, 255, 255, 0.22);
   border-radius: 10px;
   padding: 7px 10px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
 }
-
 .r2p__semLight {
   width: 18px;
   height: 18px;
   border-radius: 50%;
   background: rgba(80, 0, 0, 0.7);
-  border: 1.5px solid rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
   transition: background 0.1s ease, box-shadow 0.1s ease;
 }
-
 .r2p__semLight.isOn {
   background: #e80000;
   box-shadow: 0 0 10px 4px rgba(255, 0, 0, 0.65), 0 0 3px 1px #ff4444;
 }
-
 .r2p__semGo {
   font-size: 1.6rem;
   font-weight: 900;
@@ -405,13 +356,19 @@
   letter-spacing: 0.05em;
   animation: r2p-go-pulse 0.3s ease-out;
 }
-
 @keyframes r2p-go-pulse {
-  0% { transform: scale(0.6); opacity: 0; }
-  60% { transform: scale(1.2); }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
-
 .r2p__semCaption {
   font-size: 1.02rem;
   font-weight: 800;
@@ -419,12 +376,10 @@
   text-transform: uppercase;
   color: rgba(245, 247, 252, 0.96);
 }
-
 .r2p__semCaption.isGo {
   color: #39ff14;
   text-shadow: 0 0 14px rgba(57, 255, 20, 0.8), 0 0 28px rgba(57, 255, 20, 0.4);
 }
-
 .r2p__semDetail {
   max-width: 420px;
   text-align: center;
@@ -432,7 +387,6 @@
   line-height: 1.35;
   color: rgba(230, 236, 245, 0.88);
 }
-
 .r2p__finishBanner {
   position: absolute;
   top: 22%;
@@ -452,21 +406,18 @@
   background: rgba(8, 12, 20, 0.9);
   box-shadow: 0 18px 36px rgba(0, 0, 0, 0.4);
 }
-
 .r2p__finishTitle {
   font-size: 1rem;
   font-weight: 900;
   letter-spacing: 0.08em;
   color: #ffef9f;
 }
-
 .r2p__finishDetail {
   text-align: center;
   font-size: 0.78rem;
   line-height: 1.4;
   color: rgba(232, 238, 246, 0.88);
 }
-
 .r2p__touch {
   position: absolute;
   inset: auto 14px 14px 14px;
@@ -475,12 +426,10 @@
   align-items: end;
   pointer-events: none;
 }
-
 .r2p__joystick,
 .r2p__touchRight {
   pointer-events: auto;
 }
-
 .r2p__joystick {
   width: 110px;
   height: 110px;
@@ -489,7 +438,6 @@
   background: rgba(8, 12, 18, 0.5);
   position: relative;
 }
-
 .r2p__joystickKnob {
   position: absolute;
   top: 50%;
@@ -501,13 +449,11 @@
   transform: translate(-50%, -50%);
   box-shadow: 0 0 20px rgba(79, 214, 255, 0.5);
 }
-
 .r2p__touchRight {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-
 .r2p__touchBtn {
   width: 64px;
   height: 64px;
@@ -518,7 +464,6 @@
   font-size: 1.4rem;
   font-weight: 700;
 }
-
 .r2p__keyHint {
   position: absolute;
   left: 50%;
@@ -533,7 +478,6 @@
   backdrop-filter: blur(5px);
   pointer-events: none;
 }
-
 .r2p__endCard {
   width: min(560px, 94vw);
   background: rgba(10, 14, 22, 0.88);
@@ -542,37 +486,31 @@
   padding: 20px;
   box-shadow: 0 24px 52px rgba(0, 0, 0, 0.48);
 }
-
 .r2p__endTitle {
   margin: 0 0 14px;
   font-size: 1.5rem;
 }
-
 .r2p__endTable {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
 }
-
 .r2p__endTable th,
 .r2p__endTable td {
   padding: 8px 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   text-align: left;
 }
-
 .r2p__endTable th {
   color: var(--r2p-ui-muted);
   font-size: 0.73rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
-
 .r2p__endTable tr.isPlayer td {
   color: #89e4ff;
   font-weight: 700;
 }
-
 .r2p__endColorDot {
   display: inline-block;
   width: 10px;
@@ -581,13 +519,11 @@
   margin-right: 7px;
   box-shadow: 0 0 8px currentColor;
 }
-
 .r2p__endBtns {
   display: flex;
   gap: 10px;
   margin-top: 14px;
 }
-
 .r2p__endBtnPrimary,
 .r2p__endBtnSecondary {
   flex: 1;
@@ -598,104 +534,84 @@
   font-weight: 700;
   cursor: pointer;
 }
-
 .r2p__endBtnPrimary {
   background: linear-gradient(90deg, #4fd6ff, #2ea5ff 50%, #4f87ff);
   color: #061018;
 }
-
 .r2p__endBtnSecondary {
   background: rgba(255, 255, 255, 0.08);
   color: var(--r2p-ui-text);
   border: 1px solid rgba(255, 255, 255, 0.16);
 }
-
 @media (max-width: 1180px) {
   .r2p__setupMain {
     grid-template-columns: 1fr;
   }
-
   .r2p__trackGrid {
     max-height: none;
   }
 }
-
 @media (max-width: 1050px) {
   .r2p__trackGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
   .r2p__optionsRow {
     grid-template-columns: repeat(1, minmax(0, 1fr));
   }
 }
-
 @media (max-width: 820px) {
   .r2p {
     min-height: 520px;
     height: min(88vh, 860px);
   }
-
   .r2p__hud {
     grid-template-columns: 1fr;
     justify-items: stretch;
     gap: 8px;
   }
-
   .r2p__minimapWrap {
     width: 100%;
     height: 112px;
   }
-
   .r2p__finishBanner {
     top: 18%;
   }
 }
-
 @media (max-width: 760px), (pointer: coarse) {
   .r2p__touch {
     display: flex;
   }
-
   .r2p__keyHint {
     display: none;
   }
-
   .r2p {
     height: min(90vh, 880px);
     min-height: 500px;
   }
 }
-
 @media (max-width: 560px) {
   .r2p__setupCard {
     padding: 14px;
     border-radius: 14px;
   }
-
   .r2p__trackGrid {
     grid-template-columns: repeat(1, minmax(0, 1fr));
   }
-
   .r2p__selectedTrackFacts {
     flex-direction: column;
     gap: 6px;
   }
-
   .r2p__trackPreview {
     height: 96px;
   }
-
   .r2p__touchBtn {
     width: 58px;
     height: 58px;
   }
-
   .r2p__joystick {
     width: 96px;
     height: 96px;
   }
-
   .r2p__finishBanner {
     min-width: 0;
     width: calc(100% - 28px);
