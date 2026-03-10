@@ -15,6 +15,7 @@ import StrategySudokuGame from "../games/StrategySudokuGame";
 import PokerTexasHoldemGame from "../games/PokerTexasHoldemGame";
 import ParchisStrategyGame from "../games/ParchisStrategyGame";
 import RaceGame2DPro from "../games/RaceGame2DPro";
+import SunsetSlipstream from "../games/racing/midnight-traffic";
 import resolveBrowserLanguage from "../utils/resolveBrowserLanguage";
 
 const PlatformerGame = lazy(() => import("../games/PlatformerGame"));
@@ -65,6 +66,7 @@ const GAME_COMPONENTS = {
   "arcade-pacman-maze-protocol": PacmanGame,
   "arcade-buscaminas-classic": MinesweeperGame,
   "racing-race2dpro": RaceGame2DPro,
+  "racing-sunset-slipstream": SunsetSlipstream,
 };
 
 const CONTROL_HINTS_BY_LOCALE = {
@@ -100,6 +102,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "arcade-pacman-maze-protocol": "WASD o flechas para mover, Enter/Espacio para empezar, P/Esc para pausa, R reinicia, M sonido y G debug.",
     "arcade-buscaminas-classic": "Click izq abre, click der o pulsacion larga marca bandera. Flechas mueven cursor, Enter/Espacio abre, F marca, H sugiere IA, A ejecuta IA, R reinicia. En competitivo puntuan celdas + tiempo.",
     "racing-race2dpro": "Arriba/abajo acelerar/frenar, izq/der girar. Móvil: joystick táctil izq. + botones der. R reinicia.",
+    "racing-sunset-slipstream": "Izq/der maniobra, arriba acelera, abajo enfria el ritmo, Espacio activa focus y R reinicia.",
   },
   en: {
     "adventure-echoes": "Move with WASD/arrows plus search, scan, rations, beacon and jump (B).",
@@ -133,6 +136,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "arcade-pacman-maze-protocol": "Use arrows or WASD to move, Enter/Space to start, P/Esc to pause, R restart, M sound and G debug.",
     "arcade-buscaminas-classic": "Left click reveals, right click or long press marks. Arrows move cursor, Enter/Space reveals, F marks, H asks AI hint, A runs AI move, R restarts. Competitive mode scores cells + time.",
     "racing-race2dpro": "Up/down throttle/brake, left/right steer. Mobile: left touch joystick + right buttons. R restart.",
+    "racing-sunset-slipstream": "Left/right steers, up accelerates, down cools the pace, Space activates focus, and R restarts.",
   }
 };
 

@@ -2503,3 +2503,43 @@ Pendiente sugerido:
   - Eliminado el bloque visual de texto secundario bajo el semaforo / `GO!` de la salida.
 - Verificacion tecnica:
   - `npx esbuild src/games/RaceGame2DPro.jsx --bundle ...` OK.
+
+## 2026-03-10 - Sunset Slipstream: nuevo juego de carreras inspirado en pixi-racing
+- Referencia externa revisada:
+  - Clonado `https://github.com/arielfr/pixi-racing` en `_tmp_pixi_racing_ref` solo para estudio de mecanicas/arquitectura.
+  - Licencia verificada como MIT en `_tmp_pixi_racing_ref/package.json`, apta para inspiracion sin copiar codigo.
+- Implementacion propia:
+  - Anadido `src/games/racing/midnight-traffic/index.jsx` con un survival racer original de autopista en canvas: perspectiva falsa, 4 carriles, trafico dinamico, near miss, focus/bullet-time, escudos y pickups.
+  - Anadido `src/games/racing/midnight-traffic/styles.css` para layout responsive, overlays y direccion visual atardecer.
+  - Anadido asset `src/assets/games/sunset-slipstream.svg`.
+  - Integrado el juego en catalogo y runtime de la app: `src/data/games.js`, `src/games/registry.jsx`, `src/components/GamePlayground.jsx`.
+  - Anadido fallback `roundRectPath()` para no depender de `CanvasRenderingContext2D.roundRect()` en todos los navegadores.
+- Verificacion tecnica:
+  - `npx esbuild src/games/racing/midnight-traffic/index.jsx --bundle --format=esm --platform=browser --outfile=output/sunset-slipstream-check.js` OK.
+  - Pasada Playwright del skill sobre `http://127.0.0.1:5173/index.html#game=racing-sunset-slipstream` con `playwright-actions-sunset-slipstream.json`; artefactos en `output/sunset-slipstream-audit/`.
+  - Estados QA confirmados: menu, playing y gameover; sin `errors-*.json` nuevos.
+  - `npm run build` OK fuera del sandbox (dentro fallaba por `spawn EPERM` de `esbuild`).
+- Nota / siguiente agente:
+  - Las capturas del cliente Playwright priorizan el canvas y no siempre reflejan overlays DOM cuando el canvas ya es opaco; si se quiere QA visual explicito de menu/gameover con overlay, conviene hacer full-page screenshot o dibujar esos estados dentro del propio canvas.
+
+## 2026-03-10 - Sunset Slipstream: mejora visual de coches (mas realistas)
+- `src/games/racing/midnight-traffic/index.jsx`
+  - Ajustada paleta de trafico a tonos mas automotrices (menos neones planos, mas metal/pintura).
+  - Anadidos helpers de color (`parseColor`, `mixColor`, `withAlpha`) para generar degradados y transparencias coherentes por coche.
+  - Rehecho `drawCar` con silueta mas organica (capo/cabina/cola), pasos de rueda, ruedas visibles, parabrisas/luneta, luces delanteras/traseras, separaciones de panel y reflejos especulares.
+  - Refinado efecto de escudo (doble aro) y sombra/reflejo sobre el asfalto para mejorar volumen.
+  - Retocado color del coche del jugador para mantener contraste y lectura con el nuevo sombreado.
+
+## 2026-03-10 - Sunset Slipstream: inspiracion directa en assets de pixi-racing
+- Referencia visual escaneada:
+  - Revisados assets de `_tmp_pixi_racing_ref/game/assets` (`BlackOut.png`, `RedStrip.png`, `BlueStrip.png`, `GreenStrip.png`, `PinkStrip.png`, `WhiteStrip.png`).
+  - Patron extraido: base oscura de carroceria + franjas de color de alto contraste (laterales/centrales) para identidad por coche.
+- Implementacion:
+  - `TRAFFIC_STYLES` pasa a esquema `body` oscuro + `accent` por vehiculo.
+  - `drawCar` renderiza franja central y franjas laterales inspiradas en `pixi-racing`, integradas con sombreado y volumen del modelo realista.
+  - Jugador actualizado con `accent` propio para mantener lectura en foco/no foco.
+- Verificacion tecnica:
+  - `npx esbuild src/games/racing/midnight-traffic/index.jsx --bundle --format=esm --platform=browser --outfile=output/sunset-slipstream-check.js` OK.
+  - Pasada Playwright en `http://127.0.0.1:5173/index.html#game=racing-sunset-slipstream` con `playwright-actions-sunset-slipstream.json`.
+  - Artefactos generados en `output/sunset-slipstream-audit-v2/` (`shot-0.png`, `shot-1.png`, `state-0.json`, `state-1.json`), confirmando visual nueva en gameplay.
+  - Nota: el cliente Playwright agoto timeout del comando en este entorno tras generar artefactos; no se detectaron `errors-*.json` en la carpeta.

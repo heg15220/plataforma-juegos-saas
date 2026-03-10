@@ -30,6 +30,7 @@ import strategyPokerNoBetImage from "../assets/games/strategy-poker-no-bet.svg";
 import strategyParchisLudotekaImage from "../assets/games/strategy-parchis-ludoteka.svg";
 import strategyBarajaIaImage from "../assets/games/strategy-baraja-ia.svg";
 import race2dproImage from "../assets/games/race2dpro.svg";
+import sunsetSlipstreamImage from "../assets/games/sunset-slipstream.svg";
 
 /**
  * Game catalog
@@ -519,6 +520,50 @@ export const games = [
   },
 
   // ── Knowledge ──────────────────────────────────────────────────────────────
+  {
+    id: "racing-sunset-slipstream",
+    image: sunsetSlipstreamImage,
+    sessionTime: "2-6 min",
+
+    title: "Sunset Slipstream",
+    category: "Carreras",
+    tagline: "Supervivencia arcade top-down con trafico denso, near miss, escudos y focus.",
+    description:
+      "Carreras de supervivencia en autopista con camara cenital, carretera vertical y control con inercia. Debes leer el trafico, corregir la trazada con precision y exprimir los near miss para cargar focus, activar camara lenta y seguir vivo cuando la densidad sube.",
+    objective_es: "Sobrevive el maximo tiempo posible, esquiva coches y encadena near miss para subir la puntuacion.",
+    howToPlay_es: "Izquierda/derecha maniobra el coche, arriba acelera, abajo enfria el ritmo, Espacio activa focus y R reinicia la sesion.",
+    highlights: [
+      "Autopista canvas top-down con carretera vertical, scroll limpio y coches mas grandes en pantalla.",
+      "Sistema de near miss con racha, bonus de puntuacion y recarga de focus.",
+      "Power-ups defensivos y de energia para sostener sesiones mas largas.",
+      "Estado QA serializable con render_game_to_text y avance determinista.",
+      "Direccion visual propia inspirada en atardecer, skyline y asfalto de alta velocidad.",
+    ],
+    difficulty: "Media-Alta",
+    multiplayer: "Solo",
+    viability: "Alta: motor Canvas nativo con poca superficie tecnica y telemetria clara.",
+    visualStyle: "Autopista al atardecer con horizonte urbano, asfalto centrado, luces laterales y coches de silueta arcade.",
+    techFocus: "Scroll vertical, control con inercia, spawns deterministicos, near miss scoring y bullet-time ligero.",
+
+    category_en: "Racing",
+    tagline_en: "Top-down highway survival with dense traffic, near misses, shields, and focus.",
+    description_en:
+      "A survival racer built around a top-down highway, a vertical road layout, and inertia-based handling. Read traffic, correct the car precisely, and milk near misses to charge focus, trigger slow motion, and stay alive as density ramps up.",
+    objective_en: "Survive as long as possible, dodge traffic, and chain near misses to climb the score.",
+    howToPlay_en: "Left/right steers the car, up accelerates, down cools the pace, Space activates focus, and R restarts the session.",
+    highlights_en: [
+      "Top-down canvas highway with a vertical road, cleaner scroll, and larger on-screen cars.",
+      "Near-miss system with streaks, score bonuses, and focus recharge.",
+      "Defensive and energy pickups that support longer sessions.",
+      "Serializable QA state with render_game_to_text and deterministic frame stepping.",
+      "Original visual direction built around sunset glow, skyline silhouettes, and fast asphalt.",
+    ],
+    difficulty_en: "Medium-High",
+    multiplayer_en: "Solo",
+    viability_en: "High: native Canvas engine with low technical surface area and clear telemetry.",
+    visualStyle_en: "Sunset highway with urban horizon, centred asphalt, roadside lights, and bold arcade cars.",
+    techFocus_en: "Vertical scroll, inertia handling, deterministic spawns, near-miss scoring, and light bullet-time.",
+  },
   {
     id: "knowledge-quiz-nexus",
     image: wordBlitzImage,
