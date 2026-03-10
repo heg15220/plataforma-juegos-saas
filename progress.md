@@ -2543,3 +2543,31 @@ Pendiente sugerido:
   - Pasada Playwright en `http://127.0.0.1:5173/index.html#game=racing-sunset-slipstream` con `playwright-actions-sunset-slipstream.json`.
   - Artefactos generados en `output/sunset-slipstream-audit-v2/` (`shot-0.png`, `shot-1.png`, `state-0.json`, `state-1.json`), confirmando visual nueva en gameplay.
   - Nota: el cliente Playwright agoto timeout del comando en este entorno tras generar artefactos; no se detectaron `errors-*.json` en la carpeta.
+
+## 2026-03-10 - Race 2D Pro: ranking inicial + recuperacion tras lances
+- `src/games/RaceGame2DPro.jsx`
+  - Ranking: `getOrderedCars` ahora corrige el caso de coches de parrilla con `s` envuelto cerca de `1.0` antes del primer cruce real de meta (evita posiciones tipo `5/6` cuando el coche sale delante).
+  - Anadido `gridS` en el estado del coche para discriminar ese estado de parrilla en el calculo de progreso.
+  - Fisica de recuperacion:
+    - Colisiones menos punitivas para velocidad/rotacion (`COLLISION_VELOCITY_DAMP`, `COLLISION_YAW_DAMP`, `COLLISION_THROTTLE_CLAMP`, `COLLISION_COOLDOWN` ajustados).
+    - Salidas de pista con menor castigo de punta y recuperacion de grip mas rapida (`OFF_TRACK_GRIP`, `OFF_TRACK_MAX_SPEED_FACTOR`, `OFF_TRACK_RECOVERY`).
+    - Reducido scrub de velocidad fuera de pista para volver al ritmo normal sin tiempos muertos excesivos.
+- Verificacion tecnica:
+  - `npx esbuild src/games/RaceGame2DPro.jsx --bundle --format=esm --platform=browser --outfile=output/race2dpro-recovery-fix-check.js` OK.
+
+## 2026-03-10 - Race 2D Pro: fix adicional de posicion en carrera (caso 4a -> 6/6)
+- `src/games/RaceGame2DPro.jsx`
+  - `getOrderedCars` ahora ordena por progreso vivo sobre pista (`closestSNear(track, x, y, s)`) en vez de depender solo del `s` almacenado, evitando desajustes tras incidentes y correcciones de trayectoria.
+  - Normalizado el progreso respecto a `startS` del circuito para que la clasificacion use una referencia consistente entre pistas.
+  - Pre-vuelta inicial (antes del primer cruce real): el progreso se calcula con distancia recorrida desde `gridS` menos distancia a linea de salida; evita saltos de posicion espurios en la salida.
+  - `checkLapCross` actualizado para detectar cruce de meta relativo a `startS` (no hardcodeado al 0 de parametro), alineando conteo de vuelta y ranking con la linea de meta dibujada.
+  - `buildRaceViewModel` reporta `progress` de jugador y rivales con posicion viva sobre pista para mantener coherencia entre HUD y estado debug.
+- Verificacion tecnica:
+  - `npx esbuild src/games/RaceGame2DPro.jsx --bundle --format=esm --platform=browser --outfile=output/race2dpro-position-fix-v2-check.js` OK.
+
+## 2026-03-10 - Race 2D Pro: HUD de posicion correcta antes de salida
+- `src/games/RaceGame2DPro.jsx`
+  - En `buildRaceViewModel`, mientras `startProcedure.phase` sea `grid/lights/go` (antes de `racing`), el HUD usa `playerCar.gridSlot` como `position`.
+  - Al comenzar `racing`, vuelve automaticamente al ranking dinamico en pista.
+- Verificacion tecnica:
+  - `npx esbuild src/games/RaceGame2DPro.jsx --bundle --format=esm --platform=browser --outfile=output/race2dpro-grid-pos-fix-check.js` OK.

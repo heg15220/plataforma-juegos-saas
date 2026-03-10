@@ -181,14 +181,14 @@ const PHYS = {
   LATERAL_STABILITY: 9.0,
   CAR_RADIUS: 12,
   COLLISION_SEPARATION: 0.52,
-  COLLISION_VELOCITY_DAMP: 0.985,
-  COLLISION_YAW_DAMP: 0.74,
-  COLLISION_THROTTLE_CLAMP: 0.55,
+  COLLISION_VELOCITY_DAMP: 0.992,
+  COLLISION_YAW_DAMP: 0.82,
+  COLLISION_THROTTLE_CLAMP: 0.78,
   COLLISION_CAMERA_SHAKE: 4,
-  COLLISION_COOLDOWN: 0.14,
-  OFF_TRACK_GRIP: 0.56,
-  OFF_TRACK_MAX_SPEED_FACTOR: 0.60,
-  OFF_TRACK_RECOVERY: 1.2,
+  COLLISION_COOLDOWN: 0.1,
+  OFF_TRACK_GRIP: 0.72,
+  OFF_TRACK_MAX_SPEED_FACTOR: 0.82,
+  OFF_TRACK_RECOVERY: 0.65,
 };
 
 function getTrackUsableHalfWidth(track) {
@@ -544,9 +544,26 @@ function buildStartOverlay(startProcedure, t, screen = "race") {
 }
 
 function getOrderedCars(game) {
+  const getLiveS = (car) => {
+    if (car.finished || !game.track) return car.s;
+    return closestSNear(game.track, car.x, car.y, car.s);
+  };
+
+  const getProgressScore = (car) => {
+    const liveS = getLiveS(car);
+    const startS = game.track?.startS ?? 0;
+    if (car.awaitingStartCross && car.lap <= 1) {
+      const gridS = typeof car.gridS === "number" ? car.gridS : liveS;
+      const distanceToStart = wrap01(startS - gridS);
+      const traveledSinceGrid = wrap01(liveS - gridS);
+      return traveledSinceGrid - distanceToStart;
+    }
+    return (car.lap - 1) + wrap01(liveS - startS);
+  };
+
   return [...game.cars].sort((a, b) => {
-    const aProgress = (a.lap - 1) + a.s;
-    const bProgress = (b.lap - 1) + b.s;
+    const aProgress = getProgressScore(a);
+    const bProgress = getProgressScore(b);
     if (a.finishOrder && b.finishOrder) return a.finishOrder - b.finishOrder;
     if (a.finishOrder) return -1;
     if (b.finishOrder) return 1;
@@ -611,7 +628,11 @@ function buildSetupViewModel(trackDef, aiDifficulty, weatherKey, laps, rivals, l
 
 function buildRaceViewModel(screen, game, weatherKey, aiDifficulty, lang, t) {
   const playerCar = game.cars.find((car) => car.isPlayer) || game.cars[0];
-  const playerPosition = playerCar.finishOrder || getRacePosition(game, playerCar);
+  const preStartPhase = game.startProcedure?.phase && game.startProcedure.phase !== "racing";
+  const playerPosition = playerCar.finishOrder
+    || (preStartPhase
+      ? (playerCar.gridSlot || getRacePosition(game, playerCar))
+      : getRacePosition(game, playerCar));
   const startOverlay = buildStartOverlay(game.startProcedure, t, screen);
   const leaderboard = game.pendingLeaderboard || buildLeaderboard(game, t);
   const finishPresentation = screen !== "end" && game.finishPresentation?.active
@@ -665,7 +686,12 @@ function buildRaceViewModel(screen, game, weatherKey, aiDifficulty, lang, t) {
           x: roundNumber(playerCar.x, 1),
           y: roundNumber(playerCar.y, 1),
           angle: roundNumber(playerCar.a, 2),
-          progress: roundNumber(playerCar.s, 4),
+          progress: roundNumber(
+            playerCar.finished || !game.track
+              ? playerCar.s
+              : closestSNear(game.track, playerCar.x, playerCar.y, playerCar.s),
+            4
+          ),
           lap: playerCar.lap,
           speedKmh: Math.round(playerCar.speed * SPEED_TO_KMH),
           slipAngle: roundNumber(playerCar.slipAngle, 3),
@@ -681,7 +707,10 @@ function buildRaceViewModel(screen, game, weatherKey, aiDifficulty, lang, t) {
       x: roundNumber(car.x, 1),
       y: roundNumber(car.y, 1),
       angle: roundNumber(car.a, 2),
-      progress: roundNumber(car.s, 4),
+      progress: roundNumber(
+        car.finished || !game.track ? car.s : closestSNear(game.track, car.x, car.y, car.s),
+        4
+      ),
       lap: car.lap,
       finished: car.finished,
       finishOrder: car.finishOrder,
@@ -748,6 +777,7 @@ function createCar(id, isPlayer, aiDifficulty, seedBase) {
     gridX: 0,
     gridY: 0,
     gridA: 0,
+    gridS: 0,
     gridSlot: id + 1,
     gridSide: "left",
     trackOffset: 0,
@@ -802,6 +832,7 @@ function placeCarsOnGrid(cars, track, trackDef, playerGridIndex = 0) {
     car.gridX = slot.x;
     car.gridY = slot.y;
     car.gridA = slot.a;
+    car.gridS = slot.s;
     car.gridSlot = slot.slot;
     car.gridSide = slot.side;
     car.trackOffset = slot.trackOffset;
@@ -986,9 +1017,9 @@ function updateCar(car, dt, input, track, weatherProfile, allCars, startLocked) 
     const overDistance = distance - (halfWidth + 4);
     car.x -= (dx / distance) * overDistance * 0.7;
     car.y -= (dy / distance) * overDistance * 0.7;
-    const scrub = clamp(overDistance / 26, 0, 0.32);
-    car.vx *= 1 - scrub * 0.18;
-    car.vy *= 1 - scrub * 0.18;
+    const scrub = clamp(overDistance / 30, 0, 0.24);
+    car.vx *= 1 - scrub * 0.12;
+    car.vy *= 1 - scrub * 0.12;
     car.yawRate *= 0.96;
     if (car.dustParticles.length < 60 && Math.random() < 0.4) {
       const angle = Math.random() * Math.PI * 2;
@@ -1168,8 +1199,10 @@ function computeAiInput(car, track, weatherProfile, allCars) {
   return { throttle, brake, steer };
 }
 
-function checkLapCross(car, prevS, totalLaps, clockMs, onFinish) {
-  const crossed = prevS > 0.85 && car.s < 0.15;
+function checkLapCross(car, prevS, startS, totalLaps, clockMs, onFinish) {
+  const prevFromStart = wrap01(prevS - startS);
+  const currentFromStart = wrap01(car.s - startS);
+  const crossed = prevFromStart > 0.85 && currentFromStart < 0.15;
   if (!crossed) return;
   if (car.awaitingStartCross) {
     car.awaitingStartCross = false;
@@ -1282,7 +1315,7 @@ function stepRaceState(game, dt, playerInput, t) {
     updateCar(car, dt, input, game.track, game.weather, game.cars, startLocked);
 
     if (game.startProcedure.phase === "racing") {
-      checkLapCross(car, prevS, game.totalLaps, game.clockMs, (finishedCar) => {
+      checkLapCross(car, prevS, game.track.startS, game.totalLaps, game.clockMs, (finishedCar) => {
         finishedCar.finishOrder = game.finishOrder.length + 1;
         game.finishOrder.push(finishedCar.id);
       });
