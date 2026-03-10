@@ -1,95 +1,146 @@
-﻿import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import useGameRuntimeBridge from "../utils/useGameRuntimeBridge";
+import { RACE2DPRO_CIRCUITS } from "./race2dpro/circuits";
 import "./RaceGame2DPro.css";
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// SECTION 1: Utilities
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const STEP_MS = 1000 / 60;
+const SEM_LIGHTS = 5;
+const SPEED_TO_KMH = 0.55;
 
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const lerp = (a, b, t) => a + (b - a) * t;
-const wrap01 = (x) => ((x % 1) + 1) % 1;
-const angNorm = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+const wrap01 = (value) => ((value % 1) + 1) % 1;
+const angNorm = (angle) => Math.atan2(Math.sin(angle), Math.cos(angle));
 const signedAngleDiff = (from, to) => angNorm(to - from);
+const roundNumber = (value, digits = 2) => Number(value.toFixed(digits));
+const approach = (current, target, rate, dt) => lerp(current, target, clamp(rate * dt, 0, 1));
 
 function catmullRom(p0, p1, p2, p3, t) {
-  const t2 = t * t, t3 = t2 * t;
+  const t2 = t * t;
+  const t3 = t2 * t;
   return [
-    0.5 * ((2 * p1[0]) + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3),
-    0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3),
+    0.5
+      * ((2 * p1[0])
+      + (-p0[0] + p2[0]) * t
+      + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2
+      + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3),
+    0.5
+      * ((2 * p1[1])
+      + (-p0[1] + p2[1]) * t
+      + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2
+      + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3),
   ];
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// SECTION 2: ENVIRONMENTS
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function pseudoRandom(seed) {
+  const value = Math.sin(seed * 12.9898) * 43758.5453123;
+  return value - Math.floor(value);
+}
+
+function formatRaceTime(seconds) {
+  const safeSeconds = Math.max(0, seconds || 0);
+  const minutes = Math.floor(safeSeconds / 60);
+  const secs = (safeSeconds % 60).toFixed(1).padStart(4, "0");
+  return `${minutes}:${secs}`;
+}
 
 const ENVIRONMENTS = {
   "neon-city": {
     name: { es: "Circuito Urbano", en: "Urban Circuit" },
-    roadColor: "#3a4048", borderColor: "#f6f6f6", glowColor: "rgba(255,255,255,0.12)",
-    runoffColor: "#6b7480", kerbRed: "#e03030", kerbWhite: "#f3f3f3",
-    bgColor: "#4a5a6e", grassColor: "#5a7060", centerLineColor: "rgba(255,255,255,0.30)",
-    starfield: false,
+    roadColor: "#3a4048",
+    borderColor: "#f6f6f6",
+    glowColor: "rgba(255,255,255,0.12)",
+    runoffColor: "#6b7480",
+    kerbRed: "#e03030",
+    kerbWhite: "#f3f3f3",
+    bgColor: "#4a5a6e",
+    grassColor: "#5a7060",
+    centerLineColor: "rgba(255,255,255,0.30)",
     barrierColor: "#1e5eff",
     treeColor: "#2e5535",
     treeCount: 22,
     hasCrowd: true,
     runoffType: "asphalt",
   },
-  "volcano": {
+  volcano: {
     name: { es: "Circuito Montana", en: "Mountain Circuit" },
-    roadColor: "#444850", borderColor: "#f6f6f6", glowColor: "rgba(255,255,255,0.12)",
-    runoffColor: "#9c8060", kerbRed: "#d8402e", kerbWhite: "#f4f4f4",
-    bgColor: "#7a6040", grassColor: "#8a7050", centerLineColor: "rgba(255,255,255,0.28)",
-    starfield: false,
+    roadColor: "#444850",
+    borderColor: "#f6f6f6",
+    glowColor: "rgba(255,255,255,0.12)",
+    runoffColor: "#9c8060",
+    kerbRed: "#d8402e",
+    kerbWhite: "#f4f4f4",
+    bgColor: "#7a6040",
+    grassColor: "#8a7050",
+    centerLineColor: "rgba(255,255,255,0.28)",
     barrierColor: "#e05500",
     treeColor: "#6a5030",
     treeCount: 14,
     hasCrowd: false,
     runoffType: "gravel",
   },
-  "arctic": {
+  arctic: {
     name: { es: "Circuito Costa", en: "Coastal Circuit" },
-    roadColor: "#464c54", borderColor: "#f7f7f7", glowColor: "rgba(255,255,255,0.14)",
-    runoffColor: "#dce8f0", kerbRed: "#d04040", kerbWhite: "#f5f5f5",
-    bgColor: "#7090b0", grassColor: "#a0b8c8", centerLineColor: "rgba(255,255,255,0.32)",
-    starfield: false,
+    roadColor: "#464c54",
+    borderColor: "#f7f7f7",
+    glowColor: "rgba(255,255,255,0.14)",
+    runoffColor: "#dce8f0",
+    kerbRed: "#d04040",
+    kerbWhite: "#f5f5f5",
+    bgColor: "#7090b0",
+    grassColor: "#a0b8c8",
+    centerLineColor: "rgba(255,255,255,0.32)",
     barrierColor: "#4488ff",
     treeColor: "#2a5038",
     treeCount: 18,
     hasCrowd: true,
     runoffType: "snow",
   },
-  "jungle": {
+  jungle: {
     name: { es: "Circuito Bosque", en: "Forest Circuit" },
-    roadColor: "#404848", borderColor: "#f7f7f7", glowColor: "rgba(255,255,255,0.12)",
-    runoffColor: "#3a6830", kerbRed: "#cc4030", kerbWhite: "#f4f4f4",
-    bgColor: "#2a6840", grassColor: "#1e5428", centerLineColor: "rgba(255,255,255,0.28)",
-    starfield: false,
+    roadColor: "#404848",
+    borderColor: "#f7f7f7",
+    glowColor: "rgba(255,255,255,0.12)",
+    runoffColor: "#3a6830",
+    kerbRed: "#cc4030",
+    kerbWhite: "#f4f4f4",
+    bgColor: "#2a6840",
+    grassColor: "#1e5428",
+    centerLineColor: "rgba(255,255,255,0.28)",
     barrierColor: "#208020",
     treeColor: "#144a18",
     treeCount: 30,
     hasCrowd: false,
     runoffType: "grass",
   },
-  "desert": {
+  desert: {
     name: { es: "Circuito Desierto", en: "Desert Circuit" },
-    roadColor: "#4c5058", borderColor: "#f7f7f7", glowColor: "rgba(255,255,255,0.12)",
-    runoffColor: "#c8a058", kerbRed: "#c84030", kerbWhite: "#f5f5f5",
-    bgColor: "#d4a84c", grassColor: "#c09040", centerLineColor: "rgba(255,255,255,0.28)",
-    starfield: false,
+    roadColor: "#4c5058",
+    borderColor: "#f7f7f7",
+    glowColor: "rgba(255,255,255,0.12)",
+    runoffColor: "#c8a058",
+    kerbRed: "#c84030",
+    kerbWhite: "#f5f5f5",
+    bgColor: "#d4a84c",
+    grassColor: "#c09040",
+    centerLineColor: "rgba(255,255,255,0.28)",
     barrierColor: "#cc8800",
     treeColor: "#8a6810",
     treeCount: 10,
     hasCrowd: false,
     runoffType: "sand",
   },
-  "space": {
+  space: {
     name: { es: "Grand Prix", en: "Grand Prix" },
-    roadColor: "#424850", borderColor: "#f8f8f8", glowColor: "rgba(255,255,255,0.14)",
-    runoffColor: "#606878", kerbRed: "#d04040", kerbWhite: "#f4f4f4",
-    bgColor: "#7090b8", grassColor: "#607858", centerLineColor: "rgba(255,255,255,0.30)",
-    starfield: false,
+    roadColor: "#424850",
+    borderColor: "#f8f8f8",
+    glowColor: "rgba(255,255,255,0.14)",
+    runoffColor: "#606878",
+    kerbRed: "#d04040",
+    kerbWhite: "#f4f4f4",
+    bgColor: "#7090b8",
+    grassColor: "#607858",
+    centerLineColor: "rgba(255,255,255,0.30)",
     barrierColor: "#0055ff",
     treeColor: "#204a28",
     treeCount: 20,
@@ -98,604 +149,754 @@ const ENVIRONMENTS = {
   },
 };
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// SECTION 3: TRACKS (18 tracks â€” 3 per environment)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-const TRACKS = [
-  // ── neon-city ─────────────────────────────────────────────────────────────
-  {
-    id: 0,
-    envId: "neon-city",
-    layout: "flow",
-    name: { es: "Metropolitan GP", en: "Metropolitan GP" },
-    trackWidth: 72,
-    // Classic GP layout — balanced corners, modern feel (Bahrain-like)
-    raw: [
-      [-1.80, -0.15], [-1.62, 0.82], [-0.68, 1.12], [0.52, 1.06],
-      [1.62, 0.72], [1.86, 0.00], [1.62, -0.82], [0.22, -1.12],
-      [-0.78, -1.02], [-1.62, -0.68],
-    ],
-  },
-  {
-    id: 1,
-    envId: "neon-city",
-    layout: "technical",
-    name: { es: "Harbor Street", en: "Harbor Street" },
-    trackWidth: 60,
-    // Monaco-style — tight streets, many direction changes, low speed
-    raw: [
-      [-1.55, 0.25], [-1.82, -0.30], [-1.38, -0.95],
-      [-0.65, -1.05], [-0.08, -0.78], [0.12, -0.28],
-      [0.62, -0.12], [1.08, -0.48], [1.52, -0.90],
-      [1.78, -0.28], [1.55, 0.42], [0.92, 0.88],
-      [0.08, 0.98], [-0.52, 0.72], [-0.22, 0.42], [-0.82, 0.22],
-    ],
-  },
-  {
-    id: 2,
-    envId: "neon-city",
-    layout: "oval",
-    name: { es: "City Speedway", en: "City Speedway" },
-    trackWidth: 90,
-    // Pure oval — wide, fast, minimal cornering (NASCAR-style)
-    raw: [
-      [-1.90, 0.00], [-1.55, 0.80], [0.00, 1.05],
-      [1.55, 0.80], [1.90, 0.00], [1.55, -0.80],
-      [0.00, -1.05], [-1.55, -0.80],
-    ],
-  },
-  // ── volcano ────────────────────────────────────────────────────────────────
-  {
-    id: 3,
-    envId: "volcano",
-    layout: "flow",
-    name: { es: "Caldera GP", en: "Caldera GP" },
-    trackWidth: 74,
-    // Monza-style — two long straights, hairpin at each end, one chicane
-    raw: [
-      [-1.88, -0.42], [0.12, -0.42], [0.24, -0.68], [0.44, -0.26], [1.88, -0.42],
-      [1.90, 0.00],
-      [1.88, 0.46], [-1.88, 0.46],
-      [-1.90, 0.00],
-    ],
-  },
-  {
-    id: 4,
-    envId: "volcano",
-    layout: "technical",
-    name: { es: "Crater Complex", en: "Crater Complex" },
-    trackWidth: 64,
-    // Hungary-like — twisty, no long straights, constant direction changes
-    raw: [
-      [-1.65, 0.05], [-1.88, -0.52], [-1.32, -1.02], [-0.68, -0.88],
-      [-0.28, -0.38], [0.08, -0.08], [0.52, -0.22], [1.02, -0.68],
-      [1.58, -0.95], [1.82, -0.38], [1.62, 0.38], [1.02, 0.88],
-      [0.32, 1.08], [-0.42, 0.92], [-0.98, 0.52], [-1.58, 0.68], [-1.78, 0.32],
-    ],
-  },
-  {
-    id: 5,
-    envId: "volcano",
-    layout: "oval",
-    name: { es: "Lava Speedway", en: "Lava Speedway" },
-    trackWidth: 82,
-    // D-shaped oval — one flat straight side (Indy-like)
-    raw: [
-      [-1.90, -0.72], [-1.90, 0.72], [0.00, 1.02],
-      [1.72, 0.78], [1.90, 0.00], [1.72, -0.78], [0.00, -1.02],
-    ],
-  },
-  // ── arctic ─────────────────────────────────────────────────────────────────
-  {
-    id: 6,
-    envId: "arctic",
-    layout: "flow",
-    name: { es: "North Loop", en: "North Loop" },
-    trackWidth: 72,
-    // Silverstone-like — sweeping high-speed corners throughout
-    raw: [
-      [-1.70, 0.15], [-1.35, -0.82], [-0.25, -1.10], [0.82, -0.92],
-      [1.52, -0.22], [1.42, 0.72], [0.58, 1.08],
-      [-0.42, 0.92], [-1.32, 0.62],
-    ],
-  },
-  {
-    id: 7,
-    envId: "arctic",
-    layout: "technical",
-    name: { es: "Ice Chicane", en: "Ice Chicane" },
-    trackWidth: 65,
-    // Chicane-heavy — long straights broken by multiple chicanes (Jerez-like)
-    raw: [
-      [-1.88, -0.46],
-      [-0.78, -0.46], [-0.68, -0.72], [-0.48, -0.28], [-0.28, -0.62], [-0.08, -0.26],
-      [0.82, -0.46], [1.88, -0.46],
-      [1.88, 0.00], [1.88, 0.50],
-      [-1.88, 0.50], [-1.88, 0.00],
-    ],
-  },
-  {
-    id: 8,
-    envId: "arctic",
-    layout: "oval",
-    name: { es: "Polar Ring", en: "Polar Ring" },
-    trackWidth: 86,
-    // Compact oval — near-circular, wide banking
-    raw: [
-      [-1.52, 0.00], [-1.18, 0.76], [0.00, 1.00],
-      [1.18, 0.76], [1.52, 0.00], [1.18, -0.76],
-      [0.00, -1.00], [-1.18, -0.76],
-    ],
-  },
-  // ── jungle ─────────────────────────────────────────────────────────────────
-  {
-    id: 9,
-    envId: "jungle",
-    layout: "flow",
-    name: { es: "Rainforest GP", en: "Rainforest GP" },
-    trackWidth: 70,
-    // COTA-like — mix of fast sweeping and slow tight corners
-    raw: [
-      [-1.78, 0.12], [-1.55, 0.84], [-0.58, 1.10], [0.42, 0.92],
-      [1.02, 0.22], [0.78, -0.52], [1.58, -0.90], [1.88, -0.20],
-      [1.58, 0.48], [0.22, -0.58], [-0.62, -0.95], [-1.38, -0.72],
-    ],
-  },
-  {
-    id: 10,
-    envId: "jungle",
-    layout: "technical",
-    name: { es: "Canopy Chicane", en: "Canopy Chicane" },
-    trackWidth: 62,
-    // Complex infield — multiple hairpins, slow and precise
-    raw: [
-      [-1.72, 0.05], [-1.88, -0.48], [-1.42, -1.00], [-0.82, -0.82],
-      [-0.42, -0.32], [-0.12, -0.08], [0.38, -0.18], [0.88, -0.62],
-      [1.48, -0.95], [1.82, -0.42], [1.72, 0.28], [1.12, 0.88],
-      [0.42, 1.08], [-0.32, 0.98], [-0.78, 0.58], [-0.42, 0.22], [-0.88, 0.02],
-    ],
-  },
-  {
-    id: 11,
-    envId: "jungle",
-    layout: "oval",
-    name: { es: "Jungle Sprint", en: "Jungle Sprint" },
-    trackWidth: 92,
-    // Superspeedway — huge oval, very wide, maximum speed
-    raw: [
-      [-1.92, 0.00], [-1.56, 0.86], [0.00, 1.06],
-      [1.56, 0.86], [1.92, 0.00], [1.56, -0.86],
-      [0.00, -1.06], [-1.56, -0.86],
-    ],
-  },
-  // ── desert ─────────────────────────────────────────────────────────────────
-  {
-    id: 12,
-    envId: "desert",
-    layout: "flow",
-    name: { es: "Sahara GP", en: "Sahara GP" },
-    trackWidth: 74,
-    // Hockenheim-like — 2 straights, stadium infield chicanes
-    raw: [
-      [-1.88, -0.42],
-      [-0.28, -0.42], [-0.18, -0.68], [0.02, -0.28], [0.22, -0.62], [0.42, -0.28],
-      [1.88, -0.42],
-      [1.90, 0.00],
-      [1.88, 0.46], [-1.88, 0.46],
-      [-1.90, 0.00],
-    ],
-  },
-  {
-    id: 13,
-    envId: "desert",
-    layout: "technical",
-    name: { es: "Dune Technical", en: "Dune Technical" },
-    trackWidth: 64,
-    // Multiple hairpins — Istanbul/Korea style, downforce-dependent
-    raw: [
-      [-1.62, 0.12], [-1.82, -0.48], [-1.32, -1.00], [-0.72, -0.88],
-      [-0.28, -0.42], [0.00, -0.12], [0.42, -0.28], [0.88, -0.82],
-      [1.42, -1.00], [1.82, -0.52], [1.72, 0.22], [1.22, 0.82],
-      [0.52, 1.08], [-0.22, 1.02], [-0.82, 0.72], [-1.22, 0.32],
-    ],
-  },
-  {
-    id: 14,
-    envId: "desert",
-    layout: "oval",
-    name: { es: "Desert Storm", en: "Desert Storm" },
-    trackWidth: 88,
-    // Tri-oval — like Daytona, banked turns, very fast
-    raw: [
-      [-1.90, -0.28], [-1.70, 0.68], [0.00, 1.00],
-      [1.70, 0.68], [1.90, -0.28], [0.00, -1.00],
-    ],
-  },
-  // ── space ──────────────────────────────────────────────────────────────────
-  {
-    id: 15,
-    envId: "space",
-    layout: "flow",
-    name: { es: "Orbital GP", en: "Orbital GP" },
-    trackWidth: 72,
-    // Modern F1 style — Abu Dhabi/Qatar feel, varied corner types
-    raw: [
-      [-1.78, -0.10], [-1.58, 0.80], [-0.58, 1.10], [0.58, 1.06],
-      [1.66, 0.74], [1.88, 0.00], [1.66, -0.74], [0.32, -1.10],
-      [-0.72, -1.06], [-1.58, -0.72],
-    ],
-  },
-  {
-    id: 16,
-    envId: "space",
-    layout: "technical",
-    name: { es: "Station Complex", en: "Station Complex" },
-    trackWidth: 62,
-    // Spa-like — combination circuit, slow hairpins + fast esses
-    raw: [
-      [-1.62, 0.22], [-1.82, -0.42], [-1.22, -0.98], [-0.52, -0.92],
-      [-0.18, -0.48], [0.22, -0.12], [0.72, -0.22], [1.22, -0.68],
-      [1.68, -0.90], [1.88, -0.32], [1.68, 0.38], [1.02, 0.92],
-      [0.22, 1.05], [-0.52, 0.88], [-0.98, 0.48], [-0.58, 0.18],
-    ],
-  },
-  {
-    id: 17,
-    envId: "space",
-    layout: "oval",
-    name: { es: "Hyperdrive", en: "Hyperdrive" },
-    trackWidth: 86,
-    // Standard speedway oval — clean and fast
-    raw: [
-      [-1.88, 0.00], [-1.52, 0.82], [0.00, 1.04],
-      [1.52, 0.82], [1.88, 0.00], [1.52, -0.82],
-      [0.00, -1.04], [-1.52, -0.82],
-    ],
-  },
-];
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// SECTION 4: AI profiles, weather profiles, physics constants
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
 const AI_PROFILES = {
-  easy:   { speedFactor: 0.78, lineOffset: 0.55, brakeMargin: 1.45, errorRate: 0.18,  errorMag: 0.4,  turboUse: 0.00, apexPrecision: 0.6  },
-  medium: { speedFactor: 0.91, lineOffset: 0.28, brakeMargin: 1.10, errorRate: 0.05,  errorMag: 0.18, turboUse: 0.25, apexPrecision: 0.82 },
-  hard:   { speedFactor: 1.00, lineOffset: 0.08, brakeMargin: 0.88, errorRate: 0.008, errorMag: 0.05, turboUse: 0.75, apexPrecision: 0.97 },
+  easy: { speedFactor: 0.84, lineOffset: 0.55, brakeMargin: 1.38, errorRate: 0.14, errorMag: 0.34, apexPrecision: 0.58 },
+  medium: { speedFactor: 0.93, lineOffset: 0.28, brakeMargin: 1.10, errorRate: 0.04, errorMag: 0.16, apexPrecision: 0.80 },
+  hard: { speedFactor: 1.0, lineOffset: 0.08, brakeMargin: 0.96, errorRate: 0.008, errorMag: 0.05, apexPrecision: 0.95 },
 };
 
 const WEATHER_PROFILES = {
-  dry:  { label: { es: "Seco", en: "Dry" }, icon: "SUN", gripMult: 1.00, rainOverlay: false },
-  rain: { label: { es: "Lluvia", en: "Rain" }, icon: "RAIN", gripMult: 0.72, rainOverlay: true },
-  dusk: { label: { es: "Crepusculo", en: "Dusk" }, icon: "DUSK", gripMult: 0.90, rainOverlay: false },
+  dry: { id: "dry", label: { es: "Seco", en: "Dry" }, icon: "SUN", gripMult: 1.0, rainOverlay: false },
+  rain: { id: "rain", label: { es: "Lluvia", en: "Rain" }, icon: "RAIN", gripMult: 0.72, rainOverlay: true },
+  dusk: { id: "dusk", label: { es: "Crepusculo", en: "Dusk" }, icon: "DUSK", gripMult: 0.90, rainOverlay: false },
 };
 
 const PHYS = {
-  MAX_SPEED: 420, ACCEL: 340, BRAKE_DECEL: 700, NATURAL_DECEL: 60,
-  STEER_RATE: 3.8, GRIP_BASE: 11.0,
-  TURBO_BOOST: 190, TURBO_DURATION: 1.8, TURBO_COOLDOWN: 6.0,
-  TURBO_FILL_RATE: 0.13, NEAR_MISS_BONUS: 0.20,
+  MAX_SPEED: 470,
+  ENGINE_ACCEL: 265,
+  BRAKE_DECEL: 560,
+  ENGINE_BRAKE: 92,
+  ROLLING_DRAG: 28,
+  AERO_DRAG: 0.00085,
+  STEER_RATE: 2.45,
+  STEER_RESPONSE: 8.2,
+  THROTTLE_RESPONSE: 7.0,
+  BRAKE_RESPONSE: 10.0,
+  YAW_RESPONSE: 7.0,
+  LATERAL_GRIP: 12.5,
+  LATERAL_STABILITY: 9.0,
   CAR_RADIUS: 12,
-  OFF_TRACK_GRIP: 0.40,
-  OFF_TRACK_MAX_SPEED_FACTOR: 0.65,
-  OFF_TRACK_RECOVERY: 0.5,
+  COLLISION_SEPARATION: 0.52,
+  COLLISION_VELOCITY_DAMP: 0.985,
+  COLLISION_YAW_DAMP: 0.74,
+  COLLISION_THROTTLE_CLAMP: 0.55,
+  COLLISION_CAMERA_SHAKE: 4,
+  COLLISION_COOLDOWN: 0.14,
+  OFF_TRACK_GRIP: 0.56,
+  OFF_TRACK_MAX_SPEED_FACTOR: 0.60,
+  OFF_TRACK_RECOVERY: 1.2,
 };
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// SECTION 5: Track engine â€” buildTrack and query functions
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-function buildTrack(trackDef, canvasW, canvasH) {
-  const SAMPLES = 800;
+function buildTrack(trackDef, canvasWidth, canvasHeight) {
   const raw = trackDef.raw;
-  const n = raw.length;
-  const scaleX = canvasW * 0.92;
-  const scaleY = canvasH * 0.84;
-  const pts = raw.map(([x, y]) => [canvasW / 2 + x * scaleX, canvasH / 2 + y * scaleY]);
+  const xs = raw.map((point) => point[0]);
+  const ys = raw.map((point) => point[1]);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const spanX = maxX - minX || 1;
+  const spanY = maxY - minY || 1;
+  const scale = Math.min((canvasWidth * 0.86) / spanX, (canvasHeight * 0.76) / spanY);
+  const offsetX = canvasWidth / 2 - ((minX + maxX) / 2) * scale;
+  const offsetY = canvasHeight / 2 - ((minY + maxY) / 2) * scale;
+  const points = raw.map(([x, y]) => [x * scale + offsetX, y * scale + offsetY]);
+  const sampleCount = Math.max(900, raw.length * 32);
 
   const samples = [];
-  for (let i = 0; i < SAMPLES; i++) {
-    const t = i / SAMPLES;
-    const seg = t * n;
-    const idx = Math.floor(seg);
-    const frac = seg - idx;
-    const p0 = pts[(idx - 1 + n) % n], p1 = pts[idx % n];
-    const p2 = pts[(idx + 1) % n],     p3 = pts[(idx + 2) % n];
-    const [x, y] = catmullRom(p0, p1, p2, p3, frac);
+  for (let i = 0; i < sampleCount; i += 1) {
+    const t = i / sampleCount;
+    const segment = t * raw.length;
+    const index = Math.floor(segment);
+    const fraction = segment - index;
+    const p0 = points[(index - 1 + raw.length) % raw.length];
+    const p1 = points[index % raw.length];
+    const p2 = points[(index + 1) % raw.length];
+    const p3 = points[(index + 2) % raw.length];
+    const [x, y] = catmullRom(p0, p1, p2, p3, fraction);
     samples.push({ x, y, ang: 0, curvature: 0, speedLimit: PHYS.MAX_SPEED });
   }
 
-  // Angles
-  for (let i = 0; i < SAMPLES; i++) {
-    const next = samples[(i + 1) % SAMPLES], prev = samples[(i - 1 + SAMPLES) % SAMPLES];
+  for (let i = 0; i < sampleCount; i += 1) {
+    const next = samples[(i + 1) % sampleCount];
+    const prev = samples[(i - 1 + sampleCount) % sampleCount];
     samples[i].ang = Math.atan2(next.y - prev.y, next.x - prev.x);
   }
 
-  // Curvature and speed limit
-  for (let i = 0; i < SAMPLES; i++) {
-    const prev = samples[(i - 1 + SAMPLES) % SAMPLES], next = samples[(i + 1) % SAMPLES];
-    const da = Math.abs(angNorm(next.ang - prev.ang));
-    samples[i].curvature = da;
-    samples[i].speedLimit = PHYS.MAX_SPEED * clamp(1 - da * 3.5, 0.30, 1.0);
+  for (let i = 0; i < sampleCount; i += 1) {
+    const prev = samples[(i - 1 + sampleCount) % sampleCount];
+    const next = samples[(i + 1) % sampleCount];
+    const deltaAngle = Math.abs(angNorm(next.ang - prev.ang));
+    samples[i].curvature = deltaAngle;
+    samples[i].speedLimit = PHYS.MAX_SPEED * clamp(1 - deltaAngle * 4.1, 0.24, 1);
   }
 
   let totalLength = 0;
-  for (let i = 0; i < SAMPLES; i++) {
-    const next = samples[(i + 1) % SAMPLES];
+  for (let i = 0; i < sampleCount; i += 1) {
+    const next = samples[(i + 1) % sampleCount];
     totalLength += Math.hypot(next.x - samples[i].x, next.y - samples[i].y);
   }
 
-  // Generate decorations (trees + grandstand) seeded by track id
   const decorations = [];
-  const rng = (() => {
-    let s = (trackDef.id * 9301 + 49297) % 233280;
-    return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
-  })();
+  let rngState = (trackDef.id + 1) * 9301 + 49297;
+  const random = () => {
+    rngState = (rngState * 9301 + 49297) % 233280;
+    return rngState / 233280;
+  };
 
-  const envData = ENVIRONMENTS[trackDef.envId];
-  const treeCount = envData.treeCount || 16;
-  const outerOffset = (trackDef.trackWidth || 48) / 2 + 80;
-
-  // Trees: placed around the track at random sample points, pushed outward
-  for (let t = 0; t < treeCount; t++) {
-    const si = Math.floor(rng() * SAMPLES);
-    const sp = samples[si];
-    const side = rng() > 0.5 ? 1 : -1;
-    const dist2 = outerOffset + rng() * 80;
-    const nx = -Math.sin(sp.ang), ny = Math.cos(sp.ang);
-    const radius = 6 + rng() * 12;
-    const treeColor = envData.treeColor || "#1e5a28";
-    const tc = treeColor.replace(/#/, "");
-    const thr = Math.min(255, parseInt(tc.substring(0, 2), 16) + 30);
-    const thg = Math.min(255, parseInt(tc.substring(2, 4), 16) + 30);
-    const thb = Math.min(255, parseInt(tc.substring(4, 6), 16) + 20);
-    const treeHighlight = `rgb(${thr},${thg},${thb})`;
+  const environment = ENVIRONMENTS[trackDef.envId];
+  const outerOffset = trackDef.trackWidth / 2 + 82;
+  for (let treeIndex = 0; treeIndex < (environment.treeCount || 16); treeIndex += 1) {
+    const sample = samples[Math.floor(random() * sampleCount)];
+    const side = random() > 0.5 ? 1 : -1;
+    const distance = outerOffset + random() * 74;
+    const normalX = -Math.sin(sample.ang);
+    const normalY = Math.cos(sample.ang);
+    const radius = 6 + random() * 12;
+    const treeColor = environment.treeColor || "#1e5a28";
+    const hex = treeColor.replace("#", "");
+    const r = Math.min(255, parseInt(hex.slice(0, 2), 16) + 30);
+    const g = Math.min(255, parseInt(hex.slice(2, 4), 16) + 30);
+    const b = Math.min(255, parseInt(hex.slice(4, 6), 16) + 20);
     decorations.push({
       type: "tree",
-      x: sp.x + nx * dist2 * side,
-      y: sp.y + ny * dist2 * side,
+      x: sample.x + normalX * distance * side,
+      y: sample.y + normalY * distance * side,
       radius,
       color: treeColor,
-      highlight: treeHighlight,
+      highlight: `rgb(${r},${g},${b})`,
     });
   }
 
-  // Grandstand: near start/finish if hasCrowd
-  if (envData.hasCrowd) {
-    const startSample = samples[Math.floor(0.03 * SAMPLES)];
-    const perpX = -Math.sin(startSample.ang), perpY = Math.cos(startSample.ang);
-    const alngX = Math.cos(startSample.ang), alngY = Math.sin(startSample.ang);
-    const side = 1;
-    const dist3 = (trackDef.trackWidth || 48) / 2 + 65;
-    for (let row = 0; row < 3; row++) {
-      for (let col = -4; col <= 4; col++) {
-        const cx = startSample.x + perpX * (dist3 + row * 14) * side + alngX * col * 16;
-        const cy = startSample.y + perpY * (dist3 + row * 14) * side + alngY * col * 16;
-        decorations.push({ type: "crowd", x: cx, y: cy, row, col });
+  if (environment.hasCrowd) {
+    const gridSample = samples[Math.floor(trackDef.startS * sampleCount)];
+    const normalX = -Math.sin(gridSample.ang);
+    const normalY = Math.cos(gridSample.ang);
+    const alongX = Math.cos(gridSample.ang);
+    const alongY = Math.sin(gridSample.ang);
+    const crowdOffset = trackDef.trackWidth / 2 + 68;
+    for (let row = 0; row < 3; row += 1) {
+      for (let col = -4; col <= 4; col += 1) {
+        decorations.push({
+          type: "crowd",
+          x: gridSample.x + normalX * (crowdOffset + row * 14) + alongX * col * 16,
+          y: gridSample.y + normalY * (crowdOffset + row * 14) + alongY * col * 16,
+          row,
+          col,
+        });
       }
     }
-    // Grandstand roof
     decorations.push({
       type: "stand",
-      x: startSample.x + perpX * (dist3 + 20) * side,
-      y: startSample.y + perpY * (dist3 + 20) * side,
-      ang: startSample.ang,
-      w: 160, h: 50,
+      x: gridSample.x + normalX * (crowdOffset + 20),
+      y: gridSample.y + normalY * (crowdOffset + 20),
+      ang: gridSample.ang,
+      w: 160,
+      h: 50,
     });
   }
 
-  const tw = trackDef.trackWidth || 48;
-  const hw2 = tw / 2;
-  const barrierOff2 = hw2 + 36;
+  const halfWidth = trackDef.trackWidth / 2;
+  const barrierOffset = halfWidth + 36;
+  const pathCenter = new Path2D();
+  const pathLeft = new Path2D();
+  const pathRight = new Path2D();
+  const barrierLeft = new Path2D();
+  const barrierRight = new Path2D();
 
-  // Pre-compute Path2D objects once — reused every frame via ctx.stroke(path2d)
-  const pCenter = new Path2D();
-  const pLeft = new Path2D();
-  const pRight = new Path2D();
-  const pBLeft = new Path2D();
-  const pBRight = new Path2D();
+  for (let i = 0; i <= sampleCount; i += 1) {
+    const sample = samples[i % sampleCount];
+    const normalX = -Math.sin(sample.ang);
+    const normalY = Math.cos(sample.ang);
+    const leftX = sample.x + normalX * halfWidth;
+    const leftY = sample.y + normalY * halfWidth;
+    const rightX = sample.x - normalX * halfWidth;
+    const rightY = sample.y - normalY * halfWidth;
+    const barrierLeftX = sample.x + normalX * barrierOffset;
+    const barrierLeftY = sample.y + normalY * barrierOffset;
+    const barrierRightX = sample.x - normalX * barrierOffset;
+    const barrierRightY = sample.y - normalY * barrierOffset;
 
-  for (let i = 0; i <= SAMPLES; i++) {
-    const s = samples[i % SAMPLES];
-    const nx = -Math.sin(s.ang), ny = Math.cos(s.ang);
-    i === 0 ? pCenter.moveTo(s.x, s.y) : pCenter.lineTo(s.x, s.y);
-    const lx = s.x + nx * hw2,        ly = s.y + ny * hw2;
-    const rx = s.x - nx * hw2,        ry = s.y - ny * hw2;
-    i === 0 ? pLeft.moveTo(lx, ly) : pLeft.lineTo(lx, ly);
-    i === 0 ? pRight.moveTo(rx, ry) : pRight.lineTo(rx, ry);
-    const blx = s.x + nx * barrierOff2, bly = s.y + ny * barrierOff2;
-    const brx = s.x - nx * barrierOff2, bry = s.y - ny * barrierOff2;
-    i === 0 ? pBLeft.moveTo(blx, bly) : pBLeft.lineTo(blx, bly);
-    i === 0 ? pBRight.moveTo(brx, bry) : pBRight.lineTo(brx, bry);
-  }
-
-  // Pre-compute kerb paths grouped by color (red vs white)
-  const pKerbA = new Path2D();
-  const pKerbB = new Path2D();
-  {
-    const kerbThreshold = 0.015;
-    const kerbSegLen = 14;
-    let kerbAccum = 0, kerbColorIdx = 0;
-    for (let i = 0; i < SAMPLES - 1; i++) {
-      const a = samples[i], b = samples[i + 1];
-      const curvature = (a.curvature + b.curvature) * 0.5;
-      if (curvature < kerbThreshold) { kerbAccum = 0; continue; }
-      const segPx = Math.hypot(b.x - a.x, b.y - a.y);
-      kerbAccum += segPx;
-      if (kerbAccum > kerbSegLen) { kerbColorIdx++; kerbAccum = 0; }
-      const anX = -Math.sin(a.ang), anY = Math.cos(a.ang);
-      const bnX = -Math.sin(b.ang), bnY = Math.cos(b.ang);
-      for (const side of [-1, 1]) {
-        const ax2 = a.x + anX * hw2 * side, ay2 = a.y + anY * hw2 * side;
-        const bx2 = b.x + bnX * hw2 * side, by2 = b.y + bnY * hw2 * side;
-        const colorFlip = (kerbColorIdx + (side === 1 ? 0 : 1)) % 2 === 0;
-        const pk = colorFlip ? pKerbA : pKerbB;
-        pk.moveTo(ax2, ay2);
-        pk.lineTo(bx2, by2);
-      }
+    if (i === 0) {
+      pathCenter.moveTo(sample.x, sample.y);
+      pathLeft.moveTo(leftX, leftY);
+      pathRight.moveTo(rightX, rightY);
+      barrierLeft.moveTo(barrierLeftX, barrierLeftY);
+      barrierRight.moveTo(barrierRightX, barrierRightY);
+    } else {
+      pathCenter.lineTo(sample.x, sample.y);
+      pathLeft.lineTo(leftX, leftY);
+      pathRight.lineTo(rightX, rightY);
+      barrierLeft.lineTo(barrierLeftX, barrierLeftY);
+      barrierRight.lineTo(barrierRightX, barrierRightY);
     }
   }
 
-  const paths = { center: pCenter, left: pLeft, right: pRight, barrierLeft: pBLeft, barrierRight: pBRight, kerbA: pKerbA, kerbB: pKerbB };
+  const kerbA = new Path2D();
+  const kerbB = new Path2D();
+  let kerbAccum = 0;
+  let kerbColorIndex = 0;
+  for (let i = 0; i < sampleCount - 1; i += 1) {
+    const current = samples[i];
+    const next = samples[i + 1];
+    const curvature = (current.curvature + next.curvature) * 0.5;
+    if (curvature < 0.015) {
+      kerbAccum = 0;
+      continue;
+    }
+    const segmentLength = Math.hypot(next.x - current.x, next.y - current.y);
+    kerbAccum += segmentLength;
+    if (kerbAccum > 14) {
+      kerbColorIndex += 1;
+      kerbAccum = 0;
+    }
+    const currentNormalX = -Math.sin(current.ang);
+    const currentNormalY = Math.cos(current.ang);
+    const nextNormalX = -Math.sin(next.ang);
+    const nextNormalY = Math.cos(next.ang);
+    for (const side of [-1, 1]) {
+      const ax = current.x + currentNormalX * halfWidth * side;
+      const ay = current.y + currentNormalY * halfWidth * side;
+      const bx = next.x + nextNormalX * halfWidth * side;
+      const by = next.y + nextNormalY * halfWidth * side;
+      const path = (kerbColorIndex + (side === 1 ? 0 : 1)) % 2 === 0 ? kerbA : kerbB;
+      path.moveTo(ax, ay);
+      path.lineTo(bx, by);
+    }
+  }
 
-  return { samples, totalLength, startS: 0.03, trackWidth: tw, decorations, paths };
-}
-
-function sampleTrackAt(track, s) {
-  const s01 = wrap01(s);
-  const idx = s01 * track.samples.length;
-  const i0 = Math.floor(idx) % track.samples.length;
-  const i1 = (i0 + 1) % track.samples.length;
-  const frac = idx - Math.floor(idx);
-  const a = track.samples[i0], b = track.samples[i1];
   return {
-    x: lerp(a.x, b.x, frac),
-    y: lerp(a.y, b.y, frac),
-    ang: a.ang + signedAngleDiff(a.ang, b.ang) * frac,
-    curvature: lerp(a.curvature, b.curvature, frac),
-    speedLimit: lerp(a.speedLimit, b.speedLimit, frac),
-  };
-}
-
-function closestS(track, x, y) {
-  const N = track.samples.length;
-  let bestDist = Infinity, bestI = 0;
-  // Phase 1: coarse sweep
-  const step = Math.max(1, Math.floor(N / 80));
-  for (let i = 0; i < N; i += step) {
-    const s = track.samples[i];
-    const d = Math.hypot(s.x - x, s.y - y);
-    if (d < bestDist) { bestDist = d; bestI = i; }
-  }
-  // Phase 2: fine search ±20 samples around best
-  const lo = bestI - 20, hi = bestI + 20;
-  for (let i = lo; i <= hi; i++) {
-    const idx = ((i % N) + N) % N;
-    const s = track.samples[idx];
-    const d = Math.hypot(s.x - x, s.y - y);
-    if (d < bestDist) { bestDist = d; bestI = idx; }
-  }
-  return bestI / N;
-}
-
-// Fast version using a known hint — avoids global coarse sweep
-function closestSNear(track, x, y, hintS) {
-  const N = track.samples.length;
-  const hintI = Math.round(((hintS % 1 + 1) % 1) * N);
-  const radius = 55;
-  let bestDist = Infinity, bestI = hintI;
-  for (let di = -radius; di <= radius; di++) {
-    const idx = ((hintI + di) % N + N) % N;
-    const s = track.samples[idx];
-    const d = Math.hypot(s.x - x, s.y - y);
-    if (d < bestDist) { bestDist = d; bestI = idx; }
-  }
-  return bestI / N;
-}
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// SECTION 6: Car creation and physics
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-function createCar(id, isPlayer, color, aiDifficulty) {
-  const livery = CAR_LIVERIES[id % CAR_LIVERIES.length];
-  return {
-    id, isPlayer, color: livery.primary, livery,
-    x: 0, y: 0, a: 0, vx: 0, vy: 0, speed: 0, s: 0,
-    lap: 1, finished: false, finishTime: null, finishOrder: null,
-    turbo: 0, turboActive: false, turboCooldown: 0, turboTimeLeft: 0,
-    spawnGrace: 1.5,
-    trail: [], sparks: [], dustParticles: [],
-    offTrack: false, offTrackRecovery: 1.0,
-    aiProfile: isPlayer ? null : AI_PROFILES[aiDifficulty],
-    ai: isPlayer ? null : {
-      t: 0, noiseSeed: Math.random() * 9999,
-      lineOffset: (Math.random() - 0.5) * 0.4,
-      prevErr: 0,
+    samples,
+    totalLength,
+    startS: trackDef.startS,
+    trackWidth: trackDef.trackWidth,
+    decorations,
+    paths: {
+      center: pathCenter,
+      left: pathLeft,
+      right: pathRight,
+      barrierLeft,
+      barrierRight,
+      kerbA,
+      kerbB,
     },
   };
 }
 
-function addSparks(sparks, x, y, color) {
-  for (let i = 0; i < 5; i++) {
-    const ang = Math.random() * Math.PI * 2;
-    const spd = 40 + Math.random() * 80;
-    sparks.push({
-      x, y, color,
-      vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
-      life: 0.35 + Math.random() * 0.25, maxLife: 0.6,
-    });
+function sampleTrackAt(track, s) {
+  const safeS = wrap01(s);
+  const index = safeS * track.samples.length;
+  const index0 = Math.floor(index) % track.samples.length;
+  const index1 = (index0 + 1) % track.samples.length;
+  const fraction = index - Math.floor(index);
+  const a = track.samples[index0];
+  const b = track.samples[index1];
+  return {
+    x: lerp(a.x, b.x, fraction),
+    y: lerp(a.y, b.y, fraction),
+    ang: a.ang + signedAngleDiff(a.ang, b.ang) * fraction,
+    curvature: lerp(a.curvature, b.curvature, fraction),
+    speedLimit: lerp(a.speedLimit, b.speedLimit, fraction),
+  };
+}
+
+function closestS(track, x, y) {
+  const sampleCount = track.samples.length;
+  let bestDistance = Infinity;
+  let bestIndex = 0;
+  const coarseStep = Math.max(1, Math.floor(sampleCount / 80));
+
+  for (let i = 0; i < sampleCount; i += coarseStep) {
+    const sample = track.samples[i];
+    const distance = Math.hypot(sample.x - x, sample.y - y);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestIndex = i;
+    }
+  }
+
+  for (let i = bestIndex - 20; i <= bestIndex + 20; i += 1) {
+    const index = ((i % sampleCount) + sampleCount) % sampleCount;
+    const sample = track.samples[index];
+    const distance = Math.hypot(sample.x - x, sample.y - y);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestIndex = index;
+    }
+  }
+
+  return bestIndex / sampleCount;
+}
+
+function closestSNear(track, x, y, hintS) {
+  const sampleCount = track.samples.length;
+  const hintIndex = Math.round(wrap01(hintS) * sampleCount);
+  let bestDistance = Infinity;
+  let bestIndex = hintIndex;
+  for (let offset = -55; offset <= 55; offset += 1) {
+    const index = ((hintIndex + offset) % sampleCount + sampleCount) % sampleCount;
+    const sample = track.samples[index];
+    const distance = Math.hypot(sample.x - x, sample.y - y);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestIndex = index;
+    }
+  }
+  return bestIndex / sampleCount;
+}
+
+function buildTrackInfo(trackDef, weatherKey, aiDifficulty, laps, rivals, lang, t) {
+  return {
+    id: trackDef.id,
+    name: trackDef.name[lang],
+    env: ENVIRONMENTS[trackDef.envId].name[lang],
+    classification: trackDef.classification[lang],
+    layout: trackDef.layoutLabel[lang],
+    note: trackDef.note[lang],
+    distanceKm: trackDef.distanceKm,
+    turns: trackDef.turns,
+    overtaking: trackDef.overtaking[lang],
+    profile: trackDef.profile[lang],
+    weather: WEATHER_PROFILES[weatherKey].label[lang],
+    difficulty: t[aiDifficulty],
+    laps,
+    rivals,
+  };
+}
+
+function createStartProcedure(trackId, laps, rivals, aiDifficulty) {
+  const difficultySeed = { easy: 7, medium: 19, hard: 31 }[aiDifficulty] || 7;
+  const holdAfterFull = 0.48 + (((trackId + 1) * 23 + laps * 11 + rivals * 7 + difficultySeed) % 55) / 100;
+  return {
+    phase: "grid",
+    elapsed: 0,
+    lightCount: 0,
+    gridDuration: 1.35,
+    lightInterval: 0.72,
+    holdAfterFull,
+    goDuration: 0.70,
+  };
+}
+
+function buildStartOverlay(startProcedure, t, screen = "race") {
+  if (!startProcedure || screen !== "race") {
+    return { phase: "off", lights: Array.from({ length: SEM_LIGHTS }, () => false), caption: "", detail: "" };
+  }
+  if (startProcedure.phase === "grid") {
+    return { phase: "grid", lights: Array.from({ length: SEM_LIGHTS }, () => false), caption: t.gridReady, detail: t.gridDetail };
+  }
+  if (startProcedure.phase === "lights") {
+    return {
+      phase: "lights",
+      lights: Array.from({ length: SEM_LIGHTS }, (_, index) => index < startProcedure.lightCount),
+      caption: t.watchLights,
+      detail: t.watchLightsDetail,
+    };
+  }
+  if (startProcedure.phase === "go") {
+    return { phase: "go", lights: Array.from({ length: SEM_LIGHTS }, () => false), caption: t.lightsOut, detail: t.lightsOutDetail };
+  }
+  return { phase: "off", lights: Array.from({ length: SEM_LIGHTS }, () => false), caption: "", detail: "" };
+}
+
+function getOrderedCars(game) {
+  return [...game.cars].sort((a, b) => {
+    const aProgress = (a.lap - 1) + a.s;
+    const bProgress = (b.lap - 1) + b.s;
+    if (a.finishOrder && b.finishOrder) return a.finishOrder - b.finishOrder;
+    if (a.finishOrder) return -1;
+    if (b.finishOrder) return 1;
+    return bProgress - aProgress;
+  });
+}
+
+function getRacePosition(game, car) {
+  return getOrderedCars(game).findIndex((candidate) => candidate.id === car.id) + 1;
+}
+
+function buildLeaderboard(game, t) {
+  const ordered = getOrderedCars(game);
+  return ordered.map((car, index) => {
+    const time = car.finishTime != null && game._raceStartTime != null
+      ? formatRaceTime((car.finishTime - game._raceStartTime) / 1000)
+      : "--:--.-";
+    return {
+      pos: index + 1,
+      isPlayer: car.isPlayer,
+      color: car.color,
+      driver: car.isPlayer ? t.you : `${t.rival} ${car.gridSlot}`,
+      time,
+      lap: car.lap,
+      finished: car.finished,
+    };
+  });
+}
+
+function buildSetupViewModel(trackDef, aiDifficulty, weatherKey, laps, rivals, lang, t) {
+  return {
+    mode: "race2dpro",
+    coordinates: "origin_top_left_x_right_y_down",
+    screen: "setup",
+    phase: "setup",
+    track: buildTrackInfo(trackDef, weatherKey, aiDifficulty, laps, rivals, lang, t),
+    format: {
+      startType: t.standingStart,
+      lights: t.fiveLights,
+      grid: t.staggeredGrid,
+      laps,
+      rivals,
+      difficulty: t[aiDifficulty],
+    },
+    startOverlay: buildStartOverlay(null, t, "setup"),
+    hud: {
+      position: 1,
+      total: rivals + 1,
+      lap: 1,
+      totalLaps: laps,
+      speed: 0,
+      weatherIcon: WEATHER_PROFILES[weatherKey].icon,
+      timer: "0:00.0",
+      message: trackDef.note[lang],
+    },
+    player: null,
+    cars: [],
+    leaderboard: [],
+    message: trackDef.note[lang],
+  };
+}
+
+function buildRaceViewModel(screen, game, weatherKey, aiDifficulty, lang, t) {
+  const playerCar = game.cars.find((car) => car.isPlayer) || game.cars[0];
+  const playerPosition = playerCar.finishOrder || getRacePosition(game, playerCar);
+  const startOverlay = buildStartOverlay(game.startProcedure, t, screen);
+  const leaderboard = game.pendingLeaderboard || buildLeaderboard(game, t);
+  const message = startOverlay.phase !== "off"
+    ? startOverlay.detail
+    : playerCar?.finished
+      ? t.finishMessage
+      : playerCar?.offTrack
+        ? t.trackLimits
+        : playerCar?.slipAngle > 0.13 && playerCar?.speed > 170
+          ? t.balanceCaution
+          : game.trackDef.note[lang];
+
+  return {
+    mode: "race2dpro",
+    coordinates: "origin_top_left_x_right_y_down",
+    screen,
+    phase: screen === "end" ? "finished" : game.startProcedure.phase,
+    track: buildTrackInfo(game.trackDef, weatherKey, aiDifficulty, game.totalLaps, game.cars.length - 1, lang, t),
+    format: {
+      startType: t.standingStart,
+      lights: t.fiveLights,
+      grid: t.staggeredGrid,
+      laps: game.totalLaps,
+      rivals: game.cars.length - 1,
+      difficulty: t[aiDifficulty],
+    },
+    startOverlay: screen === "end" ? buildStartOverlay(null, t, "end") : startOverlay,
+    hud: {
+      position: playerPosition,
+      total: game.cars.length,
+      lap: clamp(playerCar?.lap || 1, 1, game.totalLaps),
+      totalLaps: game.totalLaps,
+      speed: Math.round((playerCar?.speed || 0) * SPEED_TO_KMH),
+      weatherIcon: game.weather.icon,
+      timer: formatRaceTime(game.raceElapsed),
+      message,
+    },
+    player: playerCar
+      ? {
+          id: playerCar.id,
+          x: roundNumber(playerCar.x, 1),
+          y: roundNumber(playerCar.y, 1),
+          angle: roundNumber(playerCar.a, 2),
+          progress: roundNumber(playerCar.s, 4),
+          lap: playerCar.lap,
+          speedKmh: Math.round(playerCar.speed * SPEED_TO_KMH),
+          slipAngle: roundNumber(playerCar.slipAngle, 3),
+          surfaceGrip: roundNumber(playerCar.surfaceGrip, 2),
+          offTrack: playerCar.offTrack,
+          finished: playerCar.finished,
+          gridSlot: playerCar.gridSlot,
+        }
+      : null,
+    cars: getOrderedCars(game).map((car) => ({
+      id: car.id,
+      isPlayer: car.isPlayer,
+      x: roundNumber(car.x, 1),
+      y: roundNumber(car.y, 1),
+      angle: roundNumber(car.a, 2),
+      progress: roundNumber(car.s, 4),
+      lap: car.lap,
+      finished: car.finished,
+      finishOrder: car.finishOrder,
+      speedKmh: Math.round(car.speed * SPEED_TO_KMH),
+      gridSlot: car.gridSlot,
+    })),
+    leaderboard,
+    message,
+  };
+}
+
+const CAR_LIVERIES = [
+  { primary: "#e8001e", secondary: "#ffffff", helmet: "#ffff00", number: "#ffffff" },
+  { primary: "#1e41ff", secondary: "#ffdd00", helmet: "#ffffff", number: "#ffdd00" },
+  { primary: "#ff8000", secondary: "#000000", helmet: "#ffffff", number: "#000000" },
+  { primary: "#00d2be", secondary: "#c0c0c0", helmet: "#000000", number: "#000000" },
+  { primary: "#3671c6", secondary: "#ff0000", helmet: "#ffffff", number: "#ff0000" },
+  { primary: "#900000", secondary: "#ffd700", helmet: "#ffffff", number: "#ffd700" },
+  { primary: "#005aff", secondary: "#ffffff", helmet: "#ff0000", number: "#ffffff" },
+  { primary: "#2d826d", secondary: "#cedc00", helmet: "#000000", number: "#cedc00" },
+];
+
+function createCar(id, isPlayer, aiDifficulty, seedBase) {
+  const livery = CAR_LIVERIES[id % CAR_LIVERIES.length];
+  const seed = seedBase + id * 17.23;
+  return {
+    id,
+    isPlayer,
+    color: livery.primary,
+    livery,
+    x: 0,
+    y: 0,
+    a: 0,
+    vx: 0,
+    vy: 0,
+    speed: 0,
+    s: 0,
+    lap: 1,
+    finished: false,
+    finishTime: null,
+    finishOrder: null,
+    spawnGrace: 1.5,
+    trail: [],
+    dustParticles: [],
+    offTrack: false,
+    offTrackRecovery: 1.0,
+    throttleState: 0,
+    brakeState: 0,
+    steerState: 0,
+    yawRate: 0,
+    slipAngle: 0,
+    surfaceGrip: 1,
+    collided: false,
+    collisionCooldown: 0,
+    aiProfile: isPlayer ? null : AI_PROFILES[aiDifficulty],
+    ai: isPlayer
+      ? null
+      : {
+          t: 0,
+          noiseSeed: pseudoRandom(seed + 0.7) * 9999,
+          lineOffset: (pseudoRandom(seed + 2.4) - 0.5) * 0.4,
+        },
+    gridX: 0,
+    gridY: 0,
+    gridA: 0,
+    gridSlot: id + 1,
+    gridSide: "left",
+  };
+}
+
+function buildGridSlots(track, trackDef, totalCars) {
+  const startPoint = sampleTrackAt(track, track.startS);
+  const normalX = -Math.sin(startPoint.ang);
+  const normalY = Math.cos(startPoint.ang);
+  const backX = -Math.cos(startPoint.ang);
+  const backY = -Math.sin(startPoint.ang);
+  const poleOffset = trackDef.poleSide === "left" ? -0.56 : 0.56;
+  const secondaryOffset = -poleOffset;
+  const lateralSpacing = track.trackWidth * 0.34;
+  const rowSpacing = Math.max(42, track.trackWidth * 0.58);
+
+  return Array.from({ length: totalCars }, (_, index) => {
+    const row = Math.floor(index / 2);
+    const onPoleSide = index % 2 === 0;
+    const laneFactor = onPoleSide ? poleOffset : secondaryOffset;
+    const stagger = onPoleSide ? 0 : 0.42;
+    const x = startPoint.x + normalX * laneFactor * lateralSpacing + backX * (row + stagger) * rowSpacing;
+    const y = startPoint.y + normalY * laneFactor * lateralSpacing + backY * (row + stagger) * rowSpacing;
+    return {
+      x,
+      y,
+      a: startPoint.ang,
+      slot: index + 1,
+      side: onPoleSide ? (poleOffset < 0 ? "left" : "right") : (poleOffset < 0 ? "right" : "left"),
+    };
+  });
+}
+
+function placeCarsOnGrid(cars, track, trackDef, playerGridIndex = 0) {
+  const slots = buildGridSlots(track, trackDef, cars.length);
+  const clampedPlayerGridIndex = clamp(playerGridIndex, 0, cars.length - 1);
+  const playerCar = cars.find((car) => car.isPlayer) || cars[0];
+  const aiCars = cars.filter((car) => !car.isPlayer);
+  const orderedCars = Array.from({ length: cars.length }, () => null);
+  orderedCars[clampedPlayerGridIndex] = playerCar;
+
+  let aiIndex = 0;
+  for (let i = 0; i < orderedCars.length; i += 1) {
+    if (orderedCars[i]) continue;
+    orderedCars[i] = aiCars[aiIndex];
+    aiIndex += 1;
+  }
+
+  for (let i = 0; i < orderedCars.length; i += 1) {
+    const slot = slots[i];
+    const car = orderedCars[i];
+    car.x = slot.x;
+    car.y = slot.y;
+    car.a = slot.a;
+    car.vx = 0;
+    car.vy = 0;
+    car.speed = 0;
+    car.throttleState = 0;
+    car.brakeState = 0;
+    car.steerState = 0;
+    car.yawRate = 0;
+    car.slipAngle = 0;
+    car.surfaceGrip = 1;
+    car.collided = false;
+    car.collisionCooldown = 0;
+    car.s = closestS(track, car.x, car.y);
+    car.gridX = slot.x;
+    car.gridY = slot.y;
+    car.gridA = slot.a;
+    car.gridSlot = slot.slot;
+    car.gridSide = slot.side;
   }
 }
 
-function updateSparks(sparks, dt) {
-  for (let i = sparks.length - 1; i >= 0; i--) {
-    sparks[i].x += sparks[i].vx * dt;
-    sparks[i].y += sparks[i].vy * dt;
-    sparks[i].life -= dt;
-    if (sparks[i].life <= 0) sparks.splice(i, 1);
+function parkCarsOnFinish(track, orderedCars) {
+  const finishPoint = sampleTrackAt(track, track.startS + 0.002);
+  const normalX = -Math.sin(finishPoint.ang);
+  const normalY = Math.cos(finishPoint.ang);
+  const alongX = Math.cos(finishPoint.ang);
+  const alongY = Math.sin(finishPoint.ang);
+  const rowSpacing = Math.max(46, track.trackWidth * 0.62);
+  const lateralSpacing = track.trackWidth * 0.34;
+
+  for (let index = 0; index < orderedCars.length; index += 1) {
+    const car = orderedCars[index];
+    const row = Math.floor(index / 2);
+    const laneSide = index % 2 === 0 ? -1 : 1;
+    const alongOffset = (row + 0.35) * rowSpacing;
+    car.x = finishPoint.x + alongX * alongOffset + normalX * laneSide * lateralSpacing;
+    car.y = finishPoint.y + alongY * alongOffset + normalY * laneSide * lateralSpacing;
+    car.a = finishPoint.ang;
+    car.vx = 0;
+    car.vy = 0;
+    car.speed = 0;
+    car.throttleState = 0;
+    car.brakeState = 0;
+    car.steerState = 0;
+    car.yawRate = 0;
+    car.slipAngle = 0;
+    car.s = closestSNear(track, car.x, car.y, track.startS);
   }
+}
+
+function finalizeRaceResults(game, t) {
+  const orderedCars = getOrderedCars(game);
+
+  orderedCars.forEach((car, index) => {
+    if (!car.finishOrder) {
+      car.finishOrder = index + 1;
+    }
+    if (!car.finished) {
+      car.finished = true;
+      car.finishTime = game.clockMs;
+    }
+  });
+
+  game.finishOrder = orderedCars.map((car) => car.id);
+  parkCarsOnFinish(game.track, orderedCars);
+  game.pendingLeaderboard = buildLeaderboard(game, t);
 }
 
 function updateCar(car, dt, input, track, weatherProfile, allCars, startLocked) {
-  if (car.finished) return;
-  if (startLocked) return; // all cars frozen until semaphore goes off
-  car.collided = false;
+  if (car.finished || startLocked) return;
 
-  const offTrackMult = car.offTrack ? lerp(PHYS.OFF_TRACK_GRIP, 1.0, car.offTrackRecovery) : 1.0;
-  const grip = PHYS.GRIP_BASE * weatherProfile.gripMult * offTrackMult;
-  let turboBonus = 0;
-  if (car.turboActive) {
-    car.turboTimeLeft -= dt;
-    turboBonus = PHYS.TURBO_BOOST;
-    if (car.turboTimeLeft <= 0) {
-      car.turboActive = false;
-      car.turboCooldown = PHYS.TURBO_COOLDOWN;
-    }
-  }
-  if (car.turboCooldown > 0) car.turboCooldown -= dt;
+  const offTrackMultiplier = car.offTrack ? lerp(PHYS.OFF_TRACK_GRIP, 1, car.offTrackRecovery) : 1;
+  const surfaceGrip = weatherProfile.gripMult * offTrackMultiplier;
+  car.surfaceGrip = surfaceGrip;
 
-  const offTrackSpeedFactor = car.offTrack ? lerp(PHYS.OFF_TRACK_MAX_SPEED_FACTOR, 1.0, car.offTrackRecovery) : 1.0;
-  const maxSpeed = (PHYS.MAX_SPEED + turboBonus) * (car.aiProfile ? car.aiProfile.speedFactor : 1) * offTrackSpeedFactor;
+  car.throttleState = approach(car.throttleState, input.throttle, PHYS.THROTTLE_RESPONSE, dt);
+  car.brakeState = approach(car.brakeState, input.brake, PHYS.BRAKE_RESPONSE, dt);
+  car.steerState = approach(car.steerState, input.steer, PHYS.STEER_RESPONSE, dt);
 
-  if (input.throttle > 0) car.speed += PHYS.ACCEL * dt * input.throttle;
-  else if (input.brake > 0) {
-    car.speed -= PHYS.BRAKE_DECEL * dt * input.brake;
-  } else car.speed -= PHYS.NATURAL_DECEL * dt;
-  car.speed = clamp(car.speed, 0, maxSpeed);
+  const forwardX = Math.cos(car.a);
+  const forwardY = Math.sin(car.a);
+  const rightX = -forwardY;
+  const rightY = forwardX;
+  let longVel = car.vx * forwardX + car.vy * forwardY;
+  let latVel = car.vx * rightX + car.vy * rightY;
 
-  const steerEffect = input.steer * PHYS.STEER_RATE * clamp(car.speed / PHYS.MAX_SPEED, 0.1, 1);
-  car.a += steerEffect * dt;
+  const offTrackSpeedFactor = car.offTrack
+    ? lerp(PHYS.OFF_TRACK_MAX_SPEED_FACTOR, 1, car.offTrackRecovery)
+    : 1;
+  const maxSpeed = PHYS.MAX_SPEED * (car.aiProfile ? car.aiProfile.speedFactor : 1) * offTrackSpeedFactor;
+  const speedRatio = clamp(Math.abs(longVel) / Math.max(1, maxSpeed), 0, 1.15);
+  const driveAccel = PHYS.ENGINE_ACCEL * car.throttleState * clamp(1 - Math.pow(speedRatio, 1.45), 0.18, 1);
+  const brakeAccel = PHYS.BRAKE_DECEL * car.brakeState;
+  const dragAccel = PHYS.ROLLING_DRAG + Math.abs(longVel) * 0.055 + longVel * longVel * PHYS.AERO_DRAG;
+  const engineBrake = car.throttleState < 0.08 ? PHYS.ENGINE_BRAKE : 0;
+  longVel += (driveAccel - brakeAccel - dragAccel - engineBrake) * dt;
+  longVel = clamp(longVel, 0, maxSpeed);
 
-  car.vx = lerp(car.vx, Math.cos(car.a) * car.speed, grip * dt);
-  car.vy = lerp(car.vy, Math.sin(car.a) * car.speed, grip * dt);
+  const steerAuthority = clamp((Math.abs(longVel) - 18) / (maxSpeed * 0.58), 0, 1);
+  const targetYawRate = car.steerState
+    * PHYS.STEER_RATE
+    * (0.18 + steerAuthority * 0.96)
+    * (0.75 + surfaceGrip * 0.25);
+  car.yawRate = approach(car.yawRate, targetYawRate, PHYS.YAW_RESPONSE, dt);
+  car.a += car.yawRate * dt;
+
+  const lateralGrip = PHYS.LATERAL_GRIP
+    * surfaceGrip
+    * (0.95 - speedRatio * 0.22)
+    * (car.brakeState > 0.25 ? 0.94 : 1);
+  latVel = lerp(latVel, 0, clamp(lateralGrip * dt, 0, 1));
+
+  const alignedForwardX = Math.cos(car.a);
+  const alignedForwardY = Math.sin(car.a);
+  const alignedRightX = -alignedForwardY;
+  const alignedRightY = alignedForwardX;
+  const targetVx = alignedForwardX * longVel + alignedRightX * latVel;
+  const targetVy = alignedForwardY * longVel + alignedRightY * latVel;
+  const stabilityBlend = clamp(PHYS.LATERAL_STABILITY * surfaceGrip * dt, 0, 1);
+  car.vx = lerp(car.vx, targetVx, stabilityBlend);
+  car.vy = lerp(car.vy, targetVy, stabilityBlend);
   car.x += car.vx * dt;
   car.y += car.vy * dt;
   car.speed = Math.hypot(car.vx, car.vy);
 
-  // Constrain to track + off-track penalty
-  const tw = track.trackWidth / 2;
-  const cs = closestSNear(track, car.x, car.y, car.s);
-  const closest = sampleTrackAt(track, cs);
-  const dx = car.x - closest.x, dy = car.y - closest.y;
-  const dist = Math.hypot(dx, dy);
+  const halfWidth = track.trackWidth / 2;
+  const currentS = closestSNear(track, car.x, car.y, car.s);
+  const closestPoint = sampleTrackAt(track, currentS);
+  const dx = car.x - closestPoint.x;
+  const dy = car.y - closestPoint.y;
+  const distance = Math.hypot(dx, dy);
 
-  if (dist > tw + 4) {
+  if (distance > halfWidth + 4) {
     car.offTrack = true;
     car.offTrackRecovery = Math.max(0, car.offTrackRecovery - dt / PHYS.OFF_TRACK_RECOVERY);
-    // Soft boundary push
-    const over = dist - (tw + 4);
-    car.x -= (dx / dist) * over * 0.7;
-    car.y -= (dy / dist) * over * 0.7;
-    // Emit dust particles (max 3 per frame)
+    const overDistance = distance - (halfWidth + 4);
+    car.x -= (dx / distance) * overDistance * 0.7;
+    car.y -= (dy / distance) * overDistance * 0.7;
+    const scrub = clamp(overDistance / 26, 0, 0.32);
+    car.vx *= 1 - scrub * 0.18;
+    car.vy *= 1 - scrub * 0.18;
+    car.yawRate *= 0.96;
     if (car.dustParticles.length < 60 && Math.random() < 0.4) {
-      const ang = Math.random() * Math.PI * 2;
+      const angle = Math.random() * Math.PI * 2;
       car.dustParticles.push({
-        x: car.x, y: car.y,
-        vx: Math.cos(ang) * (20 + Math.random() * 30),
-        vy: Math.sin(ang) * (20 + Math.random() * 30),
-        life: 0.6 + Math.random() * 0.4, maxLife: 1.0,
+        x: car.x,
+        y: car.y,
+        vx: Math.cos(angle) * (20 + Math.random() * 30),
+        vy: Math.sin(angle) * (20 + Math.random() * 30),
+        life: 0.6 + Math.random() * 0.4,
+        maxLife: 1,
       });
     }
   } else {
@@ -703,251 +904,399 @@ function updateCar(car, dt, input, track, weatherProfile, allCars, startLocked) 
     car.offTrackRecovery = Math.min(1, car.offTrackRecovery + dt / PHYS.OFF_TRACK_RECOVERY);
   }
 
-  // Update dust particles
-  for (let i = car.dustParticles.length - 1; i >= 0; i--) {
-    car.dustParticles[i].x += car.dustParticles[i].vx * dt;
-    car.dustParticles[i].y += car.dustParticles[i].vy * dt;
-    car.dustParticles[i].vx *= 0.92;
-    car.dustParticles[i].vy *= 0.92;
-    car.dustParticles[i].life -= dt;
-    if (car.dustParticles[i].life <= 0) car.dustParticles.splice(i, 1);
+  for (let i = car.dustParticles.length - 1; i >= 0; i -= 1) {
+    const particle = car.dustParticles[i];
+    particle.x += particle.vx * dt;
+    particle.y += particle.vy * dt;
+    particle.vx *= 0.92;
+    particle.vy *= 0.92;
+    particle.life -= dt;
+    if (particle.life <= 0) car.dustParticles.splice(i, 1);
   }
 
-  // Car-car collisions
-  if (car.spawnGrace <= 0) {
-    for (const other of allCars) {
-      if (other.id === car.id || other.spawnGrace > 0) continue;
-      const cdx = car.x - other.x, cdy = car.y - other.y;
-      const cd = Math.hypot(cdx, cdy);
-      const minD = PHYS.CAR_RADIUS * 2;
-      if (cd < minD && cd > 0.5) {
-        const push = (minD - cd) / 2;
-        car.x += (cdx / cd) * push; car.y += (cdy / cd) * push;
-        car.speed *= 0.80; car.vx *= 0.80; car.vy *= 0.80;
-        addSparks(car.sparks, car.x, car.y, car.color);
-        car.collided = true;
-      }
-    }
-  }
   if (car.spawnGrace > 0) car.spawnGrace -= dt;
+  if (car.collisionCooldown > 0) car.collisionCooldown -= dt;
 
-  // Update s (reuse cs computed above)
-  const ds = wrap01(cs - car.s + 0.5) - 0.5;
-  if (ds > 0) car.s = cs;
+  const deltaS = wrap01(currentS - car.s + 0.5) - 0.5;
+  if (deltaS > 0) car.s = currentS;
 
-  // Near-miss turbo bonus and turbo fill (player only)
   if (car.isPlayer) {
     for (const other of allCars) {
       if (other.id === car.id) continue;
-      const nd = Math.hypot(car.x - other.x, car.y - other.y);
-      if (nd < PHYS.CAR_RADIUS * 3.5 && nd > PHYS.CAR_RADIUS * 2.2) {
-        car.turbo = Math.min(1, car.turbo + PHYS.NEAR_MISS_BONUS * dt * 5);
+      const nearDistance = Math.hypot(car.x - other.x, car.y - other.y);
+      if (nearDistance < PHYS.CAR_RADIUS * 3.5 && nearDistance > PHYS.CAR_RADIUS * 2.2 && other.speed > car.speed) {
+        car.vx += (other.vx - car.vx) * 0.004;
+        car.vy += (other.vy - car.vy) * 0.004;
       }
-    }
-    if (!car.turboActive && car.turboCooldown <= 0 && car.speed > 50) {
-      car.turbo = Math.min(1, car.turbo + PHYS.TURBO_FILL_RATE * dt);
     }
   }
 
-  // Trail
+  const slipForwardX = Math.cos(car.a);
+  const slipForwardY = Math.sin(car.a);
+  const slipRightX = -slipForwardY;
+  const slipRightY = slipForwardX;
+  const stabilizedLongVel = car.vx * slipForwardX + car.vy * slipForwardY;
+  const stabilizedLatVel = car.vx * slipRightX + car.vy * slipRightY;
+  car.slipAngle = Math.atan2(Math.abs(stabilizedLatVel), Math.max(32, Math.abs(stabilizedLongVel)));
+
   car.trail.unshift({ x: car.x, y: car.y, a: car.a });
   if (car.trail.length > 28) car.trail.pop();
 }
 
+function resolveCarCollisions(cars) {
+  for (const car of cars) {
+    car.collided = false;
+  }
+
+  for (let i = 0; i < cars.length; i += 1) {
+    const a = cars[i];
+    if (a.finished || a.spawnGrace > 0) continue;
+
+    for (let j = i + 1; j < cars.length; j += 1) {
+      const b = cars[j];
+      if (b.finished || b.spawnGrace > 0) continue;
+
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const distance = Math.hypot(dx, dy);
+      const minimumDistance = PHYS.CAR_RADIUS * 2.02;
+      if (distance >= minimumDistance) continue;
+
+      const safeDistance = Math.max(distance, 0.001);
+      const nx = dx / safeDistance;
+      const ny = dy / safeDistance;
+      const overlap = minimumDistance - safeDistance;
+      const separation = overlap * PHYS.COLLISION_SEPARATION;
+
+      a.x -= nx * separation;
+      a.y -= ny * separation;
+      b.x += nx * separation;
+      b.y += ny * separation;
+
+      const relativeVx = b.vx - a.vx;
+      const relativeVy = b.vy - a.vy;
+      const closingSpeed = relativeVx * nx + relativeVy * ny;
+
+      if (closingSpeed < 0) {
+        const impulse = -closingSpeed * 0.32;
+        a.vx -= nx * impulse;
+        a.vy -= ny * impulse;
+        b.vx += nx * impulse;
+        b.vy += ny * impulse;
+      }
+
+      a.vx *= PHYS.COLLISION_VELOCITY_DAMP;
+      a.vy *= PHYS.COLLISION_VELOCITY_DAMP;
+      b.vx *= PHYS.COLLISION_VELOCITY_DAMP;
+      b.vy *= PHYS.COLLISION_VELOCITY_DAMP;
+      a.speed = Math.hypot(a.vx, a.vy);
+      b.speed = Math.hypot(b.vx, b.vy);
+
+      a.yawRate *= PHYS.COLLISION_YAW_DAMP;
+      b.yawRate *= PHYS.COLLISION_YAW_DAMP;
+      a.throttleState = Math.min(a.throttleState, PHYS.COLLISION_THROTTLE_CLAMP);
+      b.throttleState = Math.min(b.throttleState, PHYS.COLLISION_THROTTLE_CLAMP);
+
+      if (a.collisionCooldown <= 0) {
+        a.collided = true;
+        a.collisionCooldown = PHYS.COLLISION_COOLDOWN;
+      }
+      if (b.collisionCooldown <= 0) {
+        b.collided = true;
+        b.collisionCooldown = PHYS.COLLISION_COOLDOWN;
+      }
+    }
+  }
+}
+
 function computeAiInput(car, track, weatherProfile, allCars) {
-  const prof = car.aiProfile;
+  const profile = car.aiProfile;
   const ai = car.ai;
   ai.t += 0.016;
 
-  // Short lookahead for steering, long for braking
   const speedRatio = car.speed / PHYS.MAX_SPEED;
-  const shortLook = 0.020 + speedRatio * 0.030;
-  const longLook = 0.060 + speedRatio * 0.040;
-
+  const shortLook = 0.02 + speedRatio * 0.03;
+  const longLook = 0.06 + speedRatio * 0.04;
   const targetS = wrap01(car.s + shortLook);
   const target = sampleTrackAt(track, targetS);
   const longTarget = sampleTrackAt(track, wrap01(car.s + longLook));
+  const isCorner = target.curvature > 0.018;
+  const normalX = -Math.sin(target.ang);
+  const normalY = Math.cos(target.ang);
 
-  // Compute corner type at short lookahead
-  const curvatureAhead = target.curvature;
-  const isCorner = curvatureAhead > 0.018;
-
-  // Racing line: outside → apex → outside
-  const nx = -Math.sin(target.ang), ny = Math.cos(target.ang);
   let apexOffset = 0;
   if (isCorner) {
-    // Check which side is inside by sampling angle change
-    const prev = sampleTrackAt(track, wrap01(targetS - 0.005));
-    const angleChange = angNorm(target.ang - prev.ang);
-    // Positive angle change = turning left → inside is left
-    apexOffset = Math.sign(angleChange) * track.trackWidth * 0.28 * prof.apexPrecision;
+    const prevTarget = sampleTrackAt(track, wrap01(targetS - 0.005));
+    const angleChange = angNorm(target.ang - prevTarget.ang);
+    apexOffset = Math.sign(angleChange) * track.trackWidth * 0.28 * profile.apexPrecision;
   }
 
-  // Add small oscillating error + personal line offset
-  const noiseOffset = Math.sin(ai.t * 0.35 + ai.noiseSeed) * track.trackWidth * prof.lineOffset * 0.4;
-  const lateralOff = apexOffset + noiseOffset + ai.lineOffset * prof.lineOffset * track.trackWidth * 0.15;
+  const noiseOffset = Math.sin(ai.t * 0.35 + ai.noiseSeed) * track.trackWidth * profile.lineOffset * 0.4;
+  const baseOffset = apexOffset + noiseOffset + ai.lineOffset * profile.lineOffset * track.trackWidth * 0.15;
 
-  // Overtake awareness: check nearby cars
   let overtakeShift = 0;
   for (const other of allCars) {
     if (other.id === car.id) continue;
-    const rdx = other.x - car.x, rdy = other.y - car.y;
-    const along = rdx * Math.cos(car.a) + rdy * Math.sin(car.a);
-    const lateral = -rdx * Math.sin(car.a) + rdy * Math.cos(car.a);
+    const relX = other.x - car.x;
+    const relY = other.y - car.y;
+    const along = relX * Math.cos(car.a) + relY * Math.sin(car.a);
+    const lateral = -relX * Math.sin(car.a) + relY * Math.cos(car.a);
     if (along > 0 && along < 60 && Math.abs(lateral) < 24) {
       overtakeShift = lateral < 0 ? 10 : -10;
     }
   }
 
-  const tx = target.x + nx * (lateralOff + overtakeShift);
-  const ty = target.y + ny * (lateralOff + overtakeShift);
+  const targetX = target.x + normalX * (baseOffset + overtakeShift);
+  const targetY = target.y + normalY * (baseOffset + overtakeShift);
+  let angleDiff = angNorm(Math.atan2(targetY - car.y, targetX - car.x) - car.a);
+  if (Math.random() < profile.errorRate) {
+    angleDiff += (Math.random() - 0.5) * profile.errorMag * 2;
+  }
 
-  let angleDiff = angNorm(Math.atan2(ty - car.y, tx - car.x) - car.a);
-  if (Math.random() < prof.errorRate) angleDiff += (Math.random() - 0.5) * prof.errorMag * 2;
-  const steer = clamp(angleDiff * 2.8, -1, 1);
-
-  // Proportional braking (not binary)
-  const targetSpeed = longTarget.speedLimit * prof.speedFactor * weatherProfile.gripMult;
+  const steer = clamp(angleDiff * 2.25, -1, 1);
+  const targetSpeed = (longTarget.speedLimit * weatherProfile.gripMult * profile.speedFactor) / profile.brakeMargin;
   const speedDiff = car.speed - targetSpeed;
-  const throttle = speedDiff < -10 ? clamp((targetSpeed - car.speed) / 60, 0, 1) : 0.3;
-  const brake = speedDiff > 0 ? clamp(speedDiff / 80, 0, 1) : 0;
+  const brake = speedDiff > 0 ? clamp(speedDiff / 92, 0, 1) : 0;
+  const throttle = brake > 0.06
+    ? 0
+    : speedDiff < -8
+      ? clamp((targetSpeed - car.speed) / 80, 0.16, isCorner ? 0.72 : 1)
+      : (isCorner ? 0.20 : 0.38);
 
-  const useTurbo = Math.random() < prof.turboUse &&
-    car.turbo > 0.75 &&
-    longTarget.curvature < 0.016 &&
-    !car.turboActive &&
-    car.turboCooldown <= 0;
-
-  return { throttle, brake, steer, useTurbo };
+  return { throttle, brake, steer };
 }
 
-function checkLapCross(car, prevS, totalLaps, onFinish) {
+function checkLapCross(car, prevS, totalLaps, clockMs, onFinish) {
   const crossed = prevS > 0.85 && car.s < 0.15;
   if (!crossed) return;
   if (car.lap >= totalLaps) {
     car.finished = true;
-    car.finishTime = performance.now();
+    car.finishTime = clockMs;
     onFinish(car);
   } else {
-    car.lap++;
+    car.lap += 1;
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// SECTION 7: Canvas rendering pipeline
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function getPlayerInput(keys, joy, touchInput) {
+  let throttle = 0;
+  let brake = 0;
+  let steer = 0;
 
-function renderBackground(ctx, w, h, env, weatherProfile, starfield, time) {
-  ctx.fillStyle = env.bgColor;
-  ctx.fillRect(0, 0, w, h);
+  if (joy.active) {
+    throttle = clamp(-joy.dy / 42, 0, 1);
+    brake = clamp(joy.dy / 42, 0, 1);
+    steer = clamp(joy.dx / 42, -1, 1);
+  } else {
+    if (keys.has("ArrowUp") || keys.has("KeyW") || keys.has("Numpad8")) throttle = 1;
+    if (keys.has("ArrowDown") || keys.has("KeyS") || keys.has("Numpad2")) brake = 1;
+    if (keys.has("ArrowLeft") || keys.has("KeyA") || keys.has("Numpad4")) steer = -1;
+    if (keys.has("ArrowRight") || keys.has("KeyD") || keys.has("Numpad6")) steer = 1;
+  }
 
-  if (starfield && starfield.length) {
-    ctx.fillStyle = "rgba(255,255,255,0.65)";
-    for (const s of starfield) {
-      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+  if (touchInput.touchThrottle) throttle = 1;
+  if (touchInput.touchBrake) brake = 1;
+
+  return { throttle, brake, steer };
+}
+
+function updateStartProcedure(game, dt) {
+  const start = game.startProcedure;
+  let changed = false;
+  start.elapsed += dt;
+
+  if (start.phase === "grid" && start.elapsed >= start.gridDuration) {
+    start.phase = "lights";
+    start.elapsed = 0;
+    start.lightCount = 0;
+    return true;
+  }
+
+  if (start.phase === "lights") {
+    const nextLightCount = Math.min(SEM_LIGHTS, Math.floor(start.elapsed / start.lightInterval));
+    if (nextLightCount !== start.lightCount) {
+      start.lightCount = nextLightCount;
+      changed = true;
+    }
+
+    if (start.elapsed >= start.lightInterval * SEM_LIGHTS + start.holdAfterFull) {
+      start.phase = "go";
+      start.elapsed = 0;
+      start.lightCount = 0;
+      game._raceStartTime = game.clockMs;
+      return true;
     }
   }
+
+  if (start.phase === "go" && start.elapsed >= start.goDuration) {
+    start.phase = "racing";
+    start.elapsed = 0;
+    return true;
+  }
+
+  return changed;
+}
+
+function stepRaceState(game, dt, playerInput, t) {
+  game.clockMs += dt * 1000;
+  game.time += dt;
+
+  if (game._endTriggered) {
+    game.endCountdown -= dt;
+    if (game.endCountdown <= 0) {
+      return { requestScreen: "end", importantChange: true };
+    }
+    return { importantChange: false };
+  }
+
+  const startChanged = updateStartProcedure(game, dt);
+  const startLocked = game.startProcedure.phase !== "racing";
+  const playerCar = game.cars.find((car) => car.isPlayer);
+
+  for (const car of game.cars) {
+    const prevS = car.s;
+    let input;
+    if (car.isPlayer) {
+      input = startLocked ? { throttle: 0, brake: 0, steer: 0 } : playerInput;
+    } else if (game.startProcedure.phase === "racing") {
+      input = computeAiInput(car, game.track, game.weather, game.cars);
+    } else {
+      input = { throttle: 0, brake: 0, steer: 0 };
+    }
+
+    updateCar(car, dt, input, game.track, game.weather, game.cars, startLocked);
+
+    if (game.startProcedure.phase === "racing") {
+      checkLapCross(car, prevS, game.totalLaps, game.clockMs, (finishedCar) => {
+        finishedCar.finishOrder = game.finishOrder.length + 1;
+        game.finishOrder.push(finishedCar.id);
+      });
+    }
+  }
+
+  if (game.startProcedure.phase === "racing") {
+    resolveCarCollisions(game.cars);
+  }
+
+  if (game.startProcedure.phase === "racing" && game._raceStartTime != null) {
+    game.raceElapsed = Math.max(0, (game.clockMs - game._raceStartTime) / 1000);
+  }
+
+  if (game.startProcedure.phase === "racing") {
+    const playerFinished = Boolean(playerCar && playerCar.finished);
+    const allFinished = game.cars.every((car) => car.finished);
+    if (playerFinished || allFinished) {
+      finalizeRaceResults(game, t);
+      game._endTriggered = true;
+      game.endCountdown = 0.8;
+      return { importantChange: true };
+    }
+  }
+
+  return { importantChange: startChanged };
+}
+
+function renderBackground(ctx, width, height, env, weatherProfile, time) {
+  ctx.fillStyle = env.bgColor;
+  ctx.fillRect(0, 0, width, height);
 
   if (weatherProfile.rainOverlay) {
     ctx.save();
     ctx.strokeStyle = "rgba(140,190,255,0.16)";
     ctx.lineWidth = 1;
-    const off = (time * 280) % 55;
-    for (let x = -60; x < w + 60; x += 11) {
+    const offset = (time * 280) % 55;
+    for (let x = -60; x < width + 60; x += 11) {
       ctx.beginPath();
-      ctx.moveTo(x + off, 0);
-      ctx.lineTo(x + off + 28, h);
+      ctx.moveTo(x + offset, 0);
+      ctx.lineTo(x + offset + 28, height);
       ctx.stroke();
     }
     ctx.restore();
   }
 
   if (weatherProfile.id === "dusk") {
-    const grad = ctx.createRadialGradient(w / 2, h / 2, h * 0.15, w / 2, h / 2, h * 0.85);
-    grad.addColorStop(0, "rgba(0,0,0,0)");
-    grad.addColorStop(1, "rgba(25,12,0,0.50)");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, w, h);
+    const gradient = ctx.createRadialGradient(width / 2, height / 2, height * 0.15, width / 2, height / 2, height * 0.85);
+    gradient.addColorStop(0, "rgba(0,0,0,0)");
+    gradient.addColorStop(1, "rgba(25,12,0,0.50)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
   }
 }
 
 function renderDecorations(ctx, track, env) {
   if (!track.decorations) return;
-  for (const d of track.decorations) {
-    if (d.type === "tree") {
-      // Drop shadow
+  for (const decoration of track.decorations) {
+    if (decoration.type === "tree") {
       ctx.save();
       ctx.globalAlpha = 0.28;
       ctx.fillStyle = "rgba(0,0,0,0.5)";
       ctx.beginPath();
-      ctx.ellipse(d.x + 3, d.y + 4, d.radius * 0.9, d.radius * 0.7, 0, 0, Math.PI * 2);
+      ctx.ellipse(decoration.x + 3, decoration.y + 4, decoration.radius * 0.9, decoration.radius * 0.7, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalAlpha = 1;
-      // Tree canopy
-      ctx.fillStyle = d.color;
+      ctx.fillStyle = decoration.color;
       ctx.beginPath();
-      ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2);
+      ctx.arc(decoration.x, decoration.y, decoration.radius, 0, Math.PI * 2);
       ctx.fill();
-      // Highlight
-      ctx.fillStyle = d.highlight || d.color;
+      ctx.fillStyle = decoration.highlight || decoration.color;
       ctx.beginPath();
-      ctx.arc(d.x - d.radius * 0.2, d.y - d.radius * 0.2, d.radius * 0.55, 0, Math.PI * 2);
+      ctx.arc(decoration.x - decoration.radius * 0.2, decoration.y - decoration.radius * 0.2, decoration.radius * 0.55, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
-    } else if (d.type === "stand") {
+    } else if (decoration.type === "stand") {
       ctx.save();
-      ctx.translate(d.x, d.y);
-      ctx.rotate(d.ang + Math.PI / 2);
+      ctx.translate(decoration.x, decoration.y);
+      ctx.rotate(decoration.ang + Math.PI / 2);
       ctx.fillStyle = "rgba(60,60,80,0.85)";
-      ctx.fillRect(-d.w / 2, -d.h / 2, d.w, d.h);
+      ctx.fillRect(-decoration.w / 2, -decoration.h / 2, decoration.w, decoration.h);
       ctx.fillStyle = "rgba(30,30,50,0.9)";
-      ctx.fillRect(-d.w / 2, -d.h / 2, d.w, 10);
+      ctx.fillRect(-decoration.w / 2, -decoration.h / 2, decoration.w, 10);
       ctx.restore();
-    } else if (d.type === "crowd") {
+    } else if (decoration.type === "crowd") {
       const crowdColors = ["#c44", "#c84", "#48c", "#8c4", "#c48", "#888"];
-      ctx.fillStyle = crowdColors[(d.row * 3 + (d.col + 4)) % crowdColors.length];
+      ctx.fillStyle = crowdColors[(decoration.row * 3 + (decoration.col + 4)) % crowdColors.length];
       ctx.beginPath();
-      ctx.arc(d.x, d.y, 3.5, 0, Math.PI * 2);
+      ctx.arc(decoration.x, decoration.y, 3.5, 0, Math.PI * 2);
       ctx.fill();
     }
   }
 }
 
 function updateFollowCamera(camera, player, dt) {
-  if (!camera || !player) return;
   const lookAhead = 110 + player.speed * 0.46;
-  const tx = player.x + Math.cos(player.a) * lookAhead + player.vx * 0.14;
-  const ty = player.y + Math.sin(player.a) * lookAhead + player.vy * 0.14;
-  const blend = clamp(dt * 4.0, 0, 1);
-  camera.x = lerp(camera.x, tx, blend);
-  camera.y = lerp(camera.y, ty, blend);
+  const targetX = player.x + Math.cos(player.a) * lookAhead + player.vx * 0.14;
+  const targetY = player.y + Math.sin(player.a) * lookAhead + player.vy * 0.14;
+  const blend = clamp(dt * 4, 0, 1);
+  camera.x = lerp(camera.x, targetX, blend);
+  camera.y = lerp(camera.y, targetY, blend);
   const targetZoom = clamp(0.94 - (player.speed / PHYS.MAX_SPEED) * 0.20, 0.68, 0.94);
   camera.zoom = lerp(camera.zoom, targetZoom, clamp(dt * 2.6, 0, 1));
   camera.shakeX = lerp(camera.shakeX || 0, 0, clamp(dt * 8, 0, 1));
   camera.shakeY = lerp(camera.shakeY || 0, 0, clamp(dt * 8, 0, 1));
 }
 
-function applyCameraTransform(ctx, camera, w, h) {
-  if (!camera) return;
+function applyCameraTransform(ctx, camera, width, height) {
   ctx.setTransform(
     camera.zoom,
     0,
     0,
     camera.zoom,
-    w / 2 - (camera.x + (camera.shakeX || 0)) * camera.zoom,
-    h / 2 - (camera.y + (camera.shakeY || 0)) * camera.zoom
+    width / 2 - (camera.x + (camera.shakeX || 0)) * camera.zoom,
+    height / 2 - (camera.y + (camera.shakeY || 0)) * camera.zoom
   );
 }
 
 function renderTrack(ctx, track, env) {
   const samples = track.samples;
-  const N = samples.length;
-  const p = track.paths; // pre-computed Path2D objects
+  const finishIndex = Math.floor(track.startS * samples.length);
+  const finishSample = samples[finishIndex];
+  const squareWidth = Math.max(6, track.trackWidth / 8);
+  const squareHeight = 10;
+  const squareCount = Math.round(track.trackWidth / squareWidth);
 
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
-  // ── Layer 1: Wide runoff band ──────────────────────────────────────────
   let runoffColor = env.runoffColor;
   if (env.runoffType === "grass") runoffColor = env.grassColor || "#2a6030";
   else if (env.runoffType === "sand") runoffColor = env.runoffColor || "#c8a058";
@@ -955,136 +1304,120 @@ function renderTrack(ctx, track, env) {
   else if (env.runoffType === "gravel") runoffColor = "#8a7860";
   ctx.strokeStyle = runoffColor;
   ctx.lineWidth = track.trackWidth + 70;
-  ctx.stroke(p.center);
+  ctx.stroke(track.paths.center);
 
-  // ── Layer 2: Barriers ─────────────────────────────────────────────────
   ctx.lineWidth = 5;
   ctx.strokeStyle = env.barrierColor || "#1e5eff";
-  ctx.stroke(p.barrierLeft);
-  ctx.stroke(p.barrierRight);
+  ctx.stroke(track.paths.barrierLeft);
+  ctx.stroke(track.paths.barrierRight);
 
-  // ── Layer 3: Asphalt ──────────────────────────────────────────────────
   ctx.strokeStyle = env.roadColor;
   ctx.lineWidth = track.trackWidth + 2;
-  ctx.stroke(p.center);
+  ctx.stroke(track.paths.center);
 
-  // Lighter center strip for depth
-  const rc = env.roadColor.replace(/#/, "");
-  const rr = parseInt(rc.substring(0, 2), 16);
-  const rg = parseInt(rc.substring(2, 4), 16);
-  const rb = parseInt(rc.substring(4, 6), 16);
-  ctx.strokeStyle = `rgba(${Math.min(255, rr + 18)},${Math.min(255, rg + 18)},${Math.min(255, rb + 18)},0.5)`;
+  const roadHex = env.roadColor.replace("#", "");
+  const roadR = parseInt(roadHex.slice(0, 2), 16);
+  const roadG = parseInt(roadHex.slice(2, 4), 16);
+  const roadB = parseInt(roadHex.slice(4, 6), 16);
+  ctx.strokeStyle = `rgba(${Math.min(255, roadR + 18)},${Math.min(255, roadG + 18)},${Math.min(255, roadB + 18)},0.5)`;
   ctx.lineWidth = track.trackWidth * 0.5;
-  ctx.stroke(p.center);
+  ctx.stroke(track.paths.center);
 
-  // ── Layer 4a: Dashed center line ──────────────────────────────────────
   ctx.setLineDash([20, 15]);
   ctx.strokeStyle = env.centerLineColor;
-  ctx.lineWidth = 2.0;
-  ctx.stroke(p.center);
+  ctx.lineWidth = 2;
+  ctx.stroke(track.paths.center);
   ctx.setLineDash([]);
 
-  // ── Layer 4b: Finish line ─────────────────────────────────────────────
-  const finIdx = Math.floor(0.03 * N);
-  const fs = samples[finIdx];
-  const sqW = Math.max(6, track.trackWidth / 8);
-  const sqH = 10;
-  const numSq = Math.round(track.trackWidth / sqW);
   ctx.save();
-  ctx.translate(fs.x, fs.y);
-  ctx.rotate(fs.ang);
-  for (let col = 0; col < numSq; col++) {
-    for (let row = 0; row < 2; row++) {
-      const isWhite = (col + row) % 2 === 0;
-      ctx.fillStyle = isWhite ? "#ffffff" : "#1a1a1a";
-      ctx.fillRect(-sqH / 2 + row * sqH, -track.trackWidth / 2 + col * sqW, sqH, sqW);
+  ctx.translate(finishSample.x, finishSample.y);
+  ctx.rotate(finishSample.ang);
+  for (let col = 0; col < squareCount; col += 1) {
+    for (let row = 0; row < 2; row += 1) {
+      ctx.fillStyle = (col + row) % 2 === 0 ? "#ffffff" : "#1a1a1a";
+      ctx.fillRect(-squareHeight / 2 + row * squareHeight, -track.trackWidth / 2 + col * squareWidth, squareHeight, squareWidth);
     }
   }
   ctx.restore();
 
-  // ── Layer 5: Kerbs — batch-stroked by color ────────────────────────────
   ctx.lineWidth = 8;
   ctx.strokeStyle = env.kerbRed || "#e03030";
-  ctx.stroke(p.kerbA);
+  ctx.stroke(track.paths.kerbA);
   ctx.strokeStyle = env.kerbWhite || "#f3f3f3";
-  ctx.stroke(p.kerbB);
+  ctx.stroke(track.paths.kerbB);
 
-  // ── Layer 6: White track edge lines ───────────────────────────────────
   ctx.save();
   ctx.shadowBlur = 8;
   ctx.shadowColor = "rgba(255,255,255,0.3)";
   ctx.strokeStyle = env.borderColor;
   ctx.lineWidth = 2.5;
-  ctx.stroke(p.left);
-  ctx.stroke(p.right);
+  ctx.stroke(track.paths.left);
+  ctx.stroke(track.paths.right);
   ctx.restore();
 }
 
-function renderStartGrid(ctx, cars, phase, phaseTimer, env) {
-  if (phase === "go" || phase === "racing") return;
-  const alpha = phase === "fading" ? Math.max(0, 1 - phaseTimer / 0.55) : 1.0;
+function renderStartingBoxes(ctx, cars, phase, phaseTimer, env) {
+  if (phase === "racing" || phase === "off") return;
+  const alpha = phase === "go" ? Math.max(0, 1 - phaseTimer / 0.7) : 0.82;
   ctx.save();
-  ctx.globalAlpha = alpha * 0.75;
+  ctx.globalAlpha = alpha;
   ctx.strokeStyle = env.borderColor;
-  ctx.lineWidth = 1.5;
-  ctx.shadowBlur = 10; ctx.shadowColor = env.borderColor;
+  ctx.lineWidth = 1.6;
+  ctx.fillStyle = "rgba(255,255,255,0.08)";
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = env.borderColor;
+
   for (const car of cars) {
     ctx.save();
-    ctx.translate(car.x, car.y);
-    ctx.rotate(car.a);
-    ctx.strokeRect(-17, -10, 34, 20);
+    ctx.translate(car.gridX, car.gridY);
+    ctx.rotate(car.gridA);
+    ctx.beginPath();
+    ctx.moveTo(-20, -12);
+    ctx.lineTo(16, -12);
+    ctx.lineTo(16, 12);
+    ctx.lineTo(-20, 12);
+    ctx.stroke();
+    ctx.fillRect(-20, -12, 36, 24);
+    ctx.font = "bold 9px sans-serif";
+    ctx.fillStyle = "rgba(255,255,255,0.88)";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(String(car.gridSlot), -26, 0);
     ctx.restore();
   }
+
   ctx.restore();
 }
 
 function renderCar(ctx, car, isPlayer) {
-  if (!car) return;
   const livery = car.livery || { primary: car.color, secondary: "#ffffff", helmet: "#ffffff", number: "#ffffff" };
 
-  // ── Trail ──
-  for (let i = 0; i < car.trail.length; i++) {
-    const t = car.trail[i];
-    const alpha = (1 - i / car.trail.length) * (isPlayer ? 0.35 : 0.18);
+  for (let i = 0; i < car.trail.length; i += 1) {
+    const trail = car.trail[i];
+    const alpha = (1 - i / car.trail.length) * (isPlayer ? 0.18 : 0.10);
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.translate(t.x, t.y); ctx.rotate(t.a);
+    ctx.translate(trail.x, trail.y);
+    ctx.rotate(trail.a);
     ctx.fillStyle = livery.primary;
     ctx.beginPath();
-    ctx.ellipse(0, 0, Math.max(0.1, 7 - i * 0.2), Math.max(0.1, 3.5 - i * 0.08), 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, Math.max(0.1, 6.2 - i * 0.18), Math.max(0.1, 3.0 - i * 0.06), 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
 
-  // ── Turbo flame ──
-  if (car.turboActive) {
-    ctx.save();
-    ctx.translate(car.x, car.y); ctx.rotate(car.a);
-    for (let f = 0; f < 3; f++) {
-      const fScale = 1 - f * 0.25;
-      ctx.globalAlpha = 0.55 * fScale;
-      ctx.fillStyle = f === 0 ? "#ffffff" : f === 1 ? "#ffe060" : "#ff6020";
-      ctx.beginPath();
-      ctx.ellipse(-16 - f * 5, 0, (12 - f * 3) * fScale, (5 - f) * fScale, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
-  }
-
-  // ── Dust particles ──
-  if (car.dustParticles && car.dustParticles.length > 0) {
+  if (car.dustParticles.length > 0) {
     ctx.save();
     ctx.fillStyle = "rgba(180,160,120,0.8)";
-    for (const dp of car.dustParticles) {
-      ctx.globalAlpha = (dp.life / dp.maxLife) * 0.55;
+    for (const particle of car.dustParticles) {
+      ctx.globalAlpha = (particle.life / particle.maxLife) * 0.55;
       ctx.beginPath();
-      ctx.arc(dp.x, dp.y, 4 * (dp.life / dp.maxLife), 0, Math.PI * 2);
+      ctx.arc(particle.x, particle.y, 4 * (particle.life / particle.maxLife), 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.restore();
   }
 
-  // ── Car body ──
   ctx.save();
   ctx.translate(car.x, car.y);
   ctx.rotate(car.a);
@@ -1094,7 +1427,6 @@ function renderCar(ctx, car, isPlayer) {
     ctx.shadowColor = livery.primary;
   }
 
-  // 1. Drop shadow
   ctx.save();
   ctx.globalAlpha = 0.35;
   ctx.fillStyle = "rgba(0,0,0,0.8)";
@@ -1103,7 +1435,6 @@ function renderCar(ctx, car, isPlayer) {
   ctx.fill();
   ctx.restore();
 
-  // 2. Rear tires
   ctx.fillStyle = "#111111";
   ctx.beginPath();
   if (ctx.roundRect) ctx.roundRect(6, -10, 8, 5, 2);
@@ -1114,7 +1445,6 @@ function renderCar(ctx, car, isPlayer) {
   else ctx.rect(6, 5, 8, 5);
   ctx.fill();
 
-  // 3. Main body (trapezoid)
   ctx.fillStyle = livery.primary;
   ctx.beginPath();
   ctx.moveTo(-14, -6);
@@ -1124,7 +1454,6 @@ function renderCar(ctx, car, isPlayer) {
   ctx.closePath();
   ctx.fill();
 
-  // Secondary stripe
   ctx.fillStyle = livery.secondary;
   ctx.beginPath();
   ctx.moveTo(-6, -4.5);
@@ -1134,7 +1463,6 @@ function renderCar(ctx, car, isPlayer) {
   ctx.closePath();
   ctx.fill();
 
-  // 4. Front wing
   ctx.fillStyle = livery.secondary;
   ctx.beginPath();
   ctx.moveTo(-14, -12);
@@ -1147,13 +1475,11 @@ function renderCar(ctx, car, isPlayer) {
   ctx.fillRect(-15, -13, 3, 4);
   ctx.fillRect(-15, 9, 3, 4);
 
-  // 5. Rear wing
   ctx.fillStyle = livery.secondary;
   ctx.fillRect(11, -10, 5, 20);
   ctx.fillStyle = "rgba(0,0,0,0.4)";
   ctx.fillRect(13, -5, 1, 10);
 
-  // 6. Front tires
   ctx.fillStyle = "#111111";
   ctx.beginPath();
   if (ctx.roundRect) ctx.roundRect(-14, -10, 8, 5, 2);
@@ -1164,28 +1490,24 @@ function renderCar(ctx, car, isPlayer) {
   else ctx.rect(-14, 5, 8, 5);
   ctx.fill();
 
-  // Tire shine
   ctx.fillStyle = "rgba(255,255,255,0.1)";
   ctx.fillRect(-13, -10, 3, 2);
   ctx.fillRect(-13, 5, 3, 2);
   ctx.fillRect(7, -10, 3, 2);
   ctx.fillRect(7, 5, 3, 2);
 
-  // 7. Cockpit opening
   ctx.fillStyle = "rgba(0,0,0,0.75)";
   ctx.beginPath();
   if (ctx.roundRect) ctx.roundRect(-2, -4, 10, 8, 4);
   else ctx.rect(-2, -4, 10, 8);
   ctx.fill();
 
-  // 8. Halo
   ctx.strokeStyle = "rgba(200,200,200,0.5)";
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.arc(2, 0, 5, Math.PI, 0);
   ctx.stroke();
 
-  // 9. Pilot helmet
   ctx.fillStyle = livery.helmet;
   ctx.beginPath();
   ctx.arc(1, 0, 3, 0, Math.PI * 2);
@@ -1195,48 +1517,45 @@ function renderCar(ctx, car, isPlayer) {
   ctx.arc(2, 0, 2, -0.8, 0.8);
   ctx.fill();
 
-  // 10. Car number
   ctx.fillStyle = livery.number;
   ctx.font = "bold 6px sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(car.id === 0 ? "P1" : String(car.id), 7, 0);
-
   ctx.restore();
-
-  // ── Sparks ──
-  for (const s of car.sparks) {
-    const alpha = s.life / s.maxLife;
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = "#ffcc40";
-    ctx.shadowBlur = 6; ctx.shadowColor = "#ffaa00";
-    ctx.beginPath(); ctx.arc(s.x, s.y, 2.0, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  }
 }
 
-function renderMinimap(ctx, track, cars, w, h) {
+function renderMinimap(ctx, track, cars, width, height) {
+  ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = "rgba(4,4,12,0.92)";
-  ctx.fillRect(0, 0, w, h);
+  ctx.fillRect(0, 0, width, height);
 
-  // Bounding box of track
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (const s of track.samples) {
-    if (s.x < minX) minX = s.x; if (s.x > maxX) maxX = s.x;
-    if (s.y < minY) minY = s.y; if (s.y > maxY) maxY = s.y;
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const sample of track.samples) {
+    minX = Math.min(minX, sample.x);
+    maxX = Math.max(maxX, sample.x);
+    minY = Math.min(minY, sample.y);
+    maxY = Math.max(maxY, sample.y);
   }
+
   const pad = 7;
-  const sc = Math.min((w - pad * 2) / (maxX - minX || 1), (h - pad * 2) / (maxY - minY || 1));
-  const ox = pad + ((w - pad * 2) - (maxX - minX) * sc) / 2 - minX * sc;
-  const oy = pad + ((h - pad * 2) - (maxY - minY) * sc) / 2 - minY * sc;
+  const scale = Math.min((width - pad * 2) / (maxX - minX || 1), (height - pad * 2) / (maxY - minY || 1));
+  const offsetX = pad + ((width - pad * 2) - (maxX - minX) * scale) / 2 - minX * scale;
+  const offsetY = pad + ((height - pad * 2) - (maxY - minY) * scale) / 2 - minY * scale;
 
   ctx.strokeStyle = "rgba(255,255,255,0.25)";
-  ctx.lineWidth = 3; ctx.lineJoin = "round";
+  ctx.lineWidth = 3;
+  ctx.lineJoin = "round";
   ctx.beginPath();
-  for (let i = 0; i <= track.samples.length; i++) {
-    const s = track.samples[i % track.samples.length];
-    i === 0 ? ctx.moveTo(s.x * sc + ox, s.y * sc + oy) : ctx.lineTo(s.x * sc + ox, s.y * sc + oy);
+  for (let i = 0; i <= track.samples.length; i += 1) {
+    const sample = track.samples[i % track.samples.length];
+    const drawX = sample.x * scale + offsetX;
+    const drawY = sample.y * scale + offsetY;
+    if (i === 0) ctx.moveTo(drawX, drawY);
+    else ctx.lineTo(drawX, drawY);
   }
   ctx.stroke();
 
@@ -1246,120 +1565,156 @@ function renderMinimap(ctx, track, cars, w, h) {
     ctx.shadowColor = car.color;
     ctx.fillStyle = car.color;
     ctx.beginPath();
-    ctx.arc(car.x * sc + ox, car.y * sc + oy, car.isPlayer ? 3.5 : 2.2, 0, Math.PI * 2);
+    ctx.arc(car.x * scale + offsetX, car.y * scale + offsetY, car.isPlayer ? 3.5 : 2.2, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// SECTION 8: TrackPreviewCanvas auxiliary component
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
 function TrackPreviewCanvas({ track, active }) {
-  const ref = useRef(null);
+  const canvasRef = useRef(null);
+
   useEffect(() => {
-    const canvas = ref.current;
+    const canvas = canvasRef.current;
     if (!canvas) return;
-    const dpr = window.devicePixelRatio || 1;
-    const W = (canvas.offsetWidth || 80) * dpr;
-    const H = (canvas.offsetHeight || 60) * dpr;
-    canvas.width = W; canvas.height = H;
+    const pixelRatio = window.devicePixelRatio || 1;
+    const width = (canvas.offsetWidth || 120) * pixelRatio;
+    const height = (canvas.offsetHeight || 90) * pixelRatio;
+    canvas.width = width;
+    canvas.height = height;
+
     const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, W, H);
+    ctx.clearRect(0, 0, width, height);
     const env = ENVIRONMENTS[track.envId];
     ctx.fillStyle = env.bgColor;
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillRect(0, 0, width, height);
 
-    const pts = track.raw;
-    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
-    const minX = Math.min(...xs), maxX = Math.max(...xs);
-    const minY = Math.min(...ys), maxY = Math.max(...ys);
-    const pad2 = 0.15;
-    const sc2 = Math.min(W * (1 - pad2 * 2) / (maxX - minX || 1), H * (1 - pad2 * 2) / (maxY - minY || 1));
-    const ox2 = W / 2 - ((maxX + minX) / 2) * sc2;
-    const oy2 = H / 2 - ((maxY + minY) / 2) * sc2;
+    const xs = track.raw.map((point) => point[0]);
+    const ys = track.raw.map((point) => point[1]);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const spanX = maxX - minX || 1;
+    const spanY = maxY - minY || 1;
+    const scale = Math.min((width * 0.74) / spanX, (height * 0.64) / spanY);
+    const offsetX = width / 2 - ((minX + maxX) / 2) * scale;
+    const offsetY = height / 2 - ((minY + maxY) / 2) * scale;
 
-    ctx.shadowBlur = 8; ctx.shadowColor = env.borderColor;
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = env.borderColor;
     ctx.strokeStyle = active ? env.borderColor : "rgba(255,255,255,0.30)";
-    ctx.lineWidth = 2.5; ctx.lineJoin = "round"; ctx.lineCap = "round";
+    ctx.lineWidth = 2.6;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
     ctx.beginPath();
-    for (let i = 0; i <= pts.length; i++) {
-      const p = pts[i % pts.length];
-      const px = p[0] * sc2 + ox2, py = p[1] * sc2 + oy2;
-      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    for (let index = 0; index <= track.raw.length; index += 1) {
+      const point = track.raw[index % track.raw.length];
+      const drawX = point[0] * scale + offsetX;
+      const drawY = point[1] * scale + offsetY;
+      if (index === 0) ctx.moveTo(drawX, drawY);
+      else ctx.lineTo(drawX, drawY);
     }
-    ctx.closePath(); ctx.stroke();
+    ctx.closePath();
+    ctx.stroke();
   }, [track, active]);
 
-  return <canvas ref={ref} className="r2p__trackPreview" />;
+  return <canvas ref={canvasRef} className="r2p__trackPreview" />;
 }
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// SECTION 9: Main RaceGame2DPro component
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-const CAR_LIVERIES = [
-  { primary: "#e8001e", secondary: "#ffffff", helmet: "#ffff00", number: "#ffffff" }, // Ferrari red (Player)
-  { primary: "#1e41ff", secondary: "#ffdd00", helmet: "#ffffff", number: "#ffdd00" }, // Blue/Yellow
-  { primary: "#ff8000", secondary: "#000000", helmet: "#ffffff", number: "#000000" }, // McLaren orange
-  { primary: "#00d2be", secondary: "#c0c0c0", helmet: "#000000", number: "#000000" }, // Mercedes teal
-  { primary: "#3671c6", secondary: "#ff0000", helmet: "#ffffff", number: "#ff0000" }, // Alpine blue
-  { primary: "#900000", secondary: "#ffd700", helmet: "#ffffff", number: "#ffd700" }, // Burgundy
-  { primary: "#005aff", secondary: "#ffffff", helmet: "#ff0000", number: "#ffffff" }, // Williams blue
-  { primary: "#2d826d", secondary: "#cedc00", helmet: "#000000", number: "#cedc00" }, // Aston green
-];
-const CAR_COLORS = CAR_LIVERIES.map(l => l.primary);
 
 export default function RaceGame2DPro() {
   const lang = navigator.language?.startsWith("es") ? "es" : "en";
 
-  const T = {
+  const t = useMemo(() => ({
     es: {
-      title: "Race 2D Pro", subtitle: "18 circuitos | 3 dificultades | Turbo | Clima",
-      selectTrack: "Circuito", selectDifficulty: "Dificultad IA",
-      selectWeather: "Clima", selectLaps: "Vueltas", selectRivals: "Rivales",
-      easy: "Facil", medium: "Medio", hard: "Dificil",
-      startRace: "Iniciar Carrera",
-      raceOver: "Carrera terminada", restart: "Reiniciar",
-      backToSetup: "Setup",
-      posLabel: "POS", lapLabel: "VUELTA", speedUnit: "km/h",
-      you: "Tu", rival: "Rival",
-      laps: "Vueltas", rivals: "Rivales",
-      keyHint: "UP/DOWN Acelerar/Frenar | LEFT/RIGHT Girar | SPACE Turbo | R Reiniciar",
+      title: "Race 2D Pro",
+      subtitle: "6 circuitos nuevos | Parrilla escalonada | 5 luces | Fisica revisada",
+      selectTrack: "Circuito",
+      selectDifficulty: "Dificultad IA",
+      selectWeather: "Clima",
+      easy: "Facil",
+      medium: "Medio",
+      hard: "Dificil",
+      laps: "Vueltas",
+      rivals: "Rivales",
+      startRace: "Lanzar carrera",
+      raceOver: "Carrera terminada",
+      restart: "Reiniciar",
+      backToSetup: "Volver al setup",
+      posLabel: "POS",
+      lapLabel: "VUELTA",
+      speedUnit: "km/h",
+      you: "Tu",
+      rival: "Rival",
+      keyHint: "UP/DOWN acelerar-frenar | LEFT/RIGHT girar | R reinicia",
+      standingStart: "Salida detenida",
+      fiveLights: "5 luces rojas",
+      staggeredGrid: "Parrilla escalonada",
+      gridReady: "Parrilla formada",
+      gridDetail: "Completada la vuelta de formacion. Mantente preparado para la secuencia.",
+      watchLights: "Observa las luces",
+      watchLightsDetail: "Cada luz roja se enciende de forma secuencial. No muevas el coche hasta el apagado.",
+      lightsOut: "GO!",
+      lightsOutDetail: "Luces fuera. Gestiona la traccion y busca la referencia de frenada de T1.",
+      finishMessage: "Bandera a cuadros. Resultado fijado en parrilla final.",
+      trackLimits: "Fuera de pista: el agarre cae, la frenada se alarga y el coche pierde velocidad.",
+      balanceCaution: "El coche esta deslizando. Suelta direccion y recupera apoyo antes de volver a acelerar.",
+      distanceLabel: "Longitud",
+      turnsLabel: "Curvas",
+      overtakingLabel: "Adelantamiento",
+      profileLabel: "Perfil",
     },
     en: {
-      title: "Race 2D Pro", subtitle: "18 circuits | 3 difficulties | Turbo | Weather",
-      selectTrack: "Circuit", selectDifficulty: "AI Difficulty",
-      selectWeather: "Weather", selectLaps: "Laps", selectRivals: "Rivals",
-      easy: "Easy", medium: "Medium", hard: "Hard",
-      startRace: "Start Race",
-      raceOver: "Race Over!", restart: "Restart",
-      backToSetup: "Setup",
-      posLabel: "POS", lapLabel: "LAP", speedUnit: "km/h",
-      you: "You", rival: "Rival",
-      laps: "Laps", rivals: "Rivals",
-      keyHint: "UP/DOWN Throttle/Brake | LEFT/RIGHT Steer | SPACE Turbo | R Restart",
+      title: "Race 2D Pro",
+      subtitle: "6 new circuits | Staggered grid | 5 lights | Reworked physics",
+      selectTrack: "Circuit",
+      selectDifficulty: "AI difficulty",
+      selectWeather: "Weather",
+      easy: "Easy",
+      medium: "Medium",
+      hard: "Hard",
+      laps: "Laps",
+      rivals: "Rivals",
+      startRace: "Launch race",
+      raceOver: "Race over",
+      restart: "Restart",
+      backToSetup: "Back to setup",
+      posLabel: "POS",
+      lapLabel: "LAP",
+      speedUnit: "km/h",
+      you: "You",
+      rival: "Rival",
+      keyHint: "UP/DOWN throttle-brake | LEFT/RIGHT steer | R restart",
+      standingStart: "Standing start",
+      fiveLights: "5 red lights",
+      staggeredGrid: "Staggered grid",
+      gridReady: "Grid formed",
+      gridDetail: "Formation lap complete. Stay ready for the light sequence.",
+      watchLights: "Watch the lights",
+      watchLightsDetail: "Each red light illuminates in sequence. Do not release the car before lights out.",
+      lightsOut: "GO!",
+      lightsOutDetail: "Lights out. Manage traction and commit to the first braking point.",
+      finishMessage: "Chequered flag. Final result locked in.",
+      trackLimits: "Off track: grip drops, braking distances grow, and the car sheds speed.",
+      balanceCaution: "The car is sliding. Open the steering and let the platform settle before reapplying throttle.",
+      distanceLabel: "Distance",
+      turnsLabel: "Turns",
+      overtakingLabel: "Overtaking",
+      profileLabel: "Profile",
     },
-  };
-  const t = T[lang];
+  })[lang], [lang]);
 
-  // â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [screen, setScreen] = useState("setup");
-  const [selectedTrackId, setSelectedTrackId] = useState(0);
+  const [selectedTrackId, setSelectedTrackId] = useState(RACE2DPRO_CIRCUITS[0].id);
   const [aiDifficulty, setAiDifficulty] = useState("medium");
   const [weatherKey, setWeatherKey] = useState("dry");
   const [laps, setLaps] = useState(3);
   const [rivals, setRivals] = useState(5);
-  const [hud, setHud] = useState({
-    pos: 1, total: 6, lap: 1, totalLaps: 3,
-    speed: 0, turbo: 0, turboActive: false, weatherIcon: "SUN",
-  });
-  const [semaphore, setSemaphore] = useState({ phase: "off", lights: [false, false, false, false, false] });
   const [joyKnob, setJoyKnob] = useState({ dx: 0, dy: 0 });
-  const [endData, setEndData] = useState(null);
+  const [viewModel, setViewModel] = useState(
+    buildSetupViewModel(RACE2DPRO_CIRCUITS[0], "medium", "dry", 3, 5, lang, t)
+  );
 
-  // â”€â”€ Refs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const canvasRef = useRef(null);
   const minimapRef = useRef(null);
   const rafRef = useRef(null);
@@ -1368,93 +1723,80 @@ export default function RaceGame2DPro() {
   const keysRef = useRef(new Set());
   const inputRef = useRef({ throttle: 0, brake: 0, steer: 0, touchThrottle: false, touchBrake: false });
   const joyRef = useRef({ active: false, pointerId: null, cx: 0, cy: 0, dx: 0, dy: 0 });
-  const starfieldRef = useRef([]);
   const frameCountRef = useRef(0);
   const pendingStartRef = useRef(false);
+  const drawFrameRef = useRef(() => undefined);
+  const stepFrameRef = useRef(() => ({ importantChange: false }));
+  const screenRef = useRef(screen);
 
-  // â”€â”€ startRace â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const selectedTrack = RACE2DPRO_CIRCUITS.find((track) => track.id === selectedTrackId) || RACE2DPRO_CIRCUITS[0];
+
+  useEffect(() => {
+    screenRef.current = screen;
+  }, [screen]);
+
+  useEffect(() => {
+    if (screen === "setup") {
+      setViewModel(buildSetupViewModel(selectedTrack, aiDifficulty, weatherKey, laps, rivals, lang, t));
+    }
+  }, [screen, selectedTrack, aiDifficulty, weatherKey, laps, rivals, lang, t]);
+
+  const syncRaceViewModel = useCallback((screenName = "race") => {
+    if (!gameRef.current) return;
+    setViewModel(buildRaceViewModel(screenName, gameRef.current, weatherKey, aiDifficulty, lang, t));
+  }, [weatherKey, aiDifficulty, lang, t]);
+
   const initializeRace = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return false;
 
-    const dpr = window.devicePixelRatio || 1;
-    const W = (canvas.clientWidth || 800) * dpr;
-    const H = (canvas.clientHeight || 600) * dpr;
-    canvas.width = W;
-    canvas.height = H;
+    const pixelRatio = window.devicePixelRatio || 1;
+    const width = (canvas.clientWidth || 800) * pixelRatio;
+    const height = (canvas.clientHeight || 600) * pixelRatio;
+    canvas.width = width;
+    canvas.height = height;
 
-    const trackDef = TRACKS[selectedTrackId];
-    const track = buildTrack(trackDef, W, H);
-    const env = ENVIRONMENTS[trackDef.envId];
+    const track = buildTrack(selectedTrack, width, height);
+    const env = ENVIRONMENTS[selectedTrack.envId];
     const weather = WEATHER_PROFILES[weatherKey];
-    const totalCars = rivals + 1;
-
-    // Generate starfield if needed
-    if (env.starfield) {
-      const stars = [];
-      for (let i = 0; i < 180; i++) {
-        stars.push({ x: Math.random() * W, y: Math.random() * H, r: 0.5 + Math.random() * 1.5 });
-      }
-      starfieldRef.current = stars;
-    } else {
-      starfieldRef.current = [];
-    }
-
-    // Create cars
+    const seedBase = (selectedTrack.id + 1) * 101 + laps * 17 + rivals * 13 + ({ easy: 5, medium: 11, hard: 19 }[aiDifficulty] || 5);
     const cars = [];
-    for (let i = 0; i < totalCars; i++) {
-      const isPlayer = i === 0;
-      const color = CAR_COLORS[i % CAR_COLORS.length];
-      cars.push(createCar(i, isPlayer, color, aiDifficulty));
+    for (let i = 0; i < rivals + 1; i += 1) {
+      cars.push(createCar(i, i === 0, aiDifficulty, seedBase));
     }
+    const playerGridIndex = Math.floor(Math.random() * cars.length);
+    placeCarsOnGrid(cars, track, selectedTrack, playerGridIndex);
 
-    // Position cars on start grid (2 per row, staggered behind startS)
-    const startPt = sampleTrackAt(track, track.startS);
-    const perpX = -Math.sin(startPt.ang);
-    const perpY = Math.cos(startPt.ang);
-    const backX = -Math.cos(startPt.ang);
-    const backY = -Math.sin(startPt.ang);
-    const rowSpacing = 36;
-    const lateralSpacing = track.trackWidth * 0.28;
-
-    for (let i = 0; i < cars.length; i++) {
-      const row = Math.floor(i / 2);
-      const col = i % 2 === 0 ? -0.5 : 0.5;
-      const car = cars[i];
-      car.x = startPt.x + perpX * col * lateralSpacing - backX * row * rowSpacing;
-      car.y = startPt.y + perpY * col * lateralSpacing - backY * row * rowSpacing;
-      car.a = startPt.ang;
-      car.s = closestS(track, car.x, car.y);
-    }
-
+    const startPoint = sampleTrackAt(track, track.startS);
     gameRef.current = {
       cars,
+      playerGridIndex,
       track,
-      trackDef,
+      trackDef: selectedTrack,
       env,
       weather,
       weatherKey,
       totalLaps: laps,
-      startPhase: "countdown",
-      startTimer: 0,
-      countdownStep: 0,
-      phaseTimer: 0,
       finishOrder: [],
       time: 0,
+      clockMs: 0,
+      raceElapsed: 0,
       _raceStartTime: null,
       _endTriggered: false,
-      camera: { x: startPt.x, y: startPt.y, zoom: 1, shakeX: 0, shakeY: 0 },
+      endCountdown: 0,
+      pendingLeaderboard: null,
+      camera: { x: startPoint.x, y: startPoint.y, zoom: 1, shakeX: 0, shakeY: 0 },
+      startProcedure: createStartProcedure(selectedTrack.id, laps, rivals, aiDifficulty),
     };
 
-    frameCountRef.current = 0;
     keysRef.current.clear();
     inputRef.current = { throttle: 0, brake: 0, steer: 0, touchThrottle: false, touchBrake: false };
     joyRef.current = { active: false, pointerId: null, cx: 0, cy: 0, dx: 0, dy: 0 };
-
-    setEndData(null);
-    setSemaphore({ phase: "countdown", lights: [false, false, false, false, false] });
+    frameCountRef.current = 0;
+    setJoyKnob({ dx: 0, dy: 0 });
+    setViewModel(buildRaceViewModel("race", gameRef.current, weatherKey, aiDifficulty, lang, t));
     return true;
-  }, [selectedTrackId, aiDifficulty, weatherKey, laps, rivals]);
+  }, [selectedTrack, weatherKey, laps, rivals, aiDifficulty, lang, t]);
 
   const startRace = useCallback(() => {
     setScreen("race");
@@ -1466,333 +1808,184 @@ export default function RaceGame2DPro() {
     if (initializeRace()) pendingStartRef.current = false;
   }, [screen, initializeRace]);
 
-  // â”€â”€ Touch handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const onJoyStart = useCallback((e) => {
-    e.currentTarget.setPointerCapture(e.pointerId);
-    const rect = e.currentTarget.getBoundingClientRect();
+  const onJoyStart = useCallback((event) => {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const rect = event.currentTarget.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
-    joyRef.current = { active: true, pointerId: e.pointerId, cx, cy, dx: 0, dy: 0 };
+    joyRef.current = { active: true, pointerId: event.pointerId, cx, cy, dx: 0, dy: 0 };
   }, []);
 
-  const onJoyMove = useCallback((e) => {
+  const onJoyMove = useCallback((event) => {
     const joy = joyRef.current;
-    if (!joy.active || e.pointerId !== joy.pointerId) return;
-    const rawDx = e.clientX - joy.cx;
-    const rawDy = e.clientY - joy.cy;
-    const maxR = 45;
-    const dist = Math.hypot(rawDx, rawDy);
-    const clamped = dist > maxR ? maxR / dist : 1;
-    const dx = rawDx * clamped;
-    const dy = rawDy * clamped;
+    if (!joy.active || event.pointerId !== joy.pointerId) return;
+    const rawDx = event.clientX - joy.cx;
+    const rawDy = event.clientY - joy.cy;
+    const maxRadius = 45;
+    const distance = Math.hypot(rawDx, rawDy);
+    const factor = distance > maxRadius ? maxRadius / distance : 1;
+    const dx = rawDx * factor;
+    const dy = rawDy * factor;
     joyRef.current.dx = dx;
     joyRef.current.dy = dy;
     setJoyKnob({ dx, dy });
   }, []);
 
-  const onJoyEnd = useCallback((e) => {
-    if (e.pointerId !== joyRef.current.pointerId) return;
+  const onJoyEnd = useCallback((event) => {
+    if (event.pointerId !== joyRef.current.pointerId) return;
     joyRef.current = { active: false, pointerId: null, cx: 0, cy: 0, dx: 0, dy: 0 };
     setJoyKnob({ dx: 0, dy: 0 });
   }, []);
 
-  const onTouchThrottle = useCallback((val) => {
-    inputRef.current.touchThrottle = val;
+  const onTouchThrottle = useCallback((value) => {
+    inputRef.current.touchThrottle = value;
   }, []);
 
-  const onTouchBrake = useCallback((val) => {
-    inputRef.current.touchBrake = val;
+  const onTouchBrake = useCallback((value) => {
+    inputRef.current.touchBrake = value;
   }, []);
 
-  const onTouchTurbo = useCallback(() => {
-    const g = gameRef.current;
-    if (!g) return;
-    const player = g.cars.find(c => c.isPlayer);
-    if (!player) return;
-    if (player.turbo >= 0.25 && !player.turboActive && player.turboCooldown <= 0) {
-      player.turboActive = true;
-      player.turboTimeLeft = PHYS.TURBO_DURATION;
-      player.turbo = 0;
-    }
-  }, []);
-
-  // â”€â”€ Game loop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
-    if (screen !== "race") return;
+    if (screen !== "race") return undefined;
 
     const canvas = canvasRef.current;
     const minimap = minimapRef.current;
-    if (!canvas || !minimap) return;
+    if (!canvas || !minimap) return undefined;
 
-    const dpr = window.devicePixelRatio || 1;
-
-    // Resize handler
-    const resize = () => {
-      const W = canvas.clientWidth * dpr;
-      const H = canvas.clientHeight * dpr;
-      if (canvas.width !== W || canvas.height !== H) {
-        canvas.width = W;
-        canvas.height = H;
-        const g = gameRef.current;
-        if (g) {
-          const newTrack = buildTrack(g.trackDef, W, H);
-          g.track = newTrack;
-          for (const car of g.cars) {
-            const sp = sampleTrackAt(newTrack, car.s);
-            car.x = sp.x; car.y = sp.y;
-          }
-        }
-      }
-    };
-    window.addEventListener("resize", resize);
-
-    // Minimap canvas
-    const MM_W = 92, MM_H = 72;
-    minimap.width = MM_W * dpr;
-    minimap.height = MM_H * dpr;
-    const mmCtx = minimap.getContext("2d");
-    mmCtx.scale(dpr, dpr);
-
-    // Keyboard listeners
-    const onKeyDown = (e) => {
-      keysRef.current.add(e.code);
-      if (e.code === "Space") {
-        e.preventDefault();
-        const g = gameRef.current;
-        if (!g) return;
-        const player = g.cars.find(c => c.isPlayer);
-        if (!player) return;
-        if (player.turbo >= 0.25 && !player.turboActive && player.turboCooldown <= 0) {
-          player.turboActive = true;
-          player.turboTimeLeft = PHYS.TURBO_DURATION;
-          player.turbo = 0;
-        }
-      }
-      if (e.code === "KeyR") startRace();
-      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
-           "Numpad8", "Numpad2", "Numpad4", "Numpad6"].includes(e.code)) {
-        e.preventDefault();
-      }
-    };
-    const onKeyUp = (e) => {
-      keysRef.current.delete(e.code);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
-
-    lastRef.current = performance.now();
-
-    // â”€â”€ RAF loop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const pixelRatio = window.devicePixelRatio || 1;
+    const miniWidth = 92;
+    const miniHeight = 72;
+    minimap.width = miniWidth * pixelRatio;
+    minimap.height = miniHeight * pixelRatio;
     const ctx = canvas.getContext("2d");
+    const minimapCtx = minimap.getContext("2d");
+    minimapCtx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
-    const loop = (now) => {
-      rafRef.current = requestAnimationFrame(loop);
-
-      const rawDt = (now - lastRef.current) / 1000;
-      lastRef.current = now;
-      const dt = Math.min(rawDt, 0.033);
-
-      const g = gameRef.current;
-      if (!g) return;
-
-      const W = canvas.width, H = canvas.height;
-
-      g.time += dt;
-      frameCountRef.current++;
-
-      // â”€â”€ Countdown / semaphore â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-      if (g.startPhase === "countdown") {
-        g.startTimer += dt;
-        if (g.startTimer >= 0.80 * (g.countdownStep + 1)) {
-          g.countdownStep++;
-          if (g.countdownStep <= 5) {
-            const lights = [false, false, false, false, false];
-            for (let i = 0; i < g.countdownStep; i++) lights[i] = true;
-            setSemaphore({ phase: "countdown", lights });
-          } else if (g.countdownStep === 6) {
-            setSemaphore({ phase: "countdown", lights: [true, true, true, true, true] });
-          } else {
-            g.startPhase = "fading";
-            g.phaseTimer = 0;
-            setSemaphore({ phase: "go", lights: [false, false, false, false, false] });
-          }
+    const resize = () => {
+      const width = canvas.clientWidth * pixelRatio;
+      const height = canvas.clientHeight * pixelRatio;
+      if (canvas.width === width && canvas.height === height) return;
+      canvas.width = width;
+      canvas.height = height;
+      const game = gameRef.current;
+      if (!game) return;
+      const rebuiltTrack = buildTrack(game.trackDef, width, height);
+      game.track = rebuiltTrack;
+      if (game.startProcedure.phase === "racing") {
+        for (const car of game.cars) {
+          const sample = sampleTrackAt(rebuiltTrack, car.s);
+          car.x = sample.x;
+          car.y = sample.y;
+          car.a = sample.ang;
         }
-      } else if (g.startPhase === "fading") {
-        g.phaseTimer += dt;
-        if (g.phaseTimer >= 0.55) {
-          g.startPhase = "racing";
-          g._raceStartTime = performance.now();
-          setSemaphore({ phase: "off", lights: [false, false, false, false, false] });
-        }
-      }
-
-      const startLocked = g.startPhase === "countdown" || g.startPhase === "fading";
-
-      // â”€â”€ Keyboard / joystick input â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-      const keys = keysRef.current;
-      const joy = joyRef.current;
-      const inp = inputRef.current;
-
-      let throttle = 0, brake = 0, steer = 0;
-
-      if (joy.active) {
-        throttle = clamp(-joy.dy / 42, 0, 1);
-        brake = clamp(joy.dy / 42, 0, 1);
-        steer = clamp(joy.dx / 42, -1, 1);
       } else {
-        if (keys.has("ArrowUp") || keys.has("KeyW") || keys.has("Numpad8")) throttle = 1;
-        if (keys.has("ArrowDown") || keys.has("KeyS") || keys.has("Numpad2")) brake = 1;
-        if (keys.has("ArrowLeft") || keys.has("KeyA") || keys.has("Numpad4")) steer = -1;
-        if (keys.has("ArrowRight") || keys.has("KeyD") || keys.has("Numpad6")) steer = 1;
+        placeCarsOnGrid(game.cars, rebuiltTrack, game.trackDef, game.playerGridIndex ?? 0);
       }
+      syncRaceViewModel("race");
+    };
 
-      if (inp.touchThrottle) throttle = 1;
-      if (inp.touchBrake) brake = 1;
-
-      const playerInput = { throttle, brake, steer };
-
-      // â”€â”€ Update cars â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-      for (const car of g.cars) {
-        const prevS = car.s;
-        let carInput;
-
-        if (car.isPlayer) {
-          carInput = startLocked ? { throttle: 0, brake: 0, steer: 0 } : playerInput;
-        } else {
-          if (g.startPhase === "racing") {
-            const aiIn = computeAiInput(car, g.track, g.weather, g.cars);
-            carInput = aiIn;
-            if (aiIn.useTurbo) {
-              car.turboActive = true;
-              car.turboTimeLeft = PHYS.TURBO_DURATION;
-              car.turbo = 0;
-            }
-            // AI turbo fill
-            if (!car.turboActive && car.turboCooldown <= 0 && car.speed > 50) {
-              car.turbo = Math.min(1, car.turbo + PHYS.TURBO_FILL_RATE * dt * 0.6);
-            }
-          } else {
-            carInput = { throttle: 0, brake: 0, steer: 0 };
-          }
-        }
-
-        updateCar(car, dt, carInput, g.track, g.weather, g.cars, startLocked);
-        updateSparks(car.sparks, dt);
-
-        // Lap crossing
-        if (g.startPhase === "racing") {
-          checkLapCross(car, prevS, g.totalLaps, (finishedCar) => {
-            finishedCar.finishOrder = g.finishOrder.length + 1;
-            g.finishOrder.push(finishedCar.id);
-          });
-        }
+    const onKeyDown = (event) => {
+      keysRef.current.add(event.code);
+      if (event.code === "KeyR") startRace();
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Numpad8", "Numpad2", "Numpad4", "Numpad6"].includes(event.code)) {
+        event.preventDefault();
       }
+    };
 
-      // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-      ctx.save();
-      renderBackground(ctx, W, H, g.env, g.weather, starfieldRef.current, g.time);
+    const onKeyUp = (event) => {
+      keysRef.current.delete(event.code);
+    };
 
-      const playerCar = g.cars.find(c => c.isPlayer);
+    const drawFrame = () => {
+      const game = gameRef.current;
+      if (!game) return;
+
+      const width = canvas.width;
+      const height = canvas.height;
+      renderBackground(ctx, width, height, game.env, game.weather, game.time);
+
+      const playerCar = game.cars.find((car) => car.isPlayer);
       if (playerCar) {
         if (playerCar.collided) {
-          g.camera.shakeX += (Math.random() - 0.5) * 22;
-          g.camera.shakeY += (Math.random() - 0.5) * 22;
+          game.camera.shakeX += (Math.random() - 0.5) * PHYS.COLLISION_CAMERA_SHAKE;
+          game.camera.shakeY += (Math.random() - 0.5) * PHYS.COLLISION_CAMERA_SHAKE;
         }
-        updateFollowCamera(g.camera, playerCar, dt);
+        updateFollowCamera(game.camera, playerCar, STEP_MS / 1000);
       }
-      applyCameraTransform(ctx, g.camera, W, H);
-      renderTrack(ctx, g.track, g.env);
-      renderDecorations(ctx, g.track, g.env);
-      renderStartGrid(ctx, g.cars, g.startPhase, g.phaseTimer, g.env);
-      for (const car of g.cars) {
+
+      applyCameraTransform(ctx, game.camera, width, height);
+      renderTrack(ctx, game.track, game.env);
+      renderDecorations(ctx, game.track, game.env);
+      renderStartingBoxes(ctx, game.cars, game.startProcedure.phase, game.startProcedure.elapsed, game.env);
+      for (const car of game.cars) {
         if (!car.isPlayer) renderCar(ctx, car, false);
       }
       if (playerCar) renderCar(ctx, playerCar, true);
-      ctx.restore();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
+      renderMinimap(minimapCtx, game.track, game.cars, miniWidth, miniHeight);
+    };
 
-      // â”€â”€ Minimap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-      mmCtx.save();
-      renderMinimap(mmCtx, g.track, g.cars, MM_W, MM_H);
-      mmCtx.restore();
-
-      // â”€â”€ HUD update (every ~8 frames) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-      if (frameCountRef.current % 8 === 0 && playerCar) {
-        const playerProgress = (playerCar.lap - 1) + playerCar.s;
-        let pos = 1;
-        for (const car of g.cars) {
-          if (car.id === playerCar.id) continue;
-          const otherProgress = (car.lap - 1) + car.s;
-          if (otherProgress > playerProgress) pos++;
-        }
-        setHud({
-          pos,
-          total: g.cars.length,
-          lap: playerCar.lap,
-          totalLaps: g.totalLaps,
-          speed: Math.round(playerCar.speed * 0.36),
-          turbo: playerCar.turbo,
-          turboActive: playerCar.turboActive,
-          weatherIcon: g.weather.icon,
-        });
+    const stepFrame = (dt) => {
+      const game = gameRef.current;
+      if (!game) return { importantChange: false };
+      const playerInput = getPlayerInput(keysRef.current, joyRef.current, inputRef.current);
+      const result = stepRaceState(game, dt, playerInput, t);
+      if (result.requestScreen === "end") {
+        setViewModel(buildRaceViewModel("end", game, weatherKey, aiDifficulty, lang, t));
+        setScreen("end");
+        return result;
       }
-
-      // â”€â”€ End detection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-      if (g.startPhase === "racing" && !g._endTriggered) {
-        const playerFinished = playerCar && playerCar.finished;
-        const allFinished = g.cars.every(c => c.finished);
-
-        if (playerFinished || allFinished) {
-          g._endTriggered = true;
-
-          const unfinished = g.cars.filter(c => !c.finished);
-          unfinished.sort((a, b) => {
-            const pa = (a.lap - 1) + a.s;
-            const pb = (b.lap - 1) + b.s;
-            return pb - pa;
-          });
-
-          const ordered = [
-            ...g.finishOrder.map(id => g.cars.find(c => c.id === id)),
-            ...unfinished,
-          ].filter(Boolean);
-
-          const raceStartMs = g._raceStartTime || performance.now();
-          const leaderboard = ordered.map((car, i) => {
-            let timeStr = "--:--.-";
-            if (car.finishTime) {
-              const elapsed = (car.finishTime - raceStartMs) / 1000;
-              const mins = Math.floor(elapsed / 60);
-              const secs = (elapsed % 60).toFixed(1).padStart(4, "0");
-              timeStr = `${mins}:${secs}`;
-            }
-            return {
-              pos: i + 1,
-              isPlayer: car.isPlayer,
-              color: car.color,
-              time: timeStr,
-            };
-          });
-
-          setEndData(leaderboard);
-          setTimeout(() => setScreen("end"), 800);
-        }
+      frameCountRef.current += 1;
+      if (result.importantChange || frameCountRef.current % 5 === 0) {
+        syncRaceViewModel("race");
       }
+      return result;
+    };
+
+    drawFrameRef.current = drawFrame;
+    stepFrameRef.current = stepFrame;
+
+    window.addEventListener("resize", resize);
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    lastRef.current = performance.now();
+
+    const loop = (now) => {
+      rafRef.current = requestAnimationFrame(loop);
+      const delta = Math.min((now - lastRef.current) / 1000, 0.033);
+      lastRef.current = now;
+      const result = stepFrame(delta);
+      if (result.requestScreen !== "end") drawFrame();
     };
 
     rafRef.current = requestAnimationFrame(loop);
 
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      drawFrameRef.current = () => undefined;
+      stepFrameRef.current = () => ({ importantChange: false });
+      window.removeEventListener("resize", resize);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
-      window.removeEventListener("resize", resize);
     };
-  }, [screen, startRace]);
+  }, [screen, aiDifficulty, weatherKey, lang, t, startRace, syncRaceViewModel]);
 
-  // â”€â”€ JSX â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const advanceTime = useCallback((milliseconds) => {
+    if (screenRef.current !== "race" || !gameRef.current) return undefined;
+    const loops = Math.max(1, Math.round(milliseconds / STEP_MS));
+    for (let index = 0; index < loops; index += 1) {
+      const result = stepFrameRef.current(STEP_MS / 1000);
+      if (result.requestScreen === "end") break;
+    }
+    drawFrameRef.current();
+    if (screenRef.current === "race" && gameRef.current) {
+      setViewModel(buildRaceViewModel("race", gameRef.current, weatherKey, aiDifficulty, lang, t));
+    }
+    return undefined;
+  }, [weatherKey, aiDifficulty, lang, t]);
 
-  // Setup screen
+  useGameRuntimeBridge(viewModel, useCallback((snapshot) => snapshot, []), advanceTime);
+
   if (screen === "setup") {
     return (
       <div className="r2p">
@@ -1808,92 +2001,113 @@ export default function RaceGame2DPro() {
 
             <div className="r2p__sectionLabel">{t.selectTrack}</div>
             <div className="r2p__trackGrid">
-              {TRACKS.map(tr => (
+              {RACE2DPRO_CIRCUITS.map((track) => (
                 <div
-                  key={tr.id}
-                  className={`r2p__trackCard${selectedTrackId === tr.id ? " isActive" : ""}`}
-                  onClick={() => setSelectedTrackId(tr.id)}
+                  key={track.id}
+                  className={`r2p__trackCard${selectedTrackId === track.id ? " isActive" : ""}`}
+                  onClick={() => setSelectedTrackId(track.id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setSelectedTrackId(track.id);
+                    }
+                  }}
                 >
-                  <TrackPreviewCanvas track={tr} active={selectedTrackId === tr.id} />
-                  <div className="r2p__trackName">{tr.name[lang]}</div>
-                  <div className="r2p__trackEnv">{ENVIRONMENTS[tr.envId].name[lang]}</div>
-                  <div className="r2p__trackLayout">{tr.layout}</div>
+                  <TrackPreviewCanvas track={track} active={selectedTrackId === track.id} />
+                  <div className="r2p__trackName">{track.name[lang]}</div>
+                  <div className="r2p__trackEnv">{ENVIRONMENTS[track.envId].name[lang]} · {track.classification[lang]}</div>
+                  <div className="r2p__trackMeta">{track.distanceKm} · {track.turns} {t.turnsLabel.toLowerCase()}</div>
+                  <div className="r2p__trackLayout">{track.profile[lang]}</div>
                 </div>
               ))}
             </div>
 
+            <div className="r2p__selectedTrack">
+              <div className="r2p__selectedTrackTitle">{viewModel.track.name}</div>
+              <div className="r2p__selectedTrackFacts">
+                <span>{t.distanceLabel}: {viewModel.track.distanceKm}</span>
+                <span>{t.turnsLabel}: {viewModel.track.turns}</span>
+                <span>{t.overtakingLabel}: {viewModel.track.overtaking}</span>
+                <span>{t.profileLabel}: {viewModel.track.profile}</span>
+              </div>
+              <div className="r2p__trackNote">{viewModel.track.note}</div>
+              <div className="r2p__formatRow">
+                <span className="r2p__formatChip">{t.standingStart}</span>
+                <span className="r2p__formatChip">{t.fiveLights}</span>
+                <span className="r2p__formatChip">{t.staggeredGrid}</span>
+              </div>
+            </div>
+
             <div className="r2p__optionsRow">
-              {/* Weather */}
               <div className="r2p__optBlock">
                 <div className="r2p__sectionLabel">{t.selectWeather}</div>
                 <div className="r2p__choiceGroup">
-                  {Object.entries(WEATHER_PROFILES).map(([k, w]) => (
+                  {Object.entries(WEATHER_PROFILES).map(([key, weather]) => (
                     <button
-                      key={k}
-                      className={`r2p__choiceBtn${weatherKey === k ? " isActive" : ""}`}
-                      onClick={() => setWeatherKey(k)}
+                      key={key}
                       type="button"
+                      className={`r2p__choiceBtn${weatherKey === key ? " isActive" : ""}`}
+                      onClick={() => setWeatherKey(key)}
                     >
-                      {w.icon} {w.label[lang]}
+                      {weather.icon} {weather.label[lang]}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Difficulty */}
               <div className="r2p__optBlock">
                 <div className="r2p__sectionLabel">{t.selectDifficulty}</div>
                 <div className="r2p__choiceGroup">
-                  {["easy", "medium", "hard"].map(d => (
+                  {["easy", "medium", "hard"].map((difficulty) => (
                     <button
-                      key={d}
+                      key={difficulty}
                       type="button"
-                      className={`r2p__choiceBtn diff-${d}${aiDifficulty === d ? " isActive" : ""}`}
-                      onClick={() => setAiDifficulty(d)}
+                      className={`r2p__choiceBtn diff-${difficulty}${aiDifficulty === difficulty ? " isActive" : ""}`}
+                      onClick={() => setAiDifficulty(difficulty)}
                     >
-                      {t[d]}
+                      {t[difficulty]}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Laps */}
               <div className="r2p__optBlock">
                 <div className="r2p__sectionLabel">{t.laps}</div>
                 <div className="r2p__choiceGroup">
-                  {[3, 5, 7].map(n => (
+                  {[3, 5, 7].map((count) => (
                     <button
-                      key={n}
+                      key={count}
                       type="button"
-                      className={`r2p__choiceBtn${laps === n ? " isActive" : ""}`}
-                      onClick={() => setLaps(n)}
+                      className={`r2p__choiceBtn${laps === count ? " isActive" : ""}`}
+                      onClick={() => setLaps(count)}
                     >
-                      {n}
+                      {count}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Rivals */}
               <div className="r2p__optBlock">
                 <div className="r2p__sectionLabel">{t.rivals}</div>
                 <div className="r2p__choiceGroup">
-                  {[3, 5, 7].map(n => (
+                  {[3, 5, 7].map((count) => (
                     <button
-                      key={n}
+                      key={count}
                       type="button"
-                      className={`r2p__choiceBtn${rivals === n ? " isActive" : ""}`}
-                      onClick={() => setRivals(n)}
+                      className={`r2p__choiceBtn${rivals === count ? " isActive" : ""}`}
+                      onClick={() => setRivals(count)}
                     >
-                      {n}
+                      {count}
                     </button>
                   ))}
                 </div>
               </div>
             </div>
 
-            <button className="r2p__startBtn" onClick={startRace} type="button">
-              {t.startRace} GO
+            <button id="start-btn" className="r2p__startBtn" type="button" onClick={startRace}>
+              {t.startRace}
             </button>
           </div>
         </div>
@@ -1901,7 +2115,6 @@ export default function RaceGame2DPro() {
     );
   }
 
-  // End screen
   if (screen === "end") {
     return (
       <div className="r2p">
@@ -1917,7 +2130,7 @@ export default function RaceGame2DPro() {
                 </tr>
               </thead>
               <tbody>
-                {(endData || []).map(row => (
+                {viewModel.leaderboard.map((row) => (
                   <tr key={row.pos} className={row.isPlayer ? "isPlayer" : ""}>
                     <td>
                       <span className="r2p__endPosIcon">
@@ -1929,7 +2142,7 @@ export default function RaceGame2DPro() {
                         className="r2p__endColorDot"
                         style={{ background: row.color, boxShadow: `0 0 5px ${row.color}` }}
                       />
-                      {row.isPlayer ? t.you : `${t.rival} ${row.pos}`}
+                      {row.driver}
                     </td>
                     <td style={{ fontVariantNumeric: "tabular-nums" }}>{row.time}</td>
                   </tr>
@@ -1938,7 +2151,7 @@ export default function RaceGame2DPro() {
             </table>
             <div className="r2p__endBtns">
               <button className="r2p__endBtnPrimary" type="button" onClick={startRace}>
-                {t.restart} AGAIN
+                {t.restart}
               </button>
               <button className="r2p__endBtnSecondary" type="button" onClick={() => setScreen("setup")}>
                 {t.backToSetup}
@@ -1950,52 +2163,44 @@ export default function RaceGame2DPro() {
     );
   }
 
-  // Race screen
   return (
     <div className="r2p">
-      <canvas
-        ref={canvasRef}
-        style={{ width: "100%", height: "100%", display: "block" }}
-      />
+      <canvas ref={canvasRef} style={{ width: "100%", height: "100%", display: "block" }} />
 
-      {/* HUD */}
       <div className="r2p__hud">
         <div className="r2p__hudPanel">
+          <div className="r2p__hudTrack">{viewModel.track.name}</div>
           <div className="r2p__hudPos">
-            {hud.pos}<sub>/{hud.total}</sub>
+            {viewModel.hud.position}
+            <sub>/{viewModel.hud.total}</sub>
           </div>
           <div className="r2p__hudPosLabel">{t.posLabel}</div>
-          <div className="r2p__hudLap">{t.lapLabel} {hud.lap}/{hud.totalLaps}</div>
-          <div className="r2p__hudSpeed">{hud.speed} {t.speedUnit}</div>
-          <div className="r2p__hudWeather">{hud.weatherIcon}</div>
-          <div className="r2p__turboRow">
-            <span className="r2p__turboLabel">TURBO</span>
-            <div className="r2p__turboBar">
-              <div
-                className={`r2p__turboFill${hud.turboActive ? " active" : ""}`}
-                style={{ width: `${hud.turbo * 100}%` }}
-              />
-            </div>
-          </div>
+          <div className="r2p__hudLap">{t.lapLabel} {viewModel.hud.lap}/{viewModel.hud.totalLaps}</div>
+          <div className="r2p__hudSpeed">{viewModel.hud.speed} {t.speedUnit}</div>
+          <div className="r2p__hudTimer">{viewModel.hud.timer}</div>
+          <div className="r2p__hudWeather">{viewModel.hud.weatherIcon}</div>
+          <div className="r2p__hudMessage">{viewModel.hud.message}</div>
         </div>
+
         <div className="r2p__minimapWrap">
           <canvas ref={minimapRef} className="r2p__minimapCanvas" />
         </div>
       </div>
 
-      {/* Semaphore */}
-      {semaphore.phase !== "off" && (
+      {viewModel.startOverlay.phase !== "off" && (
         <div className="r2p__semaphore">
           <div className="r2p__semLights">
-            {semaphore.lights.map((on, i) => (
-              <div key={i} className={`r2p__semLight${on ? " isOn" : ""}`} />
+            {viewModel.startOverlay.lights.map((on, index) => (
+              <div key={index} className={`r2p__semLight${on ? " isOn" : ""}`} />
             ))}
           </div>
-          {semaphore.phase === "go" && <div className="r2p__semGo">GO!</div>}
+          <div className={`r2p__semCaption${viewModel.startOverlay.phase === "go" ? " isGo" : ""}`}>
+            {viewModel.startOverlay.caption}
+          </div>
+          <div className="r2p__semDetail">{viewModel.startOverlay.detail}</div>
         </div>
       )}
 
-      {/* Touch controls */}
       <div className="r2p__touch">
         <div
           className="r2p__joystick"
@@ -2006,19 +2211,11 @@ export default function RaceGame2DPro() {
         >
           <div
             className="r2p__joystickKnob"
-            style={{
-              transform: `translate(calc(-50% + ${joyKnob.dx}px), calc(-50% + ${joyKnob.dy}px))`,
-            }}
+            style={{ transform: `translate(calc(-50% + ${joyKnob.dx}px), calc(-50% + ${joyKnob.dy}px))` }}
           />
         </div>
+
         <div className="r2p__touchRight">
-          <button
-            className="r2p__touchTurbo"
-            type="button"
-            onPointerDown={onTouchTurbo}
-          >
-            TURBO
-          </button>
           <button
             className="r2p__touchBtn"
             type="button"
@@ -2044,3068 +2241,3 @@ export default function RaceGame2DPro() {
     </div>
   );
 }
-
-
-const CIRCUIT_REFERENCE_TELEMETRY = [
-  { circuitId: 0, marker: 0, s: 0.0000, segment: 'chicane' },
-  { circuitId: 0, marker: 1, s: 0.0059, segment: 'corner' },
-  { circuitId: 0, marker: 2, s: 0.0118, segment: 'corner' },
-  { circuitId: 0, marker: 3, s: 0.0176, segment: 'corner' },
-  { circuitId: 0, marker: 4, s: 0.0235, segment: 'corner' },
-  { circuitId: 0, marker: 5, s: 0.0294, segment: 'straight' },
-  { circuitId: 0, marker: 6, s: 0.0353, segment: 'corner' },
-  { circuitId: 0, marker: 7, s: 0.0412, segment: 'hairpin' },
-  { circuitId: 0, marker: 8, s: 0.0471, segment: 'corner' },
-  { circuitId: 0, marker: 9, s: 0.0529, segment: 'corner' },
-  { circuitId: 0, marker: 10, s: 0.0588, segment: 'straight' },
-  { circuitId: 0, marker: 11, s: 0.0647, segment: 'chicane' },
-  { circuitId: 0, marker: 12, s: 0.0706, segment: 'corner' },
-  { circuitId: 0, marker: 13, s: 0.0765, segment: 'corner' },
-  { circuitId: 0, marker: 14, s: 0.0824, segment: 'hairpin' },
-  { circuitId: 0, marker: 15, s: 0.0882, segment: 'straight' },
-  { circuitId: 0, marker: 16, s: 0.0941, segment: 'corner' },
-  { circuitId: 0, marker: 17, s: 0.1000, segment: 'corner' },
-  { circuitId: 0, marker: 18, s: 0.1059, segment: 'corner' },
-  { circuitId: 0, marker: 19, s: 0.1118, segment: 'corner' },
-  { circuitId: 0, marker: 20, s: 0.1176, segment: 'straight' },
-  { circuitId: 0, marker: 21, s: 0.1235, segment: 'hairpin' },
-  { circuitId: 0, marker: 22, s: 0.1294, segment: 'chicane' },
-  { circuitId: 0, marker: 23, s: 0.1353, segment: 'corner' },
-  { circuitId: 0, marker: 24, s: 0.1412, segment: 'corner' },
-  { circuitId: 0, marker: 25, s: 0.1471, segment: 'straight' },
-  { circuitId: 0, marker: 26, s: 0.1529, segment: 'corner' },
-  { circuitId: 0, marker: 27, s: 0.1588, segment: 'corner' },
-  { circuitId: 0, marker: 28, s: 0.1647, segment: 'hairpin' },
-  { circuitId: 0, marker: 29, s: 0.1706, segment: 'corner' },
-  { circuitId: 0, marker: 30, s: 0.1765, segment: 'straight' },
-  { circuitId: 0, marker: 31, s: 0.1824, segment: 'corner' },
-  { circuitId: 0, marker: 32, s: 0.1882, segment: 'corner' },
-  { circuitId: 0, marker: 33, s: 0.1941, segment: 'chicane' },
-  { circuitId: 0, marker: 34, s: 0.2000, segment: 'corner' },
-  { circuitId: 0, marker: 35, s: 0.2059, segment: 'hairpin' },
-  { circuitId: 0, marker: 36, s: 0.2118, segment: 'corner' },
-  { circuitId: 0, marker: 37, s: 0.2176, segment: 'corner' },
-  { circuitId: 0, marker: 38, s: 0.2235, segment: 'corner' },
-  { circuitId: 0, marker: 39, s: 0.2294, segment: 'corner' },
-  { circuitId: 0, marker: 40, s: 0.2353, segment: 'straight' },
-  { circuitId: 0, marker: 41, s: 0.2412, segment: 'corner' },
-  { circuitId: 0, marker: 42, s: 0.2471, segment: 'hairpin' },
-  { circuitId: 0, marker: 43, s: 0.2529, segment: 'corner' },
-  { circuitId: 0, marker: 44, s: 0.2588, segment: 'chicane' },
-  { circuitId: 0, marker: 45, s: 0.2647, segment: 'straight' },
-  { circuitId: 0, marker: 46, s: 0.2706, segment: 'corner' },
-  { circuitId: 0, marker: 47, s: 0.2765, segment: 'corner' },
-  { circuitId: 0, marker: 48, s: 0.2824, segment: 'corner' },
-  { circuitId: 0, marker: 49, s: 0.2882, segment: 'hairpin' },
-  { circuitId: 0, marker: 50, s: 0.2941, segment: 'straight' },
-  { circuitId: 0, marker: 51, s: 0.3000, segment: 'corner' },
-  { circuitId: 0, marker: 52, s: 0.3059, segment: 'corner' },
-  { circuitId: 0, marker: 53, s: 0.3118, segment: 'corner' },
-  { circuitId: 0, marker: 54, s: 0.3176, segment: 'corner' },
-  { circuitId: 0, marker: 55, s: 0.3235, segment: 'chicane' },
-  { circuitId: 0, marker: 56, s: 0.3294, segment: 'hairpin' },
-  { circuitId: 0, marker: 57, s: 0.3353, segment: 'corner' },
-  { circuitId: 0, marker: 58, s: 0.3412, segment: 'corner' },
-  { circuitId: 0, marker: 59, s: 0.3471, segment: 'corner' },
-  { circuitId: 0, marker: 60, s: 0.3529, segment: 'straight' },
-  { circuitId: 0, marker: 61, s: 0.3588, segment: 'corner' },
-  { circuitId: 0, marker: 62, s: 0.3647, segment: 'corner' },
-  { circuitId: 0, marker: 63, s: 0.3706, segment: 'hairpin' },
-  { circuitId: 0, marker: 64, s: 0.3765, segment: 'corner' },
-  { circuitId: 0, marker: 65, s: 0.3824, segment: 'straight' },
-  { circuitId: 0, marker: 66, s: 0.3882, segment: 'chicane' },
-  { circuitId: 0, marker: 67, s: 0.3941, segment: 'corner' },
-  { circuitId: 0, marker: 68, s: 0.4000, segment: 'corner' },
-  { circuitId: 0, marker: 69, s: 0.4059, segment: 'corner' },
-  { circuitId: 0, marker: 70, s: 0.4118, segment: 'hairpin' },
-  { circuitId: 0, marker: 71, s: 0.4176, segment: 'corner' },
-  { circuitId: 0, marker: 72, s: 0.4235, segment: 'corner' },
-  { circuitId: 0, marker: 73, s: 0.4294, segment: 'corner' },
-  { circuitId: 0, marker: 74, s: 0.4353, segment: 'corner' },
-  { circuitId: 0, marker: 75, s: 0.4412, segment: 'straight' },
-  { circuitId: 0, marker: 76, s: 0.4471, segment: 'corner' },
-  { circuitId: 0, marker: 77, s: 0.4529, segment: 'chicane' },
-  { circuitId: 0, marker: 78, s: 0.4588, segment: 'corner' },
-  { circuitId: 0, marker: 79, s: 0.4647, segment: 'corner' },
-  { circuitId: 0, marker: 80, s: 0.4706, segment: 'straight' },
-  { circuitId: 0, marker: 81, s: 0.4765, segment: 'corner' },
-  { circuitId: 0, marker: 82, s: 0.4824, segment: 'corner' },
-  { circuitId: 0, marker: 83, s: 0.4882, segment: 'corner' },
-  { circuitId: 0, marker: 84, s: 0.4941, segment: 'hairpin' },
-  { circuitId: 0, marker: 85, s: 0.5000, segment: 'straight' },
-  { circuitId: 0, marker: 86, s: 0.5059, segment: 'corner' },
-  { circuitId: 0, marker: 87, s: 0.5118, segment: 'corner' },
-  { circuitId: 0, marker: 88, s: 0.5176, segment: 'chicane' },
-  { circuitId: 0, marker: 89, s: 0.5235, segment: 'corner' },
-  { circuitId: 0, marker: 90, s: 0.5294, segment: 'straight' },
-  { circuitId: 0, marker: 91, s: 0.5353, segment: 'hairpin' },
-  { circuitId: 0, marker: 92, s: 0.5412, segment: 'corner' },
-  { circuitId: 0, marker: 93, s: 0.5471, segment: 'corner' },
-  { circuitId: 0, marker: 94, s: 0.5529, segment: 'corner' },
-  { circuitId: 0, marker: 95, s: 0.5588, segment: 'straight' },
-  { circuitId: 0, marker: 96, s: 0.5647, segment: 'corner' },
-  { circuitId: 0, marker: 97, s: 0.5706, segment: 'corner' },
-  { circuitId: 0, marker: 98, s: 0.5765, segment: 'hairpin' },
-  { circuitId: 0, marker: 99, s: 0.5824, segment: 'chicane' },
-  { circuitId: 0, marker: 100, s: 0.5882, segment: 'straight' },
-  { circuitId: 0, marker: 101, s: 0.5941, segment: 'corner' },
-  { circuitId: 0, marker: 102, s: 0.6000, segment: 'corner' },
-  { circuitId: 0, marker: 103, s: 0.6059, segment: 'corner' },
-  { circuitId: 0, marker: 104, s: 0.6118, segment: 'corner' },
-  { circuitId: 0, marker: 105, s: 0.6176, segment: 'hairpin' },
-  { circuitId: 0, marker: 106, s: 0.6235, segment: 'corner' },
-  { circuitId: 0, marker: 107, s: 0.6294, segment: 'corner' },
-  { circuitId: 0, marker: 108, s: 0.6353, segment: 'corner' },
-  { circuitId: 0, marker: 109, s: 0.6412, segment: 'corner' },
-  { circuitId: 0, marker: 110, s: 0.6471, segment: 'chicane' },
-  { circuitId: 0, marker: 111, s: 0.6529, segment: 'corner' },
-  { circuitId: 0, marker: 112, s: 0.6588, segment: 'hairpin' },
-  { circuitId: 0, marker: 113, s: 0.6647, segment: 'corner' },
-  { circuitId: 0, marker: 114, s: 0.6706, segment: 'corner' },
-  { circuitId: 0, marker: 115, s: 0.6765, segment: 'straight' },
-  { circuitId: 0, marker: 116, s: 0.6824, segment: 'corner' },
-  { circuitId: 0, marker: 117, s: 0.6882, segment: 'corner' },
-  { circuitId: 0, marker: 118, s: 0.6941, segment: 'corner' },
-  { circuitId: 0, marker: 119, s: 0.7000, segment: 'hairpin' },
-  { circuitId: 0, marker: 120, s: 0.7059, segment: 'straight' },
-  { circuitId: 0, marker: 121, s: 0.7118, segment: 'chicane' },
-  { circuitId: 0, marker: 122, s: 0.7176, segment: 'corner' },
-  { circuitId: 0, marker: 123, s: 0.7235, segment: 'corner' },
-  { circuitId: 0, marker: 124, s: 0.7294, segment: 'corner' },
-  { circuitId: 0, marker: 125, s: 0.7353, segment: 'straight' },
-  { circuitId: 0, marker: 126, s: 0.7412, segment: 'hairpin' },
-  { circuitId: 0, marker: 127, s: 0.7471, segment: 'corner' },
-  { circuitId: 0, marker: 128, s: 0.7529, segment: 'corner' },
-  { circuitId: 0, marker: 129, s: 0.7588, segment: 'corner' },
-  { circuitId: 0, marker: 130, s: 0.7647, segment: 'straight' },
-  { circuitId: 0, marker: 131, s: 0.7706, segment: 'corner' },
-  { circuitId: 0, marker: 132, s: 0.7765, segment: 'chicane' },
-  { circuitId: 0, marker: 133, s: 0.7824, segment: 'hairpin' },
-  { circuitId: 0, marker: 134, s: 0.7882, segment: 'corner' },
-  { circuitId: 0, marker: 135, s: 0.7941, segment: 'straight' },
-  { circuitId: 0, marker: 136, s: 0.8000, segment: 'corner' },
-  { circuitId: 0, marker: 137, s: 0.8059, segment: 'corner' },
-  { circuitId: 0, marker: 138, s: 0.8118, segment: 'corner' },
-  { circuitId: 0, marker: 139, s: 0.8176, segment: 'corner' },
-  { circuitId: 0, marker: 140, s: 0.8235, segment: 'hairpin' },
-  { circuitId: 0, marker: 141, s: 0.8294, segment: 'corner' },
-  { circuitId: 0, marker: 142, s: 0.8353, segment: 'corner' },
-  { circuitId: 0, marker: 143, s: 0.8412, segment: 'chicane' },
-  { circuitId: 0, marker: 144, s: 0.8471, segment: 'corner' },
-  { circuitId: 0, marker: 145, s: 0.8529, segment: 'straight' },
-  { circuitId: 0, marker: 146, s: 0.8588, segment: 'corner' },
-  { circuitId: 0, marker: 147, s: 0.8647, segment: 'hairpin' },
-  { circuitId: 0, marker: 148, s: 0.8706, segment: 'corner' },
-  { circuitId: 0, marker: 149, s: 0.8765, segment: 'corner' },
-  { circuitId: 0, marker: 150, s: 0.8824, segment: 'straight' },
-  { circuitId: 0, marker: 151, s: 0.8882, segment: 'corner' },
-  { circuitId: 0, marker: 152, s: 0.8941, segment: 'corner' },
-  { circuitId: 0, marker: 153, s: 0.9000, segment: 'corner' },
-  { circuitId: 0, marker: 154, s: 0.9059, segment: 'chicane' },
-  { circuitId: 0, marker: 155, s: 0.9118, segment: 'straight' },
-  { circuitId: 0, marker: 156, s: 0.9176, segment: 'corner' },
-  { circuitId: 0, marker: 157, s: 0.9235, segment: 'corner' },
-  { circuitId: 0, marker: 158, s: 0.9294, segment: 'corner' },
-  { circuitId: 0, marker: 159, s: 0.9353, segment: 'corner' },
-  { circuitId: 0, marker: 160, s: 0.9412, segment: 'straight' },
-  { circuitId: 0, marker: 161, s: 0.9471, segment: 'hairpin' },
-  { circuitId: 0, marker: 162, s: 0.9529, segment: 'corner' },
-  { circuitId: 0, marker: 163, s: 0.9588, segment: 'corner' },
-  { circuitId: 0, marker: 164, s: 0.9647, segment: 'corner' },
-  { circuitId: 0, marker: 165, s: 0.9706, segment: 'chicane' },
-  { circuitId: 0, marker: 166, s: 0.9765, segment: 'corner' },
-  { circuitId: 0, marker: 167, s: 0.9824, segment: 'corner' },
-  { circuitId: 0, marker: 168, s: 0.9882, segment: 'hairpin' },
-  { circuitId: 0, marker: 169, s: 0.9941, segment: 'corner' },
-  { circuitId: 1, marker: 0, s: 0.0000, segment: 'chicane' },
-  { circuitId: 1, marker: 1, s: 0.0059, segment: 'corner' },
-  { circuitId: 1, marker: 2, s: 0.0118, segment: 'corner' },
-  { circuitId: 1, marker: 3, s: 0.0176, segment: 'corner' },
-  { circuitId: 1, marker: 4, s: 0.0235, segment: 'corner' },
-  { circuitId: 1, marker: 5, s: 0.0294, segment: 'straight' },
-  { circuitId: 1, marker: 6, s: 0.0353, segment: 'corner' },
-  { circuitId: 1, marker: 7, s: 0.0412, segment: 'hairpin' },
-  { circuitId: 1, marker: 8, s: 0.0471, segment: 'corner' },
-  { circuitId: 1, marker: 9, s: 0.0529, segment: 'corner' },
-  { circuitId: 1, marker: 10, s: 0.0588, segment: 'straight' },
-  { circuitId: 1, marker: 11, s: 0.0647, segment: 'chicane' },
-  { circuitId: 1, marker: 12, s: 0.0706, segment: 'corner' },
-  { circuitId: 1, marker: 13, s: 0.0765, segment: 'corner' },
-  { circuitId: 1, marker: 14, s: 0.0824, segment: 'hairpin' },
-  { circuitId: 1, marker: 15, s: 0.0882, segment: 'straight' },
-  { circuitId: 1, marker: 16, s: 0.0941, segment: 'corner' },
-  { circuitId: 1, marker: 17, s: 0.1000, segment: 'corner' },
-  { circuitId: 1, marker: 18, s: 0.1059, segment: 'corner' },
-  { circuitId: 1, marker: 19, s: 0.1118, segment: 'corner' },
-  { circuitId: 1, marker: 20, s: 0.1176, segment: 'straight' },
-  { circuitId: 1, marker: 21, s: 0.1235, segment: 'hairpin' },
-  { circuitId: 1, marker: 22, s: 0.1294, segment: 'chicane' },
-  { circuitId: 1, marker: 23, s: 0.1353, segment: 'corner' },
-  { circuitId: 1, marker: 24, s: 0.1412, segment: 'corner' },
-  { circuitId: 1, marker: 25, s: 0.1471, segment: 'straight' },
-  { circuitId: 1, marker: 26, s: 0.1529, segment: 'corner' },
-  { circuitId: 1, marker: 27, s: 0.1588, segment: 'corner' },
-  { circuitId: 1, marker: 28, s: 0.1647, segment: 'hairpin' },
-  { circuitId: 1, marker: 29, s: 0.1706, segment: 'corner' },
-  { circuitId: 1, marker: 30, s: 0.1765, segment: 'straight' },
-  { circuitId: 1, marker: 31, s: 0.1824, segment: 'corner' },
-  { circuitId: 1, marker: 32, s: 0.1882, segment: 'corner' },
-  { circuitId: 1, marker: 33, s: 0.1941, segment: 'chicane' },
-  { circuitId: 1, marker: 34, s: 0.2000, segment: 'corner' },
-  { circuitId: 1, marker: 35, s: 0.2059, segment: 'hairpin' },
-  { circuitId: 1, marker: 36, s: 0.2118, segment: 'corner' },
-  { circuitId: 1, marker: 37, s: 0.2176, segment: 'corner' },
-  { circuitId: 1, marker: 38, s: 0.2235, segment: 'corner' },
-  { circuitId: 1, marker: 39, s: 0.2294, segment: 'corner' },
-  { circuitId: 1, marker: 40, s: 0.2353, segment: 'straight' },
-  { circuitId: 1, marker: 41, s: 0.2412, segment: 'corner' },
-  { circuitId: 1, marker: 42, s: 0.2471, segment: 'hairpin' },
-  { circuitId: 1, marker: 43, s: 0.2529, segment: 'corner' },
-  { circuitId: 1, marker: 44, s: 0.2588, segment: 'chicane' },
-  { circuitId: 1, marker: 45, s: 0.2647, segment: 'straight' },
-  { circuitId: 1, marker: 46, s: 0.2706, segment: 'corner' },
-  { circuitId: 1, marker: 47, s: 0.2765, segment: 'corner' },
-  { circuitId: 1, marker: 48, s: 0.2824, segment: 'corner' },
-  { circuitId: 1, marker: 49, s: 0.2882, segment: 'hairpin' },
-  { circuitId: 1, marker: 50, s: 0.2941, segment: 'straight' },
-  { circuitId: 1, marker: 51, s: 0.3000, segment: 'corner' },
-  { circuitId: 1, marker: 52, s: 0.3059, segment: 'corner' },
-  { circuitId: 1, marker: 53, s: 0.3118, segment: 'corner' },
-  { circuitId: 1, marker: 54, s: 0.3176, segment: 'corner' },
-  { circuitId: 1, marker: 55, s: 0.3235, segment: 'chicane' },
-  { circuitId: 1, marker: 56, s: 0.3294, segment: 'hairpin' },
-  { circuitId: 1, marker: 57, s: 0.3353, segment: 'corner' },
-  { circuitId: 1, marker: 58, s: 0.3412, segment: 'corner' },
-  { circuitId: 1, marker: 59, s: 0.3471, segment: 'corner' },
-  { circuitId: 1, marker: 60, s: 0.3529, segment: 'straight' },
-  { circuitId: 1, marker: 61, s: 0.3588, segment: 'corner' },
-  { circuitId: 1, marker: 62, s: 0.3647, segment: 'corner' },
-  { circuitId: 1, marker: 63, s: 0.3706, segment: 'hairpin' },
-  { circuitId: 1, marker: 64, s: 0.3765, segment: 'corner' },
-  { circuitId: 1, marker: 65, s: 0.3824, segment: 'straight' },
-  { circuitId: 1, marker: 66, s: 0.3882, segment: 'chicane' },
-  { circuitId: 1, marker: 67, s: 0.3941, segment: 'corner' },
-  { circuitId: 1, marker: 68, s: 0.4000, segment: 'corner' },
-  { circuitId: 1, marker: 69, s: 0.4059, segment: 'corner' },
-  { circuitId: 1, marker: 70, s: 0.4118, segment: 'hairpin' },
-  { circuitId: 1, marker: 71, s: 0.4176, segment: 'corner' },
-  { circuitId: 1, marker: 72, s: 0.4235, segment: 'corner' },
-  { circuitId: 1, marker: 73, s: 0.4294, segment: 'corner' },
-  { circuitId: 1, marker: 74, s: 0.4353, segment: 'corner' },
-  { circuitId: 1, marker: 75, s: 0.4412, segment: 'straight' },
-  { circuitId: 1, marker: 76, s: 0.4471, segment: 'corner' },
-  { circuitId: 1, marker: 77, s: 0.4529, segment: 'chicane' },
-  { circuitId: 1, marker: 78, s: 0.4588, segment: 'corner' },
-  { circuitId: 1, marker: 79, s: 0.4647, segment: 'corner' },
-  { circuitId: 1, marker: 80, s: 0.4706, segment: 'straight' },
-  { circuitId: 1, marker: 81, s: 0.4765, segment: 'corner' },
-  { circuitId: 1, marker: 82, s: 0.4824, segment: 'corner' },
-  { circuitId: 1, marker: 83, s: 0.4882, segment: 'corner' },
-  { circuitId: 1, marker: 84, s: 0.4941, segment: 'hairpin' },
-  { circuitId: 1, marker: 85, s: 0.5000, segment: 'straight' },
-  { circuitId: 1, marker: 86, s: 0.5059, segment: 'corner' },
-  { circuitId: 1, marker: 87, s: 0.5118, segment: 'corner' },
-  { circuitId: 1, marker: 88, s: 0.5176, segment: 'chicane' },
-  { circuitId: 1, marker: 89, s: 0.5235, segment: 'corner' },
-  { circuitId: 1, marker: 90, s: 0.5294, segment: 'straight' },
-  { circuitId: 1, marker: 91, s: 0.5353, segment: 'hairpin' },
-  { circuitId: 1, marker: 92, s: 0.5412, segment: 'corner' },
-  { circuitId: 1, marker: 93, s: 0.5471, segment: 'corner' },
-  { circuitId: 1, marker: 94, s: 0.5529, segment: 'corner' },
-  { circuitId: 1, marker: 95, s: 0.5588, segment: 'straight' },
-  { circuitId: 1, marker: 96, s: 0.5647, segment: 'corner' },
-  { circuitId: 1, marker: 97, s: 0.5706, segment: 'corner' },
-  { circuitId: 1, marker: 98, s: 0.5765, segment: 'hairpin' },
-  { circuitId: 1, marker: 99, s: 0.5824, segment: 'chicane' },
-  { circuitId: 1, marker: 100, s: 0.5882, segment: 'straight' },
-  { circuitId: 1, marker: 101, s: 0.5941, segment: 'corner' },
-  { circuitId: 1, marker: 102, s: 0.6000, segment: 'corner' },
-  { circuitId: 1, marker: 103, s: 0.6059, segment: 'corner' },
-  { circuitId: 1, marker: 104, s: 0.6118, segment: 'corner' },
-  { circuitId: 1, marker: 105, s: 0.6176, segment: 'hairpin' },
-  { circuitId: 1, marker: 106, s: 0.6235, segment: 'corner' },
-  { circuitId: 1, marker: 107, s: 0.6294, segment: 'corner' },
-  { circuitId: 1, marker: 108, s: 0.6353, segment: 'corner' },
-  { circuitId: 1, marker: 109, s: 0.6412, segment: 'corner' },
-  { circuitId: 1, marker: 110, s: 0.6471, segment: 'chicane' },
-  { circuitId: 1, marker: 111, s: 0.6529, segment: 'corner' },
-  { circuitId: 1, marker: 112, s: 0.6588, segment: 'hairpin' },
-  { circuitId: 1, marker: 113, s: 0.6647, segment: 'corner' },
-  { circuitId: 1, marker: 114, s: 0.6706, segment: 'corner' },
-  { circuitId: 1, marker: 115, s: 0.6765, segment: 'straight' },
-  { circuitId: 1, marker: 116, s: 0.6824, segment: 'corner' },
-  { circuitId: 1, marker: 117, s: 0.6882, segment: 'corner' },
-  { circuitId: 1, marker: 118, s: 0.6941, segment: 'corner' },
-  { circuitId: 1, marker: 119, s: 0.7000, segment: 'hairpin' },
-  { circuitId: 1, marker: 120, s: 0.7059, segment: 'straight' },
-  { circuitId: 1, marker: 121, s: 0.7118, segment: 'chicane' },
-  { circuitId: 1, marker: 122, s: 0.7176, segment: 'corner' },
-  { circuitId: 1, marker: 123, s: 0.7235, segment: 'corner' },
-  { circuitId: 1, marker: 124, s: 0.7294, segment: 'corner' },
-  { circuitId: 1, marker: 125, s: 0.7353, segment: 'straight' },
-  { circuitId: 1, marker: 126, s: 0.7412, segment: 'hairpin' },
-  { circuitId: 1, marker: 127, s: 0.7471, segment: 'corner' },
-  { circuitId: 1, marker: 128, s: 0.7529, segment: 'corner' },
-  { circuitId: 1, marker: 129, s: 0.7588, segment: 'corner' },
-  { circuitId: 1, marker: 130, s: 0.7647, segment: 'straight' },
-  { circuitId: 1, marker: 131, s: 0.7706, segment: 'corner' },
-  { circuitId: 1, marker: 132, s: 0.7765, segment: 'chicane' },
-  { circuitId: 1, marker: 133, s: 0.7824, segment: 'hairpin' },
-  { circuitId: 1, marker: 134, s: 0.7882, segment: 'corner' },
-  { circuitId: 1, marker: 135, s: 0.7941, segment: 'straight' },
-  { circuitId: 1, marker: 136, s: 0.8000, segment: 'corner' },
-  { circuitId: 1, marker: 137, s: 0.8059, segment: 'corner' },
-  { circuitId: 1, marker: 138, s: 0.8118, segment: 'corner' },
-  { circuitId: 1, marker: 139, s: 0.8176, segment: 'corner' },
-  { circuitId: 1, marker: 140, s: 0.8235, segment: 'hairpin' },
-  { circuitId: 1, marker: 141, s: 0.8294, segment: 'corner' },
-  { circuitId: 1, marker: 142, s: 0.8353, segment: 'corner' },
-  { circuitId: 1, marker: 143, s: 0.8412, segment: 'chicane' },
-  { circuitId: 1, marker: 144, s: 0.8471, segment: 'corner' },
-  { circuitId: 1, marker: 145, s: 0.8529, segment: 'straight' },
-  { circuitId: 1, marker: 146, s: 0.8588, segment: 'corner' },
-  { circuitId: 1, marker: 147, s: 0.8647, segment: 'hairpin' },
-  { circuitId: 1, marker: 148, s: 0.8706, segment: 'corner' },
-  { circuitId: 1, marker: 149, s: 0.8765, segment: 'corner' },
-  { circuitId: 1, marker: 150, s: 0.8824, segment: 'straight' },
-  { circuitId: 1, marker: 151, s: 0.8882, segment: 'corner' },
-  { circuitId: 1, marker: 152, s: 0.8941, segment: 'corner' },
-  { circuitId: 1, marker: 153, s: 0.9000, segment: 'corner' },
-  { circuitId: 1, marker: 154, s: 0.9059, segment: 'chicane' },
-  { circuitId: 1, marker: 155, s: 0.9118, segment: 'straight' },
-  { circuitId: 1, marker: 156, s: 0.9176, segment: 'corner' },
-  { circuitId: 1, marker: 157, s: 0.9235, segment: 'corner' },
-  { circuitId: 1, marker: 158, s: 0.9294, segment: 'corner' },
-  { circuitId: 1, marker: 159, s: 0.9353, segment: 'corner' },
-  { circuitId: 1, marker: 160, s: 0.9412, segment: 'straight' },
-  { circuitId: 1, marker: 161, s: 0.9471, segment: 'hairpin' },
-  { circuitId: 1, marker: 162, s: 0.9529, segment: 'corner' },
-  { circuitId: 1, marker: 163, s: 0.9588, segment: 'corner' },
-  { circuitId: 1, marker: 164, s: 0.9647, segment: 'corner' },
-  { circuitId: 1, marker: 165, s: 0.9706, segment: 'chicane' },
-  { circuitId: 1, marker: 166, s: 0.9765, segment: 'corner' },
-  { circuitId: 1, marker: 167, s: 0.9824, segment: 'corner' },
-  { circuitId: 1, marker: 168, s: 0.9882, segment: 'hairpin' },
-  { circuitId: 1, marker: 169, s: 0.9941, segment: 'corner' },
-  { circuitId: 2, marker: 0, s: 0.0000, segment: 'chicane' },
-  { circuitId: 2, marker: 1, s: 0.0059, segment: 'corner' },
-  { circuitId: 2, marker: 2, s: 0.0118, segment: 'corner' },
-  { circuitId: 2, marker: 3, s: 0.0176, segment: 'corner' },
-  { circuitId: 2, marker: 4, s: 0.0235, segment: 'corner' },
-  { circuitId: 2, marker: 5, s: 0.0294, segment: 'straight' },
-  { circuitId: 2, marker: 6, s: 0.0353, segment: 'corner' },
-  { circuitId: 2, marker: 7, s: 0.0412, segment: 'hairpin' },
-  { circuitId: 2, marker: 8, s: 0.0471, segment: 'corner' },
-  { circuitId: 2, marker: 9, s: 0.0529, segment: 'corner' },
-  { circuitId: 2, marker: 10, s: 0.0588, segment: 'straight' },
-  { circuitId: 2, marker: 11, s: 0.0647, segment: 'chicane' },
-  { circuitId: 2, marker: 12, s: 0.0706, segment: 'corner' },
-  { circuitId: 2, marker: 13, s: 0.0765, segment: 'corner' },
-  { circuitId: 2, marker: 14, s: 0.0824, segment: 'hairpin' },
-  { circuitId: 2, marker: 15, s: 0.0882, segment: 'straight' },
-  { circuitId: 2, marker: 16, s: 0.0941, segment: 'corner' },
-  { circuitId: 2, marker: 17, s: 0.1000, segment: 'corner' },
-  { circuitId: 2, marker: 18, s: 0.1059, segment: 'corner' },
-  { circuitId: 2, marker: 19, s: 0.1118, segment: 'corner' },
-  { circuitId: 2, marker: 20, s: 0.1176, segment: 'straight' },
-  { circuitId: 2, marker: 21, s: 0.1235, segment: 'hairpin' },
-  { circuitId: 2, marker: 22, s: 0.1294, segment: 'chicane' },
-  { circuitId: 2, marker: 23, s: 0.1353, segment: 'corner' },
-  { circuitId: 2, marker: 24, s: 0.1412, segment: 'corner' },
-  { circuitId: 2, marker: 25, s: 0.1471, segment: 'straight' },
-  { circuitId: 2, marker: 26, s: 0.1529, segment: 'corner' },
-  { circuitId: 2, marker: 27, s: 0.1588, segment: 'corner' },
-  { circuitId: 2, marker: 28, s: 0.1647, segment: 'hairpin' },
-  { circuitId: 2, marker: 29, s: 0.1706, segment: 'corner' },
-  { circuitId: 2, marker: 30, s: 0.1765, segment: 'straight' },
-  { circuitId: 2, marker: 31, s: 0.1824, segment: 'corner' },
-  { circuitId: 2, marker: 32, s: 0.1882, segment: 'corner' },
-  { circuitId: 2, marker: 33, s: 0.1941, segment: 'chicane' },
-  { circuitId: 2, marker: 34, s: 0.2000, segment: 'corner' },
-  { circuitId: 2, marker: 35, s: 0.2059, segment: 'hairpin' },
-  { circuitId: 2, marker: 36, s: 0.2118, segment: 'corner' },
-  { circuitId: 2, marker: 37, s: 0.2176, segment: 'corner' },
-  { circuitId: 2, marker: 38, s: 0.2235, segment: 'corner' },
-  { circuitId: 2, marker: 39, s: 0.2294, segment: 'corner' },
-  { circuitId: 2, marker: 40, s: 0.2353, segment: 'straight' },
-  { circuitId: 2, marker: 41, s: 0.2412, segment: 'corner' },
-  { circuitId: 2, marker: 42, s: 0.2471, segment: 'hairpin' },
-  { circuitId: 2, marker: 43, s: 0.2529, segment: 'corner' },
-  { circuitId: 2, marker: 44, s: 0.2588, segment: 'chicane' },
-  { circuitId: 2, marker: 45, s: 0.2647, segment: 'straight' },
-  { circuitId: 2, marker: 46, s: 0.2706, segment: 'corner' },
-  { circuitId: 2, marker: 47, s: 0.2765, segment: 'corner' },
-  { circuitId: 2, marker: 48, s: 0.2824, segment: 'corner' },
-  { circuitId: 2, marker: 49, s: 0.2882, segment: 'hairpin' },
-  { circuitId: 2, marker: 50, s: 0.2941, segment: 'straight' },
-  { circuitId: 2, marker: 51, s: 0.3000, segment: 'corner' },
-  { circuitId: 2, marker: 52, s: 0.3059, segment: 'corner' },
-  { circuitId: 2, marker: 53, s: 0.3118, segment: 'corner' },
-  { circuitId: 2, marker: 54, s: 0.3176, segment: 'corner' },
-  { circuitId: 2, marker: 55, s: 0.3235, segment: 'chicane' },
-  { circuitId: 2, marker: 56, s: 0.3294, segment: 'hairpin' },
-  { circuitId: 2, marker: 57, s: 0.3353, segment: 'corner' },
-  { circuitId: 2, marker: 58, s: 0.3412, segment: 'corner' },
-  { circuitId: 2, marker: 59, s: 0.3471, segment: 'corner' },
-  { circuitId: 2, marker: 60, s: 0.3529, segment: 'straight' },
-  { circuitId: 2, marker: 61, s: 0.3588, segment: 'corner' },
-  { circuitId: 2, marker: 62, s: 0.3647, segment: 'corner' },
-  { circuitId: 2, marker: 63, s: 0.3706, segment: 'hairpin' },
-  { circuitId: 2, marker: 64, s: 0.3765, segment: 'corner' },
-  { circuitId: 2, marker: 65, s: 0.3824, segment: 'straight' },
-  { circuitId: 2, marker: 66, s: 0.3882, segment: 'chicane' },
-  { circuitId: 2, marker: 67, s: 0.3941, segment: 'corner' },
-  { circuitId: 2, marker: 68, s: 0.4000, segment: 'corner' },
-  { circuitId: 2, marker: 69, s: 0.4059, segment: 'corner' },
-  { circuitId: 2, marker: 70, s: 0.4118, segment: 'hairpin' },
-  { circuitId: 2, marker: 71, s: 0.4176, segment: 'corner' },
-  { circuitId: 2, marker: 72, s: 0.4235, segment: 'corner' },
-  { circuitId: 2, marker: 73, s: 0.4294, segment: 'corner' },
-  { circuitId: 2, marker: 74, s: 0.4353, segment: 'corner' },
-  { circuitId: 2, marker: 75, s: 0.4412, segment: 'straight' },
-  { circuitId: 2, marker: 76, s: 0.4471, segment: 'corner' },
-  { circuitId: 2, marker: 77, s: 0.4529, segment: 'chicane' },
-  { circuitId: 2, marker: 78, s: 0.4588, segment: 'corner' },
-  { circuitId: 2, marker: 79, s: 0.4647, segment: 'corner' },
-  { circuitId: 2, marker: 80, s: 0.4706, segment: 'straight' },
-  { circuitId: 2, marker: 81, s: 0.4765, segment: 'corner' },
-  { circuitId: 2, marker: 82, s: 0.4824, segment: 'corner' },
-  { circuitId: 2, marker: 83, s: 0.4882, segment: 'corner' },
-  { circuitId: 2, marker: 84, s: 0.4941, segment: 'hairpin' },
-  { circuitId: 2, marker: 85, s: 0.5000, segment: 'straight' },
-  { circuitId: 2, marker: 86, s: 0.5059, segment: 'corner' },
-  { circuitId: 2, marker: 87, s: 0.5118, segment: 'corner' },
-  { circuitId: 2, marker: 88, s: 0.5176, segment: 'chicane' },
-  { circuitId: 2, marker: 89, s: 0.5235, segment: 'corner' },
-  { circuitId: 2, marker: 90, s: 0.5294, segment: 'straight' },
-  { circuitId: 2, marker: 91, s: 0.5353, segment: 'hairpin' },
-  { circuitId: 2, marker: 92, s: 0.5412, segment: 'corner' },
-  { circuitId: 2, marker: 93, s: 0.5471, segment: 'corner' },
-  { circuitId: 2, marker: 94, s: 0.5529, segment: 'corner' },
-  { circuitId: 2, marker: 95, s: 0.5588, segment: 'straight' },
-  { circuitId: 2, marker: 96, s: 0.5647, segment: 'corner' },
-  { circuitId: 2, marker: 97, s: 0.5706, segment: 'corner' },
-  { circuitId: 2, marker: 98, s: 0.5765, segment: 'hairpin' },
-  { circuitId: 2, marker: 99, s: 0.5824, segment: 'chicane' },
-  { circuitId: 2, marker: 100, s: 0.5882, segment: 'straight' },
-  { circuitId: 2, marker: 101, s: 0.5941, segment: 'corner' },
-  { circuitId: 2, marker: 102, s: 0.6000, segment: 'corner' },
-  { circuitId: 2, marker: 103, s: 0.6059, segment: 'corner' },
-  { circuitId: 2, marker: 104, s: 0.6118, segment: 'corner' },
-  { circuitId: 2, marker: 105, s: 0.6176, segment: 'hairpin' },
-  { circuitId: 2, marker: 106, s: 0.6235, segment: 'corner' },
-  { circuitId: 2, marker: 107, s: 0.6294, segment: 'corner' },
-  { circuitId: 2, marker: 108, s: 0.6353, segment: 'corner' },
-  { circuitId: 2, marker: 109, s: 0.6412, segment: 'corner' },
-  { circuitId: 2, marker: 110, s: 0.6471, segment: 'chicane' },
-  { circuitId: 2, marker: 111, s: 0.6529, segment: 'corner' },
-  { circuitId: 2, marker: 112, s: 0.6588, segment: 'hairpin' },
-  { circuitId: 2, marker: 113, s: 0.6647, segment: 'corner' },
-  { circuitId: 2, marker: 114, s: 0.6706, segment: 'corner' },
-  { circuitId: 2, marker: 115, s: 0.6765, segment: 'straight' },
-  { circuitId: 2, marker: 116, s: 0.6824, segment: 'corner' },
-  { circuitId: 2, marker: 117, s: 0.6882, segment: 'corner' },
-  { circuitId: 2, marker: 118, s: 0.6941, segment: 'corner' },
-  { circuitId: 2, marker: 119, s: 0.7000, segment: 'hairpin' },
-  { circuitId: 2, marker: 120, s: 0.7059, segment: 'straight' },
-  { circuitId: 2, marker: 121, s: 0.7118, segment: 'chicane' },
-  { circuitId: 2, marker: 122, s: 0.7176, segment: 'corner' },
-  { circuitId: 2, marker: 123, s: 0.7235, segment: 'corner' },
-  { circuitId: 2, marker: 124, s: 0.7294, segment: 'corner' },
-  { circuitId: 2, marker: 125, s: 0.7353, segment: 'straight' },
-  { circuitId: 2, marker: 126, s: 0.7412, segment: 'hairpin' },
-  { circuitId: 2, marker: 127, s: 0.7471, segment: 'corner' },
-  { circuitId: 2, marker: 128, s: 0.7529, segment: 'corner' },
-  { circuitId: 2, marker: 129, s: 0.7588, segment: 'corner' },
-  { circuitId: 2, marker: 130, s: 0.7647, segment: 'straight' },
-  { circuitId: 2, marker: 131, s: 0.7706, segment: 'corner' },
-  { circuitId: 2, marker: 132, s: 0.7765, segment: 'chicane' },
-  { circuitId: 2, marker: 133, s: 0.7824, segment: 'hairpin' },
-  { circuitId: 2, marker: 134, s: 0.7882, segment: 'corner' },
-  { circuitId: 2, marker: 135, s: 0.7941, segment: 'straight' },
-  { circuitId: 2, marker: 136, s: 0.8000, segment: 'corner' },
-  { circuitId: 2, marker: 137, s: 0.8059, segment: 'corner' },
-  { circuitId: 2, marker: 138, s: 0.8118, segment: 'corner' },
-  { circuitId: 2, marker: 139, s: 0.8176, segment: 'corner' },
-  { circuitId: 2, marker: 140, s: 0.8235, segment: 'hairpin' },
-  { circuitId: 2, marker: 141, s: 0.8294, segment: 'corner' },
-  { circuitId: 2, marker: 142, s: 0.8353, segment: 'corner' },
-  { circuitId: 2, marker: 143, s: 0.8412, segment: 'chicane' },
-  { circuitId: 2, marker: 144, s: 0.8471, segment: 'corner' },
-  { circuitId: 2, marker: 145, s: 0.8529, segment: 'straight' },
-  { circuitId: 2, marker: 146, s: 0.8588, segment: 'corner' },
-  { circuitId: 2, marker: 147, s: 0.8647, segment: 'hairpin' },
-  { circuitId: 2, marker: 148, s: 0.8706, segment: 'corner' },
-  { circuitId: 2, marker: 149, s: 0.8765, segment: 'corner' },
-  { circuitId: 2, marker: 150, s: 0.8824, segment: 'straight' },
-  { circuitId: 2, marker: 151, s: 0.8882, segment: 'corner' },
-  { circuitId: 2, marker: 152, s: 0.8941, segment: 'corner' },
-  { circuitId: 2, marker: 153, s: 0.9000, segment: 'corner' },
-  { circuitId: 2, marker: 154, s: 0.9059, segment: 'chicane' },
-  { circuitId: 2, marker: 155, s: 0.9118, segment: 'straight' },
-  { circuitId: 2, marker: 156, s: 0.9176, segment: 'corner' },
-  { circuitId: 2, marker: 157, s: 0.9235, segment: 'corner' },
-  { circuitId: 2, marker: 158, s: 0.9294, segment: 'corner' },
-  { circuitId: 2, marker: 159, s: 0.9353, segment: 'corner' },
-  { circuitId: 2, marker: 160, s: 0.9412, segment: 'straight' },
-  { circuitId: 2, marker: 161, s: 0.9471, segment: 'hairpin' },
-  { circuitId: 2, marker: 162, s: 0.9529, segment: 'corner' },
-  { circuitId: 2, marker: 163, s: 0.9588, segment: 'corner' },
-  { circuitId: 2, marker: 164, s: 0.9647, segment: 'corner' },
-  { circuitId: 2, marker: 165, s: 0.9706, segment: 'chicane' },
-  { circuitId: 2, marker: 166, s: 0.9765, segment: 'corner' },
-  { circuitId: 2, marker: 167, s: 0.9824, segment: 'corner' },
-  { circuitId: 2, marker: 168, s: 0.9882, segment: 'hairpin' },
-  { circuitId: 2, marker: 169, s: 0.9941, segment: 'corner' },
-  { circuitId: 3, marker: 0, s: 0.0000, segment: 'chicane' },
-  { circuitId: 3, marker: 1, s: 0.0059, segment: 'corner' },
-  { circuitId: 3, marker: 2, s: 0.0118, segment: 'corner' },
-  { circuitId: 3, marker: 3, s: 0.0176, segment: 'corner' },
-  { circuitId: 3, marker: 4, s: 0.0235, segment: 'corner' },
-  { circuitId: 3, marker: 5, s: 0.0294, segment: 'straight' },
-  { circuitId: 3, marker: 6, s: 0.0353, segment: 'corner' },
-  { circuitId: 3, marker: 7, s: 0.0412, segment: 'hairpin' },
-  { circuitId: 3, marker: 8, s: 0.0471, segment: 'corner' },
-  { circuitId: 3, marker: 9, s: 0.0529, segment: 'corner' },
-  { circuitId: 3, marker: 10, s: 0.0588, segment: 'straight' },
-  { circuitId: 3, marker: 11, s: 0.0647, segment: 'chicane' },
-  { circuitId: 3, marker: 12, s: 0.0706, segment: 'corner' },
-  { circuitId: 3, marker: 13, s: 0.0765, segment: 'corner' },
-  { circuitId: 3, marker: 14, s: 0.0824, segment: 'hairpin' },
-  { circuitId: 3, marker: 15, s: 0.0882, segment: 'straight' },
-  { circuitId: 3, marker: 16, s: 0.0941, segment: 'corner' },
-  { circuitId: 3, marker: 17, s: 0.1000, segment: 'corner' },
-  { circuitId: 3, marker: 18, s: 0.1059, segment: 'corner' },
-  { circuitId: 3, marker: 19, s: 0.1118, segment: 'corner' },
-  { circuitId: 3, marker: 20, s: 0.1176, segment: 'straight' },
-  { circuitId: 3, marker: 21, s: 0.1235, segment: 'hairpin' },
-  { circuitId: 3, marker: 22, s: 0.1294, segment: 'chicane' },
-  { circuitId: 3, marker: 23, s: 0.1353, segment: 'corner' },
-  { circuitId: 3, marker: 24, s: 0.1412, segment: 'corner' },
-  { circuitId: 3, marker: 25, s: 0.1471, segment: 'straight' },
-  { circuitId: 3, marker: 26, s: 0.1529, segment: 'corner' },
-  { circuitId: 3, marker: 27, s: 0.1588, segment: 'corner' },
-  { circuitId: 3, marker: 28, s: 0.1647, segment: 'hairpin' },
-  { circuitId: 3, marker: 29, s: 0.1706, segment: 'corner' },
-  { circuitId: 3, marker: 30, s: 0.1765, segment: 'straight' },
-  { circuitId: 3, marker: 31, s: 0.1824, segment: 'corner' },
-  { circuitId: 3, marker: 32, s: 0.1882, segment: 'corner' },
-  { circuitId: 3, marker: 33, s: 0.1941, segment: 'chicane' },
-  { circuitId: 3, marker: 34, s: 0.2000, segment: 'corner' },
-  { circuitId: 3, marker: 35, s: 0.2059, segment: 'hairpin' },
-  { circuitId: 3, marker: 36, s: 0.2118, segment: 'corner' },
-  { circuitId: 3, marker: 37, s: 0.2176, segment: 'corner' },
-  { circuitId: 3, marker: 38, s: 0.2235, segment: 'corner' },
-  { circuitId: 3, marker: 39, s: 0.2294, segment: 'corner' },
-  { circuitId: 3, marker: 40, s: 0.2353, segment: 'straight' },
-  { circuitId: 3, marker: 41, s: 0.2412, segment: 'corner' },
-  { circuitId: 3, marker: 42, s: 0.2471, segment: 'hairpin' },
-  { circuitId: 3, marker: 43, s: 0.2529, segment: 'corner' },
-  { circuitId: 3, marker: 44, s: 0.2588, segment: 'chicane' },
-  { circuitId: 3, marker: 45, s: 0.2647, segment: 'straight' },
-  { circuitId: 3, marker: 46, s: 0.2706, segment: 'corner' },
-  { circuitId: 3, marker: 47, s: 0.2765, segment: 'corner' },
-  { circuitId: 3, marker: 48, s: 0.2824, segment: 'corner' },
-  { circuitId: 3, marker: 49, s: 0.2882, segment: 'hairpin' },
-  { circuitId: 3, marker: 50, s: 0.2941, segment: 'straight' },
-  { circuitId: 3, marker: 51, s: 0.3000, segment: 'corner' },
-  { circuitId: 3, marker: 52, s: 0.3059, segment: 'corner' },
-  { circuitId: 3, marker: 53, s: 0.3118, segment: 'corner' },
-  { circuitId: 3, marker: 54, s: 0.3176, segment: 'corner' },
-  { circuitId: 3, marker: 55, s: 0.3235, segment: 'chicane' },
-  { circuitId: 3, marker: 56, s: 0.3294, segment: 'hairpin' },
-  { circuitId: 3, marker: 57, s: 0.3353, segment: 'corner' },
-  { circuitId: 3, marker: 58, s: 0.3412, segment: 'corner' },
-  { circuitId: 3, marker: 59, s: 0.3471, segment: 'corner' },
-  { circuitId: 3, marker: 60, s: 0.3529, segment: 'straight' },
-  { circuitId: 3, marker: 61, s: 0.3588, segment: 'corner' },
-  { circuitId: 3, marker: 62, s: 0.3647, segment: 'corner' },
-  { circuitId: 3, marker: 63, s: 0.3706, segment: 'hairpin' },
-  { circuitId: 3, marker: 64, s: 0.3765, segment: 'corner' },
-  { circuitId: 3, marker: 65, s: 0.3824, segment: 'straight' },
-  { circuitId: 3, marker: 66, s: 0.3882, segment: 'chicane' },
-  { circuitId: 3, marker: 67, s: 0.3941, segment: 'corner' },
-  { circuitId: 3, marker: 68, s: 0.4000, segment: 'corner' },
-  { circuitId: 3, marker: 69, s: 0.4059, segment: 'corner' },
-  { circuitId: 3, marker: 70, s: 0.4118, segment: 'hairpin' },
-  { circuitId: 3, marker: 71, s: 0.4176, segment: 'corner' },
-  { circuitId: 3, marker: 72, s: 0.4235, segment: 'corner' },
-  { circuitId: 3, marker: 73, s: 0.4294, segment: 'corner' },
-  { circuitId: 3, marker: 74, s: 0.4353, segment: 'corner' },
-  { circuitId: 3, marker: 75, s: 0.4412, segment: 'straight' },
-  { circuitId: 3, marker: 76, s: 0.4471, segment: 'corner' },
-  { circuitId: 3, marker: 77, s: 0.4529, segment: 'chicane' },
-  { circuitId: 3, marker: 78, s: 0.4588, segment: 'corner' },
-  { circuitId: 3, marker: 79, s: 0.4647, segment: 'corner' },
-  { circuitId: 3, marker: 80, s: 0.4706, segment: 'straight' },
-  { circuitId: 3, marker: 81, s: 0.4765, segment: 'corner' },
-  { circuitId: 3, marker: 82, s: 0.4824, segment: 'corner' },
-  { circuitId: 3, marker: 83, s: 0.4882, segment: 'corner' },
-  { circuitId: 3, marker: 84, s: 0.4941, segment: 'hairpin' },
-  { circuitId: 3, marker: 85, s: 0.5000, segment: 'straight' },
-  { circuitId: 3, marker: 86, s: 0.5059, segment: 'corner' },
-  { circuitId: 3, marker: 87, s: 0.5118, segment: 'corner' },
-  { circuitId: 3, marker: 88, s: 0.5176, segment: 'chicane' },
-  { circuitId: 3, marker: 89, s: 0.5235, segment: 'corner' },
-  { circuitId: 3, marker: 90, s: 0.5294, segment: 'straight' },
-  { circuitId: 3, marker: 91, s: 0.5353, segment: 'hairpin' },
-  { circuitId: 3, marker: 92, s: 0.5412, segment: 'corner' },
-  { circuitId: 3, marker: 93, s: 0.5471, segment: 'corner' },
-  { circuitId: 3, marker: 94, s: 0.5529, segment: 'corner' },
-  { circuitId: 3, marker: 95, s: 0.5588, segment: 'straight' },
-  { circuitId: 3, marker: 96, s: 0.5647, segment: 'corner' },
-  { circuitId: 3, marker: 97, s: 0.5706, segment: 'corner' },
-  { circuitId: 3, marker: 98, s: 0.5765, segment: 'hairpin' },
-  { circuitId: 3, marker: 99, s: 0.5824, segment: 'chicane' },
-  { circuitId: 3, marker: 100, s: 0.5882, segment: 'straight' },
-  { circuitId: 3, marker: 101, s: 0.5941, segment: 'corner' },
-  { circuitId: 3, marker: 102, s: 0.6000, segment: 'corner' },
-  { circuitId: 3, marker: 103, s: 0.6059, segment: 'corner' },
-  { circuitId: 3, marker: 104, s: 0.6118, segment: 'corner' },
-  { circuitId: 3, marker: 105, s: 0.6176, segment: 'hairpin' },
-  { circuitId: 3, marker: 106, s: 0.6235, segment: 'corner' },
-  { circuitId: 3, marker: 107, s: 0.6294, segment: 'corner' },
-  { circuitId: 3, marker: 108, s: 0.6353, segment: 'corner' },
-  { circuitId: 3, marker: 109, s: 0.6412, segment: 'corner' },
-  { circuitId: 3, marker: 110, s: 0.6471, segment: 'chicane' },
-  { circuitId: 3, marker: 111, s: 0.6529, segment: 'corner' },
-  { circuitId: 3, marker: 112, s: 0.6588, segment: 'hairpin' },
-  { circuitId: 3, marker: 113, s: 0.6647, segment: 'corner' },
-  { circuitId: 3, marker: 114, s: 0.6706, segment: 'corner' },
-  { circuitId: 3, marker: 115, s: 0.6765, segment: 'straight' },
-  { circuitId: 3, marker: 116, s: 0.6824, segment: 'corner' },
-  { circuitId: 3, marker: 117, s: 0.6882, segment: 'corner' },
-  { circuitId: 3, marker: 118, s: 0.6941, segment: 'corner' },
-  { circuitId: 3, marker: 119, s: 0.7000, segment: 'hairpin' },
-  { circuitId: 3, marker: 120, s: 0.7059, segment: 'straight' },
-  { circuitId: 3, marker: 121, s: 0.7118, segment: 'chicane' },
-  { circuitId: 3, marker: 122, s: 0.7176, segment: 'corner' },
-  { circuitId: 3, marker: 123, s: 0.7235, segment: 'corner' },
-  { circuitId: 3, marker: 124, s: 0.7294, segment: 'corner' },
-  { circuitId: 3, marker: 125, s: 0.7353, segment: 'straight' },
-  { circuitId: 3, marker: 126, s: 0.7412, segment: 'hairpin' },
-  { circuitId: 3, marker: 127, s: 0.7471, segment: 'corner' },
-  { circuitId: 3, marker: 128, s: 0.7529, segment: 'corner' },
-  { circuitId: 3, marker: 129, s: 0.7588, segment: 'corner' },
-  { circuitId: 3, marker: 130, s: 0.7647, segment: 'straight' },
-  { circuitId: 3, marker: 131, s: 0.7706, segment: 'corner' },
-  { circuitId: 3, marker: 132, s: 0.7765, segment: 'chicane' },
-  { circuitId: 3, marker: 133, s: 0.7824, segment: 'hairpin' },
-  { circuitId: 3, marker: 134, s: 0.7882, segment: 'corner' },
-  { circuitId: 3, marker: 135, s: 0.7941, segment: 'straight' },
-  { circuitId: 3, marker: 136, s: 0.8000, segment: 'corner' },
-  { circuitId: 3, marker: 137, s: 0.8059, segment: 'corner' },
-  { circuitId: 3, marker: 138, s: 0.8118, segment: 'corner' },
-  { circuitId: 3, marker: 139, s: 0.8176, segment: 'corner' },
-  { circuitId: 3, marker: 140, s: 0.8235, segment: 'hairpin' },
-  { circuitId: 3, marker: 141, s: 0.8294, segment: 'corner' },
-  { circuitId: 3, marker: 142, s: 0.8353, segment: 'corner' },
-  { circuitId: 3, marker: 143, s: 0.8412, segment: 'chicane' },
-  { circuitId: 3, marker: 144, s: 0.8471, segment: 'corner' },
-  { circuitId: 3, marker: 145, s: 0.8529, segment: 'straight' },
-  { circuitId: 3, marker: 146, s: 0.8588, segment: 'corner' },
-  { circuitId: 3, marker: 147, s: 0.8647, segment: 'hairpin' },
-  { circuitId: 3, marker: 148, s: 0.8706, segment: 'corner' },
-  { circuitId: 3, marker: 149, s: 0.8765, segment: 'corner' },
-  { circuitId: 3, marker: 150, s: 0.8824, segment: 'straight' },
-  { circuitId: 3, marker: 151, s: 0.8882, segment: 'corner' },
-  { circuitId: 3, marker: 152, s: 0.8941, segment: 'corner' },
-  { circuitId: 3, marker: 153, s: 0.9000, segment: 'corner' },
-  { circuitId: 3, marker: 154, s: 0.9059, segment: 'chicane' },
-  { circuitId: 3, marker: 155, s: 0.9118, segment: 'straight' },
-  { circuitId: 3, marker: 156, s: 0.9176, segment: 'corner' },
-  { circuitId: 3, marker: 157, s: 0.9235, segment: 'corner' },
-  { circuitId: 3, marker: 158, s: 0.9294, segment: 'corner' },
-  { circuitId: 3, marker: 159, s: 0.9353, segment: 'corner' },
-  { circuitId: 3, marker: 160, s: 0.9412, segment: 'straight' },
-  { circuitId: 3, marker: 161, s: 0.9471, segment: 'hairpin' },
-  { circuitId: 3, marker: 162, s: 0.9529, segment: 'corner' },
-  { circuitId: 3, marker: 163, s: 0.9588, segment: 'corner' },
-  { circuitId: 3, marker: 164, s: 0.9647, segment: 'corner' },
-  { circuitId: 3, marker: 165, s: 0.9706, segment: 'chicane' },
-  { circuitId: 3, marker: 166, s: 0.9765, segment: 'corner' },
-  { circuitId: 3, marker: 167, s: 0.9824, segment: 'corner' },
-  { circuitId: 3, marker: 168, s: 0.9882, segment: 'hairpin' },
-  { circuitId: 3, marker: 169, s: 0.9941, segment: 'corner' },
-  { circuitId: 4, marker: 0, s: 0.0000, segment: 'chicane' },
-  { circuitId: 4, marker: 1, s: 0.0059, segment: 'corner' },
-  { circuitId: 4, marker: 2, s: 0.0118, segment: 'corner' },
-  { circuitId: 4, marker: 3, s: 0.0176, segment: 'corner' },
-  { circuitId: 4, marker: 4, s: 0.0235, segment: 'corner' },
-  { circuitId: 4, marker: 5, s: 0.0294, segment: 'straight' },
-  { circuitId: 4, marker: 6, s: 0.0353, segment: 'corner' },
-  { circuitId: 4, marker: 7, s: 0.0412, segment: 'hairpin' },
-  { circuitId: 4, marker: 8, s: 0.0471, segment: 'corner' },
-  { circuitId: 4, marker: 9, s: 0.0529, segment: 'corner' },
-  { circuitId: 4, marker: 10, s: 0.0588, segment: 'straight' },
-  { circuitId: 4, marker: 11, s: 0.0647, segment: 'chicane' },
-  { circuitId: 4, marker: 12, s: 0.0706, segment: 'corner' },
-  { circuitId: 4, marker: 13, s: 0.0765, segment: 'corner' },
-  { circuitId: 4, marker: 14, s: 0.0824, segment: 'hairpin' },
-  { circuitId: 4, marker: 15, s: 0.0882, segment: 'straight' },
-  { circuitId: 4, marker: 16, s: 0.0941, segment: 'corner' },
-  { circuitId: 4, marker: 17, s: 0.1000, segment: 'corner' },
-  { circuitId: 4, marker: 18, s: 0.1059, segment: 'corner' },
-  { circuitId: 4, marker: 19, s: 0.1118, segment: 'corner' },
-  { circuitId: 4, marker: 20, s: 0.1176, segment: 'straight' },
-  { circuitId: 4, marker: 21, s: 0.1235, segment: 'hairpin' },
-  { circuitId: 4, marker: 22, s: 0.1294, segment: 'chicane' },
-  { circuitId: 4, marker: 23, s: 0.1353, segment: 'corner' },
-  { circuitId: 4, marker: 24, s: 0.1412, segment: 'corner' },
-  { circuitId: 4, marker: 25, s: 0.1471, segment: 'straight' },
-  { circuitId: 4, marker: 26, s: 0.1529, segment: 'corner' },
-  { circuitId: 4, marker: 27, s: 0.1588, segment: 'corner' },
-  { circuitId: 4, marker: 28, s: 0.1647, segment: 'hairpin' },
-  { circuitId: 4, marker: 29, s: 0.1706, segment: 'corner' },
-  { circuitId: 4, marker: 30, s: 0.1765, segment: 'straight' },
-  { circuitId: 4, marker: 31, s: 0.1824, segment: 'corner' },
-  { circuitId: 4, marker: 32, s: 0.1882, segment: 'corner' },
-  { circuitId: 4, marker: 33, s: 0.1941, segment: 'chicane' },
-  { circuitId: 4, marker: 34, s: 0.2000, segment: 'corner' },
-  { circuitId: 4, marker: 35, s: 0.2059, segment: 'hairpin' },
-  { circuitId: 4, marker: 36, s: 0.2118, segment: 'corner' },
-  { circuitId: 4, marker: 37, s: 0.2176, segment: 'corner' },
-  { circuitId: 4, marker: 38, s: 0.2235, segment: 'corner' },
-  { circuitId: 4, marker: 39, s: 0.2294, segment: 'corner' },
-  { circuitId: 4, marker: 40, s: 0.2353, segment: 'straight' },
-  { circuitId: 4, marker: 41, s: 0.2412, segment: 'corner' },
-  { circuitId: 4, marker: 42, s: 0.2471, segment: 'hairpin' },
-  { circuitId: 4, marker: 43, s: 0.2529, segment: 'corner' },
-  { circuitId: 4, marker: 44, s: 0.2588, segment: 'chicane' },
-  { circuitId: 4, marker: 45, s: 0.2647, segment: 'straight' },
-  { circuitId: 4, marker: 46, s: 0.2706, segment: 'corner' },
-  { circuitId: 4, marker: 47, s: 0.2765, segment: 'corner' },
-  { circuitId: 4, marker: 48, s: 0.2824, segment: 'corner' },
-  { circuitId: 4, marker: 49, s: 0.2882, segment: 'hairpin' },
-  { circuitId: 4, marker: 50, s: 0.2941, segment: 'straight' },
-  { circuitId: 4, marker: 51, s: 0.3000, segment: 'corner' },
-  { circuitId: 4, marker: 52, s: 0.3059, segment: 'corner' },
-  { circuitId: 4, marker: 53, s: 0.3118, segment: 'corner' },
-  { circuitId: 4, marker: 54, s: 0.3176, segment: 'corner' },
-  { circuitId: 4, marker: 55, s: 0.3235, segment: 'chicane' },
-  { circuitId: 4, marker: 56, s: 0.3294, segment: 'hairpin' },
-  { circuitId: 4, marker: 57, s: 0.3353, segment: 'corner' },
-  { circuitId: 4, marker: 58, s: 0.3412, segment: 'corner' },
-  { circuitId: 4, marker: 59, s: 0.3471, segment: 'corner' },
-  { circuitId: 4, marker: 60, s: 0.3529, segment: 'straight' },
-  { circuitId: 4, marker: 61, s: 0.3588, segment: 'corner' },
-  { circuitId: 4, marker: 62, s: 0.3647, segment: 'corner' },
-  { circuitId: 4, marker: 63, s: 0.3706, segment: 'hairpin' },
-  { circuitId: 4, marker: 64, s: 0.3765, segment: 'corner' },
-  { circuitId: 4, marker: 65, s: 0.3824, segment: 'straight' },
-  { circuitId: 4, marker: 66, s: 0.3882, segment: 'chicane' },
-  { circuitId: 4, marker: 67, s: 0.3941, segment: 'corner' },
-  { circuitId: 4, marker: 68, s: 0.4000, segment: 'corner' },
-  { circuitId: 4, marker: 69, s: 0.4059, segment: 'corner' },
-  { circuitId: 4, marker: 70, s: 0.4118, segment: 'hairpin' },
-  { circuitId: 4, marker: 71, s: 0.4176, segment: 'corner' },
-  { circuitId: 4, marker: 72, s: 0.4235, segment: 'corner' },
-  { circuitId: 4, marker: 73, s: 0.4294, segment: 'corner' },
-  { circuitId: 4, marker: 74, s: 0.4353, segment: 'corner' },
-  { circuitId: 4, marker: 75, s: 0.4412, segment: 'straight' },
-  { circuitId: 4, marker: 76, s: 0.4471, segment: 'corner' },
-  { circuitId: 4, marker: 77, s: 0.4529, segment: 'chicane' },
-  { circuitId: 4, marker: 78, s: 0.4588, segment: 'corner' },
-  { circuitId: 4, marker: 79, s: 0.4647, segment: 'corner' },
-  { circuitId: 4, marker: 80, s: 0.4706, segment: 'straight' },
-  { circuitId: 4, marker: 81, s: 0.4765, segment: 'corner' },
-  { circuitId: 4, marker: 82, s: 0.4824, segment: 'corner' },
-  { circuitId: 4, marker: 83, s: 0.4882, segment: 'corner' },
-  { circuitId: 4, marker: 84, s: 0.4941, segment: 'hairpin' },
-  { circuitId: 4, marker: 85, s: 0.5000, segment: 'straight' },
-  { circuitId: 4, marker: 86, s: 0.5059, segment: 'corner' },
-  { circuitId: 4, marker: 87, s: 0.5118, segment: 'corner' },
-  { circuitId: 4, marker: 88, s: 0.5176, segment: 'chicane' },
-  { circuitId: 4, marker: 89, s: 0.5235, segment: 'corner' },
-  { circuitId: 4, marker: 90, s: 0.5294, segment: 'straight' },
-  { circuitId: 4, marker: 91, s: 0.5353, segment: 'hairpin' },
-  { circuitId: 4, marker: 92, s: 0.5412, segment: 'corner' },
-  { circuitId: 4, marker: 93, s: 0.5471, segment: 'corner' },
-  { circuitId: 4, marker: 94, s: 0.5529, segment: 'corner' },
-  { circuitId: 4, marker: 95, s: 0.5588, segment: 'straight' },
-  { circuitId: 4, marker: 96, s: 0.5647, segment: 'corner' },
-  { circuitId: 4, marker: 97, s: 0.5706, segment: 'corner' },
-  { circuitId: 4, marker: 98, s: 0.5765, segment: 'hairpin' },
-  { circuitId: 4, marker: 99, s: 0.5824, segment: 'chicane' },
-  { circuitId: 4, marker: 100, s: 0.5882, segment: 'straight' },
-  { circuitId: 4, marker: 101, s: 0.5941, segment: 'corner' },
-  { circuitId: 4, marker: 102, s: 0.6000, segment: 'corner' },
-  { circuitId: 4, marker: 103, s: 0.6059, segment: 'corner' },
-  { circuitId: 4, marker: 104, s: 0.6118, segment: 'corner' },
-  { circuitId: 4, marker: 105, s: 0.6176, segment: 'hairpin' },
-  { circuitId: 4, marker: 106, s: 0.6235, segment: 'corner' },
-  { circuitId: 4, marker: 107, s: 0.6294, segment: 'corner' },
-  { circuitId: 4, marker: 108, s: 0.6353, segment: 'corner' },
-  { circuitId: 4, marker: 109, s: 0.6412, segment: 'corner' },
-  { circuitId: 4, marker: 110, s: 0.6471, segment: 'chicane' },
-  { circuitId: 4, marker: 111, s: 0.6529, segment: 'corner' },
-  { circuitId: 4, marker: 112, s: 0.6588, segment: 'hairpin' },
-  { circuitId: 4, marker: 113, s: 0.6647, segment: 'corner' },
-  { circuitId: 4, marker: 114, s: 0.6706, segment: 'corner' },
-  { circuitId: 4, marker: 115, s: 0.6765, segment: 'straight' },
-  { circuitId: 4, marker: 116, s: 0.6824, segment: 'corner' },
-  { circuitId: 4, marker: 117, s: 0.6882, segment: 'corner' },
-  { circuitId: 4, marker: 118, s: 0.6941, segment: 'corner' },
-  { circuitId: 4, marker: 119, s: 0.7000, segment: 'hairpin' },
-  { circuitId: 4, marker: 120, s: 0.7059, segment: 'straight' },
-  { circuitId: 4, marker: 121, s: 0.7118, segment: 'chicane' },
-  { circuitId: 4, marker: 122, s: 0.7176, segment: 'corner' },
-  { circuitId: 4, marker: 123, s: 0.7235, segment: 'corner' },
-  { circuitId: 4, marker: 124, s: 0.7294, segment: 'corner' },
-  { circuitId: 4, marker: 125, s: 0.7353, segment: 'straight' },
-  { circuitId: 4, marker: 126, s: 0.7412, segment: 'hairpin' },
-  { circuitId: 4, marker: 127, s: 0.7471, segment: 'corner' },
-  { circuitId: 4, marker: 128, s: 0.7529, segment: 'corner' },
-  { circuitId: 4, marker: 129, s: 0.7588, segment: 'corner' },
-  { circuitId: 4, marker: 130, s: 0.7647, segment: 'straight' },
-  { circuitId: 4, marker: 131, s: 0.7706, segment: 'corner' },
-  { circuitId: 4, marker: 132, s: 0.7765, segment: 'chicane' },
-  { circuitId: 4, marker: 133, s: 0.7824, segment: 'hairpin' },
-  { circuitId: 4, marker: 134, s: 0.7882, segment: 'corner' },
-  { circuitId: 4, marker: 135, s: 0.7941, segment: 'straight' },
-  { circuitId: 4, marker: 136, s: 0.8000, segment: 'corner' },
-  { circuitId: 4, marker: 137, s: 0.8059, segment: 'corner' },
-  { circuitId: 4, marker: 138, s: 0.8118, segment: 'corner' },
-  { circuitId: 4, marker: 139, s: 0.8176, segment: 'corner' },
-  { circuitId: 4, marker: 140, s: 0.8235, segment: 'hairpin' },
-  { circuitId: 4, marker: 141, s: 0.8294, segment: 'corner' },
-  { circuitId: 4, marker: 142, s: 0.8353, segment: 'corner' },
-  { circuitId: 4, marker: 143, s: 0.8412, segment: 'chicane' },
-  { circuitId: 4, marker: 144, s: 0.8471, segment: 'corner' },
-  { circuitId: 4, marker: 145, s: 0.8529, segment: 'straight' },
-  { circuitId: 4, marker: 146, s: 0.8588, segment: 'corner' },
-  { circuitId: 4, marker: 147, s: 0.8647, segment: 'hairpin' },
-  { circuitId: 4, marker: 148, s: 0.8706, segment: 'corner' },
-  { circuitId: 4, marker: 149, s: 0.8765, segment: 'corner' },
-  { circuitId: 4, marker: 150, s: 0.8824, segment: 'straight' },
-  { circuitId: 4, marker: 151, s: 0.8882, segment: 'corner' },
-  { circuitId: 4, marker: 152, s: 0.8941, segment: 'corner' },
-  { circuitId: 4, marker: 153, s: 0.9000, segment: 'corner' },
-  { circuitId: 4, marker: 154, s: 0.9059, segment: 'chicane' },
-  { circuitId: 4, marker: 155, s: 0.9118, segment: 'straight' },
-  { circuitId: 4, marker: 156, s: 0.9176, segment: 'corner' },
-  { circuitId: 4, marker: 157, s: 0.9235, segment: 'corner' },
-  { circuitId: 4, marker: 158, s: 0.9294, segment: 'corner' },
-  { circuitId: 4, marker: 159, s: 0.9353, segment: 'corner' },
-  { circuitId: 4, marker: 160, s: 0.9412, segment: 'straight' },
-  { circuitId: 4, marker: 161, s: 0.9471, segment: 'hairpin' },
-  { circuitId: 4, marker: 162, s: 0.9529, segment: 'corner' },
-  { circuitId: 4, marker: 163, s: 0.9588, segment: 'corner' },
-  { circuitId: 4, marker: 164, s: 0.9647, segment: 'corner' },
-  { circuitId: 4, marker: 165, s: 0.9706, segment: 'chicane' },
-  { circuitId: 4, marker: 166, s: 0.9765, segment: 'corner' },
-  { circuitId: 4, marker: 167, s: 0.9824, segment: 'corner' },
-  { circuitId: 4, marker: 168, s: 0.9882, segment: 'hairpin' },
-  { circuitId: 4, marker: 169, s: 0.9941, segment: 'corner' },
-  { circuitId: 5, marker: 0, s: 0.0000, segment: 'chicane' },
-  { circuitId: 5, marker: 1, s: 0.0059, segment: 'corner' },
-  { circuitId: 5, marker: 2, s: 0.0118, segment: 'corner' },
-  { circuitId: 5, marker: 3, s: 0.0176, segment: 'corner' },
-  { circuitId: 5, marker: 4, s: 0.0235, segment: 'corner' },
-  { circuitId: 5, marker: 5, s: 0.0294, segment: 'straight' },
-  { circuitId: 5, marker: 6, s: 0.0353, segment: 'corner' },
-  { circuitId: 5, marker: 7, s: 0.0412, segment: 'hairpin' },
-  { circuitId: 5, marker: 8, s: 0.0471, segment: 'corner' },
-  { circuitId: 5, marker: 9, s: 0.0529, segment: 'corner' },
-  { circuitId: 5, marker: 10, s: 0.0588, segment: 'straight' },
-  { circuitId: 5, marker: 11, s: 0.0647, segment: 'chicane' },
-  { circuitId: 5, marker: 12, s: 0.0706, segment: 'corner' },
-  { circuitId: 5, marker: 13, s: 0.0765, segment: 'corner' },
-  { circuitId: 5, marker: 14, s: 0.0824, segment: 'hairpin' },
-  { circuitId: 5, marker: 15, s: 0.0882, segment: 'straight' },
-  { circuitId: 5, marker: 16, s: 0.0941, segment: 'corner' },
-  { circuitId: 5, marker: 17, s: 0.1000, segment: 'corner' },
-  { circuitId: 5, marker: 18, s: 0.1059, segment: 'corner' },
-  { circuitId: 5, marker: 19, s: 0.1118, segment: 'corner' },
-  { circuitId: 5, marker: 20, s: 0.1176, segment: 'straight' },
-  { circuitId: 5, marker: 21, s: 0.1235, segment: 'hairpin' },
-  { circuitId: 5, marker: 22, s: 0.1294, segment: 'chicane' },
-  { circuitId: 5, marker: 23, s: 0.1353, segment: 'corner' },
-  { circuitId: 5, marker: 24, s: 0.1412, segment: 'corner' },
-  { circuitId: 5, marker: 25, s: 0.1471, segment: 'straight' },
-  { circuitId: 5, marker: 26, s: 0.1529, segment: 'corner' },
-  { circuitId: 5, marker: 27, s: 0.1588, segment: 'corner' },
-  { circuitId: 5, marker: 28, s: 0.1647, segment: 'hairpin' },
-  { circuitId: 5, marker: 29, s: 0.1706, segment: 'corner' },
-  { circuitId: 5, marker: 30, s: 0.1765, segment: 'straight' },
-  { circuitId: 5, marker: 31, s: 0.1824, segment: 'corner' },
-  { circuitId: 5, marker: 32, s: 0.1882, segment: 'corner' },
-  { circuitId: 5, marker: 33, s: 0.1941, segment: 'chicane' },
-  { circuitId: 5, marker: 34, s: 0.2000, segment: 'corner' },
-  { circuitId: 5, marker: 35, s: 0.2059, segment: 'hairpin' },
-  { circuitId: 5, marker: 36, s: 0.2118, segment: 'corner' },
-  { circuitId: 5, marker: 37, s: 0.2176, segment: 'corner' },
-  { circuitId: 5, marker: 38, s: 0.2235, segment: 'corner' },
-  { circuitId: 5, marker: 39, s: 0.2294, segment: 'corner' },
-  { circuitId: 5, marker: 40, s: 0.2353, segment: 'straight' },
-  { circuitId: 5, marker: 41, s: 0.2412, segment: 'corner' },
-  { circuitId: 5, marker: 42, s: 0.2471, segment: 'hairpin' },
-  { circuitId: 5, marker: 43, s: 0.2529, segment: 'corner' },
-  { circuitId: 5, marker: 44, s: 0.2588, segment: 'chicane' },
-  { circuitId: 5, marker: 45, s: 0.2647, segment: 'straight' },
-  { circuitId: 5, marker: 46, s: 0.2706, segment: 'corner' },
-  { circuitId: 5, marker: 47, s: 0.2765, segment: 'corner' },
-  { circuitId: 5, marker: 48, s: 0.2824, segment: 'corner' },
-  { circuitId: 5, marker: 49, s: 0.2882, segment: 'hairpin' },
-  { circuitId: 5, marker: 50, s: 0.2941, segment: 'straight' },
-  { circuitId: 5, marker: 51, s: 0.3000, segment: 'corner' },
-  { circuitId: 5, marker: 52, s: 0.3059, segment: 'corner' },
-  { circuitId: 5, marker: 53, s: 0.3118, segment: 'corner' },
-  { circuitId: 5, marker: 54, s: 0.3176, segment: 'corner' },
-  { circuitId: 5, marker: 55, s: 0.3235, segment: 'chicane' },
-  { circuitId: 5, marker: 56, s: 0.3294, segment: 'hairpin' },
-  { circuitId: 5, marker: 57, s: 0.3353, segment: 'corner' },
-  { circuitId: 5, marker: 58, s: 0.3412, segment: 'corner' },
-  { circuitId: 5, marker: 59, s: 0.3471, segment: 'corner' },
-  { circuitId: 5, marker: 60, s: 0.3529, segment: 'straight' },
-  { circuitId: 5, marker: 61, s: 0.3588, segment: 'corner' },
-  { circuitId: 5, marker: 62, s: 0.3647, segment: 'corner' },
-  { circuitId: 5, marker: 63, s: 0.3706, segment: 'hairpin' },
-  { circuitId: 5, marker: 64, s: 0.3765, segment: 'corner' },
-  { circuitId: 5, marker: 65, s: 0.3824, segment: 'straight' },
-  { circuitId: 5, marker: 66, s: 0.3882, segment: 'chicane' },
-  { circuitId: 5, marker: 67, s: 0.3941, segment: 'corner' },
-  { circuitId: 5, marker: 68, s: 0.4000, segment: 'corner' },
-  { circuitId: 5, marker: 69, s: 0.4059, segment: 'corner' },
-  { circuitId: 5, marker: 70, s: 0.4118, segment: 'hairpin' },
-  { circuitId: 5, marker: 71, s: 0.4176, segment: 'corner' },
-  { circuitId: 5, marker: 72, s: 0.4235, segment: 'corner' },
-  { circuitId: 5, marker: 73, s: 0.4294, segment: 'corner' },
-  { circuitId: 5, marker: 74, s: 0.4353, segment: 'corner' },
-  { circuitId: 5, marker: 75, s: 0.4412, segment: 'straight' },
-  { circuitId: 5, marker: 76, s: 0.4471, segment: 'corner' },
-  { circuitId: 5, marker: 77, s: 0.4529, segment: 'chicane' },
-  { circuitId: 5, marker: 78, s: 0.4588, segment: 'corner' },
-  { circuitId: 5, marker: 79, s: 0.4647, segment: 'corner' },
-  { circuitId: 5, marker: 80, s: 0.4706, segment: 'straight' },
-  { circuitId: 5, marker: 81, s: 0.4765, segment: 'corner' },
-  { circuitId: 5, marker: 82, s: 0.4824, segment: 'corner' },
-  { circuitId: 5, marker: 83, s: 0.4882, segment: 'corner' },
-  { circuitId: 5, marker: 84, s: 0.4941, segment: 'hairpin' },
-  { circuitId: 5, marker: 85, s: 0.5000, segment: 'straight' },
-  { circuitId: 5, marker: 86, s: 0.5059, segment: 'corner' },
-  { circuitId: 5, marker: 87, s: 0.5118, segment: 'corner' },
-  { circuitId: 5, marker: 88, s: 0.5176, segment: 'chicane' },
-  { circuitId: 5, marker: 89, s: 0.5235, segment: 'corner' },
-  { circuitId: 5, marker: 90, s: 0.5294, segment: 'straight' },
-  { circuitId: 5, marker: 91, s: 0.5353, segment: 'hairpin' },
-  { circuitId: 5, marker: 92, s: 0.5412, segment: 'corner' },
-  { circuitId: 5, marker: 93, s: 0.5471, segment: 'corner' },
-  { circuitId: 5, marker: 94, s: 0.5529, segment: 'corner' },
-  { circuitId: 5, marker: 95, s: 0.5588, segment: 'straight' },
-  { circuitId: 5, marker: 96, s: 0.5647, segment: 'corner' },
-  { circuitId: 5, marker: 97, s: 0.5706, segment: 'corner' },
-  { circuitId: 5, marker: 98, s: 0.5765, segment: 'hairpin' },
-  { circuitId: 5, marker: 99, s: 0.5824, segment: 'chicane' },
-  { circuitId: 5, marker: 100, s: 0.5882, segment: 'straight' },
-  { circuitId: 5, marker: 101, s: 0.5941, segment: 'corner' },
-  { circuitId: 5, marker: 102, s: 0.6000, segment: 'corner' },
-  { circuitId: 5, marker: 103, s: 0.6059, segment: 'corner' },
-  { circuitId: 5, marker: 104, s: 0.6118, segment: 'corner' },
-  { circuitId: 5, marker: 105, s: 0.6176, segment: 'hairpin' },
-  { circuitId: 5, marker: 106, s: 0.6235, segment: 'corner' },
-  { circuitId: 5, marker: 107, s: 0.6294, segment: 'corner' },
-  { circuitId: 5, marker: 108, s: 0.6353, segment: 'corner' },
-  { circuitId: 5, marker: 109, s: 0.6412, segment: 'corner' },
-  { circuitId: 5, marker: 110, s: 0.6471, segment: 'chicane' },
-  { circuitId: 5, marker: 111, s: 0.6529, segment: 'corner' },
-  { circuitId: 5, marker: 112, s: 0.6588, segment: 'hairpin' },
-  { circuitId: 5, marker: 113, s: 0.6647, segment: 'corner' },
-  { circuitId: 5, marker: 114, s: 0.6706, segment: 'corner' },
-  { circuitId: 5, marker: 115, s: 0.6765, segment: 'straight' },
-  { circuitId: 5, marker: 116, s: 0.6824, segment: 'corner' },
-  { circuitId: 5, marker: 117, s: 0.6882, segment: 'corner' },
-  { circuitId: 5, marker: 118, s: 0.6941, segment: 'corner' },
-  { circuitId: 5, marker: 119, s: 0.7000, segment: 'hairpin' },
-  { circuitId: 5, marker: 120, s: 0.7059, segment: 'straight' },
-  { circuitId: 5, marker: 121, s: 0.7118, segment: 'chicane' },
-  { circuitId: 5, marker: 122, s: 0.7176, segment: 'corner' },
-  { circuitId: 5, marker: 123, s: 0.7235, segment: 'corner' },
-  { circuitId: 5, marker: 124, s: 0.7294, segment: 'corner' },
-  { circuitId: 5, marker: 125, s: 0.7353, segment: 'straight' },
-  { circuitId: 5, marker: 126, s: 0.7412, segment: 'hairpin' },
-  { circuitId: 5, marker: 127, s: 0.7471, segment: 'corner' },
-  { circuitId: 5, marker: 128, s: 0.7529, segment: 'corner' },
-  { circuitId: 5, marker: 129, s: 0.7588, segment: 'corner' },
-  { circuitId: 5, marker: 130, s: 0.7647, segment: 'straight' },
-  { circuitId: 5, marker: 131, s: 0.7706, segment: 'corner' },
-  { circuitId: 5, marker: 132, s: 0.7765, segment: 'chicane' },
-  { circuitId: 5, marker: 133, s: 0.7824, segment: 'hairpin' },
-  { circuitId: 5, marker: 134, s: 0.7882, segment: 'corner' },
-  { circuitId: 5, marker: 135, s: 0.7941, segment: 'straight' },
-  { circuitId: 5, marker: 136, s: 0.8000, segment: 'corner' },
-  { circuitId: 5, marker: 137, s: 0.8059, segment: 'corner' },
-  { circuitId: 5, marker: 138, s: 0.8118, segment: 'corner' },
-  { circuitId: 5, marker: 139, s: 0.8176, segment: 'corner' },
-  { circuitId: 5, marker: 140, s: 0.8235, segment: 'hairpin' },
-  { circuitId: 5, marker: 141, s: 0.8294, segment: 'corner' },
-  { circuitId: 5, marker: 142, s: 0.8353, segment: 'corner' },
-  { circuitId: 5, marker: 143, s: 0.8412, segment: 'chicane' },
-  { circuitId: 5, marker: 144, s: 0.8471, segment: 'corner' },
-  { circuitId: 5, marker: 145, s: 0.8529, segment: 'straight' },
-  { circuitId: 5, marker: 146, s: 0.8588, segment: 'corner' },
-  { circuitId: 5, marker: 147, s: 0.8647, segment: 'hairpin' },
-  { circuitId: 5, marker: 148, s: 0.8706, segment: 'corner' },
-  { circuitId: 5, marker: 149, s: 0.8765, segment: 'corner' },
-  { circuitId: 5, marker: 150, s: 0.8824, segment: 'straight' },
-  { circuitId: 5, marker: 151, s: 0.8882, segment: 'corner' },
-  { circuitId: 5, marker: 152, s: 0.8941, segment: 'corner' },
-  { circuitId: 5, marker: 153, s: 0.9000, segment: 'corner' },
-  { circuitId: 5, marker: 154, s: 0.9059, segment: 'chicane' },
-  { circuitId: 5, marker: 155, s: 0.9118, segment: 'straight' },
-  { circuitId: 5, marker: 156, s: 0.9176, segment: 'corner' },
-  { circuitId: 5, marker: 157, s: 0.9235, segment: 'corner' },
-  { circuitId: 5, marker: 158, s: 0.9294, segment: 'corner' },
-  { circuitId: 5, marker: 159, s: 0.9353, segment: 'corner' },
-  { circuitId: 5, marker: 160, s: 0.9412, segment: 'straight' },
-  { circuitId: 5, marker: 161, s: 0.9471, segment: 'hairpin' },
-  { circuitId: 5, marker: 162, s: 0.9529, segment: 'corner' },
-  { circuitId: 5, marker: 163, s: 0.9588, segment: 'corner' },
-  { circuitId: 5, marker: 164, s: 0.9647, segment: 'corner' },
-  { circuitId: 5, marker: 165, s: 0.9706, segment: 'chicane' },
-  { circuitId: 5, marker: 166, s: 0.9765, segment: 'corner' },
-  { circuitId: 5, marker: 167, s: 0.9824, segment: 'corner' },
-  { circuitId: 5, marker: 168, s: 0.9882, segment: 'hairpin' },
-  { circuitId: 5, marker: 169, s: 0.9941, segment: 'corner' },
-  { circuitId: 6, marker: 0, s: 0.0000, segment: 'chicane' },
-  { circuitId: 6, marker: 1, s: 0.0059, segment: 'corner' },
-  { circuitId: 6, marker: 2, s: 0.0118, segment: 'corner' },
-  { circuitId: 6, marker: 3, s: 0.0176, segment: 'corner' },
-  { circuitId: 6, marker: 4, s: 0.0235, segment: 'corner' },
-  { circuitId: 6, marker: 5, s: 0.0294, segment: 'straight' },
-  { circuitId: 6, marker: 6, s: 0.0353, segment: 'corner' },
-  { circuitId: 6, marker: 7, s: 0.0412, segment: 'hairpin' },
-  { circuitId: 6, marker: 8, s: 0.0471, segment: 'corner' },
-  { circuitId: 6, marker: 9, s: 0.0529, segment: 'corner' },
-  { circuitId: 6, marker: 10, s: 0.0588, segment: 'straight' },
-  { circuitId: 6, marker: 11, s: 0.0647, segment: 'chicane' },
-  { circuitId: 6, marker: 12, s: 0.0706, segment: 'corner' },
-  { circuitId: 6, marker: 13, s: 0.0765, segment: 'corner' },
-  { circuitId: 6, marker: 14, s: 0.0824, segment: 'hairpin' },
-  { circuitId: 6, marker: 15, s: 0.0882, segment: 'straight' },
-  { circuitId: 6, marker: 16, s: 0.0941, segment: 'corner' },
-  { circuitId: 6, marker: 17, s: 0.1000, segment: 'corner' },
-  { circuitId: 6, marker: 18, s: 0.1059, segment: 'corner' },
-  { circuitId: 6, marker: 19, s: 0.1118, segment: 'corner' },
-  { circuitId: 6, marker: 20, s: 0.1176, segment: 'straight' },
-  { circuitId: 6, marker: 21, s: 0.1235, segment: 'hairpin' },
-  { circuitId: 6, marker: 22, s: 0.1294, segment: 'chicane' },
-  { circuitId: 6, marker: 23, s: 0.1353, segment: 'corner' },
-  { circuitId: 6, marker: 24, s: 0.1412, segment: 'corner' },
-  { circuitId: 6, marker: 25, s: 0.1471, segment: 'straight' },
-  { circuitId: 6, marker: 26, s: 0.1529, segment: 'corner' },
-  { circuitId: 6, marker: 27, s: 0.1588, segment: 'corner' },
-  { circuitId: 6, marker: 28, s: 0.1647, segment: 'hairpin' },
-  { circuitId: 6, marker: 29, s: 0.1706, segment: 'corner' },
-  { circuitId: 6, marker: 30, s: 0.1765, segment: 'straight' },
-  { circuitId: 6, marker: 31, s: 0.1824, segment: 'corner' },
-  { circuitId: 6, marker: 32, s: 0.1882, segment: 'corner' },
-  { circuitId: 6, marker: 33, s: 0.1941, segment: 'chicane' },
-  { circuitId: 6, marker: 34, s: 0.2000, segment: 'corner' },
-  { circuitId: 6, marker: 35, s: 0.2059, segment: 'hairpin' },
-  { circuitId: 6, marker: 36, s: 0.2118, segment: 'corner' },
-  { circuitId: 6, marker: 37, s: 0.2176, segment: 'corner' },
-  { circuitId: 6, marker: 38, s: 0.2235, segment: 'corner' },
-  { circuitId: 6, marker: 39, s: 0.2294, segment: 'corner' },
-  { circuitId: 6, marker: 40, s: 0.2353, segment: 'straight' },
-  { circuitId: 6, marker: 41, s: 0.2412, segment: 'corner' },
-  { circuitId: 6, marker: 42, s: 0.2471, segment: 'hairpin' },
-  { circuitId: 6, marker: 43, s: 0.2529, segment: 'corner' },
-  { circuitId: 6, marker: 44, s: 0.2588, segment: 'chicane' },
-  { circuitId: 6, marker: 45, s: 0.2647, segment: 'straight' },
-  { circuitId: 6, marker: 46, s: 0.2706, segment: 'corner' },
-  { circuitId: 6, marker: 47, s: 0.2765, segment: 'corner' },
-  { circuitId: 6, marker: 48, s: 0.2824, segment: 'corner' },
-  { circuitId: 6, marker: 49, s: 0.2882, segment: 'hairpin' },
-  { circuitId: 6, marker: 50, s: 0.2941, segment: 'straight' },
-  { circuitId: 6, marker: 51, s: 0.3000, segment: 'corner' },
-  { circuitId: 6, marker: 52, s: 0.3059, segment: 'corner' },
-  { circuitId: 6, marker: 53, s: 0.3118, segment: 'corner' },
-  { circuitId: 6, marker: 54, s: 0.3176, segment: 'corner' },
-  { circuitId: 6, marker: 55, s: 0.3235, segment: 'chicane' },
-  { circuitId: 6, marker: 56, s: 0.3294, segment: 'hairpin' },
-  { circuitId: 6, marker: 57, s: 0.3353, segment: 'corner' },
-  { circuitId: 6, marker: 58, s: 0.3412, segment: 'corner' },
-  { circuitId: 6, marker: 59, s: 0.3471, segment: 'corner' },
-  { circuitId: 6, marker: 60, s: 0.3529, segment: 'straight' },
-  { circuitId: 6, marker: 61, s: 0.3588, segment: 'corner' },
-  { circuitId: 6, marker: 62, s: 0.3647, segment: 'corner' },
-  { circuitId: 6, marker: 63, s: 0.3706, segment: 'hairpin' },
-  { circuitId: 6, marker: 64, s: 0.3765, segment: 'corner' },
-  { circuitId: 6, marker: 65, s: 0.3824, segment: 'straight' },
-  { circuitId: 6, marker: 66, s: 0.3882, segment: 'chicane' },
-  { circuitId: 6, marker: 67, s: 0.3941, segment: 'corner' },
-  { circuitId: 6, marker: 68, s: 0.4000, segment: 'corner' },
-  { circuitId: 6, marker: 69, s: 0.4059, segment: 'corner' },
-  { circuitId: 6, marker: 70, s: 0.4118, segment: 'hairpin' },
-  { circuitId: 6, marker: 71, s: 0.4176, segment: 'corner' },
-  { circuitId: 6, marker: 72, s: 0.4235, segment: 'corner' },
-  { circuitId: 6, marker: 73, s: 0.4294, segment: 'corner' },
-  { circuitId: 6, marker: 74, s: 0.4353, segment: 'corner' },
-  { circuitId: 6, marker: 75, s: 0.4412, segment: 'straight' },
-  { circuitId: 6, marker: 76, s: 0.4471, segment: 'corner' },
-  { circuitId: 6, marker: 77, s: 0.4529, segment: 'chicane' },
-  { circuitId: 6, marker: 78, s: 0.4588, segment: 'corner' },
-  { circuitId: 6, marker: 79, s: 0.4647, segment: 'corner' },
-  { circuitId: 6, marker: 80, s: 0.4706, segment: 'straight' },
-  { circuitId: 6, marker: 81, s: 0.4765, segment: 'corner' },
-  { circuitId: 6, marker: 82, s: 0.4824, segment: 'corner' },
-  { circuitId: 6, marker: 83, s: 0.4882, segment: 'corner' },
-  { circuitId: 6, marker: 84, s: 0.4941, segment: 'hairpin' },
-  { circuitId: 6, marker: 85, s: 0.5000, segment: 'straight' },
-  { circuitId: 6, marker: 86, s: 0.5059, segment: 'corner' },
-  { circuitId: 6, marker: 87, s: 0.5118, segment: 'corner' },
-  { circuitId: 6, marker: 88, s: 0.5176, segment: 'chicane' },
-  { circuitId: 6, marker: 89, s: 0.5235, segment: 'corner' },
-  { circuitId: 6, marker: 90, s: 0.5294, segment: 'straight' },
-  { circuitId: 6, marker: 91, s: 0.5353, segment: 'hairpin' },
-  { circuitId: 6, marker: 92, s: 0.5412, segment: 'corner' },
-  { circuitId: 6, marker: 93, s: 0.5471, segment: 'corner' },
-  { circuitId: 6, marker: 94, s: 0.5529, segment: 'corner' },
-  { circuitId: 6, marker: 95, s: 0.5588, segment: 'straight' },
-  { circuitId: 6, marker: 96, s: 0.5647, segment: 'corner' },
-  { circuitId: 6, marker: 97, s: 0.5706, segment: 'corner' },
-  { circuitId: 6, marker: 98, s: 0.5765, segment: 'hairpin' },
-  { circuitId: 6, marker: 99, s: 0.5824, segment: 'chicane' },
-  { circuitId: 6, marker: 100, s: 0.5882, segment: 'straight' },
-  { circuitId: 6, marker: 101, s: 0.5941, segment: 'corner' },
-  { circuitId: 6, marker: 102, s: 0.6000, segment: 'corner' },
-  { circuitId: 6, marker: 103, s: 0.6059, segment: 'corner' },
-  { circuitId: 6, marker: 104, s: 0.6118, segment: 'corner' },
-  { circuitId: 6, marker: 105, s: 0.6176, segment: 'hairpin' },
-  { circuitId: 6, marker: 106, s: 0.6235, segment: 'corner' },
-  { circuitId: 6, marker: 107, s: 0.6294, segment: 'corner' },
-  { circuitId: 6, marker: 108, s: 0.6353, segment: 'corner' },
-  { circuitId: 6, marker: 109, s: 0.6412, segment: 'corner' },
-  { circuitId: 6, marker: 110, s: 0.6471, segment: 'chicane' },
-  { circuitId: 6, marker: 111, s: 0.6529, segment: 'corner' },
-  { circuitId: 6, marker: 112, s: 0.6588, segment: 'hairpin' },
-  { circuitId: 6, marker: 113, s: 0.6647, segment: 'corner' },
-  { circuitId: 6, marker: 114, s: 0.6706, segment: 'corner' },
-  { circuitId: 6, marker: 115, s: 0.6765, segment: 'straight' },
-  { circuitId: 6, marker: 116, s: 0.6824, segment: 'corner' },
-  { circuitId: 6, marker: 117, s: 0.6882, segment: 'corner' },
-  { circuitId: 6, marker: 118, s: 0.6941, segment: 'corner' },
-  { circuitId: 6, marker: 119, s: 0.7000, segment: 'hairpin' },
-  { circuitId: 6, marker: 120, s: 0.7059, segment: 'straight' },
-  { circuitId: 6, marker: 121, s: 0.7118, segment: 'chicane' },
-  { circuitId: 6, marker: 122, s: 0.7176, segment: 'corner' },
-  { circuitId: 6, marker: 123, s: 0.7235, segment: 'corner' },
-  { circuitId: 6, marker: 124, s: 0.7294, segment: 'corner' },
-  { circuitId: 6, marker: 125, s: 0.7353, segment: 'straight' },
-  { circuitId: 6, marker: 126, s: 0.7412, segment: 'hairpin' },
-  { circuitId: 6, marker: 127, s: 0.7471, segment: 'corner' },
-  { circuitId: 6, marker: 128, s: 0.7529, segment: 'corner' },
-  { circuitId: 6, marker: 129, s: 0.7588, segment: 'corner' },
-  { circuitId: 6, marker: 130, s: 0.7647, segment: 'straight' },
-  { circuitId: 6, marker: 131, s: 0.7706, segment: 'corner' },
-  { circuitId: 6, marker: 132, s: 0.7765, segment: 'chicane' },
-  { circuitId: 6, marker: 133, s: 0.7824, segment: 'hairpin' },
-  { circuitId: 6, marker: 134, s: 0.7882, segment: 'corner' },
-  { circuitId: 6, marker: 135, s: 0.7941, segment: 'straight' },
-  { circuitId: 6, marker: 136, s: 0.8000, segment: 'corner' },
-  { circuitId: 6, marker: 137, s: 0.8059, segment: 'corner' },
-  { circuitId: 6, marker: 138, s: 0.8118, segment: 'corner' },
-  { circuitId: 6, marker: 139, s: 0.8176, segment: 'corner' },
-  { circuitId: 6, marker: 140, s: 0.8235, segment: 'hairpin' },
-  { circuitId: 6, marker: 141, s: 0.8294, segment: 'corner' },
-  { circuitId: 6, marker: 142, s: 0.8353, segment: 'corner' },
-  { circuitId: 6, marker: 143, s: 0.8412, segment: 'chicane' },
-  { circuitId: 6, marker: 144, s: 0.8471, segment: 'corner' },
-  { circuitId: 6, marker: 145, s: 0.8529, segment: 'straight' },
-  { circuitId: 6, marker: 146, s: 0.8588, segment: 'corner' },
-  { circuitId: 6, marker: 147, s: 0.8647, segment: 'hairpin' },
-  { circuitId: 6, marker: 148, s: 0.8706, segment: 'corner' },
-  { circuitId: 6, marker: 149, s: 0.8765, segment: 'corner' },
-  { circuitId: 6, marker: 150, s: 0.8824, segment: 'straight' },
-  { circuitId: 6, marker: 151, s: 0.8882, segment: 'corner' },
-  { circuitId: 6, marker: 152, s: 0.8941, segment: 'corner' },
-  { circuitId: 6, marker: 153, s: 0.9000, segment: 'corner' },
-  { circuitId: 6, marker: 154, s: 0.9059, segment: 'chicane' },
-  { circuitId: 6, marker: 155, s: 0.9118, segment: 'straight' },
-  { circuitId: 6, marker: 156, s: 0.9176, segment: 'corner' },
-  { circuitId: 6, marker: 157, s: 0.9235, segment: 'corner' },
-  { circuitId: 6, marker: 158, s: 0.9294, segment: 'corner' },
-  { circuitId: 6, marker: 159, s: 0.9353, segment: 'corner' },
-  { circuitId: 6, marker: 160, s: 0.9412, segment: 'straight' },
-  { circuitId: 6, marker: 161, s: 0.9471, segment: 'hairpin' },
-  { circuitId: 6, marker: 162, s: 0.9529, segment: 'corner' },
-  { circuitId: 6, marker: 163, s: 0.9588, segment: 'corner' },
-  { circuitId: 6, marker: 164, s: 0.9647, segment: 'corner' },
-  { circuitId: 6, marker: 165, s: 0.9706, segment: 'chicane' },
-  { circuitId: 6, marker: 166, s: 0.9765, segment: 'corner' },
-  { circuitId: 6, marker: 167, s: 0.9824, segment: 'corner' },
-  { circuitId: 6, marker: 168, s: 0.9882, segment: 'hairpin' },
-  { circuitId: 6, marker: 169, s: 0.9941, segment: 'corner' },
-  { circuitId: 7, marker: 0, s: 0.0000, segment: 'chicane' },
-  { circuitId: 7, marker: 1, s: 0.0059, segment: 'corner' },
-  { circuitId: 7, marker: 2, s: 0.0118, segment: 'corner' },
-  { circuitId: 7, marker: 3, s: 0.0176, segment: 'corner' },
-  { circuitId: 7, marker: 4, s: 0.0235, segment: 'corner' },
-  { circuitId: 7, marker: 5, s: 0.0294, segment: 'straight' },
-  { circuitId: 7, marker: 6, s: 0.0353, segment: 'corner' },
-  { circuitId: 7, marker: 7, s: 0.0412, segment: 'hairpin' },
-  { circuitId: 7, marker: 8, s: 0.0471, segment: 'corner' },
-  { circuitId: 7, marker: 9, s: 0.0529, segment: 'corner' },
-  { circuitId: 7, marker: 10, s: 0.0588, segment: 'straight' },
-  { circuitId: 7, marker: 11, s: 0.0647, segment: 'chicane' },
-  { circuitId: 7, marker: 12, s: 0.0706, segment: 'corner' },
-  { circuitId: 7, marker: 13, s: 0.0765, segment: 'corner' },
-  { circuitId: 7, marker: 14, s: 0.0824, segment: 'hairpin' },
-  { circuitId: 7, marker: 15, s: 0.0882, segment: 'straight' },
-  { circuitId: 7, marker: 16, s: 0.0941, segment: 'corner' },
-  { circuitId: 7, marker: 17, s: 0.1000, segment: 'corner' },
-  { circuitId: 7, marker: 18, s: 0.1059, segment: 'corner' },
-  { circuitId: 7, marker: 19, s: 0.1118, segment: 'corner' },
-  { circuitId: 7, marker: 20, s: 0.1176, segment: 'straight' },
-  { circuitId: 7, marker: 21, s: 0.1235, segment: 'hairpin' },
-  { circuitId: 7, marker: 22, s: 0.1294, segment: 'chicane' },
-  { circuitId: 7, marker: 23, s: 0.1353, segment: 'corner' },
-  { circuitId: 7, marker: 24, s: 0.1412, segment: 'corner' },
-  { circuitId: 7, marker: 25, s: 0.1471, segment: 'straight' },
-  { circuitId: 7, marker: 26, s: 0.1529, segment: 'corner' },
-  { circuitId: 7, marker: 27, s: 0.1588, segment: 'corner' },
-  { circuitId: 7, marker: 28, s: 0.1647, segment: 'hairpin' },
-  { circuitId: 7, marker: 29, s: 0.1706, segment: 'corner' },
-  { circuitId: 7, marker: 30, s: 0.1765, segment: 'straight' },
-  { circuitId: 7, marker: 31, s: 0.1824, segment: 'corner' },
-  { circuitId: 7, marker: 32, s: 0.1882, segment: 'corner' },
-  { circuitId: 7, marker: 33, s: 0.1941, segment: 'chicane' },
-  { circuitId: 7, marker: 34, s: 0.2000, segment: 'corner' },
-  { circuitId: 7, marker: 35, s: 0.2059, segment: 'hairpin' },
-  { circuitId: 7, marker: 36, s: 0.2118, segment: 'corner' },
-  { circuitId: 7, marker: 37, s: 0.2176, segment: 'corner' },
-  { circuitId: 7, marker: 38, s: 0.2235, segment: 'corner' },
-  { circuitId: 7, marker: 39, s: 0.2294, segment: 'corner' },
-  { circuitId: 7, marker: 40, s: 0.2353, segment: 'straight' },
-  { circuitId: 7, marker: 41, s: 0.2412, segment: 'corner' },
-  { circuitId: 7, marker: 42, s: 0.2471, segment: 'hairpin' },
-  { circuitId: 7, marker: 43, s: 0.2529, segment: 'corner' },
-  { circuitId: 7, marker: 44, s: 0.2588, segment: 'chicane' },
-  { circuitId: 7, marker: 45, s: 0.2647, segment: 'straight' },
-  { circuitId: 7, marker: 46, s: 0.2706, segment: 'corner' },
-  { circuitId: 7, marker: 47, s: 0.2765, segment: 'corner' },
-  { circuitId: 7, marker: 48, s: 0.2824, segment: 'corner' },
-  { circuitId: 7, marker: 49, s: 0.2882, segment: 'hairpin' },
-  { circuitId: 7, marker: 50, s: 0.2941, segment: 'straight' },
-  { circuitId: 7, marker: 51, s: 0.3000, segment: 'corner' },
-  { circuitId: 7, marker: 52, s: 0.3059, segment: 'corner' },
-  { circuitId: 7, marker: 53, s: 0.3118, segment: 'corner' },
-  { circuitId: 7, marker: 54, s: 0.3176, segment: 'corner' },
-  { circuitId: 7, marker: 55, s: 0.3235, segment: 'chicane' },
-  { circuitId: 7, marker: 56, s: 0.3294, segment: 'hairpin' },
-  { circuitId: 7, marker: 57, s: 0.3353, segment: 'corner' },
-  { circuitId: 7, marker: 58, s: 0.3412, segment: 'corner' },
-  { circuitId: 7, marker: 59, s: 0.3471, segment: 'corner' },
-  { circuitId: 7, marker: 60, s: 0.3529, segment: 'straight' },
-  { circuitId: 7, marker: 61, s: 0.3588, segment: 'corner' },
-  { circuitId: 7, marker: 62, s: 0.3647, segment: 'corner' },
-  { circuitId: 7, marker: 63, s: 0.3706, segment: 'hairpin' },
-  { circuitId: 7, marker: 64, s: 0.3765, segment: 'corner' },
-  { circuitId: 7, marker: 65, s: 0.3824, segment: 'straight' },
-  { circuitId: 7, marker: 66, s: 0.3882, segment: 'chicane' },
-  { circuitId: 7, marker: 67, s: 0.3941, segment: 'corner' },
-  { circuitId: 7, marker: 68, s: 0.4000, segment: 'corner' },
-  { circuitId: 7, marker: 69, s: 0.4059, segment: 'corner' },
-  { circuitId: 7, marker: 70, s: 0.4118, segment: 'hairpin' },
-  { circuitId: 7, marker: 71, s: 0.4176, segment: 'corner' },
-  { circuitId: 7, marker: 72, s: 0.4235, segment: 'corner' },
-  { circuitId: 7, marker: 73, s: 0.4294, segment: 'corner' },
-  { circuitId: 7, marker: 74, s: 0.4353, segment: 'corner' },
-  { circuitId: 7, marker: 75, s: 0.4412, segment: 'straight' },
-  { circuitId: 7, marker: 76, s: 0.4471, segment: 'corner' },
-  { circuitId: 7, marker: 77, s: 0.4529, segment: 'chicane' },
-  { circuitId: 7, marker: 78, s: 0.4588, segment: 'corner' },
-  { circuitId: 7, marker: 79, s: 0.4647, segment: 'corner' },
-  { circuitId: 7, marker: 80, s: 0.4706, segment: 'straight' },
-  { circuitId: 7, marker: 81, s: 0.4765, segment: 'corner' },
-  { circuitId: 7, marker: 82, s: 0.4824, segment: 'corner' },
-  { circuitId: 7, marker: 83, s: 0.4882, segment: 'corner' },
-  { circuitId: 7, marker: 84, s: 0.4941, segment: 'hairpin' },
-  { circuitId: 7, marker: 85, s: 0.5000, segment: 'straight' },
-  { circuitId: 7, marker: 86, s: 0.5059, segment: 'corner' },
-  { circuitId: 7, marker: 87, s: 0.5118, segment: 'corner' },
-  { circuitId: 7, marker: 88, s: 0.5176, segment: 'chicane' },
-  { circuitId: 7, marker: 89, s: 0.5235, segment: 'corner' },
-  { circuitId: 7, marker: 90, s: 0.5294, segment: 'straight' },
-  { circuitId: 7, marker: 91, s: 0.5353, segment: 'hairpin' },
-  { circuitId: 7, marker: 92, s: 0.5412, segment: 'corner' },
-  { circuitId: 7, marker: 93, s: 0.5471, segment: 'corner' },
-  { circuitId: 7, marker: 94, s: 0.5529, segment: 'corner' },
-  { circuitId: 7, marker: 95, s: 0.5588, segment: 'straight' },
-  { circuitId: 7, marker: 96, s: 0.5647, segment: 'corner' },
-  { circuitId: 7, marker: 97, s: 0.5706, segment: 'corner' },
-  { circuitId: 7, marker: 98, s: 0.5765, segment: 'hairpin' },
-  { circuitId: 7, marker: 99, s: 0.5824, segment: 'chicane' },
-  { circuitId: 7, marker: 100, s: 0.5882, segment: 'straight' },
-  { circuitId: 7, marker: 101, s: 0.5941, segment: 'corner' },
-  { circuitId: 7, marker: 102, s: 0.6000, segment: 'corner' },
-  { circuitId: 7, marker: 103, s: 0.6059, segment: 'corner' },
-  { circuitId: 7, marker: 104, s: 0.6118, segment: 'corner' },
-  { circuitId: 7, marker: 105, s: 0.6176, segment: 'hairpin' },
-  { circuitId: 7, marker: 106, s: 0.6235, segment: 'corner' },
-  { circuitId: 7, marker: 107, s: 0.6294, segment: 'corner' },
-  { circuitId: 7, marker: 108, s: 0.6353, segment: 'corner' },
-  { circuitId: 7, marker: 109, s: 0.6412, segment: 'corner' },
-  { circuitId: 7, marker: 110, s: 0.6471, segment: 'chicane' },
-  { circuitId: 7, marker: 111, s: 0.6529, segment: 'corner' },
-  { circuitId: 7, marker: 112, s: 0.6588, segment: 'hairpin' },
-  { circuitId: 7, marker: 113, s: 0.6647, segment: 'corner' },
-  { circuitId: 7, marker: 114, s: 0.6706, segment: 'corner' },
-  { circuitId: 7, marker: 115, s: 0.6765, segment: 'straight' },
-  { circuitId: 7, marker: 116, s: 0.6824, segment: 'corner' },
-  { circuitId: 7, marker: 117, s: 0.6882, segment: 'corner' },
-  { circuitId: 7, marker: 118, s: 0.6941, segment: 'corner' },
-  { circuitId: 7, marker: 119, s: 0.7000, segment: 'hairpin' },
-  { circuitId: 7, marker: 120, s: 0.7059, segment: 'straight' },
-  { circuitId: 7, marker: 121, s: 0.7118, segment: 'chicane' },
-  { circuitId: 7, marker: 122, s: 0.7176, segment: 'corner' },
-  { circuitId: 7, marker: 123, s: 0.7235, segment: 'corner' },
-  { circuitId: 7, marker: 124, s: 0.7294, segment: 'corner' },
-  { circuitId: 7, marker: 125, s: 0.7353, segment: 'straight' },
-  { circuitId: 7, marker: 126, s: 0.7412, segment: 'hairpin' },
-  { circuitId: 7, marker: 127, s: 0.7471, segment: 'corner' },
-  { circuitId: 7, marker: 128, s: 0.7529, segment: 'corner' },
-  { circuitId: 7, marker: 129, s: 0.7588, segment: 'corner' },
-  { circuitId: 7, marker: 130, s: 0.7647, segment: 'straight' },
-  { circuitId: 7, marker: 131, s: 0.7706, segment: 'corner' },
-  { circuitId: 7, marker: 132, s: 0.7765, segment: 'chicane' },
-  { circuitId: 7, marker: 133, s: 0.7824, segment: 'hairpin' },
-  { circuitId: 7, marker: 134, s: 0.7882, segment: 'corner' },
-  { circuitId: 7, marker: 135, s: 0.7941, segment: 'straight' },
-  { circuitId: 7, marker: 136, s: 0.8000, segment: 'corner' },
-  { circuitId: 7, marker: 137, s: 0.8059, segment: 'corner' },
-  { circuitId: 7, marker: 138, s: 0.8118, segment: 'corner' },
-  { circuitId: 7, marker: 139, s: 0.8176, segment: 'corner' },
-  { circuitId: 7, marker: 140, s: 0.8235, segment: 'hairpin' },
-  { circuitId: 7, marker: 141, s: 0.8294, segment: 'corner' },
-  { circuitId: 7, marker: 142, s: 0.8353, segment: 'corner' },
-  { circuitId: 7, marker: 143, s: 0.8412, segment: 'chicane' },
-  { circuitId: 7, marker: 144, s: 0.8471, segment: 'corner' },
-  { circuitId: 7, marker: 145, s: 0.8529, segment: 'straight' },
-  { circuitId: 7, marker: 146, s: 0.8588, segment: 'corner' },
-  { circuitId: 7, marker: 147, s: 0.8647, segment: 'hairpin' },
-  { circuitId: 7, marker: 148, s: 0.8706, segment: 'corner' },
-  { circuitId: 7, marker: 149, s: 0.8765, segment: 'corner' },
-  { circuitId: 7, marker: 150, s: 0.8824, segment: 'straight' },
-  { circuitId: 7, marker: 151, s: 0.8882, segment: 'corner' },
-  { circuitId: 7, marker: 152, s: 0.8941, segment: 'corner' },
-  { circuitId: 7, marker: 153, s: 0.9000, segment: 'corner' },
-  { circuitId: 7, marker: 154, s: 0.9059, segment: 'chicane' },
-  { circuitId: 7, marker: 155, s: 0.9118, segment: 'straight' },
-  { circuitId: 7, marker: 156, s: 0.9176, segment: 'corner' },
-  { circuitId: 7, marker: 157, s: 0.9235, segment: 'corner' },
-  { circuitId: 7, marker: 158, s: 0.9294, segment: 'corner' },
-  { circuitId: 7, marker: 159, s: 0.9353, segment: 'corner' },
-  { circuitId: 7, marker: 160, s: 0.9412, segment: 'straight' },
-  { circuitId: 7, marker: 161, s: 0.9471, segment: 'hairpin' },
-  { circuitId: 7, marker: 162, s: 0.9529, segment: 'corner' },
-  { circuitId: 7, marker: 163, s: 0.9588, segment: 'corner' },
-  { circuitId: 7, marker: 164, s: 0.9647, segment: 'corner' },
-  { circuitId: 7, marker: 165, s: 0.9706, segment: 'chicane' },
-  { circuitId: 7, marker: 166, s: 0.9765, segment: 'corner' },
-  { circuitId: 7, marker: 167, s: 0.9824, segment: 'corner' },
-  { circuitId: 7, marker: 168, s: 0.9882, segment: 'hairpin' },
-  { circuitId: 7, marker: 169, s: 0.9941, segment: 'corner' },
-  { circuitId: 8, marker: 0, s: 0.0000, segment: 'chicane' },
-  { circuitId: 8, marker: 1, s: 0.0059, segment: 'corner' },
-  { circuitId: 8, marker: 2, s: 0.0118, segment: 'corner' },
-  { circuitId: 8, marker: 3, s: 0.0176, segment: 'corner' },
-  { circuitId: 8, marker: 4, s: 0.0235, segment: 'corner' },
-  { circuitId: 8, marker: 5, s: 0.0294, segment: 'straight' },
-  { circuitId: 8, marker: 6, s: 0.0353, segment: 'corner' },
-  { circuitId: 8, marker: 7, s: 0.0412, segment: 'hairpin' },
-  { circuitId: 8, marker: 8, s: 0.0471, segment: 'corner' },
-  { circuitId: 8, marker: 9, s: 0.0529, segment: 'corner' },
-  { circuitId: 8, marker: 10, s: 0.0588, segment: 'straight' },
-  { circuitId: 8, marker: 11, s: 0.0647, segment: 'chicane' },
-  { circuitId: 8, marker: 12, s: 0.0706, segment: 'corner' },
-  { circuitId: 8, marker: 13, s: 0.0765, segment: 'corner' },
-  { circuitId: 8, marker: 14, s: 0.0824, segment: 'hairpin' },
-  { circuitId: 8, marker: 15, s: 0.0882, segment: 'straight' },
-  { circuitId: 8, marker: 16, s: 0.0941, segment: 'corner' },
-  { circuitId: 8, marker: 17, s: 0.1000, segment: 'corner' },
-  { circuitId: 8, marker: 18, s: 0.1059, segment: 'corner' },
-  { circuitId: 8, marker: 19, s: 0.1118, segment: 'corner' },
-  { circuitId: 8, marker: 20, s: 0.1176, segment: 'straight' },
-  { circuitId: 8, marker: 21, s: 0.1235, segment: 'hairpin' },
-  { circuitId: 8, marker: 22, s: 0.1294, segment: 'chicane' },
-  { circuitId: 8, marker: 23, s: 0.1353, segment: 'corner' },
-  { circuitId: 8, marker: 24, s: 0.1412, segment: 'corner' },
-  { circuitId: 8, marker: 25, s: 0.1471, segment: 'straight' },
-  { circuitId: 8, marker: 26, s: 0.1529, segment: 'corner' },
-  { circuitId: 8, marker: 27, s: 0.1588, segment: 'corner' },
-  { circuitId: 8, marker: 28, s: 0.1647, segment: 'hairpin' },
-  { circuitId: 8, marker: 29, s: 0.1706, segment: 'corner' },
-  { circuitId: 8, marker: 30, s: 0.1765, segment: 'straight' },
-  { circuitId: 8, marker: 31, s: 0.1824, segment: 'corner' },
-  { circuitId: 8, marker: 32, s: 0.1882, segment: 'corner' },
-  { circuitId: 8, marker: 33, s: 0.1941, segment: 'chicane' },
-  { circuitId: 8, marker: 34, s: 0.2000, segment: 'corner' },
-  { circuitId: 8, marker: 35, s: 0.2059, segment: 'hairpin' },
-  { circuitId: 8, marker: 36, s: 0.2118, segment: 'corner' },
-  { circuitId: 8, marker: 37, s: 0.2176, segment: 'corner' },
-  { circuitId: 8, marker: 38, s: 0.2235, segment: 'corner' },
-  { circuitId: 8, marker: 39, s: 0.2294, segment: 'corner' },
-  { circuitId: 8, marker: 40, s: 0.2353, segment: 'straight' },
-  { circuitId: 8, marker: 41, s: 0.2412, segment: 'corner' },
-  { circuitId: 8, marker: 42, s: 0.2471, segment: 'hairpin' },
-  { circuitId: 8, marker: 43, s: 0.2529, segment: 'corner' },
-  { circuitId: 8, marker: 44, s: 0.2588, segment: 'chicane' },
-  { circuitId: 8, marker: 45, s: 0.2647, segment: 'straight' },
-  { circuitId: 8, marker: 46, s: 0.2706, segment: 'corner' },
-  { circuitId: 8, marker: 47, s: 0.2765, segment: 'corner' },
-  { circuitId: 8, marker: 48, s: 0.2824, segment: 'corner' },
-  { circuitId: 8, marker: 49, s: 0.2882, segment: 'hairpin' },
-  { circuitId: 8, marker: 50, s: 0.2941, segment: 'straight' },
-  { circuitId: 8, marker: 51, s: 0.3000, segment: 'corner' },
-  { circuitId: 8, marker: 52, s: 0.3059, segment: 'corner' },
-  { circuitId: 8, marker: 53, s: 0.3118, segment: 'corner' },
-  { circuitId: 8, marker: 54, s: 0.3176, segment: 'corner' },
-  { circuitId: 8, marker: 55, s: 0.3235, segment: 'chicane' },
-  { circuitId: 8, marker: 56, s: 0.3294, segment: 'hairpin' },
-  { circuitId: 8, marker: 57, s: 0.3353, segment: 'corner' },
-  { circuitId: 8, marker: 58, s: 0.3412, segment: 'corner' },
-  { circuitId: 8, marker: 59, s: 0.3471, segment: 'corner' },
-  { circuitId: 8, marker: 60, s: 0.3529, segment: 'straight' },
-  { circuitId: 8, marker: 61, s: 0.3588, segment: 'corner' },
-  { circuitId: 8, marker: 62, s: 0.3647, segment: 'corner' },
-  { circuitId: 8, marker: 63, s: 0.3706, segment: 'hairpin' },
-  { circuitId: 8, marker: 64, s: 0.3765, segment: 'corner' },
-  { circuitId: 8, marker: 65, s: 0.3824, segment: 'straight' },
-  { circuitId: 8, marker: 66, s: 0.3882, segment: 'chicane' },
-  { circuitId: 8, marker: 67, s: 0.3941, segment: 'corner' },
-  { circuitId: 8, marker: 68, s: 0.4000, segment: 'corner' },
-  { circuitId: 8, marker: 69, s: 0.4059, segment: 'corner' },
-  { circuitId: 8, marker: 70, s: 0.4118, segment: 'hairpin' },
-  { circuitId: 8, marker: 71, s: 0.4176, segment: 'corner' },
-  { circuitId: 8, marker: 72, s: 0.4235, segment: 'corner' },
-  { circuitId: 8, marker: 73, s: 0.4294, segment: 'corner' },
-  { circuitId: 8, marker: 74, s: 0.4353, segment: 'corner' },
-  { circuitId: 8, marker: 75, s: 0.4412, segment: 'straight' },
-  { circuitId: 8, marker: 76, s: 0.4471, segment: 'corner' },
-  { circuitId: 8, marker: 77, s: 0.4529, segment: 'chicane' },
-  { circuitId: 8, marker: 78, s: 0.4588, segment: 'corner' },
-  { circuitId: 8, marker: 79, s: 0.4647, segment: 'corner' },
-  { circuitId: 8, marker: 80, s: 0.4706, segment: 'straight' },
-  { circuitId: 8, marker: 81, s: 0.4765, segment: 'corner' },
-  { circuitId: 8, marker: 82, s: 0.4824, segment: 'corner' },
-  { circuitId: 8, marker: 83, s: 0.4882, segment: 'corner' },
-  { circuitId: 8, marker: 84, s: 0.4941, segment: 'hairpin' },
-  { circuitId: 8, marker: 85, s: 0.5000, segment: 'straight' },
-  { circuitId: 8, marker: 86, s: 0.5059, segment: 'corner' },
-  { circuitId: 8, marker: 87, s: 0.5118, segment: 'corner' },
-  { circuitId: 8, marker: 88, s: 0.5176, segment: 'chicane' },
-  { circuitId: 8, marker: 89, s: 0.5235, segment: 'corner' },
-  { circuitId: 8, marker: 90, s: 0.5294, segment: 'straight' },
-  { circuitId: 8, marker: 91, s: 0.5353, segment: 'hairpin' },
-  { circuitId: 8, marker: 92, s: 0.5412, segment: 'corner' },
-  { circuitId: 8, marker: 93, s: 0.5471, segment: 'corner' },
-  { circuitId: 8, marker: 94, s: 0.5529, segment: 'corner' },
-  { circuitId: 8, marker: 95, s: 0.5588, segment: 'straight' },
-  { circuitId: 8, marker: 96, s: 0.5647, segment: 'corner' },
-  { circuitId: 8, marker: 97, s: 0.5706, segment: 'corner' },
-  { circuitId: 8, marker: 98, s: 0.5765, segment: 'hairpin' },
-  { circuitId: 8, marker: 99, s: 0.5824, segment: 'chicane' },
-  { circuitId: 8, marker: 100, s: 0.5882, segment: 'straight' },
-  { circuitId: 8, marker: 101, s: 0.5941, segment: 'corner' },
-  { circuitId: 8, marker: 102, s: 0.6000, segment: 'corner' },
-  { circuitId: 8, marker: 103, s: 0.6059, segment: 'corner' },
-  { circuitId: 8, marker: 104, s: 0.6118, segment: 'corner' },
-  { circuitId: 8, marker: 105, s: 0.6176, segment: 'hairpin' },
-  { circuitId: 8, marker: 106, s: 0.6235, segment: 'corner' },
-  { circuitId: 8, marker: 107, s: 0.6294, segment: 'corner' },
-  { circuitId: 8, marker: 108, s: 0.6353, segment: 'corner' },
-  { circuitId: 8, marker: 109, s: 0.6412, segment: 'corner' },
-  { circuitId: 8, marker: 110, s: 0.6471, segment: 'chicane' },
-  { circuitId: 8, marker: 111, s: 0.6529, segment: 'corner' },
-  { circuitId: 8, marker: 112, s: 0.6588, segment: 'hairpin' },
-  { circuitId: 8, marker: 113, s: 0.6647, segment: 'corner' },
-  { circuitId: 8, marker: 114, s: 0.6706, segment: 'corner' },
-  { circuitId: 8, marker: 115, s: 0.6765, segment: 'straight' },
-  { circuitId: 8, marker: 116, s: 0.6824, segment: 'corner' },
-  { circuitId: 8, marker: 117, s: 0.6882, segment: 'corner' },
-  { circuitId: 8, marker: 118, s: 0.6941, segment: 'corner' },
-  { circuitId: 8, marker: 119, s: 0.7000, segment: 'hairpin' },
-  { circuitId: 8, marker: 120, s: 0.7059, segment: 'straight' },
-  { circuitId: 8, marker: 121, s: 0.7118, segment: 'chicane' },
-  { circuitId: 8, marker: 122, s: 0.7176, segment: 'corner' },
-  { circuitId: 8, marker: 123, s: 0.7235, segment: 'corner' },
-  { circuitId: 8, marker: 124, s: 0.7294, segment: 'corner' },
-  { circuitId: 8, marker: 125, s: 0.7353, segment: 'straight' },
-  { circuitId: 8, marker: 126, s: 0.7412, segment: 'hairpin' },
-  { circuitId: 8, marker: 127, s: 0.7471, segment: 'corner' },
-  { circuitId: 8, marker: 128, s: 0.7529, segment: 'corner' },
-  { circuitId: 8, marker: 129, s: 0.7588, segment: 'corner' },
-  { circuitId: 8, marker: 130, s: 0.7647, segment: 'straight' },
-  { circuitId: 8, marker: 131, s: 0.7706, segment: 'corner' },
-  { circuitId: 8, marker: 132, s: 0.7765, segment: 'chicane' },
-  { circuitId: 8, marker: 133, s: 0.7824, segment: 'hairpin' },
-  { circuitId: 8, marker: 134, s: 0.7882, segment: 'corner' },
-  { circuitId: 8, marker: 135, s: 0.7941, segment: 'straight' },
-  { circuitId: 8, marker: 136, s: 0.8000, segment: 'corner' },
-  { circuitId: 8, marker: 137, s: 0.8059, segment: 'corner' },
-  { circuitId: 8, marker: 138, s: 0.8118, segment: 'corner' },
-  { circuitId: 8, marker: 139, s: 0.8176, segment: 'corner' },
-  { circuitId: 8, marker: 140, s: 0.8235, segment: 'hairpin' },
-  { circuitId: 8, marker: 141, s: 0.8294, segment: 'corner' },
-  { circuitId: 8, marker: 142, s: 0.8353, segment: 'corner' },
-  { circuitId: 8, marker: 143, s: 0.8412, segment: 'chicane' },
-  { circuitId: 8, marker: 144, s: 0.8471, segment: 'corner' },
-  { circuitId: 8, marker: 145, s: 0.8529, segment: 'straight' },
-  { circuitId: 8, marker: 146, s: 0.8588, segment: 'corner' },
-  { circuitId: 8, marker: 147, s: 0.8647, segment: 'hairpin' },
-  { circuitId: 8, marker: 148, s: 0.8706, segment: 'corner' },
-  { circuitId: 8, marker: 149, s: 0.8765, segment: 'corner' },
-  { circuitId: 8, marker: 150, s: 0.8824, segment: 'straight' },
-  { circuitId: 8, marker: 151, s: 0.8882, segment: 'corner' },
-  { circuitId: 8, marker: 152, s: 0.8941, segment: 'corner' },
-  { circuitId: 8, marker: 153, s: 0.9000, segment: 'corner' },
-  { circuitId: 8, marker: 154, s: 0.9059, segment: 'chicane' },
-  { circuitId: 8, marker: 155, s: 0.9118, segment: 'straight' },
-  { circuitId: 8, marker: 156, s: 0.9176, segment: 'corner' },
-  { circuitId: 8, marker: 157, s: 0.9235, segment: 'corner' },
-  { circuitId: 8, marker: 158, s: 0.9294, segment: 'corner' },
-  { circuitId: 8, marker: 159, s: 0.9353, segment: 'corner' },
-  { circuitId: 8, marker: 160, s: 0.9412, segment: 'straight' },
-  { circuitId: 8, marker: 161, s: 0.9471, segment: 'hairpin' },
-  { circuitId: 8, marker: 162, s: 0.9529, segment: 'corner' },
-  { circuitId: 8, marker: 163, s: 0.9588, segment: 'corner' },
-  { circuitId: 8, marker: 164, s: 0.9647, segment: 'corner' },
-  { circuitId: 8, marker: 165, s: 0.9706, segment: 'chicane' },
-  { circuitId: 8, marker: 166, s: 0.9765, segment: 'corner' },
-  { circuitId: 8, marker: 167, s: 0.9824, segment: 'corner' },
-  { circuitId: 8, marker: 168, s: 0.9882, segment: 'hairpin' },
-  { circuitId: 8, marker: 169, s: 0.9941, segment: 'corner' },
-  { circuitId: 9, marker: 0, s: 0.0000, segment: 'chicane' },
-  { circuitId: 9, marker: 1, s: 0.0059, segment: 'corner' },
-  { circuitId: 9, marker: 2, s: 0.0118, segment: 'corner' },
-  { circuitId: 9, marker: 3, s: 0.0176, segment: 'corner' },
-  { circuitId: 9, marker: 4, s: 0.0235, segment: 'corner' },
-  { circuitId: 9, marker: 5, s: 0.0294, segment: 'straight' },
-  { circuitId: 9, marker: 6, s: 0.0353, segment: 'corner' },
-  { circuitId: 9, marker: 7, s: 0.0412, segment: 'hairpin' },
-  { circuitId: 9, marker: 8, s: 0.0471, segment: 'corner' },
-  { circuitId: 9, marker: 9, s: 0.0529, segment: 'corner' },
-  { circuitId: 9, marker: 10, s: 0.0588, segment: 'straight' },
-  { circuitId: 9, marker: 11, s: 0.0647, segment: 'chicane' },
-  { circuitId: 9, marker: 12, s: 0.0706, segment: 'corner' },
-  { circuitId: 9, marker: 13, s: 0.0765, segment: 'corner' },
-  { circuitId: 9, marker: 14, s: 0.0824, segment: 'hairpin' },
-  { circuitId: 9, marker: 15, s: 0.0882, segment: 'straight' },
-  { circuitId: 9, marker: 16, s: 0.0941, segment: 'corner' },
-  { circuitId: 9, marker: 17, s: 0.1000, segment: 'corner' },
-  { circuitId: 9, marker: 18, s: 0.1059, segment: 'corner' },
-  { circuitId: 9, marker: 19, s: 0.1118, segment: 'corner' },
-  { circuitId: 9, marker: 20, s: 0.1176, segment: 'straight' },
-  { circuitId: 9, marker: 21, s: 0.1235, segment: 'hairpin' },
-  { circuitId: 9, marker: 22, s: 0.1294, segment: 'chicane' },
-  { circuitId: 9, marker: 23, s: 0.1353, segment: 'corner' },
-  { circuitId: 9, marker: 24, s: 0.1412, segment: 'corner' },
-  { circuitId: 9, marker: 25, s: 0.1471, segment: 'straight' },
-  { circuitId: 9, marker: 26, s: 0.1529, segment: 'corner' },
-  { circuitId: 9, marker: 27, s: 0.1588, segment: 'corner' },
-  { circuitId: 9, marker: 28, s: 0.1647, segment: 'hairpin' },
-  { circuitId: 9, marker: 29, s: 0.1706, segment: 'corner' },
-  { circuitId: 9, marker: 30, s: 0.1765, segment: 'straight' },
-  { circuitId: 9, marker: 31, s: 0.1824, segment: 'corner' },
-  { circuitId: 9, marker: 32, s: 0.1882, segment: 'corner' },
-  { circuitId: 9, marker: 33, s: 0.1941, segment: 'chicane' },
-  { circuitId: 9, marker: 34, s: 0.2000, segment: 'corner' },
-  { circuitId: 9, marker: 35, s: 0.2059, segment: 'hairpin' },
-  { circuitId: 9, marker: 36, s: 0.2118, segment: 'corner' },
-  { circuitId: 9, marker: 37, s: 0.2176, segment: 'corner' },
-  { circuitId: 9, marker: 38, s: 0.2235, segment: 'corner' },
-  { circuitId: 9, marker: 39, s: 0.2294, segment: 'corner' },
-  { circuitId: 9, marker: 40, s: 0.2353, segment: 'straight' },
-  { circuitId: 9, marker: 41, s: 0.2412, segment: 'corner' },
-  { circuitId: 9, marker: 42, s: 0.2471, segment: 'hairpin' },
-  { circuitId: 9, marker: 43, s: 0.2529, segment: 'corner' },
-  { circuitId: 9, marker: 44, s: 0.2588, segment: 'chicane' },
-  { circuitId: 9, marker: 45, s: 0.2647, segment: 'straight' },
-  { circuitId: 9, marker: 46, s: 0.2706, segment: 'corner' },
-  { circuitId: 9, marker: 47, s: 0.2765, segment: 'corner' },
-  { circuitId: 9, marker: 48, s: 0.2824, segment: 'corner' },
-  { circuitId: 9, marker: 49, s: 0.2882, segment: 'hairpin' },
-  { circuitId: 9, marker: 50, s: 0.2941, segment: 'straight' },
-  { circuitId: 9, marker: 51, s: 0.3000, segment: 'corner' },
-  { circuitId: 9, marker: 52, s: 0.3059, segment: 'corner' },
-  { circuitId: 9, marker: 53, s: 0.3118, segment: 'corner' },
-  { circuitId: 9, marker: 54, s: 0.3176, segment: 'corner' },
-  { circuitId: 9, marker: 55, s: 0.3235, segment: 'chicane' },
-  { circuitId: 9, marker: 56, s: 0.3294, segment: 'hairpin' },
-  { circuitId: 9, marker: 57, s: 0.3353, segment: 'corner' },
-  { circuitId: 9, marker: 58, s: 0.3412, segment: 'corner' },
-  { circuitId: 9, marker: 59, s: 0.3471, segment: 'corner' },
-  { circuitId: 9, marker: 60, s: 0.3529, segment: 'straight' },
-  { circuitId: 9, marker: 61, s: 0.3588, segment: 'corner' },
-  { circuitId: 9, marker: 62, s: 0.3647, segment: 'corner' },
-  { circuitId: 9, marker: 63, s: 0.3706, segment: 'hairpin' },
-  { circuitId: 9, marker: 64, s: 0.3765, segment: 'corner' },
-  { circuitId: 9, marker: 65, s: 0.3824, segment: 'straight' },
-  { circuitId: 9, marker: 66, s: 0.3882, segment: 'chicane' },
-  { circuitId: 9, marker: 67, s: 0.3941, segment: 'corner' },
-  { circuitId: 9, marker: 68, s: 0.4000, segment: 'corner' },
-  { circuitId: 9, marker: 69, s: 0.4059, segment: 'corner' },
-  { circuitId: 9, marker: 70, s: 0.4118, segment: 'hairpin' },
-  { circuitId: 9, marker: 71, s: 0.4176, segment: 'corner' },
-  { circuitId: 9, marker: 72, s: 0.4235, segment: 'corner' },
-  { circuitId: 9, marker: 73, s: 0.4294, segment: 'corner' },
-  { circuitId: 9, marker: 74, s: 0.4353, segment: 'corner' },
-  { circuitId: 9, marker: 75, s: 0.4412, segment: 'straight' },
-  { circuitId: 9, marker: 76, s: 0.4471, segment: 'corner' },
-  { circuitId: 9, marker: 77, s: 0.4529, segment: 'chicane' },
-  { circuitId: 9, marker: 78, s: 0.4588, segment: 'corner' },
-  { circuitId: 9, marker: 79, s: 0.4647, segment: 'corner' },
-  { circuitId: 9, marker: 80, s: 0.4706, segment: 'straight' },
-  { circuitId: 9, marker: 81, s: 0.4765, segment: 'corner' },
-  { circuitId: 9, marker: 82, s: 0.4824, segment: 'corner' },
-  { circuitId: 9, marker: 83, s: 0.4882, segment: 'corner' },
-  { circuitId: 9, marker: 84, s: 0.4941, segment: 'hairpin' },
-  { circuitId: 9, marker: 85, s: 0.5000, segment: 'straight' },
-  { circuitId: 9, marker: 86, s: 0.5059, segment: 'corner' },
-  { circuitId: 9, marker: 87, s: 0.5118, segment: 'corner' },
-  { circuitId: 9, marker: 88, s: 0.5176, segment: 'chicane' },
-  { circuitId: 9, marker: 89, s: 0.5235, segment: 'corner' },
-  { circuitId: 9, marker: 90, s: 0.5294, segment: 'straight' },
-  { circuitId: 9, marker: 91, s: 0.5353, segment: 'hairpin' },
-  { circuitId: 9, marker: 92, s: 0.5412, segment: 'corner' },
-  { circuitId: 9, marker: 93, s: 0.5471, segment: 'corner' },
-  { circuitId: 9, marker: 94, s: 0.5529, segment: 'corner' },
-  { circuitId: 9, marker: 95, s: 0.5588, segment: 'straight' },
-  { circuitId: 9, marker: 96, s: 0.5647, segment: 'corner' },
-  { circuitId: 9, marker: 97, s: 0.5706, segment: 'corner' },
-  { circuitId: 9, marker: 98, s: 0.5765, segment: 'hairpin' },
-  { circuitId: 9, marker: 99, s: 0.5824, segment: 'chicane' },
-  { circuitId: 9, marker: 100, s: 0.5882, segment: 'straight' },
-  { circuitId: 9, marker: 101, s: 0.5941, segment: 'corner' },
-  { circuitId: 9, marker: 102, s: 0.6000, segment: 'corner' },
-  { circuitId: 9, marker: 103, s: 0.6059, segment: 'corner' },
-  { circuitId: 9, marker: 104, s: 0.6118, segment: 'corner' },
-  { circuitId: 9, marker: 105, s: 0.6176, segment: 'hairpin' },
-  { circuitId: 9, marker: 106, s: 0.6235, segment: 'corner' },
-  { circuitId: 9, marker: 107, s: 0.6294, segment: 'corner' },
-  { circuitId: 9, marker: 108, s: 0.6353, segment: 'corner' },
-  { circuitId: 9, marker: 109, s: 0.6412, segment: 'corner' },
-  { circuitId: 9, marker: 110, s: 0.6471, segment: 'chicane' },
-  { circuitId: 9, marker: 111, s: 0.6529, segment: 'corner' },
-  { circuitId: 9, marker: 112, s: 0.6588, segment: 'hairpin' },
-  { circuitId: 9, marker: 113, s: 0.6647, segment: 'corner' },
-  { circuitId: 9, marker: 114, s: 0.6706, segment: 'corner' },
-  { circuitId: 9, marker: 115, s: 0.6765, segment: 'straight' },
-  { circuitId: 9, marker: 116, s: 0.6824, segment: 'corner' },
-  { circuitId: 9, marker: 117, s: 0.6882, segment: 'corner' },
-  { circuitId: 9, marker: 118, s: 0.6941, segment: 'corner' },
-  { circuitId: 9, marker: 119, s: 0.7000, segment: 'hairpin' },
-  { circuitId: 9, marker: 120, s: 0.7059, segment: 'straight' },
-  { circuitId: 9, marker: 121, s: 0.7118, segment: 'chicane' },
-  { circuitId: 9, marker: 122, s: 0.7176, segment: 'corner' },
-  { circuitId: 9, marker: 123, s: 0.7235, segment: 'corner' },
-  { circuitId: 9, marker: 124, s: 0.7294, segment: 'corner' },
-  { circuitId: 9, marker: 125, s: 0.7353, segment: 'straight' },
-  { circuitId: 9, marker: 126, s: 0.7412, segment: 'hairpin' },
-  { circuitId: 9, marker: 127, s: 0.7471, segment: 'corner' },
-  { circuitId: 9, marker: 128, s: 0.7529, segment: 'corner' },
-  { circuitId: 9, marker: 129, s: 0.7588, segment: 'corner' },
-  { circuitId: 9, marker: 130, s: 0.7647, segment: 'straight' },
-  { circuitId: 9, marker: 131, s: 0.7706, segment: 'corner' },
-  { circuitId: 9, marker: 132, s: 0.7765, segment: 'chicane' },
-  { circuitId: 9, marker: 133, s: 0.7824, segment: 'hairpin' },
-  { circuitId: 9, marker: 134, s: 0.7882, segment: 'corner' },
-  { circuitId: 9, marker: 135, s: 0.7941, segment: 'straight' },
-  { circuitId: 9, marker: 136, s: 0.8000, segment: 'corner' },
-  { circuitId: 9, marker: 137, s: 0.8059, segment: 'corner' },
-  { circuitId: 9, marker: 138, s: 0.8118, segment: 'corner' },
-  { circuitId: 9, marker: 139, s: 0.8176, segment: 'corner' },
-  { circuitId: 9, marker: 140, s: 0.8235, segment: 'hairpin' },
-  { circuitId: 9, marker: 141, s: 0.8294, segment: 'corner' },
-  { circuitId: 9, marker: 142, s: 0.8353, segment: 'corner' },
-  { circuitId: 9, marker: 143, s: 0.8412, segment: 'chicane' },
-  { circuitId: 9, marker: 144, s: 0.8471, segment: 'corner' },
-  { circuitId: 9, marker: 145, s: 0.8529, segment: 'straight' },
-  { circuitId: 9, marker: 146, s: 0.8588, segment: 'corner' },
-  { circuitId: 9, marker: 147, s: 0.8647, segment: 'hairpin' },
-  { circuitId: 9, marker: 148, s: 0.8706, segment: 'corner' },
-  { circuitId: 9, marker: 149, s: 0.8765, segment: 'corner' },
-  { circuitId: 9, marker: 150, s: 0.8824, segment: 'straight' },
-  { circuitId: 9, marker: 151, s: 0.8882, segment: 'corner' },
-  { circuitId: 9, marker: 152, s: 0.8941, segment: 'corner' },
-  { circuitId: 9, marker: 153, s: 0.9000, segment: 'corner' },
-  { circuitId: 9, marker: 154, s: 0.9059, segment: 'chicane' },
-  { circuitId: 9, marker: 155, s: 0.9118, segment: 'straight' },
-  { circuitId: 9, marker: 156, s: 0.9176, segment: 'corner' },
-  { circuitId: 9, marker: 157, s: 0.9235, segment: 'corner' },
-  { circuitId: 9, marker: 158, s: 0.9294, segment: 'corner' },
-  { circuitId: 9, marker: 159, s: 0.9353, segment: 'corner' },
-  { circuitId: 9, marker: 160, s: 0.9412, segment: 'straight' },
-  { circuitId: 9, marker: 161, s: 0.9471, segment: 'hairpin' },
-  { circuitId: 9, marker: 162, s: 0.9529, segment: 'corner' },
-  { circuitId: 9, marker: 163, s: 0.9588, segment: 'corner' },
-  { circuitId: 9, marker: 164, s: 0.9647, segment: 'corner' },
-  { circuitId: 9, marker: 165, s: 0.9706, segment: 'chicane' },
-  { circuitId: 9, marker: 166, s: 0.9765, segment: 'corner' },
-  { circuitId: 9, marker: 167, s: 0.9824, segment: 'corner' },
-  { circuitId: 9, marker: 168, s: 0.9882, segment: 'hairpin' },
-  { circuitId: 9, marker: 169, s: 0.9941, segment: 'corner' },
-  { circuitId: 10, marker: 0, s: 0.0000, segment: 'chicane' },
-  { circuitId: 10, marker: 1, s: 0.0059, segment: 'corner' },
-  { circuitId: 10, marker: 2, s: 0.0118, segment: 'corner' },
-  { circuitId: 10, marker: 3, s: 0.0176, segment: 'corner' },
-  { circuitId: 10, marker: 4, s: 0.0235, segment: 'corner' },
-  { circuitId: 10, marker: 5, s: 0.0294, segment: 'straight' },
-  { circuitId: 10, marker: 6, s: 0.0353, segment: 'corner' },
-  { circuitId: 10, marker: 7, s: 0.0412, segment: 'hairpin' },
-  { circuitId: 10, marker: 8, s: 0.0471, segment: 'corner' },
-  { circuitId: 10, marker: 9, s: 0.0529, segment: 'corner' },
-  { circuitId: 10, marker: 10, s: 0.0588, segment: 'straight' },
-  { circuitId: 10, marker: 11, s: 0.0647, segment: 'chicane' },
-  { circuitId: 10, marker: 12, s: 0.0706, segment: 'corner' },
-  { circuitId: 10, marker: 13, s: 0.0765, segment: 'corner' },
-  { circuitId: 10, marker: 14, s: 0.0824, segment: 'hairpin' },
-  { circuitId: 10, marker: 15, s: 0.0882, segment: 'straight' },
-  { circuitId: 10, marker: 16, s: 0.0941, segment: 'corner' },
-  { circuitId: 10, marker: 17, s: 0.1000, segment: 'corner' },
-  { circuitId: 10, marker: 18, s: 0.1059, segment: 'corner' },
-  { circuitId: 10, marker: 19, s: 0.1118, segment: 'corner' },
-  { circuitId: 10, marker: 20, s: 0.1176, segment: 'straight' },
-  { circuitId: 10, marker: 21, s: 0.1235, segment: 'hairpin' },
-  { circuitId: 10, marker: 22, s: 0.1294, segment: 'chicane' },
-  { circuitId: 10, marker: 23, s: 0.1353, segment: 'corner' },
-  { circuitId: 10, marker: 24, s: 0.1412, segment: 'corner' },
-  { circuitId: 10, marker: 25, s: 0.1471, segment: 'straight' },
-  { circuitId: 10, marker: 26, s: 0.1529, segment: 'corner' },
-  { circuitId: 10, marker: 27, s: 0.1588, segment: 'corner' },
-  { circuitId: 10, marker: 28, s: 0.1647, segment: 'hairpin' },
-  { circuitId: 10, marker: 29, s: 0.1706, segment: 'corner' },
-  { circuitId: 10, marker: 30, s: 0.1765, segment: 'straight' },
-  { circuitId: 10, marker: 31, s: 0.1824, segment: 'corner' },
-  { circuitId: 10, marker: 32, s: 0.1882, segment: 'corner' },
-  { circuitId: 10, marker: 33, s: 0.1941, segment: 'chicane' },
-  { circuitId: 10, marker: 34, s: 0.2000, segment: 'corner' },
-  { circuitId: 10, marker: 35, s: 0.2059, segment: 'hairpin' },
-  { circuitId: 10, marker: 36, s: 0.2118, segment: 'corner' },
-  { circuitId: 10, marker: 37, s: 0.2176, segment: 'corner' },
-  { circuitId: 10, marker: 38, s: 0.2235, segment: 'corner' },
-  { circuitId: 10, marker: 39, s: 0.2294, segment: 'corner' },
-  { circuitId: 10, marker: 40, s: 0.2353, segment: 'straight' },
-  { circuitId: 10, marker: 41, s: 0.2412, segment: 'corner' },
-  { circuitId: 10, marker: 42, s: 0.2471, segment: 'hairpin' },
-  { circuitId: 10, marker: 43, s: 0.2529, segment: 'corner' },
-  { circuitId: 10, marker: 44, s: 0.2588, segment: 'chicane' },
-  { circuitId: 10, marker: 45, s: 0.2647, segment: 'straight' },
-  { circuitId: 10, marker: 46, s: 0.2706, segment: 'corner' },
-  { circuitId: 10, marker: 47, s: 0.2765, segment: 'corner' },
-  { circuitId: 10, marker: 48, s: 0.2824, segment: 'corner' },
-  { circuitId: 10, marker: 49, s: 0.2882, segment: 'hairpin' },
-  { circuitId: 10, marker: 50, s: 0.2941, segment: 'straight' },
-  { circuitId: 10, marker: 51, s: 0.3000, segment: 'corner' },
-  { circuitId: 10, marker: 52, s: 0.3059, segment: 'corner' },
-  { circuitId: 10, marker: 53, s: 0.3118, segment: 'corner' },
-  { circuitId: 10, marker: 54, s: 0.3176, segment: 'corner' },
-  { circuitId: 10, marker: 55, s: 0.3235, segment: 'chicane' },
-  { circuitId: 10, marker: 56, s: 0.3294, segment: 'hairpin' },
-  { circuitId: 10, marker: 57, s: 0.3353, segment: 'corner' },
-  { circuitId: 10, marker: 58, s: 0.3412, segment: 'corner' },
-  { circuitId: 10, marker: 59, s: 0.3471, segment: 'corner' },
-  { circuitId: 10, marker: 60, s: 0.3529, segment: 'straight' },
-  { circuitId: 10, marker: 61, s: 0.3588, segment: 'corner' },
-  { circuitId: 10, marker: 62, s: 0.3647, segment: 'corner' },
-  { circuitId: 10, marker: 63, s: 0.3706, segment: 'hairpin' },
-  { circuitId: 10, marker: 64, s: 0.3765, segment: 'corner' },
-  { circuitId: 10, marker: 65, s: 0.3824, segment: 'straight' },
-  { circuitId: 10, marker: 66, s: 0.3882, segment: 'chicane' },
-  { circuitId: 10, marker: 67, s: 0.3941, segment: 'corner' },
-  { circuitId: 10, marker: 68, s: 0.4000, segment: 'corner' },
-  { circuitId: 10, marker: 69, s: 0.4059, segment: 'corner' },
-  { circuitId: 10, marker: 70, s: 0.4118, segment: 'hairpin' },
-  { circuitId: 10, marker: 71, s: 0.4176, segment: 'corner' },
-  { circuitId: 10, marker: 72, s: 0.4235, segment: 'corner' },
-  { circuitId: 10, marker: 73, s: 0.4294, segment: 'corner' },
-  { circuitId: 10, marker: 74, s: 0.4353, segment: 'corner' },
-  { circuitId: 10, marker: 75, s: 0.4412, segment: 'straight' },
-  { circuitId: 10, marker: 76, s: 0.4471, segment: 'corner' },
-  { circuitId: 10, marker: 77, s: 0.4529, segment: 'chicane' },
-  { circuitId: 10, marker: 78, s: 0.4588, segment: 'corner' },
-  { circuitId: 10, marker: 79, s: 0.4647, segment: 'corner' },
-  { circuitId: 10, marker: 80, s: 0.4706, segment: 'straight' },
-  { circuitId: 10, marker: 81, s: 0.4765, segment: 'corner' },
-  { circuitId: 10, marker: 82, s: 0.4824, segment: 'corner' },
-  { circuitId: 10, marker: 83, s: 0.4882, segment: 'corner' },
-  { circuitId: 10, marker: 84, s: 0.4941, segment: 'hairpin' },
-  { circuitId: 10, marker: 85, s: 0.5000, segment: 'straight' },
-  { circuitId: 10, marker: 86, s: 0.5059, segment: 'corner' },
-  { circuitId: 10, marker: 87, s: 0.5118, segment: 'corner' },
-  { circuitId: 10, marker: 88, s: 0.5176, segment: 'chicane' },
-  { circuitId: 10, marker: 89, s: 0.5235, segment: 'corner' },
-  { circuitId: 10, marker: 90, s: 0.5294, segment: 'straight' },
-  { circuitId: 10, marker: 91, s: 0.5353, segment: 'hairpin' },
-  { circuitId: 10, marker: 92, s: 0.5412, segment: 'corner' },
-  { circuitId: 10, marker: 93, s: 0.5471, segment: 'corner' },
-  { circuitId: 10, marker: 94, s: 0.5529, segment: 'corner' },
-  { circuitId: 10, marker: 95, s: 0.5588, segment: 'straight' },
-  { circuitId: 10, marker: 96, s: 0.5647, segment: 'corner' },
-  { circuitId: 10, marker: 97, s: 0.5706, segment: 'corner' },
-  { circuitId: 10, marker: 98, s: 0.5765, segment: 'hairpin' },
-  { circuitId: 10, marker: 99, s: 0.5824, segment: 'chicane' },
-  { circuitId: 10, marker: 100, s: 0.5882, segment: 'straight' },
-  { circuitId: 10, marker: 101, s: 0.5941, segment: 'corner' },
-  { circuitId: 10, marker: 102, s: 0.6000, segment: 'corner' },
-  { circuitId: 10, marker: 103, s: 0.6059, segment: 'corner' },
-  { circuitId: 10, marker: 104, s: 0.6118, segment: 'corner' },
-  { circuitId: 10, marker: 105, s: 0.6176, segment: 'hairpin' },
-  { circuitId: 10, marker: 106, s: 0.6235, segment: 'corner' },
-  { circuitId: 10, marker: 107, s: 0.6294, segment: 'corner' },
-  { circuitId: 10, marker: 108, s: 0.6353, segment: 'corner' },
-  { circuitId: 10, marker: 109, s: 0.6412, segment: 'corner' },
-  { circuitId: 10, marker: 110, s: 0.6471, segment: 'chicane' },
-  { circuitId: 10, marker: 111, s: 0.6529, segment: 'corner' },
-  { circuitId: 10, marker: 112, s: 0.6588, segment: 'hairpin' },
-  { circuitId: 10, marker: 113, s: 0.6647, segment: 'corner' },
-  { circuitId: 10, marker: 114, s: 0.6706, segment: 'corner' },
-  { circuitId: 10, marker: 115, s: 0.6765, segment: 'straight' },
-  { circuitId: 10, marker: 116, s: 0.6824, segment: 'corner' },
-  { circuitId: 10, marker: 117, s: 0.6882, segment: 'corner' },
-  { circuitId: 10, marker: 118, s: 0.6941, segment: 'corner' },
-  { circuitId: 10, marker: 119, s: 0.7000, segment: 'hairpin' },
-  { circuitId: 10, marker: 120, s: 0.7059, segment: 'straight' },
-  { circuitId: 10, marker: 121, s: 0.7118, segment: 'chicane' },
-  { circuitId: 10, marker: 122, s: 0.7176, segment: 'corner' },
-  { circuitId: 10, marker: 123, s: 0.7235, segment: 'corner' },
-  { circuitId: 10, marker: 124, s: 0.7294, segment: 'corner' },
-  { circuitId: 10, marker: 125, s: 0.7353, segment: 'straight' },
-  { circuitId: 10, marker: 126, s: 0.7412, segment: 'hairpin' },
-  { circuitId: 10, marker: 127, s: 0.7471, segment: 'corner' },
-  { circuitId: 10, marker: 128, s: 0.7529, segment: 'corner' },
-  { circuitId: 10, marker: 129, s: 0.7588, segment: 'corner' },
-  { circuitId: 10, marker: 130, s: 0.7647, segment: 'straight' },
-  { circuitId: 10, marker: 131, s: 0.7706, segment: 'corner' },
-  { circuitId: 10, marker: 132, s: 0.7765, segment: 'chicane' },
-  { circuitId: 10, marker: 133, s: 0.7824, segment: 'hairpin' },
-  { circuitId: 10, marker: 134, s: 0.7882, segment: 'corner' },
-  { circuitId: 10, marker: 135, s: 0.7941, segment: 'straight' },
-  { circuitId: 10, marker: 136, s: 0.8000, segment: 'corner' },
-  { circuitId: 10, marker: 137, s: 0.8059, segment: 'corner' },
-  { circuitId: 10, marker: 138, s: 0.8118, segment: 'corner' },
-  { circuitId: 10, marker: 139, s: 0.8176, segment: 'corner' },
-  { circuitId: 10, marker: 140, s: 0.8235, segment: 'hairpin' },
-  { circuitId: 10, marker: 141, s: 0.8294, segment: 'corner' },
-  { circuitId: 10, marker: 142, s: 0.8353, segment: 'corner' },
-  { circuitId: 10, marker: 143, s: 0.8412, segment: 'chicane' },
-  { circuitId: 10, marker: 144, s: 0.8471, segment: 'corner' },
-  { circuitId: 10, marker: 145, s: 0.8529, segment: 'straight' },
-  { circuitId: 10, marker: 146, s: 0.8588, segment: 'corner' },
-  { circuitId: 10, marker: 147, s: 0.8647, segment: 'hairpin' },
-  { circuitId: 10, marker: 148, s: 0.8706, segment: 'corner' },
-  { circuitId: 10, marker: 149, s: 0.8765, segment: 'corner' },
-  { circuitId: 10, marker: 150, s: 0.8824, segment: 'straight' },
-  { circuitId: 10, marker: 151, s: 0.8882, segment: 'corner' },
-  { circuitId: 10, marker: 152, s: 0.8941, segment: 'corner' },
-  { circuitId: 10, marker: 153, s: 0.9000, segment: 'corner' },
-  { circuitId: 10, marker: 154, s: 0.9059, segment: 'chicane' },
-  { circuitId: 10, marker: 155, s: 0.9118, segment: 'straight' },
-  { circuitId: 10, marker: 156, s: 0.9176, segment: 'corner' },
-  { circuitId: 10, marker: 157, s: 0.9235, segment: 'corner' },
-  { circuitId: 10, marker: 158, s: 0.9294, segment: 'corner' },
-  { circuitId: 10, marker: 159, s: 0.9353, segment: 'corner' },
-  { circuitId: 10, marker: 160, s: 0.9412, segment: 'straight' },
-  { circuitId: 10, marker: 161, s: 0.9471, segment: 'hairpin' },
-  { circuitId: 10, marker: 162, s: 0.9529, segment: 'corner' },
-  { circuitId: 10, marker: 163, s: 0.9588, segment: 'corner' },
-  { circuitId: 10, marker: 164, s: 0.9647, segment: 'corner' },
-  { circuitId: 10, marker: 165, s: 0.9706, segment: 'chicane' },
-  { circuitId: 10, marker: 166, s: 0.9765, segment: 'corner' },
-  { circuitId: 10, marker: 167, s: 0.9824, segment: 'corner' },
-  { circuitId: 10, marker: 168, s: 0.9882, segment: 'hairpin' },
-  { circuitId: 10, marker: 169, s: 0.9941, segment: 'corner' },
-  { circuitId: 11, marker: 0, s: 0.0000, segment: 'chicane' },
-  { circuitId: 11, marker: 1, s: 0.0059, segment: 'corner' },
-  { circuitId: 11, marker: 2, s: 0.0118, segment: 'corner' },
-  { circuitId: 11, marker: 3, s: 0.0176, segment: 'corner' },
-  { circuitId: 11, marker: 4, s: 0.0235, segment: 'corner' },
-  { circuitId: 11, marker: 5, s: 0.0294, segment: 'straight' },
-  { circuitId: 11, marker: 6, s: 0.0353, segment: 'corner' },
-  { circuitId: 11, marker: 7, s: 0.0412, segment: 'hairpin' },
-  { circuitId: 11, marker: 8, s: 0.0471, segment: 'corner' },
-  { circuitId: 11, marker: 9, s: 0.0529, segment: 'corner' },
-  { circuitId: 11, marker: 10, s: 0.0588, segment: 'straight' },
-  { circuitId: 11, marker: 11, s: 0.0647, segment: 'chicane' },
-  { circuitId: 11, marker: 12, s: 0.0706, segment: 'corner' },
-  { circuitId: 11, marker: 13, s: 0.0765, segment: 'corner' },
-  { circuitId: 11, marker: 14, s: 0.0824, segment: 'hairpin' },
-  { circuitId: 11, marker: 15, s: 0.0882, segment: 'straight' },
-  { circuitId: 11, marker: 16, s: 0.0941, segment: 'corner' },
-  { circuitId: 11, marker: 17, s: 0.1000, segment: 'corner' },
-  { circuitId: 11, marker: 18, s: 0.1059, segment: 'corner' },
-  { circuitId: 11, marker: 19, s: 0.1118, segment: 'corner' },
-  { circuitId: 11, marker: 20, s: 0.1176, segment: 'straight' },
-  { circuitId: 11, marker: 21, s: 0.1235, segment: 'hairpin' },
-  { circuitId: 11, marker: 22, s: 0.1294, segment: 'chicane' },
-  { circuitId: 11, marker: 23, s: 0.1353, segment: 'corner' },
-  { circuitId: 11, marker: 24, s: 0.1412, segment: 'corner' },
-  { circuitId: 11, marker: 25, s: 0.1471, segment: 'straight' },
-  { circuitId: 11, marker: 26, s: 0.1529, segment: 'corner' },
-  { circuitId: 11, marker: 27, s: 0.1588, segment: 'corner' },
-  { circuitId: 11, marker: 28, s: 0.1647, segment: 'hairpin' },
-  { circuitId: 11, marker: 29, s: 0.1706, segment: 'corner' },
-  { circuitId: 11, marker: 30, s: 0.1765, segment: 'straight' },
-  { circuitId: 11, marker: 31, s: 0.1824, segment: 'corner' },
-  { circuitId: 11, marker: 32, s: 0.1882, segment: 'corner' },
-  { circuitId: 11, marker: 33, s: 0.1941, segment: 'chicane' },
-  { circuitId: 11, marker: 34, s: 0.2000, segment: 'corner' },
-  { circuitId: 11, marker: 35, s: 0.2059, segment: 'hairpin' },
-  { circuitId: 11, marker: 36, s: 0.2118, segment: 'corner' },
-  { circuitId: 11, marker: 37, s: 0.2176, segment: 'corner' },
-  { circuitId: 11, marker: 38, s: 0.2235, segment: 'corner' },
-  { circuitId: 11, marker: 39, s: 0.2294, segment: 'corner' },
-  { circuitId: 11, marker: 40, s: 0.2353, segment: 'straight' },
-  { circuitId: 11, marker: 41, s: 0.2412, segment: 'corner' },
-  { circuitId: 11, marker: 42, s: 0.2471, segment: 'hairpin' },
-  { circuitId: 11, marker: 43, s: 0.2529, segment: 'corner' },
-  { circuitId: 11, marker: 44, s: 0.2588, segment: 'chicane' },
-  { circuitId: 11, marker: 45, s: 0.2647, segment: 'straight' },
-  { circuitId: 11, marker: 46, s: 0.2706, segment: 'corner' },
-  { circuitId: 11, marker: 47, s: 0.2765, segment: 'corner' },
-  { circuitId: 11, marker: 48, s: 0.2824, segment: 'corner' },
-  { circuitId: 11, marker: 49, s: 0.2882, segment: 'hairpin' },
-  { circuitId: 11, marker: 50, s: 0.2941, segment: 'straight' },
-  { circuitId: 11, marker: 51, s: 0.3000, segment: 'corner' },
-  { circuitId: 11, marker: 52, s: 0.3059, segment: 'corner' },
-  { circuitId: 11, marker: 53, s: 0.3118, segment: 'corner' },
-  { circuitId: 11, marker: 54, s: 0.3176, segment: 'corner' },
-  { circuitId: 11, marker: 55, s: 0.3235, segment: 'chicane' },
-  { circuitId: 11, marker: 56, s: 0.3294, segment: 'hairpin' },
-  { circuitId: 11, marker: 57, s: 0.3353, segment: 'corner' },
-  { circuitId: 11, marker: 58, s: 0.3412, segment: 'corner' },
-  { circuitId: 11, marker: 59, s: 0.3471, segment: 'corner' },
-  { circuitId: 11, marker: 60, s: 0.3529, segment: 'straight' },
-  { circuitId: 11, marker: 61, s: 0.3588, segment: 'corner' },
-  { circuitId: 11, marker: 62, s: 0.3647, segment: 'corner' },
-  { circuitId: 11, marker: 63, s: 0.3706, segment: 'hairpin' },
-  { circuitId: 11, marker: 64, s: 0.3765, segment: 'corner' },
-  { circuitId: 11, marker: 65, s: 0.3824, segment: 'straight' },
-  { circuitId: 11, marker: 66, s: 0.3882, segment: 'chicane' },
-  { circuitId: 11, marker: 67, s: 0.3941, segment: 'corner' },
-  { circuitId: 11, marker: 68, s: 0.4000, segment: 'corner' },
-  { circuitId: 11, marker: 69, s: 0.4059, segment: 'corner' },
-  { circuitId: 11, marker: 70, s: 0.4118, segment: 'hairpin' },
-  { circuitId: 11, marker: 71, s: 0.4176, segment: 'corner' },
-  { circuitId: 11, marker: 72, s: 0.4235, segment: 'corner' },
-  { circuitId: 11, marker: 73, s: 0.4294, segment: 'corner' },
-  { circuitId: 11, marker: 74, s: 0.4353, segment: 'corner' },
-  { circuitId: 11, marker: 75, s: 0.4412, segment: 'straight' },
-  { circuitId: 11, marker: 76, s: 0.4471, segment: 'corner' },
-  { circuitId: 11, marker: 77, s: 0.4529, segment: 'chicane' },
-  { circuitId: 11, marker: 78, s: 0.4588, segment: 'corner' },
-  { circuitId: 11, marker: 79, s: 0.4647, segment: 'corner' },
-  { circuitId: 11, marker: 80, s: 0.4706, segment: 'straight' },
-  { circuitId: 11, marker: 81, s: 0.4765, segment: 'corner' },
-  { circuitId: 11, marker: 82, s: 0.4824, segment: 'corner' },
-  { circuitId: 11, marker: 83, s: 0.4882, segment: 'corner' },
-  { circuitId: 11, marker: 84, s: 0.4941, segment: 'hairpin' },
-  { circuitId: 11, marker: 85, s: 0.5000, segment: 'straight' },
-  { circuitId: 11, marker: 86, s: 0.5059, segment: 'corner' },
-  { circuitId: 11, marker: 87, s: 0.5118, segment: 'corner' },
-  { circuitId: 11, marker: 88, s: 0.5176, segment: 'chicane' },
-  { circuitId: 11, marker: 89, s: 0.5235, segment: 'corner' },
-  { circuitId: 11, marker: 90, s: 0.5294, segment: 'straight' },
-  { circuitId: 11, marker: 91, s: 0.5353, segment: 'hairpin' },
-  { circuitId: 11, marker: 92, s: 0.5412, segment: 'corner' },
-  { circuitId: 11, marker: 93, s: 0.5471, segment: 'corner' },
-  { circuitId: 11, marker: 94, s: 0.5529, segment: 'corner' },
-  { circuitId: 11, marker: 95, s: 0.5588, segment: 'straight' },
-  { circuitId: 11, marker: 96, s: 0.5647, segment: 'corner' },
-  { circuitId: 11, marker: 97, s: 0.5706, segment: 'corner' },
-  { circuitId: 11, marker: 98, s: 0.5765, segment: 'hairpin' },
-  { circuitId: 11, marker: 99, s: 0.5824, segment: 'chicane' },
-  { circuitId: 11, marker: 100, s: 0.5882, segment: 'straight' },
-  { circuitId: 11, marker: 101, s: 0.5941, segment: 'corner' },
-  { circuitId: 11, marker: 102, s: 0.6000, segment: 'corner' },
-  { circuitId: 11, marker: 103, s: 0.6059, segment: 'corner' },
-  { circuitId: 11, marker: 104, s: 0.6118, segment: 'corner' },
-  { circuitId: 11, marker: 105, s: 0.6176, segment: 'hairpin' },
-  { circuitId: 11, marker: 106, s: 0.6235, segment: 'corner' },
-  { circuitId: 11, marker: 107, s: 0.6294, segment: 'corner' },
-  { circuitId: 11, marker: 108, s: 0.6353, segment: 'corner' },
-  { circuitId: 11, marker: 109, s: 0.6412, segment: 'corner' },
-  { circuitId: 11, marker: 110, s: 0.6471, segment: 'chicane' },
-  { circuitId: 11, marker: 111, s: 0.6529, segment: 'corner' },
-  { circuitId: 11, marker: 112, s: 0.6588, segment: 'hairpin' },
-  { circuitId: 11, marker: 113, s: 0.6647, segment: 'corner' },
-  { circuitId: 11, marker: 114, s: 0.6706, segment: 'corner' },
-  { circuitId: 11, marker: 115, s: 0.6765, segment: 'straight' },
-  { circuitId: 11, marker: 116, s: 0.6824, segment: 'corner' },
-  { circuitId: 11, marker: 117, s: 0.6882, segment: 'corner' },
-  { circuitId: 11, marker: 118, s: 0.6941, segment: 'corner' },
-  { circuitId: 11, marker: 119, s: 0.7000, segment: 'hairpin' },
-  { circuitId: 11, marker: 120, s: 0.7059, segment: 'straight' },
-  { circuitId: 11, marker: 121, s: 0.7118, segment: 'chicane' },
-  { circuitId: 11, marker: 122, s: 0.7176, segment: 'corner' },
-  { circuitId: 11, marker: 123, s: 0.7235, segment: 'corner' },
-  { circuitId: 11, marker: 124, s: 0.7294, segment: 'corner' },
-  { circuitId: 11, marker: 125, s: 0.7353, segment: 'straight' },
-  { circuitId: 11, marker: 126, s: 0.7412, segment: 'hairpin' },
-  { circuitId: 11, marker: 127, s: 0.7471, segment: 'corner' },
-  { circuitId: 11, marker: 128, s: 0.7529, segment: 'corner' },
-  { circuitId: 11, marker: 129, s: 0.7588, segment: 'corner' },
-  { circuitId: 11, marker: 130, s: 0.7647, segment: 'straight' },
-  { circuitId: 11, marker: 131, s: 0.7706, segment: 'corner' },
-  { circuitId: 11, marker: 132, s: 0.7765, segment: 'chicane' },
-  { circuitId: 11, marker: 133, s: 0.7824, segment: 'hairpin' },
-  { circuitId: 11, marker: 134, s: 0.7882, segment: 'corner' },
-  { circuitId: 11, marker: 135, s: 0.7941, segment: 'straight' },
-  { circuitId: 11, marker: 136, s: 0.8000, segment: 'corner' },
-  { circuitId: 11, marker: 137, s: 0.8059, segment: 'corner' },
-  { circuitId: 11, marker: 138, s: 0.8118, segment: 'corner' },
-  { circuitId: 11, marker: 139, s: 0.8176, segment: 'corner' },
-  { circuitId: 11, marker: 140, s: 0.8235, segment: 'hairpin' },
-  { circuitId: 11, marker: 141, s: 0.8294, segment: 'corner' },
-  { circuitId: 11, marker: 142, s: 0.8353, segment: 'corner' },
-  { circuitId: 11, marker: 143, s: 0.8412, segment: 'chicane' },
-  { circuitId: 11, marker: 144, s: 0.8471, segment: 'corner' },
-  { circuitId: 11, marker: 145, s: 0.8529, segment: 'straight' },
-  { circuitId: 11, marker: 146, s: 0.8588, segment: 'corner' },
-  { circuitId: 11, marker: 147, s: 0.8647, segment: 'hairpin' },
-  { circuitId: 11, marker: 148, s: 0.8706, segment: 'corner' },
-  { circuitId: 11, marker: 149, s: 0.8765, segment: 'corner' },
-  { circuitId: 11, marker: 150, s: 0.8824, segment: 'straight' },
-  { circuitId: 11, marker: 151, s: 0.8882, segment: 'corner' },
-  { circuitId: 11, marker: 152, s: 0.8941, segment: 'corner' },
-  { circuitId: 11, marker: 153, s: 0.9000, segment: 'corner' },
-  { circuitId: 11, marker: 154, s: 0.9059, segment: 'chicane' },
-  { circuitId: 11, marker: 155, s: 0.9118, segment: 'straight' },
-  { circuitId: 11, marker: 156, s: 0.9176, segment: 'corner' },
-  { circuitId: 11, marker: 157, s: 0.9235, segment: 'corner' },
-  { circuitId: 11, marker: 158, s: 0.9294, segment: 'corner' },
-  { circuitId: 11, marker: 159, s: 0.9353, segment: 'corner' },
-  { circuitId: 11, marker: 160, s: 0.9412, segment: 'straight' },
-  { circuitId: 11, marker: 161, s: 0.9471, segment: 'hairpin' },
-  { circuitId: 11, marker: 162, s: 0.9529, segment: 'corner' },
-  { circuitId: 11, marker: 163, s: 0.9588, segment: 'corner' },
-  { circuitId: 11, marker: 164, s: 0.9647, segment: 'corner' },
-  { circuitId: 11, marker: 165, s: 0.9706, segment: 'chicane' },
-  { circuitId: 11, marker: 166, s: 0.9765, segment: 'corner' },
-  { circuitId: 11, marker: 167, s: 0.9824, segment: 'corner' },
-  { circuitId: 11, marker: 168, s: 0.9882, segment: 'hairpin' },
-  { circuitId: 11, marker: 169, s: 0.9941, segment: 'corner' },
-  { circuitId: 12, marker: 0, s: 0.0000, segment: 'chicane' },
-  { circuitId: 12, marker: 1, s: 0.0059, segment: 'corner' },
-  { circuitId: 12, marker: 2, s: 0.0118, segment: 'corner' },
-  { circuitId: 12, marker: 3, s: 0.0176, segment: 'corner' },
-  { circuitId: 12, marker: 4, s: 0.0235, segment: 'corner' },
-  { circuitId: 12, marker: 5, s: 0.0294, segment: 'straight' },
-  { circuitId: 12, marker: 6, s: 0.0353, segment: 'corner' },
-  { circuitId: 12, marker: 7, s: 0.0412, segment: 'hairpin' },
-  { circuitId: 12, marker: 8, s: 0.0471, segment: 'corner' },
-  { circuitId: 12, marker: 9, s: 0.0529, segment: 'corner' },
-  { circuitId: 12, marker: 10, s: 0.0588, segment: 'straight' },
-  { circuitId: 12, marker: 11, s: 0.0647, segment: 'chicane' },
-  { circuitId: 12, marker: 12, s: 0.0706, segment: 'corner' },
-  { circuitId: 12, marker: 13, s: 0.0765, segment: 'corner' },
-  { circuitId: 12, marker: 14, s: 0.0824, segment: 'hairpin' },
-  { circuitId: 12, marker: 15, s: 0.0882, segment: 'straight' },
-  { circuitId: 12, marker: 16, s: 0.0941, segment: 'corner' },
-  { circuitId: 12, marker: 17, s: 0.1000, segment: 'corner' },
-  { circuitId: 12, marker: 18, s: 0.1059, segment: 'corner' },
-  { circuitId: 12, marker: 19, s: 0.1118, segment: 'corner' },
-  { circuitId: 12, marker: 20, s: 0.1176, segment: 'straight' },
-  { circuitId: 12, marker: 21, s: 0.1235, segment: 'hairpin' },
-  { circuitId: 12, marker: 22, s: 0.1294, segment: 'chicane' },
-  { circuitId: 12, marker: 23, s: 0.1353, segment: 'corner' },
-  { circuitId: 12, marker: 24, s: 0.1412, segment: 'corner' },
-  { circuitId: 12, marker: 25, s: 0.1471, segment: 'straight' },
-  { circuitId: 12, marker: 26, s: 0.1529, segment: 'corner' },
-  { circuitId: 12, marker: 27, s: 0.1588, segment: 'corner' },
-  { circuitId: 12, marker: 28, s: 0.1647, segment: 'hairpin' },
-  { circuitId: 12, marker: 29, s: 0.1706, segment: 'corner' },
-  { circuitId: 12, marker: 30, s: 0.1765, segment: 'straight' },
-  { circuitId: 12, marker: 31, s: 0.1824, segment: 'corner' },
-  { circuitId: 12, marker: 32, s: 0.1882, segment: 'corner' },
-  { circuitId: 12, marker: 33, s: 0.1941, segment: 'chicane' },
-  { circuitId: 12, marker: 34, s: 0.2000, segment: 'corner' },
-  { circuitId: 12, marker: 35, s: 0.2059, segment: 'hairpin' },
-  { circuitId: 12, marker: 36, s: 0.2118, segment: 'corner' },
-  { circuitId: 12, marker: 37, s: 0.2176, segment: 'corner' },
-  { circuitId: 12, marker: 38, s: 0.2235, segment: 'corner' },
-  { circuitId: 12, marker: 39, s: 0.2294, segment: 'corner' },
-  { circuitId: 12, marker: 40, s: 0.2353, segment: 'straight' },
-  { circuitId: 12, marker: 41, s: 0.2412, segment: 'corner' },
-  { circuitId: 12, marker: 42, s: 0.2471, segment: 'hairpin' },
-  { circuitId: 12, marker: 43, s: 0.2529, segment: 'corner' },
-  { circuitId: 12, marker: 44, s: 0.2588, segment: 'chicane' },
-  { circuitId: 12, marker: 45, s: 0.2647, segment: 'straight' },
-  { circuitId: 12, marker: 46, s: 0.2706, segment: 'corner' },
-  { circuitId: 12, marker: 47, s: 0.2765, segment: 'corner' },
-  { circuitId: 12, marker: 48, s: 0.2824, segment: 'corner' },
-  { circuitId: 12, marker: 49, s: 0.2882, segment: 'hairpin' },
-  { circuitId: 12, marker: 50, s: 0.2941, segment: 'straight' },
-  { circuitId: 12, marker: 51, s: 0.3000, segment: 'corner' },
-  { circuitId: 12, marker: 52, s: 0.3059, segment: 'corner' },
-  { circuitId: 12, marker: 53, s: 0.3118, segment: 'corner' },
-  { circuitId: 12, marker: 54, s: 0.3176, segment: 'corner' },
-  { circuitId: 12, marker: 55, s: 0.3235, segment: 'chicane' },
-  { circuitId: 12, marker: 56, s: 0.3294, segment: 'hairpin' },
-  { circuitId: 12, marker: 57, s: 0.3353, segment: 'corner' },
-  { circuitId: 12, marker: 58, s: 0.3412, segment: 'corner' },
-  { circuitId: 12, marker: 59, s: 0.3471, segment: 'corner' },
-  { circuitId: 12, marker: 60, s: 0.3529, segment: 'straight' },
-  { circuitId: 12, marker: 61, s: 0.3588, segment: 'corner' },
-  { circuitId: 12, marker: 62, s: 0.3647, segment: 'corner' },
-  { circuitId: 12, marker: 63, s: 0.3706, segment: 'hairpin' },
-  { circuitId: 12, marker: 64, s: 0.3765, segment: 'corner' },
-  { circuitId: 12, marker: 65, s: 0.3824, segment: 'straight' },
-  { circuitId: 12, marker: 66, s: 0.3882, segment: 'chicane' },
-  { circuitId: 12, marker: 67, s: 0.3941, segment: 'corner' },
-  { circuitId: 12, marker: 68, s: 0.4000, segment: 'corner' },
-  { circuitId: 12, marker: 69, s: 0.4059, segment: 'corner' },
-  { circuitId: 12, marker: 70, s: 0.4118, segment: 'hairpin' },
-  { circuitId: 12, marker: 71, s: 0.4176, segment: 'corner' },
-  { circuitId: 12, marker: 72, s: 0.4235, segment: 'corner' },
-  { circuitId: 12, marker: 73, s: 0.4294, segment: 'corner' },
-  { circuitId: 12, marker: 74, s: 0.4353, segment: 'corner' },
-  { circuitId: 12, marker: 75, s: 0.4412, segment: 'straight' },
-  { circuitId: 12, marker: 76, s: 0.4471, segment: 'corner' },
-  { circuitId: 12, marker: 77, s: 0.4529, segment: 'chicane' },
-  { circuitId: 12, marker: 78, s: 0.4588, segment: 'corner' },
-  { circuitId: 12, marker: 79, s: 0.4647, segment: 'corner' },
-  { circuitId: 12, marker: 80, s: 0.4706, segment: 'straight' },
-  { circuitId: 12, marker: 81, s: 0.4765, segment: 'corner' },
-  { circuitId: 12, marker: 82, s: 0.4824, segment: 'corner' },
-  { circuitId: 12, marker: 83, s: 0.4882, segment: 'corner' },
-  { circuitId: 12, marker: 84, s: 0.4941, segment: 'hairpin' },
-  { circuitId: 12, marker: 85, s: 0.5000, segment: 'straight' },
-  { circuitId: 12, marker: 86, s: 0.5059, segment: 'corner' },
-  { circuitId: 12, marker: 87, s: 0.5118, segment: 'corner' },
-  { circuitId: 12, marker: 88, s: 0.5176, segment: 'chicane' },
-  { circuitId: 12, marker: 89, s: 0.5235, segment: 'corner' },
-  { circuitId: 12, marker: 90, s: 0.5294, segment: 'straight' },
-  { circuitId: 12, marker: 91, s: 0.5353, segment: 'hairpin' },
-  { circuitId: 12, marker: 92, s: 0.5412, segment: 'corner' },
-  { circuitId: 12, marker: 93, s: 0.5471, segment: 'corner' },
-  { circuitId: 12, marker: 94, s: 0.5529, segment: 'corner' },
-  { circuitId: 12, marker: 95, s: 0.5588, segment: 'straight' },
-  { circuitId: 12, marker: 96, s: 0.5647, segment: 'corner' },
-  { circuitId: 12, marker: 97, s: 0.5706, segment: 'corner' },
-  { circuitId: 12, marker: 98, s: 0.5765, segment: 'hairpin' },
-  { circuitId: 12, marker: 99, s: 0.5824, segment: 'chicane' },
-  { circuitId: 12, marker: 100, s: 0.5882, segment: 'straight' },
-  { circuitId: 12, marker: 101, s: 0.5941, segment: 'corner' },
-  { circuitId: 12, marker: 102, s: 0.6000, segment: 'corner' },
-  { circuitId: 12, marker: 103, s: 0.6059, segment: 'corner' },
-  { circuitId: 12, marker: 104, s: 0.6118, segment: 'corner' },
-  { circuitId: 12, marker: 105, s: 0.6176, segment: 'hairpin' },
-  { circuitId: 12, marker: 106, s: 0.6235, segment: 'corner' },
-  { circuitId: 12, marker: 107, s: 0.6294, segment: 'corner' },
-  { circuitId: 12, marker: 108, s: 0.6353, segment: 'corner' },
-  { circuitId: 12, marker: 109, s: 0.6412, segment: 'corner' },
-  { circuitId: 12, marker: 110, s: 0.6471, segment: 'chicane' },
-  { circuitId: 12, marker: 111, s: 0.6529, segment: 'corner' },
-  { circuitId: 12, marker: 112, s: 0.6588, segment: 'hairpin' },
-  { circuitId: 12, marker: 113, s: 0.6647, segment: 'corner' },
-  { circuitId: 12, marker: 114, s: 0.6706, segment: 'corner' },
-  { circuitId: 12, marker: 115, s: 0.6765, segment: 'straight' },
-  { circuitId: 12, marker: 116, s: 0.6824, segment: 'corner' },
-  { circuitId: 12, marker: 117, s: 0.6882, segment: 'corner' },
-  { circuitId: 12, marker: 118, s: 0.6941, segment: 'corner' },
-  { circuitId: 12, marker: 119, s: 0.7000, segment: 'hairpin' },
-  { circuitId: 12, marker: 120, s: 0.7059, segment: 'straight' },
-  { circuitId: 12, marker: 121, s: 0.7118, segment: 'chicane' },
-  { circuitId: 12, marker: 122, s: 0.7176, segment: 'corner' },
-  { circuitId: 12, marker: 123, s: 0.7235, segment: 'corner' },
-  { circuitId: 12, marker: 124, s: 0.7294, segment: 'corner' },
-  { circuitId: 12, marker: 125, s: 0.7353, segment: 'straight' },
-  { circuitId: 12, marker: 126, s: 0.7412, segment: 'hairpin' },
-  { circuitId: 12, marker: 127, s: 0.7471, segment: 'corner' },
-  { circuitId: 12, marker: 128, s: 0.7529, segment: 'corner' },
-  { circuitId: 12, marker: 129, s: 0.7588, segment: 'corner' },
-  { circuitId: 12, marker: 130, s: 0.7647, segment: 'straight' },
-  { circuitId: 12, marker: 131, s: 0.7706, segment: 'corner' },
-  { circuitId: 12, marker: 132, s: 0.7765, segment: 'chicane' },
-  { circuitId: 12, marker: 133, s: 0.7824, segment: 'hairpin' },
-  { circuitId: 12, marker: 134, s: 0.7882, segment: 'corner' },
-  { circuitId: 12, marker: 135, s: 0.7941, segment: 'straight' },
-  { circuitId: 12, marker: 136, s: 0.8000, segment: 'corner' },
-  { circuitId: 12, marker: 137, s: 0.8059, segment: 'corner' },
-  { circuitId: 12, marker: 138, s: 0.8118, segment: 'corner' },
-  { circuitId: 12, marker: 139, s: 0.8176, segment: 'corner' },
-  { circuitId: 12, marker: 140, s: 0.8235, segment: 'hairpin' },
-  { circuitId: 12, marker: 141, s: 0.8294, segment: 'corner' },
-  { circuitId: 12, marker: 142, s: 0.8353, segment: 'corner' },
-  { circuitId: 12, marker: 143, s: 0.8412, segment: 'chicane' },
-  { circuitId: 12, marker: 144, s: 0.8471, segment: 'corner' },
-  { circuitId: 12, marker: 145, s: 0.8529, segment: 'straight' },
-  { circuitId: 12, marker: 146, s: 0.8588, segment: 'corner' },
-  { circuitId: 12, marker: 147, s: 0.8647, segment: 'hairpin' },
-  { circuitId: 12, marker: 148, s: 0.8706, segment: 'corner' },
-  { circuitId: 12, marker: 149, s: 0.8765, segment: 'corner' },
-  { circuitId: 12, marker: 150, s: 0.8824, segment: 'straight' },
-  { circuitId: 12, marker: 151, s: 0.8882, segment: 'corner' },
-  { circuitId: 12, marker: 152, s: 0.8941, segment: 'corner' },
-  { circuitId: 12, marker: 153, s: 0.9000, segment: 'corner' },
-  { circuitId: 12, marker: 154, s: 0.9059, segment: 'chicane' },
-  { circuitId: 12, marker: 155, s: 0.9118, segment: 'straight' },
-  { circuitId: 12, marker: 156, s: 0.9176, segment: 'corner' },
-  { circuitId: 12, marker: 157, s: 0.9235, segment: 'corner' },
-  { circuitId: 12, marker: 158, s: 0.9294, segment: 'corner' },
-  { circuitId: 12, marker: 159, s: 0.9353, segment: 'corner' },
-  { circuitId: 12, marker: 160, s: 0.9412, segment: 'straight' },
-  { circuitId: 12, marker: 161, s: 0.9471, segment: 'hairpin' },
-  { circuitId: 12, marker: 162, s: 0.9529, segment: 'corner' },
-  { circuitId: 12, marker: 163, s: 0.9588, segment: 'corner' },
-  { circuitId: 12, marker: 164, s: 0.9647, segment: 'corner' },
-  { circuitId: 12, marker: 165, s: 0.9706, segment: 'chicane' },
-  { circuitId: 12, marker: 166, s: 0.9765, segment: 'corner' },
-  { circuitId: 12, marker: 167, s: 0.9824, segment: 'corner' },
-  { circuitId: 12, marker: 168, s: 0.9882, segment: 'hairpin' },
-  { circuitId: 12, marker: 169, s: 0.9941, segment: 'corner' },
-  { circuitId: 13, marker: 0, s: 0.0000, segment: 'chicane' },
-  { circuitId: 13, marker: 1, s: 0.0059, segment: 'corner' },
-  { circuitId: 13, marker: 2, s: 0.0118, segment: 'corner' },
-  { circuitId: 13, marker: 3, s: 0.0176, segment: 'corner' },
-  { circuitId: 13, marker: 4, s: 0.0235, segment: 'corner' },
-  { circuitId: 13, marker: 5, s: 0.0294, segment: 'straight' },
-  { circuitId: 13, marker: 6, s: 0.0353, segment: 'corner' },
-  { circuitId: 13, marker: 7, s: 0.0412, segment: 'hairpin' },
-  { circuitId: 13, marker: 8, s: 0.0471, segment: 'corner' },
-  { circuitId: 13, marker: 9, s: 0.0529, segment: 'corner' },
-  { circuitId: 13, marker: 10, s: 0.0588, segment: 'straight' },
-  { circuitId: 13, marker: 11, s: 0.0647, segment: 'chicane' },
-  { circuitId: 13, marker: 12, s: 0.0706, segment: 'corner' },
-  { circuitId: 13, marker: 13, s: 0.0765, segment: 'corner' },
-  { circuitId: 13, marker: 14, s: 0.0824, segment: 'hairpin' },
-  { circuitId: 13, marker: 15, s: 0.0882, segment: 'straight' },
-  { circuitId: 13, marker: 16, s: 0.0941, segment: 'corner' },
-  { circuitId: 13, marker: 17, s: 0.1000, segment: 'corner' },
-  { circuitId: 13, marker: 18, s: 0.1059, segment: 'corner' },
-  { circuitId: 13, marker: 19, s: 0.1118, segment: 'corner' },
-  { circuitId: 13, marker: 20, s: 0.1176, segment: 'straight' },
-  { circuitId: 13, marker: 21, s: 0.1235, segment: 'hairpin' },
-  { circuitId: 13, marker: 22, s: 0.1294, segment: 'chicane' },
-  { circuitId: 13, marker: 23, s: 0.1353, segment: 'corner' },
-  { circuitId: 13, marker: 24, s: 0.1412, segment: 'corner' },
-  { circuitId: 13, marker: 25, s: 0.1471, segment: 'straight' },
-  { circuitId: 13, marker: 26, s: 0.1529, segment: 'corner' },
-  { circuitId: 13, marker: 27, s: 0.1588, segment: 'corner' },
-  { circuitId: 13, marker: 28, s: 0.1647, segment: 'hairpin' },
-  { circuitId: 13, marker: 29, s: 0.1706, segment: 'corner' },
-  { circuitId: 13, marker: 30, s: 0.1765, segment: 'straight' },
-  { circuitId: 13, marker: 31, s: 0.1824, segment: 'corner' },
-  { circuitId: 13, marker: 32, s: 0.1882, segment: 'corner' },
-  { circuitId: 13, marker: 33, s: 0.1941, segment: 'chicane' },
-  { circuitId: 13, marker: 34, s: 0.2000, segment: 'corner' },
-  { circuitId: 13, marker: 35, s: 0.2059, segment: 'hairpin' },
-  { circuitId: 13, marker: 36, s: 0.2118, segment: 'corner' },
-  { circuitId: 13, marker: 37, s: 0.2176, segment: 'corner' },
-  { circuitId: 13, marker: 38, s: 0.2235, segment: 'corner' },
-  { circuitId: 13, marker: 39, s: 0.2294, segment: 'corner' },
-  { circuitId: 13, marker: 40, s: 0.2353, segment: 'straight' },
-  { circuitId: 13, marker: 41, s: 0.2412, segment: 'corner' },
-  { circuitId: 13, marker: 42, s: 0.2471, segment: 'hairpin' },
-  { circuitId: 13, marker: 43, s: 0.2529, segment: 'corner' },
-  { circuitId: 13, marker: 44, s: 0.2588, segment: 'chicane' },
-  { circuitId: 13, marker: 45, s: 0.2647, segment: 'straight' },
-  { circuitId: 13, marker: 46, s: 0.2706, segment: 'corner' },
-  { circuitId: 13, marker: 47, s: 0.2765, segment: 'corner' },
-  { circuitId: 13, marker: 48, s: 0.2824, segment: 'corner' },
-  { circuitId: 13, marker: 49, s: 0.2882, segment: 'hairpin' },
-  { circuitId: 13, marker: 50, s: 0.2941, segment: 'straight' },
-  { circuitId: 13, marker: 51, s: 0.3000, segment: 'corner' },
-  { circuitId: 13, marker: 52, s: 0.3059, segment: 'corner' },
-  { circuitId: 13, marker: 53, s: 0.3118, segment: 'corner' },
-  { circuitId: 13, marker: 54, s: 0.3176, segment: 'corner' },
-  { circuitId: 13, marker: 55, s: 0.3235, segment: 'chicane' },
-  { circuitId: 13, marker: 56, s: 0.3294, segment: 'hairpin' },
-  { circuitId: 13, marker: 57, s: 0.3353, segment: 'corner' },
-  { circuitId: 13, marker: 58, s: 0.3412, segment: 'corner' },
-  { circuitId: 13, marker: 59, s: 0.3471, segment: 'corner' },
-  { circuitId: 13, marker: 60, s: 0.3529, segment: 'straight' },
-  { circuitId: 13, marker: 61, s: 0.3588, segment: 'corner' },
-  { circuitId: 13, marker: 62, s: 0.3647, segment: 'corner' },
-  { circuitId: 13, marker: 63, s: 0.3706, segment: 'hairpin' },
-  { circuitId: 13, marker: 64, s: 0.3765, segment: 'corner' },
-  { circuitId: 13, marker: 65, s: 0.3824, segment: 'straight' },
-  { circuitId: 13, marker: 66, s: 0.3882, segment: 'chicane' },
-  { circuitId: 13, marker: 67, s: 0.3941, segment: 'corner' },
-  { circuitId: 13, marker: 68, s: 0.4000, segment: 'corner' },
-  { circuitId: 13, marker: 69, s: 0.4059, segment: 'corner' },
-  { circuitId: 13, marker: 70, s: 0.4118, segment: 'hairpin' },
-  { circuitId: 13, marker: 71, s: 0.4176, segment: 'corner' },
-  { circuitId: 13, marker: 72, s: 0.4235, segment: 'corner' },
-  { circuitId: 13, marker: 73, s: 0.4294, segment: 'corner' },
-  { circuitId: 13, marker: 74, s: 0.4353, segment: 'corner' },
-  { circuitId: 13, marker: 75, s: 0.4412, segment: 'straight' },
-  { circuitId: 13, marker: 76, s: 0.4471, segment: 'corner' },
-  { circuitId: 13, marker: 77, s: 0.4529, segment: 'chicane' },
-  { circuitId: 13, marker: 78, s: 0.4588, segment: 'corner' },
-  { circuitId: 13, marker: 79, s: 0.4647, segment: 'corner' },
-  { circuitId: 13, marker: 80, s: 0.4706, segment: 'straight' },
-  { circuitId: 13, marker: 81, s: 0.4765, segment: 'corner' },
-  { circuitId: 13, marker: 82, s: 0.4824, segment: 'corner' },
-  { circuitId: 13, marker: 83, s: 0.4882, segment: 'corner' },
-  { circuitId: 13, marker: 84, s: 0.4941, segment: 'hairpin' },
-  { circuitId: 13, marker: 85, s: 0.5000, segment: 'straight' },
-  { circuitId: 13, marker: 86, s: 0.5059, segment: 'corner' },
-  { circuitId: 13, marker: 87, s: 0.5118, segment: 'corner' },
-  { circuitId: 13, marker: 88, s: 0.5176, segment: 'chicane' },
-  { circuitId: 13, marker: 89, s: 0.5235, segment: 'corner' },
-  { circuitId: 13, marker: 90, s: 0.5294, segment: 'straight' },
-  { circuitId: 13, marker: 91, s: 0.5353, segment: 'hairpin' },
-  { circuitId: 13, marker: 92, s: 0.5412, segment: 'corner' },
-  { circuitId: 13, marker: 93, s: 0.5471, segment: 'corner' },
-  { circuitId: 13, marker: 94, s: 0.5529, segment: 'corner' },
-  { circuitId: 13, marker: 95, s: 0.5588, segment: 'straight' },
-  { circuitId: 13, marker: 96, s: 0.5647, segment: 'corner' },
-  { circuitId: 13, marker: 97, s: 0.5706, segment: 'corner' },
-  { circuitId: 13, marker: 98, s: 0.5765, segment: 'hairpin' },
-  { circuitId: 13, marker: 99, s: 0.5824, segment: 'chicane' },
-  { circuitId: 13, marker: 100, s: 0.5882, segment: 'straight' },
-  { circuitId: 13, marker: 101, s: 0.5941, segment: 'corner' },
-  { circuitId: 13, marker: 102, s: 0.6000, segment: 'corner' },
-  { circuitId: 13, marker: 103, s: 0.6059, segment: 'corner' },
-  { circuitId: 13, marker: 104, s: 0.6118, segment: 'corner' },
-  { circuitId: 13, marker: 105, s: 0.6176, segment: 'hairpin' },
-  { circuitId: 13, marker: 106, s: 0.6235, segment: 'corner' },
-  { circuitId: 13, marker: 107, s: 0.6294, segment: 'corner' },
-  { circuitId: 13, marker: 108, s: 0.6353, segment: 'corner' },
-  { circuitId: 13, marker: 109, s: 0.6412, segment: 'corner' },
-  { circuitId: 13, marker: 110, s: 0.6471, segment: 'chicane' },
-  { circuitId: 13, marker: 111, s: 0.6529, segment: 'corner' },
-  { circuitId: 13, marker: 112, s: 0.6588, segment: 'hairpin' },
-  { circuitId: 13, marker: 113, s: 0.6647, segment: 'corner' },
-  { circuitId: 13, marker: 114, s: 0.6706, segment: 'corner' },
-  { circuitId: 13, marker: 115, s: 0.6765, segment: 'straight' },
-  { circuitId: 13, marker: 116, s: 0.6824, segment: 'corner' },
-  { circuitId: 13, marker: 117, s: 0.6882, segment: 'corner' },
-  { circuitId: 13, marker: 118, s: 0.6941, segment: 'corner' },
-  { circuitId: 13, marker: 119, s: 0.7000, segment: 'hairpin' },
-  { circuitId: 13, marker: 120, s: 0.7059, segment: 'straight' },
-  { circuitId: 13, marker: 121, s: 0.7118, segment: 'chicane' },
-  { circuitId: 13, marker: 122, s: 0.7176, segment: 'corner' },
-  { circuitId: 13, marker: 123, s: 0.7235, segment: 'corner' },
-  { circuitId: 13, marker: 124, s: 0.7294, segment: 'corner' },
-  { circuitId: 13, marker: 125, s: 0.7353, segment: 'straight' },
-  { circuitId: 13, marker: 126, s: 0.7412, segment: 'hairpin' },
-  { circuitId: 13, marker: 127, s: 0.7471, segment: 'corner' },
-  { circuitId: 13, marker: 128, s: 0.7529, segment: 'corner' },
-  { circuitId: 13, marker: 129, s: 0.7588, segment: 'corner' },
-  { circuitId: 13, marker: 130, s: 0.7647, segment: 'straight' },
-  { circuitId: 13, marker: 131, s: 0.7706, segment: 'corner' },
-  { circuitId: 13, marker: 132, s: 0.7765, segment: 'chicane' },
-  { circuitId: 13, marker: 133, s: 0.7824, segment: 'hairpin' },
-  { circuitId: 13, marker: 134, s: 0.7882, segment: 'corner' },
-  { circuitId: 13, marker: 135, s: 0.7941, segment: 'straight' },
-  { circuitId: 13, marker: 136, s: 0.8000, segment: 'corner' },
-  { circuitId: 13, marker: 137, s: 0.8059, segment: 'corner' },
-  { circuitId: 13, marker: 138, s: 0.8118, segment: 'corner' },
-  { circuitId: 13, marker: 139, s: 0.8176, segment: 'corner' },
-  { circuitId: 13, marker: 140, s: 0.8235, segment: 'hairpin' },
-  { circuitId: 13, marker: 141, s: 0.8294, segment: 'corner' },
-  { circuitId: 13, marker: 142, s: 0.8353, segment: 'corner' },
-  { circuitId: 13, marker: 143, s: 0.8412, segment: 'chicane' },
-  { circuitId: 13, marker: 144, s: 0.8471, segment: 'corner' },
-  { circuitId: 13, marker: 145, s: 0.8529, segment: 'straight' },
-  { circuitId: 13, marker: 146, s: 0.8588, segment: 'corner' },
-  { circuitId: 13, marker: 147, s: 0.8647, segment: 'hairpin' },
-  { circuitId: 13, marker: 148, s: 0.8706, segment: 'corner' },
-  { circuitId: 13, marker: 149, s: 0.8765, segment: 'corner' },
-  { circuitId: 13, marker: 150, s: 0.8824, segment: 'straight' },
-  { circuitId: 13, marker: 151, s: 0.8882, segment: 'corner' },
-  { circuitId: 13, marker: 152, s: 0.8941, segment: 'corner' },
-  { circuitId: 13, marker: 153, s: 0.9000, segment: 'corner' },
-  { circuitId: 13, marker: 154, s: 0.9059, segment: 'chicane' },
-  { circuitId: 13, marker: 155, s: 0.9118, segment: 'straight' },
-  { circuitId: 13, marker: 156, s: 0.9176, segment: 'corner' },
-  { circuitId: 13, marker: 157, s: 0.9235, segment: 'corner' },
-  { circuitId: 13, marker: 158, s: 0.9294, segment: 'corner' },
-  { circuitId: 13, marker: 159, s: 0.9353, segment: 'corner' },
-  { circuitId: 13, marker: 160, s: 0.9412, segment: 'straight' },
-  { circuitId: 13, marker: 161, s: 0.9471, segment: 'hairpin' },
-  { circuitId: 13, marker: 162, s: 0.9529, segment: 'corner' },
-  { circuitId: 13, marker: 163, s: 0.9588, segment: 'corner' },
-  { circuitId: 13, marker: 164, s: 0.9647, segment: 'corner' },
-  { circuitId: 13, marker: 165, s: 0.9706, segment: 'chicane' },
-  { circuitId: 13, marker: 166, s: 0.9765, segment: 'corner' },
-  { circuitId: 13, marker: 167, s: 0.9824, segment: 'corner' },
-  { circuitId: 13, marker: 168, s: 0.9882, segment: 'hairpin' },
-  { circuitId: 13, marker: 169, s: 0.9941, segment: 'corner' },
-  { circuitId: 14, marker: 0, s: 0.0000, segment: 'chicane' },
-  { circuitId: 14, marker: 1, s: 0.0059, segment: 'corner' },
-  { circuitId: 14, marker: 2, s: 0.0118, segment: 'corner' },
-  { circuitId: 14, marker: 3, s: 0.0176, segment: 'corner' },
-  { circuitId: 14, marker: 4, s: 0.0235, segment: 'corner' },
-  { circuitId: 14, marker: 5, s: 0.0294, segment: 'straight' },
-  { circuitId: 14, marker: 6, s: 0.0353, segment: 'corner' },
-  { circuitId: 14, marker: 7, s: 0.0412, segment: 'hairpin' },
-  { circuitId: 14, marker: 8, s: 0.0471, segment: 'corner' },
-  { circuitId: 14, marker: 9, s: 0.0529, segment: 'corner' },
-  { circuitId: 14, marker: 10, s: 0.0588, segment: 'straight' },
-  { circuitId: 14, marker: 11, s: 0.0647, segment: 'chicane' },
-  { circuitId: 14, marker: 12, s: 0.0706, segment: 'corner' },
-  { circuitId: 14, marker: 13, s: 0.0765, segment: 'corner' },
-  { circuitId: 14, marker: 14, s: 0.0824, segment: 'hairpin' },
-  { circuitId: 14, marker: 15, s: 0.0882, segment: 'straight' },
-  { circuitId: 14, marker: 16, s: 0.0941, segment: 'corner' },
-  { circuitId: 14, marker: 17, s: 0.1000, segment: 'corner' },
-  { circuitId: 14, marker: 18, s: 0.1059, segment: 'corner' },
-  { circuitId: 14, marker: 19, s: 0.1118, segment: 'corner' },
-  { circuitId: 14, marker: 20, s: 0.1176, segment: 'straight' },
-  { circuitId: 14, marker: 21, s: 0.1235, segment: 'hairpin' },
-  { circuitId: 14, marker: 22, s: 0.1294, segment: 'chicane' },
-  { circuitId: 14, marker: 23, s: 0.1353, segment: 'corner' },
-  { circuitId: 14, marker: 24, s: 0.1412, segment: 'corner' },
-  { circuitId: 14, marker: 25, s: 0.1471, segment: 'straight' },
-  { circuitId: 14, marker: 26, s: 0.1529, segment: 'corner' },
-  { circuitId: 14, marker: 27, s: 0.1588, segment: 'corner' },
-  { circuitId: 14, marker: 28, s: 0.1647, segment: 'hairpin' },
-  { circuitId: 14, marker: 29, s: 0.1706, segment: 'corner' },
-  { circuitId: 14, marker: 30, s: 0.1765, segment: 'straight' },
-  { circuitId: 14, marker: 31, s: 0.1824, segment: 'corner' },
-  { circuitId: 14, marker: 32, s: 0.1882, segment: 'corner' },
-  { circuitId: 14, marker: 33, s: 0.1941, segment: 'chicane' },
-  { circuitId: 14, marker: 34, s: 0.2000, segment: 'corner' },
-  { circuitId: 14, marker: 35, s: 0.2059, segment: 'hairpin' },
-  { circuitId: 14, marker: 36, s: 0.2118, segment: 'corner' },
-  { circuitId: 14, marker: 37, s: 0.2176, segment: 'corner' },
-  { circuitId: 14, marker: 38, s: 0.2235, segment: 'corner' },
-  { circuitId: 14, marker: 39, s: 0.2294, segment: 'corner' },
-  { circuitId: 14, marker: 40, s: 0.2353, segment: 'straight' },
-  { circuitId: 14, marker: 41, s: 0.2412, segment: 'corner' },
-  { circuitId: 14, marker: 42, s: 0.2471, segment: 'hairpin' },
-  { circuitId: 14, marker: 43, s: 0.2529, segment: 'corner' },
-  { circuitId: 14, marker: 44, s: 0.2588, segment: 'chicane' },
-  { circuitId: 14, marker: 45, s: 0.2647, segment: 'straight' },
-  { circuitId: 14, marker: 46, s: 0.2706, segment: 'corner' },
-  { circuitId: 14, marker: 47, s: 0.2765, segment: 'corner' },
-  { circuitId: 14, marker: 48, s: 0.2824, segment: 'corner' },
-  { circuitId: 14, marker: 49, s: 0.2882, segment: 'hairpin' },
-  { circuitId: 14, marker: 50, s: 0.2941, segment: 'straight' },
-  { circuitId: 14, marker: 51, s: 0.3000, segment: 'corner' },
-  { circuitId: 14, marker: 52, s: 0.3059, segment: 'corner' },
-  { circuitId: 14, marker: 53, s: 0.3118, segment: 'corner' },
-  { circuitId: 14, marker: 54, s: 0.3176, segment: 'corner' },
-  { circuitId: 14, marker: 55, s: 0.3235, segment: 'chicane' },
-  { circuitId: 14, marker: 56, s: 0.3294, segment: 'hairpin' },
-  { circuitId: 14, marker: 57, s: 0.3353, segment: 'corner' },
-  { circuitId: 14, marker: 58, s: 0.3412, segment: 'corner' },
-  { circuitId: 14, marker: 59, s: 0.3471, segment: 'corner' },
-  { circuitId: 14, marker: 60, s: 0.3529, segment: 'straight' },
-  { circuitId: 14, marker: 61, s: 0.3588, segment: 'corner' },
-  { circuitId: 14, marker: 62, s: 0.3647, segment: 'corner' },
-  { circuitId: 14, marker: 63, s: 0.3706, segment: 'hairpin' },
-  { circuitId: 14, marker: 64, s: 0.3765, segment: 'corner' },
-  { circuitId: 14, marker: 65, s: 0.3824, segment: 'straight' },
-  { circuitId: 14, marker: 66, s: 0.3882, segment: 'chicane' },
-  { circuitId: 14, marker: 67, s: 0.3941, segment: 'corner' },
-  { circuitId: 14, marker: 68, s: 0.4000, segment: 'corner' },
-  { circuitId: 14, marker: 69, s: 0.4059, segment: 'corner' },
-  { circuitId: 14, marker: 70, s: 0.4118, segment: 'hairpin' },
-  { circuitId: 14, marker: 71, s: 0.4176, segment: 'corner' },
-  { circuitId: 14, marker: 72, s: 0.4235, segment: 'corner' },
-  { circuitId: 14, marker: 73, s: 0.4294, segment: 'corner' },
-  { circuitId: 14, marker: 74, s: 0.4353, segment: 'corner' },
-  { circuitId: 14, marker: 75, s: 0.4412, segment: 'straight' },
-  { circuitId: 14, marker: 76, s: 0.4471, segment: 'corner' },
-  { circuitId: 14, marker: 77, s: 0.4529, segment: 'chicane' },
-  { circuitId: 14, marker: 78, s: 0.4588, segment: 'corner' },
-  { circuitId: 14, marker: 79, s: 0.4647, segment: 'corner' },
-  { circuitId: 14, marker: 80, s: 0.4706, segment: 'straight' },
-  { circuitId: 14, marker: 81, s: 0.4765, segment: 'corner' },
-  { circuitId: 14, marker: 82, s: 0.4824, segment: 'corner' },
-  { circuitId: 14, marker: 83, s: 0.4882, segment: 'corner' },
-  { circuitId: 14, marker: 84, s: 0.4941, segment: 'hairpin' },
-  { circuitId: 14, marker: 85, s: 0.5000, segment: 'straight' },
-  { circuitId: 14, marker: 86, s: 0.5059, segment: 'corner' },
-  { circuitId: 14, marker: 87, s: 0.5118, segment: 'corner' },
-  { circuitId: 14, marker: 88, s: 0.5176, segment: 'chicane' },
-  { circuitId: 14, marker: 89, s: 0.5235, segment: 'corner' },
-  { circuitId: 14, marker: 90, s: 0.5294, segment: 'straight' },
-  { circuitId: 14, marker: 91, s: 0.5353, segment: 'hairpin' },
-  { circuitId: 14, marker: 92, s: 0.5412, segment: 'corner' },
-  { circuitId: 14, marker: 93, s: 0.5471, segment: 'corner' },
-  { circuitId: 14, marker: 94, s: 0.5529, segment: 'corner' },
-  { circuitId: 14, marker: 95, s: 0.5588, segment: 'straight' },
-  { circuitId: 14, marker: 96, s: 0.5647, segment: 'corner' },
-  { circuitId: 14, marker: 97, s: 0.5706, segment: 'corner' },
-  { circuitId: 14, marker: 98, s: 0.5765, segment: 'hairpin' },
-  { circuitId: 14, marker: 99, s: 0.5824, segment: 'chicane' },
-  { circuitId: 14, marker: 100, s: 0.5882, segment: 'straight' },
-  { circuitId: 14, marker: 101, s: 0.5941, segment: 'corner' },
-  { circuitId: 14, marker: 102, s: 0.6000, segment: 'corner' },
-  { circuitId: 14, marker: 103, s: 0.6059, segment: 'corner' },
-  { circuitId: 14, marker: 104, s: 0.6118, segment: 'corner' },
-  { circuitId: 14, marker: 105, s: 0.6176, segment: 'hairpin' },
-  { circuitId: 14, marker: 106, s: 0.6235, segment: 'corner' },
-  { circuitId: 14, marker: 107, s: 0.6294, segment: 'corner' },
-  { circuitId: 14, marker: 108, s: 0.6353, segment: 'corner' },
-  { circuitId: 14, marker: 109, s: 0.6412, segment: 'corner' },
-  { circuitId: 14, marker: 110, s: 0.6471, segment: 'chicane' },
-  { circuitId: 14, marker: 111, s: 0.6529, segment: 'corner' },
-  { circuitId: 14, marker: 112, s: 0.6588, segment: 'hairpin' },
-  { circuitId: 14, marker: 113, s: 0.6647, segment: 'corner' },
-  { circuitId: 14, marker: 114, s: 0.6706, segment: 'corner' },
-  { circuitId: 14, marker: 115, s: 0.6765, segment: 'straight' },
-  { circuitId: 14, marker: 116, s: 0.6824, segment: 'corner' },
-  { circuitId: 14, marker: 117, s: 0.6882, segment: 'corner' },
-  { circuitId: 14, marker: 118, s: 0.6941, segment: 'corner' },
-  { circuitId: 14, marker: 119, s: 0.7000, segment: 'hairpin' },
-  { circuitId: 14, marker: 120, s: 0.7059, segment: 'straight' },
-  { circuitId: 14, marker: 121, s: 0.7118, segment: 'chicane' },
-  { circuitId: 14, marker: 122, s: 0.7176, segment: 'corner' },
-  { circuitId: 14, marker: 123, s: 0.7235, segment: 'corner' },
-  { circuitId: 14, marker: 124, s: 0.7294, segment: 'corner' },
-  { circuitId: 14, marker: 125, s: 0.7353, segment: 'straight' },
-  { circuitId: 14, marker: 126, s: 0.7412, segment: 'hairpin' },
-  { circuitId: 14, marker: 127, s: 0.7471, segment: 'corner' },
-  { circuitId: 14, marker: 128, s: 0.7529, segment: 'corner' },
-  { circuitId: 14, marker: 129, s: 0.7588, segment: 'corner' },
-  { circuitId: 14, marker: 130, s: 0.7647, segment: 'straight' },
-  { circuitId: 14, marker: 131, s: 0.7706, segment: 'corner' },
-  { circuitId: 14, marker: 132, s: 0.7765, segment: 'chicane' },
-  { circuitId: 14, marker: 133, s: 0.7824, segment: 'hairpin' },
-  { circuitId: 14, marker: 134, s: 0.7882, segment: 'corner' },
-  { circuitId: 14, marker: 135, s: 0.7941, segment: 'straight' },
-  { circuitId: 14, marker: 136, s: 0.8000, segment: 'corner' },
-  { circuitId: 14, marker: 137, s: 0.8059, segment: 'corner' },
-  { circuitId: 14, marker: 138, s: 0.8118, segment: 'corner' },
-  { circuitId: 14, marker: 139, s: 0.8176, segment: 'corner' },
-  { circuitId: 14, marker: 140, s: 0.8235, segment: 'hairpin' },
-  { circuitId: 14, marker: 141, s: 0.8294, segment: 'corner' },
-  { circuitId: 14, marker: 142, s: 0.8353, segment: 'corner' },
-  { circuitId: 14, marker: 143, s: 0.8412, segment: 'chicane' },
-  { circuitId: 14, marker: 144, s: 0.8471, segment: 'corner' },
-  { circuitId: 14, marker: 145, s: 0.8529, segment: 'straight' },
-  { circuitId: 14, marker: 146, s: 0.8588, segment: 'corner' },
-  { circuitId: 14, marker: 147, s: 0.8647, segment: 'hairpin' },
-  { circuitId: 14, marker: 148, s: 0.8706, segment: 'corner' },
-  { circuitId: 14, marker: 149, s: 0.8765, segment: 'corner' },
-  { circuitId: 14, marker: 150, s: 0.8824, segment: 'straight' },
-  { circuitId: 14, marker: 151, s: 0.8882, segment: 'corner' },
-  { circuitId: 14, marker: 152, s: 0.8941, segment: 'corner' },
-  { circuitId: 14, marker: 153, s: 0.9000, segment: 'corner' },
-  { circuitId: 14, marker: 154, s: 0.9059, segment: 'chicane' },
-  { circuitId: 14, marker: 155, s: 0.9118, segment: 'straight' },
-  { circuitId: 14, marker: 156, s: 0.9176, segment: 'corner' },
-  { circuitId: 14, marker: 157, s: 0.9235, segment: 'corner' },
-  { circuitId: 14, marker: 158, s: 0.9294, segment: 'corner' },
-  { circuitId: 14, marker: 159, s: 0.9353, segment: 'corner' },
-  { circuitId: 14, marker: 160, s: 0.9412, segment: 'straight' },
-  { circuitId: 14, marker: 161, s: 0.9471, segment: 'hairpin' },
-  { circuitId: 14, marker: 162, s: 0.9529, segment: 'corner' },
-  { circuitId: 14, marker: 163, s: 0.9588, segment: 'corner' },
-  { circuitId: 14, marker: 164, s: 0.9647, segment: 'corner' },
-  { circuitId: 14, marker: 165, s: 0.9706, segment: 'chicane' },
-  { circuitId: 14, marker: 166, s: 0.9765, segment: 'corner' },
-  { circuitId: 14, marker: 167, s: 0.9824, segment: 'corner' },
-  { circuitId: 14, marker: 168, s: 0.9882, segment: 'hairpin' },
-  { circuitId: 14, marker: 169, s: 0.9941, segment: 'corner' },
-  { circuitId: 15, marker: 0, s: 0.0000, segment: 'chicane' },
-  { circuitId: 15, marker: 1, s: 0.0059, segment: 'corner' },
-  { circuitId: 15, marker: 2, s: 0.0118, segment: 'corner' },
-  { circuitId: 15, marker: 3, s: 0.0176, segment: 'corner' },
-  { circuitId: 15, marker: 4, s: 0.0235, segment: 'corner' },
-  { circuitId: 15, marker: 5, s: 0.0294, segment: 'straight' },
-  { circuitId: 15, marker: 6, s: 0.0353, segment: 'corner' },
-  { circuitId: 15, marker: 7, s: 0.0412, segment: 'hairpin' },
-  { circuitId: 15, marker: 8, s: 0.0471, segment: 'corner' },
-  { circuitId: 15, marker: 9, s: 0.0529, segment: 'corner' },
-  { circuitId: 15, marker: 10, s: 0.0588, segment: 'straight' },
-  { circuitId: 15, marker: 11, s: 0.0647, segment: 'chicane' },
-  { circuitId: 15, marker: 12, s: 0.0706, segment: 'corner' },
-  { circuitId: 15, marker: 13, s: 0.0765, segment: 'corner' },
-  { circuitId: 15, marker: 14, s: 0.0824, segment: 'hairpin' },
-  { circuitId: 15, marker: 15, s: 0.0882, segment: 'straight' },
-  { circuitId: 15, marker: 16, s: 0.0941, segment: 'corner' },
-  { circuitId: 15, marker: 17, s: 0.1000, segment: 'corner' },
-  { circuitId: 15, marker: 18, s: 0.1059, segment: 'corner' },
-  { circuitId: 15, marker: 19, s: 0.1118, segment: 'corner' },
-  { circuitId: 15, marker: 20, s: 0.1176, segment: 'straight' },
-  { circuitId: 15, marker: 21, s: 0.1235, segment: 'hairpin' },
-  { circuitId: 15, marker: 22, s: 0.1294, segment: 'chicane' },
-  { circuitId: 15, marker: 23, s: 0.1353, segment: 'corner' },
-  { circuitId: 15, marker: 24, s: 0.1412, segment: 'corner' },
-  { circuitId: 15, marker: 25, s: 0.1471, segment: 'straight' },
-  { circuitId: 15, marker: 26, s: 0.1529, segment: 'corner' },
-  { circuitId: 15, marker: 27, s: 0.1588, segment: 'corner' },
-  { circuitId: 15, marker: 28, s: 0.1647, segment: 'hairpin' },
-  { circuitId: 15, marker: 29, s: 0.1706, segment: 'corner' },
-  { circuitId: 15, marker: 30, s: 0.1765, segment: 'straight' },
-  { circuitId: 15, marker: 31, s: 0.1824, segment: 'corner' },
-  { circuitId: 15, marker: 32, s: 0.1882, segment: 'corner' },
-  { circuitId: 15, marker: 33, s: 0.1941, segment: 'chicane' },
-  { circuitId: 15, marker: 34, s: 0.2000, segment: 'corner' },
-  { circuitId: 15, marker: 35, s: 0.2059, segment: 'hairpin' },
-  { circuitId: 15, marker: 36, s: 0.2118, segment: 'corner' },
-  { circuitId: 15, marker: 37, s: 0.2176, segment: 'corner' },
-  { circuitId: 15, marker: 38, s: 0.2235, segment: 'corner' },
-  { circuitId: 15, marker: 39, s: 0.2294, segment: 'corner' },
-  { circuitId: 15, marker: 40, s: 0.2353, segment: 'straight' },
-  { circuitId: 15, marker: 41, s: 0.2412, segment: 'corner' },
-  { circuitId: 15, marker: 42, s: 0.2471, segment: 'hairpin' },
-  { circuitId: 15, marker: 43, s: 0.2529, segment: 'corner' },
-  { circuitId: 15, marker: 44, s: 0.2588, segment: 'chicane' },
-  { circuitId: 15, marker: 45, s: 0.2647, segment: 'straight' },
-  { circuitId: 15, marker: 46, s: 0.2706, segment: 'corner' },
-  { circuitId: 15, marker: 47, s: 0.2765, segment: 'corner' },
-  { circuitId: 15, marker: 48, s: 0.2824, segment: 'corner' },
-  { circuitId: 15, marker: 49, s: 0.2882, segment: 'hairpin' },
-  { circuitId: 15, marker: 50, s: 0.2941, segment: 'straight' },
-  { circuitId: 15, marker: 51, s: 0.3000, segment: 'corner' },
-  { circuitId: 15, marker: 52, s: 0.3059, segment: 'corner' },
-  { circuitId: 15, marker: 53, s: 0.3118, segment: 'corner' },
-  { circuitId: 15, marker: 54, s: 0.3176, segment: 'corner' },
-  { circuitId: 15, marker: 55, s: 0.3235, segment: 'chicane' },
-  { circuitId: 15, marker: 56, s: 0.3294, segment: 'hairpin' },
-  { circuitId: 15, marker: 57, s: 0.3353, segment: 'corner' },
-  { circuitId: 15, marker: 58, s: 0.3412, segment: 'corner' },
-  { circuitId: 15, marker: 59, s: 0.3471, segment: 'corner' },
-  { circuitId: 15, marker: 60, s: 0.3529, segment: 'straight' },
-  { circuitId: 15, marker: 61, s: 0.3588, segment: 'corner' },
-  { circuitId: 15, marker: 62, s: 0.3647, segment: 'corner' },
-  { circuitId: 15, marker: 63, s: 0.3706, segment: 'hairpin' },
-  { circuitId: 15, marker: 64, s: 0.3765, segment: 'corner' },
-  { circuitId: 15, marker: 65, s: 0.3824, segment: 'straight' },
-  { circuitId: 15, marker: 66, s: 0.3882, segment: 'chicane' },
-  { circuitId: 15, marker: 67, s: 0.3941, segment: 'corner' },
-  { circuitId: 15, marker: 68, s: 0.4000, segment: 'corner' },
-  { circuitId: 15, marker: 69, s: 0.4059, segment: 'corner' },
-  { circuitId: 15, marker: 70, s: 0.4118, segment: 'hairpin' },
-  { circuitId: 15, marker: 71, s: 0.4176, segment: 'corner' },
-  { circuitId: 15, marker: 72, s: 0.4235, segment: 'corner' },
-  { circuitId: 15, marker: 73, s: 0.4294, segment: 'corner' },
-  { circuitId: 15, marker: 74, s: 0.4353, segment: 'corner' },
-  { circuitId: 15, marker: 75, s: 0.4412, segment: 'straight' },
-  { circuitId: 15, marker: 76, s: 0.4471, segment: 'corner' },
-  { circuitId: 15, marker: 77, s: 0.4529, segment: 'chicane' },
-  { circuitId: 15, marker: 78, s: 0.4588, segment: 'corner' },
-  { circuitId: 15, marker: 79, s: 0.4647, segment: 'corner' },
-  { circuitId: 15, marker: 80, s: 0.4706, segment: 'straight' },
-  { circuitId: 15, marker: 81, s: 0.4765, segment: 'corner' },
-  { circuitId: 15, marker: 82, s: 0.4824, segment: 'corner' },
-  { circuitId: 15, marker: 83, s: 0.4882, segment: 'corner' },
-  { circuitId: 15, marker: 84, s: 0.4941, segment: 'hairpin' },
-  { circuitId: 15, marker: 85, s: 0.5000, segment: 'straight' },
-  { circuitId: 15, marker: 86, s: 0.5059, segment: 'corner' },
-  { circuitId: 15, marker: 87, s: 0.5118, segment: 'corner' },
-  { circuitId: 15, marker: 88, s: 0.5176, segment: 'chicane' },
-  { circuitId: 15, marker: 89, s: 0.5235, segment: 'corner' },
-  { circuitId: 15, marker: 90, s: 0.5294, segment: 'straight' },
-  { circuitId: 15, marker: 91, s: 0.5353, segment: 'hairpin' },
-  { circuitId: 15, marker: 92, s: 0.5412, segment: 'corner' },
-  { circuitId: 15, marker: 93, s: 0.5471, segment: 'corner' },
-  { circuitId: 15, marker: 94, s: 0.5529, segment: 'corner' },
-  { circuitId: 15, marker: 95, s: 0.5588, segment: 'straight' },
-  { circuitId: 15, marker: 96, s: 0.5647, segment: 'corner' },
-  { circuitId: 15, marker: 97, s: 0.5706, segment: 'corner' },
-  { circuitId: 15, marker: 98, s: 0.5765, segment: 'hairpin' },
-  { circuitId: 15, marker: 99, s: 0.5824, segment: 'chicane' },
-  { circuitId: 15, marker: 100, s: 0.5882, segment: 'straight' },
-  { circuitId: 15, marker: 101, s: 0.5941, segment: 'corner' },
-  { circuitId: 15, marker: 102, s: 0.6000, segment: 'corner' },
-  { circuitId: 15, marker: 103, s: 0.6059, segment: 'corner' },
-  { circuitId: 15, marker: 104, s: 0.6118, segment: 'corner' },
-  { circuitId: 15, marker: 105, s: 0.6176, segment: 'hairpin' },
-  { circuitId: 15, marker: 106, s: 0.6235, segment: 'corner' },
-  { circuitId: 15, marker: 107, s: 0.6294, segment: 'corner' },
-  { circuitId: 15, marker: 108, s: 0.6353, segment: 'corner' },
-  { circuitId: 15, marker: 109, s: 0.6412, segment: 'corner' },
-  { circuitId: 15, marker: 110, s: 0.6471, segment: 'chicane' },
-  { circuitId: 15, marker: 111, s: 0.6529, segment: 'corner' },
-  { circuitId: 15, marker: 112, s: 0.6588, segment: 'hairpin' },
-  { circuitId: 15, marker: 113, s: 0.6647, segment: 'corner' },
-  { circuitId: 15, marker: 114, s: 0.6706, segment: 'corner' },
-  { circuitId: 15, marker: 115, s: 0.6765, segment: 'straight' },
-  { circuitId: 15, marker: 116, s: 0.6824, segment: 'corner' },
-  { circuitId: 15, marker: 117, s: 0.6882, segment: 'corner' },
-  { circuitId: 15, marker: 118, s: 0.6941, segment: 'corner' },
-  { circuitId: 15, marker: 119, s: 0.7000, segment: 'hairpin' },
-  { circuitId: 15, marker: 120, s: 0.7059, segment: 'straight' },
-  { circuitId: 15, marker: 121, s: 0.7118, segment: 'chicane' },
-  { circuitId: 15, marker: 122, s: 0.7176, segment: 'corner' },
-  { circuitId: 15, marker: 123, s: 0.7235, segment: 'corner' },
-  { circuitId: 15, marker: 124, s: 0.7294, segment: 'corner' },
-  { circuitId: 15, marker: 125, s: 0.7353, segment: 'straight' },
-  { circuitId: 15, marker: 126, s: 0.7412, segment: 'hairpin' },
-  { circuitId: 15, marker: 127, s: 0.7471, segment: 'corner' },
-  { circuitId: 15, marker: 128, s: 0.7529, segment: 'corner' },
-  { circuitId: 15, marker: 129, s: 0.7588, segment: 'corner' },
-  { circuitId: 15, marker: 130, s: 0.7647, segment: 'straight' },
-  { circuitId: 15, marker: 131, s: 0.7706, segment: 'corner' },
-  { circuitId: 15, marker: 132, s: 0.7765, segment: 'chicane' },
-  { circuitId: 15, marker: 133, s: 0.7824, segment: 'hairpin' },
-  { circuitId: 15, marker: 134, s: 0.7882, segment: 'corner' },
-  { circuitId: 15, marker: 135, s: 0.7941, segment: 'straight' },
-  { circuitId: 15, marker: 136, s: 0.8000, segment: 'corner' },
-  { circuitId: 15, marker: 137, s: 0.8059, segment: 'corner' },
-  { circuitId: 15, marker: 138, s: 0.8118, segment: 'corner' },
-  { circuitId: 15, marker: 139, s: 0.8176, segment: 'corner' },
-  { circuitId: 15, marker: 140, s: 0.8235, segment: 'hairpin' },
-  { circuitId: 15, marker: 141, s: 0.8294, segment: 'corner' },
-  { circuitId: 15, marker: 142, s: 0.8353, segment: 'corner' },
-  { circuitId: 15, marker: 143, s: 0.8412, segment: 'chicane' },
-  { circuitId: 15, marker: 144, s: 0.8471, segment: 'corner' },
-  { circuitId: 15, marker: 145, s: 0.8529, segment: 'straight' },
-  { circuitId: 15, marker: 146, s: 0.8588, segment: 'corner' },
-  { circuitId: 15, marker: 147, s: 0.8647, segment: 'hairpin' },
-  { circuitId: 15, marker: 148, s: 0.8706, segment: 'corner' },
-  { circuitId: 15, marker: 149, s: 0.8765, segment: 'corner' },
-  { circuitId: 15, marker: 150, s: 0.8824, segment: 'straight' },
-  { circuitId: 15, marker: 151, s: 0.8882, segment: 'corner' },
-  { circuitId: 15, marker: 152, s: 0.8941, segment: 'corner' },
-  { circuitId: 15, marker: 153, s: 0.9000, segment: 'corner' },
-  { circuitId: 15, marker: 154, s: 0.9059, segment: 'chicane' },
-  { circuitId: 15, marker: 155, s: 0.9118, segment: 'straight' },
-  { circuitId: 15, marker: 156, s: 0.9176, segment: 'corner' },
-  { circuitId: 15, marker: 157, s: 0.9235, segment: 'corner' },
-  { circuitId: 15, marker: 158, s: 0.9294, segment: 'corner' },
-  { circuitId: 15, marker: 159, s: 0.9353, segment: 'corner' },
-  { circuitId: 15, marker: 160, s: 0.9412, segment: 'straight' },
-  { circuitId: 15, marker: 161, s: 0.9471, segment: 'hairpin' },
-  { circuitId: 15, marker: 162, s: 0.9529, segment: 'corner' },
-  { circuitId: 15, marker: 163, s: 0.9588, segment: 'corner' },
-  { circuitId: 15, marker: 164, s: 0.9647, segment: 'corner' },
-  { circuitId: 15, marker: 165, s: 0.9706, segment: 'chicane' },
-  { circuitId: 15, marker: 166, s: 0.9765, segment: 'corner' },
-  { circuitId: 15, marker: 167, s: 0.9824, segment: 'corner' },
-  { circuitId: 15, marker: 168, s: 0.9882, segment: 'hairpin' },
-  { circuitId: 15, marker: 169, s: 0.9941, segment: 'corner' },
-  { circuitId: 16, marker: 0, s: 0.0000, segment: 'chicane' },
-  { circuitId: 16, marker: 1, s: 0.0059, segment: 'corner' },
-  { circuitId: 16, marker: 2, s: 0.0118, segment: 'corner' },
-  { circuitId: 16, marker: 3, s: 0.0176, segment: 'corner' },
-  { circuitId: 16, marker: 4, s: 0.0235, segment: 'corner' },
-  { circuitId: 16, marker: 5, s: 0.0294, segment: 'straight' },
-  { circuitId: 16, marker: 6, s: 0.0353, segment: 'corner' },
-  { circuitId: 16, marker: 7, s: 0.0412, segment: 'hairpin' },
-  { circuitId: 16, marker: 8, s: 0.0471, segment: 'corner' },
-  { circuitId: 16, marker: 9, s: 0.0529, segment: 'corner' },
-  { circuitId: 16, marker: 10, s: 0.0588, segment: 'straight' },
-  { circuitId: 16, marker: 11, s: 0.0647, segment: 'chicane' },
-  { circuitId: 16, marker: 12, s: 0.0706, segment: 'corner' },
-  { circuitId: 16, marker: 13, s: 0.0765, segment: 'corner' },
-  { circuitId: 16, marker: 14, s: 0.0824, segment: 'hairpin' },
-  { circuitId: 16, marker: 15, s: 0.0882, segment: 'straight' },
-  { circuitId: 16, marker: 16, s: 0.0941, segment: 'corner' },
-  { circuitId: 16, marker: 17, s: 0.1000, segment: 'corner' },
-  { circuitId: 16, marker: 18, s: 0.1059, segment: 'corner' },
-  { circuitId: 16, marker: 19, s: 0.1118, segment: 'corner' },
-  { circuitId: 16, marker: 20, s: 0.1176, segment: 'straight' },
-  { circuitId: 16, marker: 21, s: 0.1235, segment: 'hairpin' },
-  { circuitId: 16, marker: 22, s: 0.1294, segment: 'chicane' },
-  { circuitId: 16, marker: 23, s: 0.1353, segment: 'corner' },
-  { circuitId: 16, marker: 24, s: 0.1412, segment: 'corner' },
-  { circuitId: 16, marker: 25, s: 0.1471, segment: 'straight' },
-  { circuitId: 16, marker: 26, s: 0.1529, segment: 'corner' },
-  { circuitId: 16, marker: 27, s: 0.1588, segment: 'corner' },
-  { circuitId: 16, marker: 28, s: 0.1647, segment: 'hairpin' },
-  { circuitId: 16, marker: 29, s: 0.1706, segment: 'corner' },
-  { circuitId: 16, marker: 30, s: 0.1765, segment: 'straight' },
-  { circuitId: 16, marker: 31, s: 0.1824, segment: 'corner' },
-  { circuitId: 16, marker: 32, s: 0.1882, segment: 'corner' },
-  { circuitId: 16, marker: 33, s: 0.1941, segment: 'chicane' },
-  { circuitId: 16, marker: 34, s: 0.2000, segment: 'corner' },
-  { circuitId: 16, marker: 35, s: 0.2059, segment: 'hairpin' },
-  { circuitId: 16, marker: 36, s: 0.2118, segment: 'corner' },
-  { circuitId: 16, marker: 37, s: 0.2176, segment: 'corner' },
-  { circuitId: 16, marker: 38, s: 0.2235, segment: 'corner' },
-  { circuitId: 16, marker: 39, s: 0.2294, segment: 'corner' },
-  { circuitId: 16, marker: 40, s: 0.2353, segment: 'straight' },
-  { circuitId: 16, marker: 41, s: 0.2412, segment: 'corner' },
-  { circuitId: 16, marker: 42, s: 0.2471, segment: 'hairpin' },
-  { circuitId: 16, marker: 43, s: 0.2529, segment: 'corner' },
-  { circuitId: 16, marker: 44, s: 0.2588, segment: 'chicane' },
-  { circuitId: 16, marker: 45, s: 0.2647, segment: 'straight' },
-  { circuitId: 16, marker: 46, s: 0.2706, segment: 'corner' },
-  { circuitId: 16, marker: 47, s: 0.2765, segment: 'corner' },
-  { circuitId: 16, marker: 48, s: 0.2824, segment: 'corner' },
-  { circuitId: 16, marker: 49, s: 0.2882, segment: 'hairpin' },
-  { circuitId: 16, marker: 50, s: 0.2941, segment: 'straight' },
-  { circuitId: 16, marker: 51, s: 0.3000, segment: 'corner' },
-  { circuitId: 16, marker: 52, s: 0.3059, segment: 'corner' },
-  { circuitId: 16, marker: 53, s: 0.3118, segment: 'corner' },
-  { circuitId: 16, marker: 54, s: 0.3176, segment: 'corner' },
-  { circuitId: 16, marker: 55, s: 0.3235, segment: 'chicane' },
-  { circuitId: 16, marker: 56, s: 0.3294, segment: 'hairpin' },
-  { circuitId: 16, marker: 57, s: 0.3353, segment: 'corner' },
-  { circuitId: 16, marker: 58, s: 0.3412, segment: 'corner' },
-  { circuitId: 16, marker: 59, s: 0.3471, segment: 'corner' },
-  { circuitId: 16, marker: 60, s: 0.3529, segment: 'straight' },
-  { circuitId: 16, marker: 61, s: 0.3588, segment: 'corner' },
-  { circuitId: 16, marker: 62, s: 0.3647, segment: 'corner' },
-  { circuitId: 16, marker: 63, s: 0.3706, segment: 'hairpin' },
-  { circuitId: 16, marker: 64, s: 0.3765, segment: 'corner' },
-  { circuitId: 16, marker: 65, s: 0.3824, segment: 'straight' },
-  { circuitId: 16, marker: 66, s: 0.3882, segment: 'chicane' },
-  { circuitId: 16, marker: 67, s: 0.3941, segment: 'corner' },
-  { circuitId: 16, marker: 68, s: 0.4000, segment: 'corner' },
-  { circuitId: 16, marker: 69, s: 0.4059, segment: 'corner' },
-  { circuitId: 16, marker: 70, s: 0.4118, segment: 'hairpin' },
-  { circuitId: 16, marker: 71, s: 0.4176, segment: 'corner' },
-  { circuitId: 16, marker: 72, s: 0.4235, segment: 'corner' },
-  { circuitId: 16, marker: 73, s: 0.4294, segment: 'corner' },
-  { circuitId: 16, marker: 74, s: 0.4353, segment: 'corner' },
-  { circuitId: 16, marker: 75, s: 0.4412, segment: 'straight' },
-  { circuitId: 16, marker: 76, s: 0.4471, segment: 'corner' },
-  { circuitId: 16, marker: 77, s: 0.4529, segment: 'chicane' },
-  { circuitId: 16, marker: 78, s: 0.4588, segment: 'corner' },
-  { circuitId: 16, marker: 79, s: 0.4647, segment: 'corner' },
-  { circuitId: 16, marker: 80, s: 0.4706, segment: 'straight' },
-  { circuitId: 16, marker: 81, s: 0.4765, segment: 'corner' },
-  { circuitId: 16, marker: 82, s: 0.4824, segment: 'corner' },
-  { circuitId: 16, marker: 83, s: 0.4882, segment: 'corner' },
-  { circuitId: 16, marker: 84, s: 0.4941, segment: 'hairpin' },
-  { circuitId: 16, marker: 85, s: 0.5000, segment: 'straight' },
-  { circuitId: 16, marker: 86, s: 0.5059, segment: 'corner' },
-  { circuitId: 16, marker: 87, s: 0.5118, segment: 'corner' },
-  { circuitId: 16, marker: 88, s: 0.5176, segment: 'chicane' },
-  { circuitId: 16, marker: 89, s: 0.5235, segment: 'corner' },
-  { circuitId: 16, marker: 90, s: 0.5294, segment: 'straight' },
-  { circuitId: 16, marker: 91, s: 0.5353, segment: 'hairpin' },
-  { circuitId: 16, marker: 92, s: 0.5412, segment: 'corner' },
-  { circuitId: 16, marker: 93, s: 0.5471, segment: 'corner' },
-  { circuitId: 16, marker: 94, s: 0.5529, segment: 'corner' },
-  { circuitId: 16, marker: 95, s: 0.5588, segment: 'straight' },
-  { circuitId: 16, marker: 96, s: 0.5647, segment: 'corner' },
-  { circuitId: 16, marker: 97, s: 0.5706, segment: 'corner' },
-  { circuitId: 16, marker: 98, s: 0.5765, segment: 'hairpin' },
-  { circuitId: 16, marker: 99, s: 0.5824, segment: 'chicane' },
-  { circuitId: 16, marker: 100, s: 0.5882, segment: 'straight' },
-  { circuitId: 16, marker: 101, s: 0.5941, segment: 'corner' },
-  { circuitId: 16, marker: 102, s: 0.6000, segment: 'corner' },
-  { circuitId: 16, marker: 103, s: 0.6059, segment: 'corner' },
-  { circuitId: 16, marker: 104, s: 0.6118, segment: 'corner' },
-  { circuitId: 16, marker: 105, s: 0.6176, segment: 'hairpin' },
-  { circuitId: 16, marker: 106, s: 0.6235, segment: 'corner' },
-  { circuitId: 16, marker: 107, s: 0.6294, segment: 'corner' },
-  { circuitId: 16, marker: 108, s: 0.6353, segment: 'corner' },
-  { circuitId: 16, marker: 109, s: 0.6412, segment: 'corner' },
-  { circuitId: 16, marker: 110, s: 0.6471, segment: 'chicane' },
-  { circuitId: 16, marker: 111, s: 0.6529, segment: 'corner' },
-  { circuitId: 16, marker: 112, s: 0.6588, segment: 'hairpin' },
-  { circuitId: 16, marker: 113, s: 0.6647, segment: 'corner' },
-  { circuitId: 16, marker: 114, s: 0.6706, segment: 'corner' },
-  { circuitId: 16, marker: 115, s: 0.6765, segment: 'straight' },
-  { circuitId: 16, marker: 116, s: 0.6824, segment: 'corner' },
-  { circuitId: 16, marker: 117, s: 0.6882, segment: 'corner' },
-  { circuitId: 16, marker: 118, s: 0.6941, segment: 'corner' },
-  { circuitId: 16, marker: 119, s: 0.7000, segment: 'hairpin' },
-  { circuitId: 16, marker: 120, s: 0.7059, segment: 'straight' },
-  { circuitId: 16, marker: 121, s: 0.7118, segment: 'chicane' },
-  { circuitId: 16, marker: 122, s: 0.7176, segment: 'corner' },
-  { circuitId: 16, marker: 123, s: 0.7235, segment: 'corner' },
-  { circuitId: 16, marker: 124, s: 0.7294, segment: 'corner' },
-  { circuitId: 16, marker: 125, s: 0.7353, segment: 'straight' },
-  { circuitId: 16, marker: 126, s: 0.7412, segment: 'hairpin' },
-  { circuitId: 16, marker: 127, s: 0.7471, segment: 'corner' },
-  { circuitId: 16, marker: 128, s: 0.7529, segment: 'corner' },
-  { circuitId: 16, marker: 129, s: 0.7588, segment: 'corner' },
-  { circuitId: 16, marker: 130, s: 0.7647, segment: 'straight' },
-  { circuitId: 16, marker: 131, s: 0.7706, segment: 'corner' },
-  { circuitId: 16, marker: 132, s: 0.7765, segment: 'chicane' },
-  { circuitId: 16, marker: 133, s: 0.7824, segment: 'hairpin' },
-  { circuitId: 16, marker: 134, s: 0.7882, segment: 'corner' },
-  { circuitId: 16, marker: 135, s: 0.7941, segment: 'straight' },
-  { circuitId: 16, marker: 136, s: 0.8000, segment: 'corner' },
-  { circuitId: 16, marker: 137, s: 0.8059, segment: 'corner' },
-  { circuitId: 16, marker: 138, s: 0.8118, segment: 'corner' },
-  { circuitId: 16, marker: 139, s: 0.8176, segment: 'corner' },
-  { circuitId: 16, marker: 140, s: 0.8235, segment: 'hairpin' },
-  { circuitId: 16, marker: 141, s: 0.8294, segment: 'corner' },
-  { circuitId: 16, marker: 142, s: 0.8353, segment: 'corner' },
-  { circuitId: 16, marker: 143, s: 0.8412, segment: 'chicane' },
-  { circuitId: 16, marker: 144, s: 0.8471, segment: 'corner' },
-  { circuitId: 16, marker: 145, s: 0.8529, segment: 'straight' },
-  { circuitId: 16, marker: 146, s: 0.8588, segment: 'corner' },
-  { circuitId: 16, marker: 147, s: 0.8647, segment: 'hairpin' },
-  { circuitId: 16, marker: 148, s: 0.8706, segment: 'corner' },
-  { circuitId: 16, marker: 149, s: 0.8765, segment: 'corner' },
-  { circuitId: 16, marker: 150, s: 0.8824, segment: 'straight' },
-  { circuitId: 16, marker: 151, s: 0.8882, segment: 'corner' },
-  { circuitId: 16, marker: 152, s: 0.8941, segment: 'corner' },
-  { circuitId: 16, marker: 153, s: 0.9000, segment: 'corner' },
-  { circuitId: 16, marker: 154, s: 0.9059, segment: 'chicane' },
-  { circuitId: 16, marker: 155, s: 0.9118, segment: 'straight' },
-  { circuitId: 16, marker: 156, s: 0.9176, segment: 'corner' },
-  { circuitId: 16, marker: 157, s: 0.9235, segment: 'corner' },
-  { circuitId: 16, marker: 158, s: 0.9294, segment: 'corner' },
-  { circuitId: 16, marker: 159, s: 0.9353, segment: 'corner' },
-  { circuitId: 16, marker: 160, s: 0.9412, segment: 'straight' },
-  { circuitId: 16, marker: 161, s: 0.9471, segment: 'hairpin' },
-  { circuitId: 16, marker: 162, s: 0.9529, segment: 'corner' },
-  { circuitId: 16, marker: 163, s: 0.9588, segment: 'corner' },
-  { circuitId: 16, marker: 164, s: 0.9647, segment: 'corner' },
-  { circuitId: 16, marker: 165, s: 0.9706, segment: 'chicane' },
-  { circuitId: 16, marker: 166, s: 0.9765, segment: 'corner' },
-  { circuitId: 16, marker: 167, s: 0.9824, segment: 'corner' },
-  { circuitId: 16, marker: 168, s: 0.9882, segment: 'hairpin' },
-  { circuitId: 16, marker: 169, s: 0.9941, segment: 'corner' },
-  { circuitId: 17, marker: 0, s: 0.0000, segment: 'chicane' },
-  { circuitId: 17, marker: 1, s: 0.0059, segment: 'corner' },
-  { circuitId: 17, marker: 2, s: 0.0118, segment: 'corner' },
-  { circuitId: 17, marker: 3, s: 0.0176, segment: 'corner' },
-  { circuitId: 17, marker: 4, s: 0.0235, segment: 'corner' },
-  { circuitId: 17, marker: 5, s: 0.0294, segment: 'straight' },
-  { circuitId: 17, marker: 6, s: 0.0353, segment: 'corner' },
-  { circuitId: 17, marker: 7, s: 0.0412, segment: 'hairpin' },
-  { circuitId: 17, marker: 8, s: 0.0471, segment: 'corner' },
-  { circuitId: 17, marker: 9, s: 0.0529, segment: 'corner' },
-  { circuitId: 17, marker: 10, s: 0.0588, segment: 'straight' },
-  { circuitId: 17, marker: 11, s: 0.0647, segment: 'chicane' },
-  { circuitId: 17, marker: 12, s: 0.0706, segment: 'corner' },
-  { circuitId: 17, marker: 13, s: 0.0765, segment: 'corner' },
-  { circuitId: 17, marker: 14, s: 0.0824, segment: 'hairpin' },
-  { circuitId: 17, marker: 15, s: 0.0882, segment: 'straight' },
-  { circuitId: 17, marker: 16, s: 0.0941, segment: 'corner' },
-  { circuitId: 17, marker: 17, s: 0.1000, segment: 'corner' },
-  { circuitId: 17, marker: 18, s: 0.1059, segment: 'corner' },
-  { circuitId: 17, marker: 19, s: 0.1118, segment: 'corner' },
-  { circuitId: 17, marker: 20, s: 0.1176, segment: 'straight' },
-  { circuitId: 17, marker: 21, s: 0.1235, segment: 'hairpin' },
-  { circuitId: 17, marker: 22, s: 0.1294, segment: 'chicane' },
-  { circuitId: 17, marker: 23, s: 0.1353, segment: 'corner' },
-  { circuitId: 17, marker: 24, s: 0.1412, segment: 'corner' },
-  { circuitId: 17, marker: 25, s: 0.1471, segment: 'straight' },
-  { circuitId: 17, marker: 26, s: 0.1529, segment: 'corner' },
-  { circuitId: 17, marker: 27, s: 0.1588, segment: 'corner' },
-  { circuitId: 17, marker: 28, s: 0.1647, segment: 'hairpin' },
-  { circuitId: 17, marker: 29, s: 0.1706, segment: 'corner' },
-  { circuitId: 17, marker: 30, s: 0.1765, segment: 'straight' },
-  { circuitId: 17, marker: 31, s: 0.1824, segment: 'corner' },
-  { circuitId: 17, marker: 32, s: 0.1882, segment: 'corner' },
-  { circuitId: 17, marker: 33, s: 0.1941, segment: 'chicane' },
-  { circuitId: 17, marker: 34, s: 0.2000, segment: 'corner' },
-  { circuitId: 17, marker: 35, s: 0.2059, segment: 'hairpin' },
-  { circuitId: 17, marker: 36, s: 0.2118, segment: 'corner' },
-  { circuitId: 17, marker: 37, s: 0.2176, segment: 'corner' },
-  { circuitId: 17, marker: 38, s: 0.2235, segment: 'corner' },
-  { circuitId: 17, marker: 39, s: 0.2294, segment: 'corner' },
-  { circuitId: 17, marker: 40, s: 0.2353, segment: 'straight' },
-  { circuitId: 17, marker: 41, s: 0.2412, segment: 'corner' },
-  { circuitId: 17, marker: 42, s: 0.2471, segment: 'hairpin' },
-  { circuitId: 17, marker: 43, s: 0.2529, segment: 'corner' },
-  { circuitId: 17, marker: 44, s: 0.2588, segment: 'chicane' },
-  { circuitId: 17, marker: 45, s: 0.2647, segment: 'straight' },
-  { circuitId: 17, marker: 46, s: 0.2706, segment: 'corner' },
-  { circuitId: 17, marker: 47, s: 0.2765, segment: 'corner' },
-  { circuitId: 17, marker: 48, s: 0.2824, segment: 'corner' },
-  { circuitId: 17, marker: 49, s: 0.2882, segment: 'hairpin' },
-  { circuitId: 17, marker: 50, s: 0.2941, segment: 'straight' },
-  { circuitId: 17, marker: 51, s: 0.3000, segment: 'corner' },
-  { circuitId: 17, marker: 52, s: 0.3059, segment: 'corner' },
-  { circuitId: 17, marker: 53, s: 0.3118, segment: 'corner' },
-  { circuitId: 17, marker: 54, s: 0.3176, segment: 'corner' },
-  { circuitId: 17, marker: 55, s: 0.3235, segment: 'chicane' },
-  { circuitId: 17, marker: 56, s: 0.3294, segment: 'hairpin' },
-  { circuitId: 17, marker: 57, s: 0.3353, segment: 'corner' },
-  { circuitId: 17, marker: 58, s: 0.3412, segment: 'corner' },
-  { circuitId: 17, marker: 59, s: 0.3471, segment: 'corner' },
-  { circuitId: 17, marker: 60, s: 0.3529, segment: 'straight' },
-  { circuitId: 17, marker: 61, s: 0.3588, segment: 'corner' },
-  { circuitId: 17, marker: 62, s: 0.3647, segment: 'corner' },
-  { circuitId: 17, marker: 63, s: 0.3706, segment: 'hairpin' },
-  { circuitId: 17, marker: 64, s: 0.3765, segment: 'corner' },
-  { circuitId: 17, marker: 65, s: 0.3824, segment: 'straight' },
-  { circuitId: 17, marker: 66, s: 0.3882, segment: 'chicane' },
-  { circuitId: 17, marker: 67, s: 0.3941, segment: 'corner' },
-  { circuitId: 17, marker: 68, s: 0.4000, segment: 'corner' },
-  { circuitId: 17, marker: 69, s: 0.4059, segment: 'corner' },
-  { circuitId: 17, marker: 70, s: 0.4118, segment: 'hairpin' },
-  { circuitId: 17, marker: 71, s: 0.4176, segment: 'corner' },
-  { circuitId: 17, marker: 72, s: 0.4235, segment: 'corner' },
-  { circuitId: 17, marker: 73, s: 0.4294, segment: 'corner' },
-  { circuitId: 17, marker: 74, s: 0.4353, segment: 'corner' },
-  { circuitId: 17, marker: 75, s: 0.4412, segment: 'straight' },
-  { circuitId: 17, marker: 76, s: 0.4471, segment: 'corner' },
-  { circuitId: 17, marker: 77, s: 0.4529, segment: 'chicane' },
-  { circuitId: 17, marker: 78, s: 0.4588, segment: 'corner' },
-  { circuitId: 17, marker: 79, s: 0.4647, segment: 'corner' },
-  { circuitId: 17, marker: 80, s: 0.4706, segment: 'straight' },
-  { circuitId: 17, marker: 81, s: 0.4765, segment: 'corner' },
-  { circuitId: 17, marker: 82, s: 0.4824, segment: 'corner' },
-  { circuitId: 17, marker: 83, s: 0.4882, segment: 'corner' },
-  { circuitId: 17, marker: 84, s: 0.4941, segment: 'hairpin' },
-  { circuitId: 17, marker: 85, s: 0.5000, segment: 'straight' },
-  { circuitId: 17, marker: 86, s: 0.5059, segment: 'corner' },
-  { circuitId: 17, marker: 87, s: 0.5118, segment: 'corner' },
-  { circuitId: 17, marker: 88, s: 0.5176, segment: 'chicane' },
-  { circuitId: 17, marker: 89, s: 0.5235, segment: 'corner' },
-  { circuitId: 17, marker: 90, s: 0.5294, segment: 'straight' },
-  { circuitId: 17, marker: 91, s: 0.5353, segment: 'hairpin' },
-  { circuitId: 17, marker: 92, s: 0.5412, segment: 'corner' },
-  { circuitId: 17, marker: 93, s: 0.5471, segment: 'corner' },
-  { circuitId: 17, marker: 94, s: 0.5529, segment: 'corner' },
-  { circuitId: 17, marker: 95, s: 0.5588, segment: 'straight' },
-  { circuitId: 17, marker: 96, s: 0.5647, segment: 'corner' },
-  { circuitId: 17, marker: 97, s: 0.5706, segment: 'corner' },
-  { circuitId: 17, marker: 98, s: 0.5765, segment: 'hairpin' },
-  { circuitId: 17, marker: 99, s: 0.5824, segment: 'chicane' },
-  { circuitId: 17, marker: 100, s: 0.5882, segment: 'straight' },
-  { circuitId: 17, marker: 101, s: 0.5941, segment: 'corner' },
-  { circuitId: 17, marker: 102, s: 0.6000, segment: 'corner' },
-  { circuitId: 17, marker: 103, s: 0.6059, segment: 'corner' },
-  { circuitId: 17, marker: 104, s: 0.6118, segment: 'corner' },
-  { circuitId: 17, marker: 105, s: 0.6176, segment: 'hairpin' },
-  { circuitId: 17, marker: 106, s: 0.6235, segment: 'corner' },
-  { circuitId: 17, marker: 107, s: 0.6294, segment: 'corner' },
-  { circuitId: 17, marker: 108, s: 0.6353, segment: 'corner' },
-  { circuitId: 17, marker: 109, s: 0.6412, segment: 'corner' },
-  { circuitId: 17, marker: 110, s: 0.6471, segment: 'chicane' },
-  { circuitId: 17, marker: 111, s: 0.6529, segment: 'corner' },
-  { circuitId: 17, marker: 112, s: 0.6588, segment: 'hairpin' },
-  { circuitId: 17, marker: 113, s: 0.6647, segment: 'corner' },
-  { circuitId: 17, marker: 114, s: 0.6706, segment: 'corner' },
-  { circuitId: 17, marker: 115, s: 0.6765, segment: 'straight' },
-  { circuitId: 17, marker: 116, s: 0.6824, segment: 'corner' },
-  { circuitId: 17, marker: 117, s: 0.6882, segment: 'corner' },
-  { circuitId: 17, marker: 118, s: 0.6941, segment: 'corner' },
-  { circuitId: 17, marker: 119, s: 0.7000, segment: 'hairpin' },
-  { circuitId: 17, marker: 120, s: 0.7059, segment: 'straight' },
-  { circuitId: 17, marker: 121, s: 0.7118, segment: 'chicane' },
-  { circuitId: 17, marker: 122, s: 0.7176, segment: 'corner' },
-  { circuitId: 17, marker: 123, s: 0.7235, segment: 'corner' },
-  { circuitId: 17, marker: 124, s: 0.7294, segment: 'corner' },
-  { circuitId: 17, marker: 125, s: 0.7353, segment: 'straight' },
-  { circuitId: 17, marker: 126, s: 0.7412, segment: 'hairpin' },
-  { circuitId: 17, marker: 127, s: 0.7471, segment: 'corner' },
-  { circuitId: 17, marker: 128, s: 0.7529, segment: 'corner' },
-  { circuitId: 17, marker: 129, s: 0.7588, segment: 'corner' },
-  { circuitId: 17, marker: 130, s: 0.7647, segment: 'straight' },
-  { circuitId: 17, marker: 131, s: 0.7706, segment: 'corner' },
-  { circuitId: 17, marker: 132, s: 0.7765, segment: 'chicane' },
-  { circuitId: 17, marker: 133, s: 0.7824, segment: 'hairpin' },
-  { circuitId: 17, marker: 134, s: 0.7882, segment: 'corner' },
-  { circuitId: 17, marker: 135, s: 0.7941, segment: 'straight' },
-  { circuitId: 17, marker: 136, s: 0.8000, segment: 'corner' },
-  { circuitId: 17, marker: 137, s: 0.8059, segment: 'corner' },
-  { circuitId: 17, marker: 138, s: 0.8118, segment: 'corner' },
-  { circuitId: 17, marker: 139, s: 0.8176, segment: 'corner' },
-  { circuitId: 17, marker: 140, s: 0.8235, segment: 'hairpin' },
-  { circuitId: 17, marker: 141, s: 0.8294, segment: 'corner' },
-  { circuitId: 17, marker: 142, s: 0.8353, segment: 'corner' },
-  { circuitId: 17, marker: 143, s: 0.8412, segment: 'chicane' },
-  { circuitId: 17, marker: 144, s: 0.8471, segment: 'corner' },
-  { circuitId: 17, marker: 145, s: 0.8529, segment: 'straight' },
-  { circuitId: 17, marker: 146, s: 0.8588, segment: 'corner' },
-  { circuitId: 17, marker: 147, s: 0.8647, segment: 'hairpin' },
-  { circuitId: 17, marker: 148, s: 0.8706, segment: 'corner' },
-  { circuitId: 17, marker: 149, s: 0.8765, segment: 'corner' },
-  { circuitId: 17, marker: 150, s: 0.8824, segment: 'straight' },
-  { circuitId: 17, marker: 151, s: 0.8882, segment: 'corner' },
-  { circuitId: 17, marker: 152, s: 0.8941, segment: 'corner' },
-  { circuitId: 17, marker: 153, s: 0.9000, segment: 'corner' },
-  { circuitId: 17, marker: 154, s: 0.9059, segment: 'chicane' },
-  { circuitId: 17, marker: 155, s: 0.9118, segment: 'straight' },
-  { circuitId: 17, marker: 156, s: 0.9176, segment: 'corner' },
-  { circuitId: 17, marker: 157, s: 0.9235, segment: 'corner' },
-  { circuitId: 17, marker: 158, s: 0.9294, segment: 'corner' },
-  { circuitId: 17, marker: 159, s: 0.9353, segment: 'corner' },
-  { circuitId: 17, marker: 160, s: 0.9412, segment: 'straight' },
-  { circuitId: 17, marker: 161, s: 0.9471, segment: 'hairpin' },
-  { circuitId: 17, marker: 162, s: 0.9529, segment: 'corner' },
-  { circuitId: 17, marker: 163, s: 0.9588, segment: 'corner' },
-  { circuitId: 17, marker: 164, s: 0.9647, segment: 'corner' },
-  { circuitId: 17, marker: 165, s: 0.9706, segment: 'chicane' },
-  { circuitId: 17, marker: 166, s: 0.9765, segment: 'corner' },
-  { circuitId: 17, marker: 167, s: 0.9824, segment: 'corner' },
-  { circuitId: 17, marker: 168, s: 0.9882, segment: 'hairpin' },
-  { circuitId: 17, marker: 169, s: 0.9941, segment: 'corner' },
-];
-

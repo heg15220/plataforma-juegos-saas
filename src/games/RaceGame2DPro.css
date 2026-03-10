@@ -130,6 +130,56 @@
   color: rgba(225, 233, 245, 0.78);
 }
 
+.r2p__trackMeta {
+  font-size: 0.73rem;
+  color: rgba(200, 220, 245, 0.72);
+}
+
+.r2p__selectedTrack {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.r2p__selectedTrackTitle {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.r2p__selectedTrackFacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  font-size: 0.78rem;
+  color: rgba(220, 230, 245, 0.82);
+}
+
+.r2p__trackNote {
+  font-size: 0.82rem;
+  color: rgba(235, 240, 248, 0.88);
+  line-height: 1.45;
+}
+
+.r2p__formatRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.r2p__formatChip {
+  border: 1px solid rgba(79, 214, 255, 0.25);
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: rgba(79, 214, 255, 0.1);
+  color: rgba(214, 241, 255, 0.95);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
 .r2p__optionsRow {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -231,6 +281,12 @@
   color: var(--r2p-accent);
 }
 
+.r2p__hudTrack {
+  font-size: 0.92rem;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
 .r2p__hudPos sub {
   font-size: 0.9rem;
   color: var(--r2p-ui-muted);
@@ -246,40 +302,18 @@
 
 .r2p__hudLap,
 .r2p__hudSpeed,
-.r2p__hudWeather {
+.r2p__hudWeather,
+.r2p__hudTimer {
   font-size: 0.84rem;
   font-weight: 600;
 }
 
-.r2p__turboRow {
+.r2p__hudMessage {
   margin-top: 8px;
-}
-
-.r2p__turboLabel {
-  display: block;
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  color: var(--r2p-ui-muted);
-  font-weight: 700;
-}
-
-.r2p__turboBar {
-  margin-top: 4px;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-  overflow: hidden;
-}
-
-.r2p__turboFill {
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #76ecff, #4fd6ff, #2d9aff);
-  transition: width 0.1s linear;
-}
-
-.r2p__turboFill.active {
-  filter: saturate(1.35) brightness(1.12);
+  font-size: 0.75rem;
+  color: rgba(225, 233, 245, 0.82);
+  line-height: 1.4;
+  max-width: 280px;
 }
 
 .r2p__minimapWrap {
@@ -350,6 +384,27 @@
   100% { transform: scale(1); opacity: 1; }
 }
 
+.r2p__semCaption {
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(245, 247, 252, 0.96);
+}
+
+.r2p__semCaption.isGo {
+  color: #39ff14;
+  text-shadow: 0 0 14px rgba(57, 255, 20, 0.8), 0 0 28px rgba(57, 255, 20, 0.4);
+}
+
+.r2p__semDetail {
+  max-width: 420px;
+  text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: rgba(230, 236, 245, 0.88);
+}
+
 .r2p__touch {
   position: absolute;
   inset: auto 14px 14px 14px;
@@ -391,8 +446,7 @@
   gap: 8px;
 }
 
-.r2p__touchBtn,
-.r2p__touchTurbo {
+.r2p__touchBtn {
   width: 64px;
   height: 64px;
   border-radius: 999px;
@@ -401,12 +455,6 @@
   color: var(--r2p-ui-text);
   font-size: 1.4rem;
   font-weight: 700;
-}
-
-.r2p__touchTurbo {
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: var(--r2p-accent);
 }
 
 .r2p__keyHint {
@@ -553,12 +601,16 @@
     grid-template-columns: repeat(1, minmax(0, 1fr));
   }
 
+  .r2p__selectedTrackFacts {
+    flex-direction: column;
+    gap: 6px;
+  }
+
   .r2p__trackPreview {
     height: 96px;
   }
 
-  .r2p__touchBtn,
-  .r2p__touchTurbo {
+  .r2p__touchBtn {
     width: 58px;
     height: 58px;
   }

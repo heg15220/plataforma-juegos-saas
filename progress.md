@@ -2389,3 +2389,82 @@ Pendiente sugerido:
 ## 2026-03-10 - Ajuste solicitado: ocultar "Ultima carta vista" en Escoba
 - Eliminado del render de asientos IA en `src/games/StrategyEscobaDeckGame.jsx` el bloque que mostraba `t.lastKnownCard` + carta revelada.
 - Limpieza asociada en `src/styles.css`: retiradas las reglas de `.seat-last-card` al no usarse ya.
+
+## 2026-03-10 - Race 2D Pro: reinicio completo de circuitos y salida
+- `src/games/RaceGame2DPro.jsx`
+  - Reescrito el flujo de carrera para eliminar los circuitos anteriores y el procedimiento de salida previo.
+  - Nueva salida por fases `grid -> lights -> go -> racing` con boxes escalonados y cinco luces.
+  - Integrado `useGameRuntimeBridge` con `advanceTime` para QA determinista.
+  - Conservado el estilo visual de los coches y rehacido el HUD para mostrar pista, vuelta, posicion y mensajes de carrera.
+- `src/games/race2dpro/circuits.js`
+  - Nuevo compilador de circuitos basado en segmentos rectos/curvas.
+  - Aniadidos 6 trazados nuevos con metadatos de longitud, anchura, adelantamiento y perfil.
+  - Metodologia inspirada en `Resaj/basic-circuit-maker` sin reutilizar su codigo MATLAB ni assets.
+- `src/games/RaceGame2DPro.css`
+  - Nuevas piezas de UI para ficha del circuito seleccionado, mensajes de HUD y semaforo de salida.
+- `src/data/games.js`
+  - Actualizada la ficha publica del juego para reflejar los 6 nuevos circuitos y el formato realista de salida.
+- `docs/race2dpro-track-methodology.md`
+  - Documentada la atribucion y la licencia CC BY-SA 4.0 del repositorio externo usado como referencia metodologica.
+- Verificacion parcial:
+  - `npx esbuild src/games/RaceGame2DPro.jsx --bundle ...` OK.
+- Pendiente:
+  - build completa con Vite.
+  - pasada Playwright sobre `#game=racing-race2dpro`.
+  - revision visual de los seis previews y de la secuencia de salida en captura.
+
+## 2026-03-10 - Race 2D Pro: causa principal del stutter en carrera
+- Detectado origen del gameplay "a trompicones" en `src/games/RaceGame2DPro.jsx`:
+  - el `useEffect` del loop de carrera dependia de `t` y de callbacks que cambiaban identidad en cada render;
+  - como `setViewModel` se ejecuta durante la carrera, React re-renderizaba y el `requestAnimationFrame` se desmontaba/recreaba continuamente.
+- Ajuste aplicado:
+  - `t` pasa a derivarse con `useMemo([lang])` para estabilizar dependencias;
+  - eliminadas referencias de turbo y rehecha la fisica hacia un modelo mas progresivo (inputs suavizados, yaw rate, drag, grip lateral y penalizacion realista fuera de pista).
+- Verificacion parcial:
+  - `npx esbuild src/games/RaceGame2DPro.jsx --bundle ...` OK tras el cambio.
+- Pendiente:
+  - validar en runtime con preview/Playwright que el loop ya no se reinicia y que la fisica no necesita otro ajuste fino.
+
+## 2026-03-10 - Race 2D Pro: diversidad de circuitos + parrilla aleatoria
+- `src/games/race2dpro/circuits.js`
+  - Sustituidos 5 trazados (`Costa Azul`, `Sierra Verde`, `Nordhaven`, `Emerald Forest`, `Capital GP`) por perfiles mas diferenciados:
+    - tecnico lento y revirado,
+    - alta velocidad con apoyos largos,
+    - stop-go de rectas y frenadas,
+    - ritmo medio enlazado,
+    - power circuit de rectas y frenadas fuertes.
+  - `Sol Dunes Speedway` se mantiene sin cambios.
+  - Verificacion geometrica local por script: los 6 circuitos compilan sin cruces de segmentos.
+- `src/games/RaceGame2DPro.jsx`
+  - `placeCarsOnGrid` ahora acepta `playerGridIndex`.
+  - El coche del jugador arranca desde una posicion aleatoria de parrilla en cada nueva carrera.
+  - En `resize`, la recolocacion respeta la posicion de parrilla ya sorteada para la carrera en curso.
+- Verificacion tecnica:
+  - `npx esbuild src/games/RaceGame2DPro.jsx --bundle ...` OK.
+
+## 2026-03-10 - Race 2D Pro: segunda pasada de circuitos inspirada en planos de referencia
+- El usuario rechazo la primera tanda de layouts y aporto 4 planos de referencia para inspirar nuevas formas.
+- `src/games/race2dpro/circuits.js`
+  - `Costa Azul GP`, `Sierra Verde GP`, `Emerald Forest GP` y `Capital Grand Prix` pasan a definirse con `raw` control points mas cercanos a planos reales.
+  - `Nordhaven Ring` se mantiene segmentado pero con perfil stop-go limpio.
+  - `Sol Dunes Speedway` sigue intacto.
+  - `compileBlueprint` ahora acepta blueprints con `raw` predefinido para mezclar layouts directos y segmentados.
+- Verificacion geometrica:
+  - script local de intersecciones sobre la curva suavizada final: los 6 circuitos devuelven `none`.
+- Verificacion tecnica:
+  - `npx esbuild src/games/RaceGame2DPro.jsx --bundle ...` OK.
+## 2026-03-10 - Race 2D Pro: motor basic-circuit-maker portado a JS
+- `src/games/race2dpro/circuits.js`
+  - Reemplazados los `raw` manuales por definiciones `origin + tramos` compatibles con el modelo de `basic-circuit-maker`.
+  - Anadido cierre automatico de los dos ultimos tramos (`recta+curva` o `curva+recta`) mediante solver geometrico en JS.
+  - Los 6 circuitos ahora salen del motor portado y mantienen diversidad de perfiles.
+- Verificacion tecnica:
+  - script local de intersecciones sobre la curva suavizada final: los 6 circuitos devuelven `none`.
+  - `npx esbuild src/games/RaceGame2DPro.jsx --bundle ...` OK.
+
+## 2026-03-10 - Race 2D Pro: final en meta + parrilla corregida
+- `src/games/RaceGame2DPro.jsx`
+  - Corregida la direccion del retroceso de parrilla en `buildGridSlots`; las filas ya salen detras de la linea y no por delante.
+  - Anadidos `parkCarsOnFinish` y `finalizeRaceResults` para fijar la clasificacion final y detener los coches sobre la zona de meta al terminar la carrera.
+- Verificacion tecnica:
+  - `npx esbuild src/games/RaceGame2DPro.jsx --bundle ...` OK.
