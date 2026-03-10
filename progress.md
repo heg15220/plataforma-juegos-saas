@@ -2300,3 +2300,31 @@ Pendiente sugerido:
   - `output/strategy-baraja-escoba-led-layout-check/manual/shot-final.png`
 - Confirmado en `state-final.json`:
   - `phase: "hand-over"` y `lastHand.winnerOwners/winnerLabel` presentes.
+
+## 2026-03-10 - Adivina pais: contraste, autoavance y encaje anti-estirado
+- `src/games/knowledge/GuessCountryKnowledgeGame.jsx`
+  - Anadido autoavance de ronda tras validacion (`AUTO_NEXT_ROUND_MS = 2000`) para pasar automaticamente a la siguiente ronda cuando no es la ultima.
+  - Mantenido boton de `Siguiente ronda` como avance manual inmediato.
+  - Render de silueta normalizado para evitar estirados: `viewBox` fijo `0 0 100 100` + transform uniforme `scale/translate` calculado por `getBBox` y centrado.
+- `src/styles.css`
+  - Mejorado contraste del tablero/silueta (fondo mas oscuro, borde y grid mas legibles, silueta oculta mas clara con borde definido).
+  - Ajustes menores de presentacion (`display: block` en SVG y CTA inline de siguiente ronda).
+
+### Validacion
+- Build: `npm run build` OK (ejecucion fuera de sandbox por `spawn EPERM` de esbuild en sandbox).
+- Playwright (preview + capturas):
+  - `output/knowledge-adivina-pais-visual-fit/shot-0..3.png`
+  - `output/knowledge-adivina-pais-visual-fit/state-0..3.json`
+  - sin `errors-*.json`.
+- Verificado en estados que la partida avanza automaticamente de ronda tras validar (ej.: `state-0` en ronda 2, `state-1` en ronda 4 sin pulsar `N`).
+
+## 2026-03-10 - Auditoria cobertura de paises con silueta (Adivina pais)
+- Comprobacion por script de datos base:
+  - Siluetas con paths en temas activos: `158` IDs.
+  - Pool jugable actual: `151` IDs.
+  - Diferencia (`7`) corresponde solo a siluetas de continentes (`africa`, `antarctica`, `asia`, `europe`, `north-america`, `oceania`, `south-america`), no a paises.
+- Comprobacion de cobertura de partidas (`matchId 0..9999`, 5 rondas por partida):
+  - `countryPoolCount = 151`
+  - `seenCountryCount = 151`
+  - `missingCountryCount = 0`
+- Conclusión: todos los paises con silueta disponibles en la plataforma estan incluidos en las partidas y aparecen en al menos una ronda dentro del set de 10.000 partidas.

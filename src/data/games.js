@@ -22,6 +22,7 @@ import knowledgeAnagramasImage from "../assets/games/knowledge-anagramas.svg";
 import knowledgeCalculoMentalImage from "../assets/games/knowledge-calculo-mental.svg";
 import knowledgeTablaPeriodicaImage from "../assets/games/knowledge-tabla-periodica.svg";
 import knowledgeMapasImage from "../assets/games/knowledge-mapas.svg";
+import knowledgeAdivinaPaisImage from "../assets/games/knowledge-adivina-pais.svg";
 import chessGrandmasterArenaImage from "../assets/games/chess-grandmaster-arena.svg";
 import strategySudokuTecnicasImage from "../assets/games/strategy-sudoku-tecnicas.svg";
 import strategyDamasProfesionalImage from "../assets/games/strategy-damas-professional.svg";
@@ -1135,6 +1136,57 @@ export const games = [
     viability_en: "High: discrete graph rules, local text validation and compact state.",
     visualStyle_en: "Geographic silhouette board with progressive color-coded route tracing.",
     techFocus_en: "BFS shortest path + neighbor validation for countries/provinces + route telemetry.",
+  },
+
+  {
+    id: "knowledge-adivina-pais-silueta",
+    image: knowledgeAdivinaPaisImage,
+    sessionTime: "3-8 min",
+
+    title: "Adivina el pais",
+    category: "Conocimiento",
+    tagline: "5 rondas por partida para identificar paises por su silueta.",
+    description:
+      "Reto geografico corto y directo: en cada ronda aparece la silueta de un pais y debes escribir su nombre. Mientras escribes, el juego muestra recomendaciones de todos los paises compatibles con esas letras.",
+    objective_es:
+      "Completa 5 rondas con el maximo numero de aciertos, identificando cada silueta y validando el pais correcto.",
+    howToPlay_es:
+      "Escribe el nombre del pais y pulsa Enter para validar. Tras cada validacion se revela la respuesta y puedes avanzar a la siguiente ronda. R reinicia partida y N avanza ronda cuando ya esta validada.",
+    highlights: [
+      "Partidas compactas de 5 rondas con puntuacion acumulada de aciertos.",
+      "Siluetas de paises reutilizadas de los datasets geograficos ya integrados.",
+      "Recomendaciones dinamicas de paises compatibles segun las letras escritas.",
+      "Validacion multilenguaje con alias y normalizacion de texto sin tildes.",
+      "Historial de rondas con respuesta enviada y resultado por intento.",
+      "Bridge QA con estado serializado de ronda, sugerencias y progreso.",
+    ],
+    difficulty: "Media",
+    multiplayer: "Solo",
+    viability: "Alta: reglas discretas, datasets ya disponibles y validacion textual local.",
+    visualStyle: "Tablero de silueta unica con panel lateral de entrada, recomendados e historial.",
+    techFocus: "Filtrado incremental de paises + validacion por alias + zoom dinamico de silueta SVG.",
+
+    category_en: "Knowledge",
+    tagline_en: "5 rounds per match to identify countries from their silhouette.",
+    description_en:
+      "Short geography challenge: each round shows one country silhouette and you must type the country name. While typing, live recommendations list every country that matches the current letters.",
+    objective_en:
+      "Complete 5 rounds with the highest possible score by identifying each silhouette correctly.",
+    howToPlay_en:
+      "Type the country name and press Enter to check. After each check, the answer is revealed and you can continue to the next round. R restarts the match and N advances once a round is checked.",
+    highlights_en: [
+      "Compact 5-round matches with cumulative hit scoring.",
+      "Country silhouettes reused from existing integrated geography datasets.",
+      "Dynamic recommendations of matching countries while typing.",
+      "Multilingual validation with aliases and accent-insensitive normalization.",
+      "Round history with submitted guess and result.",
+      "QA bridge with serialized round, recommendation, and progress state.",
+    ],
+    difficulty_en: "Medium",
+    multiplayer_en: "Solo",
+    viability_en: "High: discrete rules, existing datasets, and local text validation.",
+    visualStyle_en: "Single-silhouette board with side panel for input, recommendations, and history.",
+    techFocus_en: "Incremental country filtering + alias-based validation + dynamic SVG silhouette zoom.",
   },
 
   {

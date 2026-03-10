@@ -12,6 +12,7 @@ import MentalMathKnowledgeGame from "./knowledge/MentalMathKnowledgeGame";
 import PeriodicTableKnowledgeGame from "./knowledge/PeriodicTableKnowledgeGame";
 import MapsKnowledgeGame from "./knowledge/MapsKnowledgeGame";
 import MapsShortestPathKnowledgeGame from "./knowledge/MapsShortestPathKnowledgeGame";
+import GuessCountryKnowledgeGame from "./knowledge/GuessCountryKnowledgeGame";
 
 function KnowledgeArcadeGame({ variant }) {
   if (variant === "sudoku") {
@@ -52,6 +53,9 @@ function KnowledgeArcadeGame({ variant }) {
   }
   if (variant === "mapas-camino-corto") {
     return <MapsShortestPathKnowledgeGame />;
+  }
+  if (variant === "adivina-pais") {
+    return <GuessCountryKnowledgeGame />;
   }
 
   return <SudokuKnowledgeGame />;

@@ -5,7 +5,8 @@ import useGameRuntimeBridge from "../utils/useGameRuntimeBridge";
 const HAND_SIZE = 3;
 const TARGET_OPTIONS = [11, 15, 21];
 const PLAYER_OPTIONS = [2, 3, 4];
-const AI_DELAY_MS = 900;
+const AI_DELAY_MS = 1450;
+const TURN_SETTLE_DELAY_MS = 900;
 const BACK_IMAGE = "/assets/cards/spanish/reverso.png";
 
 const DIFF = {
@@ -171,6 +172,14 @@ const T = {
     clearSel: "Limpiar seleccion",
     selected: "Seleccionadas",
     canCapture: "Opciones de recogida",
+    lastMove: "Ultima jugada",
+    playedCard: "Carta jugada",
+    capturedCards: "Cartas recogidas",
+    tableAfter: "Mesa tras jugada",
+    handAfter: "Cartas en mano",
+    lastKnownCard: "Ultima carta vista",
+    aiThinking: "La IA esta pensando su jugada...",
+    settlePause: "Pausa para revisar la jugada anterior.",
     mandatoryHintOn:
       "Recogida obligatoria activa: no puedes tirar carta si existe combinacion a 15.",
     mandatoryHintOff:
@@ -248,6 +257,14 @@ const T = {
     clearSel: "Clear selection",
     selected: "Selected",
     canCapture: "Capture options",
+    lastMove: "Last move",
+    playedCard: "Played card",
+    capturedCards: "Captured cards",
+    tableAfter: "Table after move",
+    handAfter: "Cards in hand",
+    lastKnownCard: "Last seen card",
+    aiThinking: "AI is thinking about the next move...",
+    settlePause: "Pause to review the previous move.",
     mandatoryHintOn:
       "Mandatory capture is ON: you cannot drop a card when a 15 capture exists.",
     mandatoryHintOff:
@@ -371,6 +388,19 @@ const ownerOfPlayer = (state, playerId) =>
 const ownerLabel = (state, ownerId, t) => {
   if (state.teamMode) return ownerId === "user" ? t.teamUser : t.teamRival;
   return state.byId[ownerId]?.name || ownerId;
+};
+
+const buildTurnMessage = (state, playerId, playedCard, capturedCards, madeEscoba, t) => {
+  const actorName = state.byId[playerId]?.name || playerId;
+  const playedText = cardText(playedCard);
+  if (!capturedCards.length) {
+    return `${actorName}: ${playedText}. ${t.noCapture}`;
+  }
+  const captureText = capturedCards.map((card) => cardText(card)).join(" + ");
+  if (madeEscoba) {
+    return `${actorName}: ${playedText} + ${captureText}. ${t.escobaMade}`;
+  }
+  return `${actorName}: ${playedText} + ${captureText}. ${t.captured}`;
 };
 
 const createOwnerMap = (players, teamMode, initialValue = 0) =>
@@ -594,6 +624,25 @@ const withAutoTurn = (state) => {
   return { ...state, auto: null };
 };
 
+const withTurnSettlePause = (state) => {
+  if (state.phase !== "playing") return { ...state, auto: null };
+  const current = state.auto;
+  const targetMs = TURN_SETTLE_DELAY_MS;
+  if (current?.type === "turn-settle" && current.ms === targetMs) return state;
+  return { ...state, auto: { type: "turn-settle", ms: targetMs } };
+};
+
+const runAutoStep = (state) => {
+  if (!state.auto) return state;
+  if (state.auto.type === "turn-settle") {
+    return withAutoTurn({ ...state, auto: null });
+  }
+  if (state.auto.type === "ai-turn") {
+    return runAiTurn({ ...state, auto: null });
+  }
+  return { ...state, auto: null };
+};
+
 const makeHandState = (base, handNumber, dealerIndex, scores, initialMessage = null) => {
   const t = tt(base.locale);
   const stock = shuffle(buildDeck(base.deckId));
@@ -634,6 +683,8 @@ const makeHandState = (base, handNumber, dealerIndex, scores, initialMessage = n
     captures,
     escobas,
     lastCapturerId,
+    lastMove: null,
+    revealedCards: {},
     selectedTableIds: [],
     lastHand: null,
     matchWinner: null,
@@ -759,7 +810,7 @@ const endHandIfNeeded = (state) => {
 };
 
 const resolvePlay = (state, playerId, cardIndex, chosenOption) => {
-  if (state.phase !== "playing" || state.turnId !== playerId) return state;
+  if (state.phase !== "playing" || state.turnId !== playerId || state.auto) return state;
   const t = tt(state.locale);
   const hand = [...(state.hands[playerId] || [])];
   const card = hand[cardIndex];
@@ -771,24 +822,27 @@ const resolvePlay = (state, playerId, cardIndex, chosenOption) => {
   const captures = { ...state.captures, [playerId]: [...(state.captures[playerId] || [])] };
   const escobas = { ...state.escobas };
   let lastCapturerId = state.lastCapturerId;
-  let message = t.noCapture;
+  let pickedCards = [];
+  let madeEscoba = false;
 
   if (chosenOption?.cards?.length) {
     const takeIds = new Set(chosenOption.cards.map((c) => c.id));
     const picked = tableCards.filter((c) => takeIds.has(c.id));
     const remaining = tableCards.filter((c) => !takeIds.has(c.id));
-    captures[playerId].push(...picked, card);
+    pickedCards = picked;
+    captures[playerId].push(...pickedCards, card);
     lastCapturerId = playerId;
-    message = t.captured;
     if (remaining.length === 0) {
       escobas[playerId] = (escobas[playerId] || 0) + 1;
-      message = `${t.captured} ${t.escobaMade}`;
+      madeEscoba = true;
     }
     tableCards.splice(0, tableCards.length, ...remaining);
   } else {
     tableCards.push(card);
   }
 
+  const message = buildTurnMessage(state, playerId, card, pickedCards, madeEscoba, t);
+  const playedCardText = cardText(card);
   const nextTurnId = nextId(state.order, playerId);
   const updated = {
     ...state,
@@ -799,14 +853,31 @@ const resolvePlay = (state, playerId, cardIndex, chosenOption) => {
     lastCapturerId,
     turnId: nextTurnId,
     selectedTableIds: [],
+    revealedCards: {
+      ...(state.revealedCards || {}),
+      [playerId]: playedCardText,
+    },
+    lastMove: {
+      actorId: playerId,
+      actorName: state.byId[playerId]?.name || playerId,
+      card: playedCardText,
+      captured: pickedCards.map((pickedCard) => cardText(pickedCard)),
+      madeEscoba,
+      tableCountAfter: tableCards.length,
+      handCountAfter: hand.length,
+    },
     message,
     auto: null,
   };
-  return endHandIfNeeded(withAutoTurn(updated));
+  const afterPlay = endHandIfNeeded(updated);
+  if (afterPlay.phase !== "playing") {
+    return { ...afterPlay, auto: null };
+  }
+  return withTurnSettlePause(afterPlay);
 };
 
 const applyHumanCard = (state, cardIndex) => {
-  if (state.phase !== "playing" || state.turnId !== "human") return state;
+  if (state.phase !== "playing" || state.turnId !== "human" || state.auto) return state;
   const t = tt(state.locale);
   const hand = state.hands.human || [];
   const card = hand[cardIndex];
@@ -948,7 +1019,7 @@ function StrategyEscobaDeckGame() {
 
   const toggleTableCard = useCallback((cardId) => {
     setS((prev) => {
-      if (prev.phase !== "playing" || prev.turnId !== "human") return prev;
+      if (prev.phase !== "playing" || prev.turnId !== "human" || prev.auto) return prev;
       return {
         ...prev,
         selectedTableIds: prev.selectedTableIds.includes(cardId)
@@ -960,7 +1031,7 @@ function StrategyEscobaDeckGame() {
 
   const clearSelection = useCallback(() => {
     setS((prev) =>
-      prev.phase === "playing" && prev.turnId === "human"
+      prev.phase === "playing" && prev.turnId === "human" && !prev.auto
         ? { ...prev, selectedTableIds: [], message: t.selectTable }
         : prev
     );
@@ -975,8 +1046,7 @@ function StrategyEscobaDeckGame() {
     const tm = setTimeout(() => {
       setS((prev) => {
         if (!prev.auto) return prev;
-        if (prev.auto.type === "ai-turn") return runAiTurn(prev);
-        return prev;
+        return runAutoStep(prev);
       });
     }, s.auto.ms || 0);
     return () => clearTimeout(tm);
@@ -997,7 +1067,7 @@ function StrategyEscobaDeckGame() {
         nextHand();
         return;
       }
-      if (s.phase === "playing" && s.turnId === "human") {
+      if (s.phase === "playing" && s.turnId === "human" && !s.auto) {
         if (["1", "2", "3"].includes(k)) {
           e.preventDefault();
           playHumanCard(Number(k) - 1);
@@ -1011,7 +1081,7 @@ function StrategyEscobaDeckGame() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [s.phase, s.turnId, restart, nextHand, playHumanCard]);
+  }, [s.phase, s.turnId, s.auto, restart, nextHand, playHumanCard]);
 
   const bridgePayload = useCallback(
     (snap) => {
@@ -1061,6 +1131,24 @@ function StrategyEscobaDeckGame() {
           score: snap.scores[owner] || 0,
         })),
         lastCapturerId: snap.lastCapturerId || null,
+        auto: snap.auto
+          ? {
+              type: snap.auto.type,
+              ms: snap.auto.ms || 0,
+            }
+          : null,
+        lastMove: snap.lastMove
+          ? {
+              actorId: snap.lastMove.actorId,
+              actorName: snap.lastMove.actorName,
+              card: snap.lastMove.card,
+              captured: snap.lastMove.captured || [],
+              madeEscoba: Boolean(snap.lastMove.madeEscoba),
+              tableCountAfter: snap.lastMove.tableCountAfter,
+              handCountAfter: snap.lastMove.handCountAfter,
+            }
+          : null,
+        revealedCards: { ...(snap.revealedCards || {}) },
         lastHand: snap.lastHand
           ? {
               pointsByOwner: snap.lastHand.pointsByOwner,
@@ -1071,10 +1159,10 @@ function StrategyEscobaDeckGame() {
             }
           : null,
         actions: {
-          canPlayHuman: snap.phase === "playing" && snap.turnId === "human",
+          canPlayHuman: snap.phase === "playing" && snap.turnId === "human" && !snap.auto,
           canNextHand: snap.phase === "hand-over",
           canRestart: true,
-          canToggleTable: snap.phase === "playing" && snap.turnId === "human",
+          canToggleTable: snap.phase === "playing" && snap.turnId === "human" && !snap.auto,
         },
         message: snap.message,
       };
@@ -1086,8 +1174,7 @@ function StrategyEscobaDeckGame() {
     setS((prev) => {
       if (!prev.auto) return prev;
       if ((ms || 0) >= (prev.auto.ms || 0)) {
-        if (prev.auto.type === "ai-turn") return runAiTurn(prev);
-        return { ...prev, auto: null };
+        return runAutoStep(prev);
       }
       return {
         ...prev,
@@ -1108,7 +1195,7 @@ function StrategyEscobaDeckGame() {
     s.deckId === "spanish" ? t.subtitleSpanish : t.subtitleEnglishAdapted;
   const rulesText =
     s.deckId === "spanish" ? t.rulesSpanish : t.rulesEnglishAdapted;
-  const isHumanTurn = s.phase === "playing" && s.turnId === "human";
+  const isHumanTurn = s.phase === "playing" && s.turnId === "human" && !s.auto;
   const scoreOwners = ownerIdsFrom(s.players, s.teamMode);
   const dealerId = s.order[s.dealerIndex];
   const selectedSet = new Set(s.selectedTableIds);
@@ -1123,6 +1210,15 @@ function StrategyEscobaDeckGame() {
   const roundWinnerOwners = s.lastHand?.winnerOwners || [];
   const roundWinnerLabel = s.lastHand?.winnerLabel || null;
   const humanWonRound = roundWinnerOwners.includes(ownerOfPlayer(s, "human"));
+  const autoStatusText =
+    s.auto?.type === "ai-turn"
+      ? t.aiThinking
+      : s.auto?.type === "turn-settle"
+        ? t.settlePause
+        : null;
+  const lastMoveCapturedText = s.lastMove?.captured?.length
+    ? s.lastMove.captured.join(", ")
+    : t.none;
 
   return (
     <div className="mini-game strategy-brisca-game brisca-arena strategy-escoba-game">
@@ -1231,6 +1327,7 @@ function StrategyEscobaDeckGame() {
         <span>
           {t.turn}: {s.byId[s.turnId]?.name || s.turnId}
         </span>
+        {autoStatusText ? <span>{autoStatusText}</span> : null}
         <span>
           {t.stock}: {s.stock.length}
         </span>
@@ -1284,6 +1381,11 @@ function StrategyEscobaDeckGame() {
                     <p className="seat-kpi">
                       {t.escobas}: <strong>{s.escobas[player.id] || 0}</strong>
                     </p>
+                    {s.revealedCards?.[player.id] ? (
+                      <p className="seat-kpi">
+                        {t.lastKnownCard}: <strong>{s.revealedCards[player.id]}</strong>
+                      </p>
+                    ) : null}
                     {wonRound ? (
                       <span className="seat-turn-led" aria-label={`${player.name}: ${t.wonRoundLed}`}>
                         {t.wonRoundLed}
@@ -1337,6 +1439,24 @@ function StrategyEscobaDeckGame() {
                 <p className="escoba-table-empty">--</p>
               )}
             </div>
+
+            {s.lastMove ? (
+              <div className="escoba-last-move">
+                <p>
+                  <strong>{t.lastMove}:</strong> {s.lastMove.actorName}
+                </p>
+                <p>
+                  {t.playedCard}: <strong>{s.lastMove.card}</strong>
+                </p>
+                <p>
+                  {t.capturedCards}: <strong>{lastMoveCapturedText}</strong>
+                </p>
+                <p>
+                  {t.tableAfter}: <strong>{s.lastMove.tableCountAfter}</strong> | {t.handAfter}:{" "}
+                  <strong>{s.lastMove.handCountAfter}</strong>
+                </p>
+              </div>
+            ) : null}
 
             {isHumanTurn ? (
               <div className="escoba-human-actions">

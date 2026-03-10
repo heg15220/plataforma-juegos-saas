@@ -56,6 +56,7 @@ const KnowledgeCalculoMentalGame = () => <KnowledgeArcadeGame variant="calculo-m
 const KnowledgeTablaPeriodicaGame = () => <KnowledgeArcadeGame variant="tabla-periodica" />;
 const KnowledgeMapasGame = () => <KnowledgeArcadeGame variant="mapas" />;
 const KnowledgeMapasCaminoCortoGame = () => <KnowledgeArcadeGame variant="mapas-camino-corto" />;
+const KnowledgeAdivinaPaisGame = () => <KnowledgeArcadeGame variant="adivina-pais" />;
 
 // ─── Registry ─────────────────────────────────────────────────────────────
 export const GAME_REGISTRY = {
@@ -77,6 +78,7 @@ export const GAME_REGISTRY = {
   "knowledge-tabla-periodica-total": KnowledgeTablaPeriodicaGame,
   "knowledge-mapas-atlas":       KnowledgeMapasGame,
   "knowledge-mapas-camino-corto": KnowledgeMapasCaminoCortoGame,
+  "knowledge-adivina-pais-silueta": KnowledgeAdivinaPaisGame,
   "strategy-chess-grandmaster":  ChessGame,
   "strategy-damas-clasicas":     CheckersGame,
   "strategy-sudoku-tecnicas":    StrategySudokuGame,
@@ -118,6 +120,7 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-tabla-periodica-total": "Tabla periodica vacia: flechas mueven casilla, simbolo/nombre + Enter valida, N siguiente pendiente, R reinicia.",
     "knowledge-mapas-atlas":       "Elige escala (mundo/continente/pais/ciudades), escribe nombres geograficos y valida con Enter. R reinicia el mapa y N carga uno aleatorio.",
     "knowledge-mapas-camino-corto": "Modo paises/provincias: selecciona continente o pais, escribe vecino, Enter valida, verde ideal, naranja alternativa, R reinicia y N nueva ruta.",
+    "knowledge-adivina-pais-silueta": "5 rondas: identifica la silueta escribiendo el pais y valida con Enter. Recomendados en vivo por letras; N avanza ronda ya validada y R reinicia.",
     "strategy-chess-grandmaster":  "Clic para mover, U deshace, D reclama tablas, F pantalla completa.",
     "strategy-damas-clasicas":     "Damas 8x8: clic para mover en diagonal, capturas encadenadas, U deshace, X retiro, R reinicia y F pantalla completa.",
     "strategy-sudoku-tecnicas":    "Sudoku 9x9: flechas para mover, 1-9 o QWE/ASD/UIO para escribir, Backspace borra, P aplica pista y R partida aleatoria.",
@@ -152,6 +155,7 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "knowledge-tabla-periodica-total": "Empty periodic table: arrows move cells, symbol/name + Enter checks, N next pending, R restart.",
     "knowledge-mapas-atlas":       "Choose scope (world/continent/country/cities), type geographic names and submit with Enter. R restarts and N loads a random map.",
     "knowledge-mapas-camino-corto": "Countries/provinces mode: pick continent or country, type next neighbor, Enter checks, green ideal, orange alternative, R restart, N new route.",
+    "knowledge-adivina-pais-silueta": "5 rounds: identify each silhouette by typing the country and pressing Enter. Live recommendations update by letters; N advances checked rounds and R restarts.",
     "strategy-chess-grandmaster":  "Click to move, U undo, D claim draw, F fullscreen.",
     "strategy-damas-clasicas":     "8x8 checkers: click to move diagonally, chain captures, U undo, X resign, R restart and F fullscreen.",
     "strategy-sudoku-tecnicas":    "Sudoku 9x9: arrows move, 1-9 or QWE/ASD/UIO types values, Backspace clears, P applies hint, and R starts a random match.",
