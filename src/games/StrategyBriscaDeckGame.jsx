@@ -6,6 +6,7 @@ const MATCH_TARGET_ROUNDS = 3;
 const RESOLVE_DELAY_MS = 1800;
 const NEXT_TURN_DELAY_MS = 1100;
 const DRAW_FX_MS = 900;
+const AI_THINK_EXTRA_MS = 450;
 
 const SPANISH_CARD_SOURCE = "https://github.com/mcmd/playingcards.io-spanish.playing.cards";
 const BACK_IMAGE = "/assets/cards/spanish/reverso.png";
@@ -542,7 +543,7 @@ function StrategyBriscaDeckGame() {
   useEffect(() => {
     if (s.status !== "playing" || s.resolving || !s.current || !s.byId[s.current]?.ai) return;
     if (s.turnTransitioning) return;
-    const d = (DIFF[s.difficultyId] || DIFF.medium).think + Math.floor(Math.random() * 260);
+    const d = (DIFF[s.difficultyId] || DIFF.medium).think + AI_THINK_EXTRA_MS + Math.floor(Math.random() * 260);
     const tm = setTimeout(() => setS((prev) => aiTurn(prev, t)), d);
     return () => clearTimeout(tm);
   }, [s.current, s.difficultyId, s.playSeq, s.resolving, s.status, s.turnTransitioning, s.byId, t]);
@@ -690,7 +691,7 @@ function StrategyBriscaDeckGame() {
 
           <section className="brisca-center-zone">
             <div className="brisca-center-meta">
-              <article className="brisca-pile"><h6>{t.trump}</h6><Card card={s.trumpCard} deckId={s.deckId} compact /></article>
+              <article className="brisca-pile brisca-pile-trump"><h6>{t.trump}</h6><Card card={s.trumpCard} deckId={s.deckId} compact /></article>
               <article className="brisca-pile brisca-pile-stock">
                 <h6>{t.stock}</h6>
                 <div className="brisca-stock-stack" aria-label={`${t.stock}: ${s.stock.length + (s.trumpCard ? 1 : 0)}`}>

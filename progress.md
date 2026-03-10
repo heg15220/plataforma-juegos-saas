@@ -2328,3 +2328,64 @@ Pendiente sugerido:
   - `seenCountryCount = 151`
   - `missingCountryCount = 0`
 - Conclusión: todos los paises con silueta disponibles en la plataforma estan incluidos en las partidas y aparecen en al menos una ronda dentro del set de 10.000 partidas.
+
+## 2026-03-10 - Escoba UX: LEDs, limpieza de panel y animacion de captura 15
+- `StrategyEscobaDeckGame.jsx`
+  - IA mas lenta al jugar carta (`AI_DELAY_MS` subido a 2300 ms).
+  - LED de turno actual en asientos IA y zona humana (`turnLed`), manteniendo indicador de ganador de ronda.
+  - Eliminado panel textual de `Ultima jugada` del centro (bloque solicitado como sobrante).
+  - Nuevo `captureFx` temporal con timeout (`CAPTURE_FX_MS`) para avisar de capturas al sumar 15.
+  - `captureFx` incluye cartas de la combinacion (`[carta jugada + cartas de mesa]`) para render animado en overlay.
+- `styles.css`
+  - Nueva tarjeta/overlay `escoba-capture-fx` con transicion fade y aparicion escalonada de cartas (`escoba-capture-card-in`).
+  - Realce visual del asiento del jugador que captura (`capture-fx-seat`).
+  - Cambio de color del contador de cartas restantes en mazo (`.mus-center-deck span`) y del titulo `Tu mano` (`.escoba-human-zone h5`) a tono dorado.
+- Validacion tecnica: comprobacion de sintaxis por `esbuild` del componente Escoba (OK).
+
+## 2026-03-10 - Escoba: animacion de reparto desde mazo a mano (cuando mano vacia)
+- `StrategyEscobaDeckGame.jsx`
+  - Anadido estado `dealFx` (`id`, `count`) y secuencia `dealFxSeq` para disparar animacion de cartas al usuario cuando se reponen manos desde mazo.
+  - En `endHandIfNeeded` (caso `stock.length > 0`), tras repartir se calcula cuantas cartas recibe `human` y se activa `dealFx`.
+  - Nuevo efecto de limpieza de `dealFx` sincronizado por duracion base + stagger.
+  - Runtime bridge ahora expone `dealFx.count` para QA.
+  - Inicializacion/limpieza de `dealFx` en nueva mano/cierre.
+- `styles.css`
+  - Nueva animacion `escoba-deal-to-hand` y contenedor `.escoba-deal-fx` con cartas ocultas escalonadas (`--deal-index`) moviendose del mazo hacia la mano humana.
+- Verificacion tecnica: `esbuild` del componente Escoba OK.
+
+## 2026-03-10 - Escoba: cola de animaciones de captura con pausa entre transiciones
+- `StrategyEscobaDeckGame.jsx`
+  - Anadido `CAPTURE_FX_GAP_MS = 900`.
+  - Nuevo estado `captureFxQueue` para encolar capturas cuando ya hay una animacion activa.
+  - `resolvePlay` ahora:
+    - muestra captura al instante si no hay animacion activa,
+    - encola la siguiente si ya hay una en curso.
+  - Efecto adicional para lanzar la siguiente captura en cola con pausa (`gap`) cuando termina la anterior.
+  - Bridge QA ampliado con `captureFxQueued`.
+- Verificacion: compilacion sintactica del componente Escoba con esbuild (OK).
+
+## 2026-03-10 - Escoba: transiciones secuenciales entre multiples recogidas de 15
+- Se implemento cola de animaciones de captura:
+  - nuevo estado `captureFxQueue`.
+  - si llega una nueva captura mientras hay animacion activa, se encola en vez de reemplazar.
+- Se anadio pausa entre transiciones:
+  - `CAPTURE_FX_GAP_MS = 900`.
+  - al terminar una captura, la siguiente se activa tras ese gap.
+- Se limpia cola al pasar de mano/cerrar mano para evitar arrastres visuales.
+- Bridge QA ampliado con `captureFxQueued` para observar capturas pendientes.
+- Verificacion tecnica: `esbuild` del componente Escoba OK.
+## 2026-03-10 - Ajustes UX Escoba/Brisca (solape + ritmo IA + triunfo)
+- Escoba: `src/games/StrategyEscobaDeckGame.jsx`
+  - `lastKnownCard` ahora se renderiza despues de la mano oculta de la IA y con clase dedicada `seat-last-card`.
+  - `escobas` conserva indicador principal con clase `seat-escobas-kpi`.
+- Estilos: `src/styles.css`
+  - Nuevo bloque `.strategy-escoba-game.brisca-arena .seat-last-card` para evitar superposicion visual con nombre IA/cartas.
+  - Ajustes para `seat-slot-left/right/top` con ancho/control de wrapping estable.
+  - Brisca: nuevo tamano de triunfo en mesa (`.brisca-pile-trump .brisca-card.compact`: 52x74).
+- Brisca: `src/games/StrategyBriscaDeckGame.jsx`
+  - IA ligeramente mas lenta al jugar (`AI_THINK_EXTRA_MS = 450` sumado al think por dificultad).
+  - Added class `brisca-pile-trump` en la pila de triunfo para tamaño dedicado.
+- Pendiente: pasada Playwright en modo baraja para confirmar no solape y comprobar ritmo/escala visual.
+## 2026-03-10 - Ajuste solicitado: ocultar "Ultima carta vista" en Escoba
+- Eliminado del render de asientos IA en `src/games/StrategyEscobaDeckGame.jsx` el bloque que mostraba `t.lastKnownCard` + carta revelada.
+- Limpieza asociada en `src/styles.css`: retiradas las reglas de `.seat-last-card` al no usarse ya.

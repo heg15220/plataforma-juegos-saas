@@ -5,8 +5,12 @@ import useGameRuntimeBridge from "../utils/useGameRuntimeBridge";
 const HAND_SIZE = 3;
 const TARGET_OPTIONS = [11, 15, 21];
 const PLAYER_OPTIONS = [2, 3, 4];
-const AI_DELAY_MS = 1450;
+const AI_DELAY_MS = 2300;
 const TURN_SETTLE_DELAY_MS = 900;
+const CAPTURE_FX_MS = 4800;
+const CAPTURE_FX_GAP_MS = 900;
+const DEAL_TO_HAND_FX_CARD_MS = 1200;
+const DEAL_TO_HAND_FX_STAGGER_MS = 220;
 const BACK_IMAGE = "/assets/cards/spanish/reverso.png";
 
 const DIFF = {
@@ -128,6 +132,7 @@ const T = {
     hand: "Mano",
     dealer: "Repartidor",
     turn: "Turno",
+    turnLed: "Turno actual",
     stock: "Mazo",
     table: "Mesa",
     scores: "Marcador",
@@ -175,6 +180,7 @@ const T = {
     lastMove: "Ultima jugada",
     playedCard: "Carta jugada",
     capturedCards: "Cartas recogidas",
+    captureFx: (name, count) => `${name} recoge ${count} cartas para sumar 15.`,
     tableAfter: "Mesa tras jugada",
     handAfter: "Cartas en mano",
     lastKnownCard: "Ultima carta vista",
@@ -214,6 +220,7 @@ const T = {
     hand: "Hand",
     dealer: "Dealer",
     turn: "Turn",
+    turnLed: "Current turn",
     stock: "Stock",
     table: "Table",
     scores: "Scoreboard",
@@ -260,6 +267,7 @@ const T = {
     lastMove: "Last move",
     playedCard: "Played card",
     capturedCards: "Captured cards",
+    captureFx: (name, count) => `${name} captures ${count} cards to make 15.`,
     tableAfter: "Table after move",
     handAfter: "Cards in hand",
     lastKnownCard: "Last seen card",
@@ -506,6 +514,8 @@ const pickAiMove = (state, playerId) => {
 };
 
 const teamLabel = (side, t) => (side === "user" ? t.teamUser : t.teamRival);
+const hasPendingCaptureFx = (state) =>
+  Boolean(state.captureFx || (state.captureFxQueue?.length || 0) > 0);
 
 const scoreHand = (state, t) => {
   const owners = ownerIdsFrom(state.players, state.teamMode);
@@ -614,6 +624,10 @@ const scoreHand = (state, t) => {
 };
 
 const withAutoTurn = (state) => {
+  if (hasPendingCaptureFx(state)) {
+    if (!state.auto) return state;
+    return { ...state, auto: null };
+  }
   if (state.phase === "playing" && state.byId[state.turnId]?.ai) {
     const current = state.auto;
     const targetMs = AI_DELAY_MS;
@@ -626,6 +640,7 @@ const withAutoTurn = (state) => {
 
 const withTurnSettlePause = (state) => {
   if (state.phase !== "playing") return { ...state, auto: null };
+  if (hasPendingCaptureFx(state)) return { ...state, auto: null };
   const current = state.auto;
   const targetMs = TURN_SETTLE_DELAY_MS;
   if (current?.type === "turn-settle" && current.ms === targetMs) return state;
@@ -633,6 +648,7 @@ const withTurnSettlePause = (state) => {
 };
 
 const runAutoStep = (state) => {
+  if (hasPendingCaptureFx(state)) return { ...state, auto: null };
   if (!state.auto) return state;
   if (state.auto.type === "turn-settle") {
     return withAutoTurn({ ...state, auto: null });
@@ -685,6 +701,11 @@ const makeHandState = (base, handNumber, dealerIndex, scores, initialMessage = n
     lastCapturerId,
     lastMove: null,
     revealedCards: {},
+    captureFx: null,
+    captureFxQueue: [],
+    captureFxSeq: 0,
+    dealFx: null,
+    dealFxSeq: 0,
     selectedTableIds: [],
     lastHand: null,
     matchWinner: null,
@@ -737,6 +758,16 @@ const endHandIfNeeded = (state) => {
     const manoIndex = state.order.indexOf(state.manoId);
     const dealOrder = rotateFromIndex(state.order, manoIndex);
     dealRoundCards(hands, stock, dealOrder, HAND_SIZE);
+    const dealtToHuman = Math.max(
+      0,
+      (hands.human || []).length - ((state.hands.human || []).length)
+    );
+    const nextDealFxSeq = dealtToHuman > 0
+      ? (state.dealFxSeq || 0) + 1
+      : state.dealFxSeq || 0;
+    const dealFx = dealtToHuman > 0
+      ? { id: nextDealFxSeq, count: dealtToHuman }
+      : null;
     return withAutoTurn({
       ...state,
       hands,
@@ -744,6 +775,10 @@ const endHandIfNeeded = (state) => {
       turnId: state.manoId,
       selectedTableIds: [],
       message: t.redeal,
+      captureFx: null,
+      captureFxQueue: [],
+      dealFx,
+      dealFxSeq: nextDealFxSeq,
       auto: null,
     });
   }
@@ -787,6 +822,9 @@ const endHandIfNeeded = (state) => {
     phase: uniqueWinner ? "match-over" : "hand-over",
     captures,
     tableCards,
+    captureFx: null,
+    captureFxQueue: [],
+    dealFx: null,
     auto: null,
     matchWinner: uniqueWinner,
     scores,
@@ -810,7 +848,14 @@ const endHandIfNeeded = (state) => {
 };
 
 const resolvePlay = (state, playerId, cardIndex, chosenOption) => {
-  if (state.phase !== "playing" || state.turnId !== playerId || state.auto) return state;
+  if (
+    state.phase !== "playing" ||
+    state.turnId !== playerId ||
+    state.auto ||
+    hasPendingCaptureFx(state)
+  ) {
+    return state;
+  }
   const t = tt(state.locale);
   const hand = [...(state.hands[playerId] || [])];
   const card = hand[cardIndex];
@@ -821,6 +866,7 @@ const resolvePlay = (state, playerId, cardIndex, chosenOption) => {
   const tableCards = [...state.tableCards];
   const captures = { ...state.captures, [playerId]: [...(state.captures[playerId] || [])] };
   const escobas = { ...state.escobas };
+  const actorName = state.byId[playerId]?.name || playerId;
   let lastCapturerId = state.lastCapturerId;
   let pickedCards = [];
   let madeEscoba = false;
@@ -842,6 +888,25 @@ const resolvePlay = (state, playerId, cardIndex, chosenOption) => {
   }
 
   const message = buildTurnMessage(state, playerId, card, pickedCards, madeEscoba, t);
+  const nextCaptureFxSeq = pickedCards.length ? (state.captureFxSeq || 0) + 1 : state.captureFxSeq || 0;
+  const captureFxCards = pickedCards.length ? [card, ...pickedCards].map((item) => ({ ...item })) : [];
+  const captureFx = pickedCards.length
+    ? {
+        id: nextCaptureFxSeq,
+        actorId: playerId,
+        text: t.captureFx(actorName, pickedCards.length + 1),
+        cards: captureFxCards,
+      }
+    : null;
+  const captureFxQueue = [...(state.captureFxQueue || [])];
+  let activeCaptureFx = state.captureFx || null;
+  if (captureFx) {
+    if (activeCaptureFx || captureFxQueue.length) {
+      captureFxQueue.push(captureFx);
+    } else {
+      activeCaptureFx = captureFx;
+    }
+  }
   const playedCardText = cardText(card);
   const nextTurnId = nextId(state.order, playerId);
   const updated = {
@@ -859,13 +924,17 @@ const resolvePlay = (state, playerId, cardIndex, chosenOption) => {
     },
     lastMove: {
       actorId: playerId,
-      actorName: state.byId[playerId]?.name || playerId,
+      actorName,
       card: playedCardText,
+      cardId: card.id,
       captured: pickedCards.map((pickedCard) => cardText(pickedCard)),
       madeEscoba,
       tableCountAfter: tableCards.length,
       handCountAfter: hand.length,
     },
+    captureFx: activeCaptureFx,
+    captureFxQueue,
+    captureFxSeq: nextCaptureFxSeq,
     message,
     auto: null,
   };
@@ -877,7 +946,14 @@ const resolvePlay = (state, playerId, cardIndex, chosenOption) => {
 };
 
 const applyHumanCard = (state, cardIndex) => {
-  if (state.phase !== "playing" || state.turnId !== "human" || state.auto) return state;
+  if (
+    state.phase !== "playing" ||
+    state.turnId !== "human" ||
+    state.auto ||
+    hasPendingCaptureFx(state)
+  ) {
+    return state;
+  }
   const t = tt(state.locale);
   const hand = state.hands.human || [];
   const card = hand[cardIndex];
@@ -911,7 +987,16 @@ const runAiTurn = (state) => {
   return resolvePlay({ ...state, auto: null }, player.id, move.cardIndex, move.option);
 };
 
-function Card({ card, deckId = "english_adapted", hidden = false, compact = false, onClick, disabled, selected }) {
+function Card({
+  card,
+  deckId = "english_adapted",
+  hidden = false,
+  compact = false,
+  onClick,
+  disabled,
+  selected,
+  led = false,
+}) {
   const cls = [
     "brisca-card",
     compact ? "compact" : "",
@@ -920,6 +1005,7 @@ function Card({ card, deckId = "english_adapted", hidden = false, compact = fals
     card?.colorClass || "",
     onClick ? "playable" : "",
     selected ? "selected-for-discard" : "",
+    led ? "led-marked" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -1019,7 +1105,14 @@ function StrategyEscobaDeckGame() {
 
   const toggleTableCard = useCallback((cardId) => {
     setS((prev) => {
-      if (prev.phase !== "playing" || prev.turnId !== "human" || prev.auto) return prev;
+      if (
+        prev.phase !== "playing" ||
+        prev.turnId !== "human" ||
+        prev.auto ||
+        hasPendingCaptureFx(prev)
+      ) {
+        return prev;
+      }
       return {
         ...prev,
         selectedTableIds: prev.selectedTableIds.includes(cardId)
@@ -1031,7 +1124,10 @@ function StrategyEscobaDeckGame() {
 
   const clearSelection = useCallback(() => {
     setS((prev) =>
-      prev.phase === "playing" && prev.turnId === "human" && !prev.auto
+      prev.phase === "playing" &&
+      prev.turnId === "human" &&
+      !prev.auto &&
+      !hasPendingCaptureFx(prev)
         ? { ...prev, selectedTableIds: [], message: t.selectTable }
         : prev
     );
@@ -1053,6 +1149,59 @@ function StrategyEscobaDeckGame() {
   }, [s.auto]);
 
   useEffect(() => {
+    if (!s.captureFx?.id) return undefined;
+    const activeFxId = s.captureFx.id;
+    const tm = setTimeout(() => {
+      setS((prev) => {
+        if (!prev.captureFx || prev.captureFx.id !== activeFxId) return prev;
+        return { ...prev, captureFx: null };
+      });
+    }, CAPTURE_FX_MS);
+    return () => clearTimeout(tm);
+  }, [s.captureFx]);
+
+  useEffect(() => {
+    if (s.captureFx || !s.captureFxQueue?.length) return undefined;
+    const tm = setTimeout(() => {
+      setS((prev) => {
+        if (prev.captureFx || !prev.captureFxQueue?.length) return prev;
+        const [nextFx, ...restQueue] = prev.captureFxQueue;
+        return {
+          ...prev,
+          captureFx: nextFx,
+          captureFxQueue: restQueue,
+        };
+      });
+    }, CAPTURE_FX_GAP_MS);
+    return () => clearTimeout(tm);
+  }, [s.captureFx, s.captureFxQueue]);
+
+  useEffect(() => {
+    if (s.phase !== "playing" || s.auto || hasPendingCaptureFx(s)) return undefined;
+    if (!s.byId[s.turnId]?.ai) return undefined;
+    setS((prev) => {
+      if (prev.phase !== "playing" || prev.auto || hasPendingCaptureFx(prev)) return prev;
+      return withAutoTurn(prev);
+    });
+    return undefined;
+  }, [s.phase, s.turnId, s.auto, s.captureFx, s.captureFxQueue, s.byId]);
+
+  useEffect(() => {
+    if (!s.dealFx?.id) return undefined;
+    const activeDealFxId = s.dealFx.id;
+    const clearMs =
+      DEAL_TO_HAND_FX_CARD_MS +
+      Math.max(0, (s.dealFx.count || 1) - 1) * DEAL_TO_HAND_FX_STAGGER_MS;
+    const tm = setTimeout(() => {
+      setS((prev) => {
+        if (!prev.dealFx || prev.dealFx.id !== activeDealFxId) return prev;
+        return { ...prev, dealFx: null };
+      });
+    }, clearMs);
+    return () => clearTimeout(tm);
+  }, [s.dealFx]);
+
+  useEffect(() => {
     const onKey = (e) => {
       const tag = String(e.target?.tagName || "").toLowerCase();
       if (["input", "textarea", "select"].includes(tag)) return;
@@ -1067,7 +1216,12 @@ function StrategyEscobaDeckGame() {
         nextHand();
         return;
       }
-      if (s.phase === "playing" && s.turnId === "human" && !s.auto) {
+      if (
+        s.phase === "playing" &&
+        s.turnId === "human" &&
+        !s.auto &&
+        !hasPendingCaptureFx(s)
+      ) {
         if (["1", "2", "3"].includes(k)) {
           e.preventDefault();
           playHumanCard(Number(k) - 1);
@@ -1081,7 +1235,7 @@ function StrategyEscobaDeckGame() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [s.phase, s.turnId, s.auto, restart, nextHand, playHumanCard]);
+  }, [s.phase, s.turnId, s.auto, s.captureFx, s.captureFxQueue, restart, nextHand, playHumanCard]);
 
   const bridgePayload = useCallback(
     (snap) => {
@@ -1142,10 +1296,24 @@ function StrategyEscobaDeckGame() {
               actorId: snap.lastMove.actorId,
               actorName: snap.lastMove.actorName,
               card: snap.lastMove.card,
+              cardId: snap.lastMove.cardId || null,
               captured: snap.lastMove.captured || [],
               madeEscoba: Boolean(snap.lastMove.madeEscoba),
               tableCountAfter: snap.lastMove.tableCountAfter,
               handCountAfter: snap.lastMove.handCountAfter,
+            }
+          : null,
+        captureFx: snap.captureFx
+          ? {
+              actorId: snap.captureFx.actorId,
+              text: snap.captureFx.text,
+              cards: (snap.captureFx.cards || []).map((card) => cardText(card)),
+            }
+          : null,
+        captureFxQueued: snap.captureFxQueue?.length || 0,
+        dealFx: snap.dealFx
+          ? {
+              count: snap.dealFx.count || 0,
             }
           : null,
         revealedCards: { ...(snap.revealedCards || {}) },
@@ -1159,10 +1327,18 @@ function StrategyEscobaDeckGame() {
             }
           : null,
         actions: {
-          canPlayHuman: snap.phase === "playing" && snap.turnId === "human" && !snap.auto,
+          canPlayHuman:
+            snap.phase === "playing" &&
+            snap.turnId === "human" &&
+            !snap.auto &&
+            !hasPendingCaptureFx(snap),
           canNextHand: snap.phase === "hand-over",
           canRestart: true,
-          canToggleTable: snap.phase === "playing" && snap.turnId === "human" && !snap.auto,
+          canToggleTable:
+            snap.phase === "playing" &&
+            snap.turnId === "human" &&
+            !snap.auto &&
+            !hasPendingCaptureFx(snap),
         },
         message: snap.message,
       };
@@ -1195,7 +1371,12 @@ function StrategyEscobaDeckGame() {
     s.deckId === "spanish" ? t.subtitleSpanish : t.subtitleEnglishAdapted;
   const rulesText =
     s.deckId === "spanish" ? t.rulesSpanish : t.rulesEnglishAdapted;
-  const isHumanTurn = s.phase === "playing" && s.turnId === "human" && !s.auto;
+  const isHumanTurn =
+    s.phase === "playing" &&
+    s.turnId === "human" &&
+    !s.auto &&
+    !hasPendingCaptureFx(s);
+  const isHumanCurrentTurn = s.phase === "playing" && s.turnId === "human";
   const scoreOwners = ownerIdsFrom(s.players, s.teamMode);
   const dealerId = s.order[s.dealerIndex];
   const selectedSet = new Set(s.selectedTableIds);
@@ -1216,9 +1397,8 @@ function StrategyEscobaDeckGame() {
       : s.auto?.type === "turn-settle"
         ? t.settlePause
         : null;
-  const lastMoveCapturedText = s.lastMove?.captured?.length
-    ? s.lastMove.captured.join(", ")
-    : t.none;
+  const lastPlayedCardOnTableId =
+    s.lastMove && !s.lastMove.captured?.length ? s.lastMove.cardId : null;
 
   return (
     <div className="mini-game strategy-brisca-game brisca-arena strategy-escoba-game">
@@ -1354,6 +1534,8 @@ function StrategyEscobaDeckGame() {
               .filter((player) => !player.human)
               .map((player) => {
                 const wonRound = roundWinnerOwners.includes(ownerOfPlayer(s, player.id));
+                const isCurrentTurn = s.phase === "playing" && s.turnId === player.id;
+                const hasCaptureFx = s.captureFx?.actorId === player.id;
                 return (
                   <article
                     key={player.id}
@@ -1362,6 +1544,8 @@ function StrategyEscobaDeckGame() {
                       "seat-ai",
                       player.side === "user" ? "seat-friendly" : "seat-rival",
                       `seat-slot-${player.seat.slot}`,
+                      isCurrentTurn ? "seat-active seat-active-turn" : "",
+                      hasCaptureFx ? "capture-fx-seat" : "",
                       wonRound ? "seat-won-trick" : "",
                     ].join(" ")}
                     style={{
@@ -1381,10 +1565,10 @@ function StrategyEscobaDeckGame() {
                     <p className="seat-kpi">
                       {t.escobas}: <strong>{s.escobas[player.id] || 0}</strong>
                     </p>
-                    {s.revealedCards?.[player.id] ? (
-                      <p className="seat-kpi">
-                        {t.lastKnownCard}: <strong>{s.revealedCards[player.id]}</strong>
-                      </p>
+                    {isCurrentTurn ? (
+                      <span className="seat-turn-led current-turn-led" aria-label={`${player.name}: ${t.turnLed}`}>
+                        {t.turnLed}
+                      </span>
                     ) : null}
                     {wonRound ? (
                       <span className="seat-turn-led" aria-label={`${player.name}: ${t.wonRoundLed}`}>
@@ -1403,6 +1587,49 @@ function StrategyEscobaDeckGame() {
                 );
               })}
           </div>
+          {s.captureFx ? (
+            <div className="escoba-capture-fx" role="status" aria-live="polite">
+              <div className="escoba-capture-fx-head">
+                <span className="escoba-led-dot" aria-hidden="true" />
+                <strong>{s.captureFx.text}</strong>
+              </div>
+              {s.captureFx.cards?.length ? (
+                <div className="escoba-capture-fx-cards" aria-hidden="true">
+                  {s.captureFx.cards.map((fxCard, index) => (
+                    <React.Fragment key={`${s.captureFx.id}-${fxCard.id}-${index}`}>
+                      {index > 0 ? <span className="fx-plus">+</span> : null}
+                      <div
+                        className="escoba-capture-fx-card-wrap"
+                        style={{ "--fx-index": index }}
+                      >
+                        <Card deckId={s.deckId} card={fxCard} compact led />
+                      </div>
+                    </React.Fragment>
+                  ))}
+                  <span className="fx-equals">= 15</span>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          {s.dealFx ? (
+            <div className="escoba-deal-fx" aria-hidden="true">
+              {Array.from({ length: s.dealFx.count || 0 }).map((_, index) => {
+                const spread = (index - ((s.dealFx.count || 1) - 1) / 2) * 22;
+                return (
+                  <div
+                    key={`escoba-deal-fx-${s.dealFx.id}-${index}`}
+                    className="escoba-deal-fx-card"
+                    style={{
+                      "--deal-index": index,
+                      "--deal-spread": `${spread}px`,
+                    }}
+                  >
+                    <Card deckId={s.deckId} hidden compact />
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
 
           <section className="brisca-center-zone escoba-center-zone">
             <div className="escoba-board-score">
@@ -1431,6 +1658,7 @@ function StrategyEscobaDeckGame() {
                     deckId={s.deckId}
                     card={card}
                     compact
+                    led={lastPlayedCardOnTableId === card.id}
                     selected={selectedSet.has(card.id)}
                     onClick={isHumanTurn ? () => toggleTableCard(card.id) : undefined}
                   />
@@ -1439,24 +1667,6 @@ function StrategyEscobaDeckGame() {
                 <p className="escoba-table-empty">--</p>
               )}
             </div>
-
-            {s.lastMove ? (
-              <div className="escoba-last-move">
-                <p>
-                  <strong>{t.lastMove}:</strong> {s.lastMove.actorName}
-                </p>
-                <p>
-                  {t.playedCard}: <strong>{s.lastMove.card}</strong>
-                </p>
-                <p>
-                  {t.capturedCards}: <strong>{lastMoveCapturedText}</strong>
-                </p>
-                <p>
-                  {t.tableAfter}: <strong>{s.lastMove.tableCountAfter}</strong> | {t.handAfter}:{" "}
-                  <strong>{s.lastMove.handCountAfter}</strong>
-                </p>
-              </div>
-            ) : null}
 
             {isHumanTurn ? (
               <div className="escoba-human-actions">
@@ -1470,13 +1680,14 @@ function StrategyEscobaDeckGame() {
               </div>
             ) : null}
 
-            <p className="brisca-message">{s.message}</p>
           </section>
 
           <section
             className={[
               "brisca-human-zone",
               "escoba-human-zone",
+              isHumanCurrentTurn ? "seat-active seat-active-turn human-active-turn" : "",
+              s.captureFx?.actorId === "human" ? "capture-fx-seat" : "",
               humanWonRound ? "human-won-trick" : "",
             ].join(" ")}
           >
@@ -1486,6 +1697,11 @@ function StrategyEscobaDeckGame() {
                 {t.captures}: {(s.captures.human || []).length} | {t.escobas}: {s.escobas.human || 0}
               </span>
             </header>
+            {isHumanCurrentTurn ? (
+              <span className="seat-turn-led human-turn-led current-turn-led" aria-label={t.turnLed}>
+                {t.turnLed}
+              </span>
+            ) : null}
             {humanWonRound ? (
               <span className="seat-turn-led human-turn-led" aria-label={t.wonRoundLed}>
                 {t.wonRoundLed}
