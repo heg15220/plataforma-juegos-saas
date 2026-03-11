@@ -2571,3 +2571,41 @@ Pendiente sugerido:
   - Al comenzar `racing`, vuelve automaticamente al ranking dinamico en pista.
 - Verificacion tecnica:
   - `npx esbuild src/games/RaceGame2DPro.jsx --bundle --format=esm --platform=browser --outfile=output/race2dpro-grid-pos-fix-check.js` OK.
+## 2026-03-11 - Billar: desplegables pre-partida + objetivo + mobile responsive
+- `src/games/arcade/billiards-club/index.jsx`
+  - Sustituidos los botones de seleccion por 2 desplegables previos al inicio de partida: `Modo de juego` y `Modo IA`.
+  - La configuracion queda bloqueada fuera del estado `menu` para cumplir flujo "elige antes de empezar".
+  - Anadido texto breve junto a los desplegables: `Objetivo del modo: ...` basado en el modo elegido (Bola 8/9/10).
+  - Anadida deteccion de viewport movil (portrait/landscape), clases de layout mobile y toggle de orientacion de mesa en portrait.
+  - Anadidos controles virtuales tactiles para movil (pad direccional contextual + acciones `Tirar/Fijar blanca`, `Auto blanca`, `Push Out`, `Safety`).
+  - Ajustado mapeo de coordenadas puntero->mesa cuando la mesa esta rotada en vista vertical movil.
+- `src/styles.css`
+  - Nuevo bloque visual para setup con selects y tarjeta de objetivo.
+  - Refuerzo responsive de layout en movil (portrait/landscape), chips scrollables y simplificacion de cabecera.
+  - Nuevo modulo CSS para controles virtuales tactiles con botones de mayor tamano y CTA principal.
+  - Vista vertical de mesa en portrait (`billiards-table-vertical`) con rotacion visual del canvas para optimizar espacio.
+- Validacion tecnica
+  - Check de compilacion del componente OK con esbuild: `output/billiards-mobile-config-check.js`.
+  - QA Playwright del flujo de billar ejecutada con cliente local ESM compatible (`web_game_playwright_client.skill.mjs`) por incompatibilidad ESM de Node al invocar directamente el script `.js` de la skill.
+  - Artefactos generados en `output/billiards-mobile-ui-audit/`: `shot-0.png` y `state-0.json`; sin `errors-*.json` en la salida generada.
+## 2026-03-11 - Billar: IA aun mas lenta + linea de direccion visible durante IA
+- `src/games/arcade/billiards-club/index.jsx`
+  - Reduccion adicional del ritmo de IA elevando el multiplicador global `AI_ACTION_SLOWDOWN` a `5.2`.
+  - Ralentizadas de forma uniforme todas las fases de accion de la IA (`scan`, `auto-place`, `set-pocket`, `adjust-aim`, `adjust-power`, `push-out/safety`, `shoot`) mediante `scaleAiDuration(...)`.
+  - La previsualizacion de direccion (`getAimPreview`) ahora tambien se dibuja durante `ai-thinking` para que se vea en tiempo real el ajuste de la IA antes de golpear.
+  - Estilo visual diferenciado de guia IA: trazo dorado mas grueso y destacado sobre la trayectoria seleccionada.
+- Validacion tecnica
+  - Check de compilacion OK con esbuild: `output/billiards-ai-slower-guide-check.js`.
+  - No se completo pasada Playwright en este turno porque la ejecucion con escalado fuera de sandbox fue interrumpida manualmente por el usuario.
+## 2026-03-11 - Billar: internacionalizacion completa ES/EN por locale de navegador
+- `src/games/arcade/billiards-club/index.jsx`
+  - Anadida deteccion de idioma (`resolveLocale`): `es` si `navigator.language` empieza por `es`; en cualquier otro caso `en`.
+  - Internacionalizados textos de UI mediante `UI_COPY` (cabecera, botones, paneles, ayudas, overlays, controles tactiles y labels de accesibilidad).
+  - Internacionalizados metadatos de juego (`MODE_PRESETS`, `DIFFICULTY_PRESETS`, `POCKETS`) con labels ES/EN y helpers (`modeLabel`, `modeSummary`, `difficultyLabel`, `pocketLabel`).
+  - Runtime adaptado para locale:
+    - `createRuntimeState(..., locale)` + nombres de jugador/IA localizados.
+    - snapshots con `locale`, `statusLabel`, `modeLabel`, `difficultyLabel`, `calledPocketLabel`, `players[].groupLabel` localizados.
+    - `message`, `log`, `ai.action`, `pendingDecision.prompt/options` pasan por `localizeRuntimeText(...)` para mostrar salida en ingles cuando corresponda.
+  - Ajustados flujos de runtime para preservar locale al resetear/iniciar racks y al cambiar dificultad.
+- Validacion tecnica
+  - Compilacion OK con esbuild: `output/billiards-i18n-check.js`.

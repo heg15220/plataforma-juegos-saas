@@ -13146,7 +13146,6 @@ button.brisca-card.playable:disabled {
 }
 
 .billiards-head-actions,
-.billiards-segment,
 .billiards-control-group,
 .billiards-pocket-grid {
   display: flex;
@@ -13160,10 +13159,10 @@ button.brisca-card.playable:disabled {
   margin-top: 0.75rem;
 }
 
-.billiards-segment button,
 .billiards-head-actions button,
 .billiards-control-group button,
-.billiards-pocket-grid button {
+.billiards-pocket-grid button,
+.billiards-mobile-controls button {
   border: 1px solid rgba(245, 222, 179, 0.2);
   border-radius: 999px;
   background: rgba(12, 25, 36, 0.7);
@@ -13175,15 +13174,14 @@ button.brisca-card.playable:disabled {
   transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
 }
 
-.billiards-segment button:hover,
 .billiards-head-actions button:hover,
 .billiards-control-group button:hover,
-.billiards-pocket-grid button:hover {
+.billiards-pocket-grid button:hover,
+.billiards-mobile-controls button:hover {
   transform: translateY(-1px);
   border-color: rgba(250, 204, 21, 0.42);
 }
 
-.billiards-segment button.active,
 .billiards-pocket-grid button.active {
   background: linear-gradient(135deg, rgba(245, 158, 11, 0.38), rgba(234, 179, 8, 0.2));
   border-color: rgba(250, 204, 21, 0.68);
@@ -13194,8 +13192,8 @@ button.brisca-card.playable:disabled {
   border-color: rgba(250, 204, 21, 0.64);
 }
 
-.billiards-segment button:disabled,
-.billiards-control-group button:disabled {
+.billiards-control-group button:disabled,
+.billiards-mobile-controls button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
   transform: none;
@@ -13215,6 +13213,59 @@ button.brisca-card.playable:disabled {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
+}
+
+.billiards-setup-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.65rem;
+  align-items: end;
+}
+
+.billiards-select-field {
+  display: grid;
+  gap: 0.26rem;
+  margin: 0;
+}
+
+.billiards-select-field span {
+  color: #d5e8dd;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.billiards-select-field select {
+  border: 1px solid rgba(245, 222, 179, 0.24);
+  border-radius: 10px;
+  background: rgba(8, 18, 28, 0.78);
+  color: #f8fafc;
+  min-height: 38px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.38rem 0.62rem;
+  appearance: none;
+}
+
+.billiards-select-field select:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+.billiards-mode-goal {
+  margin: 0;
+  grid-column: 1 / -1;
+  border: 1px solid rgba(250, 204, 21, 0.28);
+  border-radius: 12px;
+  padding: 0.52rem 0.65rem;
+  background: rgba(16, 32, 48, 0.56);
+  color: #dce8e3;
+  font-size: 0.8rem;
+  line-height: 1.38;
+}
+
+.billiards-mode-goal strong {
+  color: #fef3c7;
 }
 
 .billiards-game .hud-pill {
@@ -13268,6 +13319,7 @@ button.brisca-card.playable:disabled {
   width: 100%;
   height: 100%;
   border-radius: 12px;
+  touch-action: none;
 }
 
 .billiards-overlay {
@@ -13371,6 +13423,13 @@ button.brisca-card.playable:disabled {
   gap: 0.55rem;
 }
 
+.billiards-panel.scoreboard .billiards-score-row {
+  max-height: 340px;
+  overflow: auto;
+  padding-right: 0.16rem;
+  scrollbar-width: thin;
+}
+
 .billiards-score-row article {
   border-radius: 14px;
   padding: 0.72rem 0.76rem;
@@ -13393,6 +13452,75 @@ button.brisca-card.playable:disabled {
   margin-top: 0.9rem;
   display: grid;
   gap: 0.65rem;
+}
+
+.billiards-mobile-controls {
+  display: none;
+  margin-top: 0.82rem;
+  border: 1px solid rgba(250, 204, 21, 0.28);
+  border-radius: 14px;
+  background: rgba(7, 17, 28, 0.86);
+  padding: 0.55rem;
+  gap: 0.5rem;
+}
+
+.billiards-mobile-hint {
+  margin: 0;
+  color: #d7e7df;
+  font-size: 0.74rem;
+}
+
+.billiards-mobile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.48rem;
+}
+
+.billiards-mobile-pad {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-areas:
+    ". up ."
+    "left . right"
+    ". down .";
+  gap: 0.32rem;
+}
+
+.billiards-mobile-pad button:nth-child(1) {
+  grid-area: up;
+}
+
+.billiards-mobile-pad button:nth-child(2) {
+  grid-area: left;
+}
+
+.billiards-mobile-pad button:nth-child(3) {
+  grid-area: right;
+}
+
+.billiards-mobile-pad button:nth-child(4) {
+  grid-area: down;
+}
+
+.billiards-mobile-pad button,
+.billiards-mobile-actions button {
+  min-height: 44px;
+  padding: 0.4rem 0.54rem;
+}
+
+.billiards-mobile-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.32rem;
+}
+
+.billiards-mobile-actions .billiards-mobile-primary {
+  grid-column: 1 / -1;
+  min-height: 50px;
+  font-size: 0.86rem;
+  border-color: rgba(250, 204, 21, 0.72);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.54), rgba(234, 179, 8, 0.28));
+  color: #fff9e8;
 }
 
 .billiards-help-copy {
@@ -13420,11 +13548,164 @@ button.brisca-card.playable:disabled {
 }
 
 @media (max-width: 980px) {
+  .billiards-setup-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .billiards-mode-goal {
+    grid-column: 1 / -1;
+  }
+
   .billiards-layout {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .billiards-canvas-host {
     max-height: none;
+  }
+}
+
+@media (max-width: 920px) {
+  .billiards-mobile .mini-head {
+    align-items: flex-start;
+  }
+
+  .billiards-mobile .mini-head p {
+    display: none;
+  }
+
+  .billiards-mobile .billiards-head-actions button {
+    min-height: 34px;
+    font-size: 0.7rem;
+    padding: 0.34rem 0.6rem;
+  }
+
+  .billiards-mobile .billiards-chipline {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.18rem;
+    scrollbar-width: thin;
+  }
+
+  .billiards-mobile .billiards-chipline > span {
+    white-space: nowrap;
+  }
+
+  .billiards-mobile .billiards-control-deck {
+    display: none;
+  }
+
+  .billiards-mobile .billiards-mobile-controls {
+    display: grid;
+    position: sticky;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 0.2rem);
+    z-index: 6;
+    backdrop-filter: blur(6px);
+  }
+
+  .billiards-mobile .billiards-log-strip {
+    margin-top: 0.62rem;
+  }
+}
+
+@media (max-width: 920px) and (orientation: portrait) {
+  .billiards-mobile-portrait {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 7.6rem);
+  }
+
+  .billiards-mobile-portrait .billiards-layout {
+    gap: 0.62rem;
+  }
+
+  .billiards-mobile-portrait .billiards-sidepanel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .billiards-mobile-portrait .billiards-panel {
+    padding: 0.66rem 0.72rem;
+  }
+
+  .billiards-mobile-portrait .billiards-overlay h5 {
+    font-size: 1.12rem;
+  }
+
+  .billiards-mobile-portrait .billiards-overlay p {
+    font-size: 0.82rem;
+  }
+
+  .billiards-game.billiards-table-vertical .billiards-canvas-host {
+    aspect-ratio: 9 / 16;
+    max-height: min(68vh, 580px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .billiards-game.billiards-table-vertical .billiards-canvas {
+    width: auto;
+    height: 100%;
+    max-width: none;
+    transform: rotate(90deg);
+    transform-origin: center;
+  }
+
+  .billiards-mobile-portrait .billiards-mobile-grid {
+    grid-template-columns: 1.1fr 1fr;
+  }
+}
+
+@media (max-width: 920px) and (orientation: landscape) {
+  .billiards-mobile-landscape {
+    padding: 0.5rem;
+    min-height: calc(100dvh - 0.2rem);
+  }
+
+  .billiards-mobile-landscape .billiards-toolbar {
+    gap: 0.45rem;
+    margin-top: 0.46rem;
+  }
+
+  .billiards-mobile-landscape .billiards-setup-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.42rem;
+  }
+
+  .billiards-mobile-landscape .billiards-select-field span {
+    font-size: 0.64rem;
+  }
+
+  .billiards-mobile-landscape .billiards-select-field select {
+    min-height: 30px;
+    font-size: 0.7rem;
+    padding: 0.22rem 0.45rem;
+  }
+
+  .billiards-mobile-landscape .billiards-mode-goal {
+    font-size: 0.72rem;
+    padding: 0.38rem 0.5rem;
+  }
+
+  .billiards-mobile-landscape .billiards-layout {
+    grid-template-columns: minmax(0, 1.2fr) minmax(220px, 0.8fr);
+    align-items: stretch;
+    gap: 0.56rem;
+  }
+
+  .billiards-mobile-landscape .billiards-canvas-host {
+    max-height: 66vh;
+  }
+
+  .billiards-mobile-landscape .billiards-sidepanel {
+    max-height: 66vh;
+    overflow: auto;
+    padding-right: 0.14rem;
+    scrollbar-width: thin;
+  }
+
+  .billiards-mobile-landscape .billiards-mobile-controls {
+    position: static;
+    margin-top: 0.52rem;
   }
 }

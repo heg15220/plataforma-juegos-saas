@@ -20,6 +20,7 @@ const MAX_FRAME_MS = 50;
 const ROLL_DECEL = 138;
 const STOP_SPEED = 5;
 const RESTITUTION = 0.985;
+const AI_ACTION_SLOWDOWN = 5.2;
 const AIM_STEP = Math.PI / 180 * 1.6;
 const POWER_STEP = 0.05;
 const PLACE_NUDGE_STEP = 9;
@@ -30,22 +31,45 @@ const PLAYER_AI = 1;
 
 const MODE_PRESETS = {
   "eight-ball": {
-    label: "Bola 8",
-    summary: "Mesa abierta, lisas/rayas y cierre cantando la 8.",
+    label: { es: "Bola 8", en: "8-Ball" },
+    summary: {
+      es: "Mesa abierta, lisas/rayas y cierre cantando la 8.",
+      en: "Open table, solids/stripes assignment, and a called 8-ball finish.",
+    },
   },
   "nine-ball": {
-    label: "Bola 9",
-    summary: "Orden numerico, blanca en mano y regla de tres faltas.",
+    label: { es: "Bola 9", en: "9-Ball" },
+    summary: {
+      es: "Orden numerico, blanca en mano y regla de tres faltas.",
+      en: "Numerical order, cue-ball in hand fouls, and the three-foul rule.",
+    },
   },
   "ten-ball": {
-    label: "Bola 10",
-    summary: "Tiro cantado, push out y reposicion de la 10.",
+    label: { es: "Bola 10", en: "10-Ball" },
+    summary: {
+      es: "Tiro cantado, push out y reposicion de la 10.",
+      en: "Called-shot discipline, push out, and legal 10-ball spotting.",
+    },
+  },
+  "carom-libre": {
+    label: { es: "Carambola Libre", en: "Free Carom" },
+    summary: {
+      es: "Mesa sin troneras con 3 bolas: puntua al contactar las dos bolas objetivas en un mismo tiro.",
+      en: "Pocketless 3-ball table: score by contacting both object balls in a single shot.",
+    },
+  },
+  kelly: {
+    label: { es: "Kelly", en: "Kelly" },
+    summary: {
+      es: "Modalidad recreativa multi-jugador: cada jugador tiene bola objetivo propia y gana quien emboca la suya.",
+      en: "Recreational multiplayer variant: each player has a personal target ball and wins by pocketing it.",
+    },
   },
 };
 
 const DIFFICULTY_PRESETS = {
   casual: {
-    label: "Recreativo",
+    label: { es: "Recreativo", en: "Casual" },
     aimNoise: 0.11,
     powerNoise: 0.16,
     pickSpread: 5,
@@ -63,7 +87,7 @@ const DIFFICULTY_PRESETS = {
     placementBias: 0.14,
   },
   club: {
-    label: "Club",
+    label: { es: "Club", en: "Club" },
     aimNoise: 0.045,
     powerNoise: 0.09,
     pickSpread: 2,
@@ -81,7 +105,7 @@ const DIFFICULTY_PRESETS = {
     placementBias: 0.1,
   },
   pro: {
-    label: "Pro",
+    label: { es: "Pro", en: "Pro" },
     aimNoise: 0.013,
     powerNoise: 0.035,
     pickSpread: 1,
@@ -131,13 +155,264 @@ const BALL_COLORS = {
 };
 
 const POCKETS = [
-  { id: "tl", label: "Sup. izq.", x: PLAY_LEFT - 10, y: PLAY_TOP - 10, radius: CORNER_POCKET_RADIUS },
-  { id: "tm", label: "Sup. centro", x: TABLE_CENTER_X, y: PLAY_TOP - 6, radius: SIDE_POCKET_RADIUS },
-  { id: "tr", label: "Sup. dcha.", x: PLAY_RIGHT + 10, y: PLAY_TOP - 10, radius: CORNER_POCKET_RADIUS },
-  { id: "bl", label: "Inf. izq.", x: PLAY_LEFT - 10, y: PLAY_BOTTOM + 10, radius: CORNER_POCKET_RADIUS },
-  { id: "bm", label: "Inf. centro", x: TABLE_CENTER_X, y: PLAY_BOTTOM + 6, radius: SIDE_POCKET_RADIUS },
-  { id: "br", label: "Inf. dcha.", x: PLAY_RIGHT + 10, y: PLAY_BOTTOM + 10, radius: CORNER_POCKET_RADIUS },
+  { id: "tl", label: { es: "Sup. izq.", en: "Top left" }, x: PLAY_LEFT - 10, y: PLAY_TOP - 10, radius: CORNER_POCKET_RADIUS },
+  { id: "tm", label: { es: "Sup. centro", en: "Top center" }, x: TABLE_CENTER_X, y: PLAY_TOP - 6, radius: SIDE_POCKET_RADIUS },
+  { id: "tr", label: { es: "Sup. dcha.", en: "Top right" }, x: PLAY_RIGHT + 10, y: PLAY_TOP - 10, radius: CORNER_POCKET_RADIUS },
+  { id: "bl", label: { es: "Inf. izq.", en: "Bottom left" }, x: PLAY_LEFT - 10, y: PLAY_BOTTOM + 10, radius: CORNER_POCKET_RADIUS },
+  { id: "bm", label: { es: "Inf. centro", en: "Bottom center" }, x: TABLE_CENTER_X, y: PLAY_BOTTOM + 6, radius: SIDE_POCKET_RADIUS },
+  { id: "br", label: { es: "Inf. dcha.", en: "Bottom right" }, x: PLAY_RIGHT + 10, y: PLAY_BOTTOM + 10, radius: CORNER_POCKET_RADIUS },
 ];
+
+const UI_COPY = {
+  es: {
+    title: "Billar Pool Club",
+    subtitle: "Pool arcade-profesional con fisica top-down, modos Bola 8/Bola 9/Bola 10, push out, safety y IA tactica.",
+    start: "Empezar",
+    nextRack: "Siguiente rack",
+    restartRack: "Repetir rack",
+    newMatch: "Nuevo match",
+    fullscreen: "Pantalla completa",
+    orientationHorizontal: "Mesa horizontal",
+    orientationVertical: "Mesa vertical",
+    gameMode: "Modo de juego",
+    aiMode: "Modo IA",
+    participants: "Participantes",
+    modeGoal: "Objetivo del modo:",
+    leader: "Lider",
+    pointsUnit: "puntos",
+    winsUnit: "victorias",
+    onTable: "en mesa",
+    pocketed: "embocada",
+    turn: "Turno",
+    mode: "Modo",
+    raceTo: "Objetivo: al mejor de",
+    tableOpen: "Mesa abierta",
+    ballInHand: "Blanca en mano",
+    pushOutAvailable: "Push out disponible",
+    safetyActive: "Safety activo",
+    openTableButton: "Abrir mesa",
+    rackClosedTitle: "Rack cerrado",
+    prepareNextRack: "Preparar siguiente rack",
+    matchFinishedTitle: "Match finalizado",
+    backToMenu: "Volver al menu",
+    scoreboard: "Marcador",
+    group: "Grupo",
+    remaining: "Restantes",
+    targetBall: "Bola objetivo",
+    foulsInRow: "Faltas seguidas",
+    telemetry: "Telemetria",
+    legalTarget: "Objetivo legal",
+    power: "Potencia",
+    angle: "Angulo",
+    lowestBall: "Bola mas baja",
+    pushOut: "Push out",
+    yes: "si",
+    no: "no",
+    declared: "declarado",
+    calledPocket: "Tronera cantada",
+    aiConsole: "Cabina IA",
+    analyzing: "analizando",
+    standby: "standby",
+    aiLedGroup: "Indicadores LED de acciones IA",
+    aiTurn: "Turno IA",
+    autoPlace: "Auto colocar",
+    pocket: "Tronera",
+    aimAdjust: "Ajuste angulo",
+    powerAdjust: "Ajuste potencia",
+    shoot: "Tirar",
+    plan: "Plan",
+    planPot: "tronera directa",
+    planKick: "trayectoria alternativa",
+    planContact: "contacto",
+    ball: "bola",
+    decision: "Decision",
+    choosePocket: "Elige tronera",
+    callShot: "Cantar tiro",
+    callEight: "Cantar la 8",
+    aimMinus: "Aim -",
+    aimPlus: "Aim +",
+    powerMinus: "- Potencia",
+    powerPlus: "+ Potencia",
+    safety: "Safety",
+    shootButton: "Tirar",
+    optionalMouseAim: "Raton opcional para apuntar.",
+    help1: "A/D ajustan el taco en fase de apuntado.",
+    help2: "W/S regulan potencia.",
+    help3: "En blanca en mano: flechas o WASD mueven la bola.",
+    help4: "Enter/Space fijan la blanca (Shift = ajuste fino).",
+    help5: "O push out, V safety.",
+    help6: "1/2 resuelven decisiones.",
+    help7: "Space tira.",
+    mobileHintPlace: "Pad tactil: mueve la blanca en mano en cuatro direcciones.",
+    mobileHintAim: "Pad tactil: izquierda/derecha apuntan, arriba/abajo ajustan potencia.",
+    mobileControlsAria: "Controles tactiles de billar",
+    up: "Arriba",
+    left: "Izquierda",
+    right: "Derecha",
+    down: "Abajo",
+    placeCueBall: "Fijar blanca",
+    autoCueBall: "Auto blanca",
+    speedToUnderstand: "Rompe, gestiona faltas, usa push out/safety cuando toque y gana un duelo al mejor de",
+    racksUnit: "racks",
+    racks: "racks.",
+  },
+  en: {
+    title: "Pool Club Billiards",
+    subtitle: "Arcade-professional top-down pool with 8-ball/9-ball/10-ball rules, push out, safety, and tactical AI.",
+    start: "Start",
+    nextRack: "Next rack",
+    restartRack: "Replay rack",
+    newMatch: "New match",
+    fullscreen: "Fullscreen",
+    orientationHorizontal: "Horizontal table",
+    orientationVertical: "Vertical table",
+    gameMode: "Game mode",
+    aiMode: "AI mode",
+    participants: "Players",
+    modeGoal: "Mode objective:",
+    leader: "Leader",
+    pointsUnit: "points",
+    winsUnit: "wins",
+    onTable: "on table",
+    pocketed: "pocketed",
+    turn: "Turn",
+    mode: "Mode",
+    raceTo: "Target: race to",
+    tableOpen: "Open table",
+    ballInHand: "Cue ball in hand",
+    pushOutAvailable: "Push out available",
+    safetyActive: "Safety active",
+    openTableButton: "Open table",
+    rackClosedTitle: "Rack over",
+    prepareNextRack: "Prepare next rack",
+    matchFinishedTitle: "Match over",
+    backToMenu: "Back to menu",
+    scoreboard: "Scoreboard",
+    group: "Group",
+    remaining: "Remaining",
+    targetBall: "Target ball",
+    foulsInRow: "Fouls in a row",
+    telemetry: "Telemetry",
+    legalTarget: "Legal target",
+    power: "Power",
+    angle: "Angle",
+    lowestBall: "Lowest ball",
+    pushOut: "Push out",
+    yes: "yes",
+    no: "no",
+    declared: "declared",
+    calledPocket: "Called pocket",
+    aiConsole: "AI cockpit",
+    analyzing: "analyzing",
+    standby: "standby",
+    aiLedGroup: "AI action LED indicators",
+    aiTurn: "AI turn",
+    autoPlace: "Auto place",
+    pocket: "Pocket",
+    aimAdjust: "Aim adjust",
+    powerAdjust: "Power adjust",
+    shoot: "Shoot",
+    plan: "Plan",
+    planPot: "direct pot",
+    planKick: "alternative rail route",
+    planContact: "contact shot",
+    ball: "ball",
+    decision: "Decision",
+    choosePocket: "Choose pocket",
+    callShot: "Call shot",
+    callEight: "Call the 8",
+    aimMinus: "Aim -",
+    aimPlus: "Aim +",
+    powerMinus: "- Power",
+    powerPlus: "+ Power",
+    safety: "Safety",
+    shootButton: "Shoot",
+    optionalMouseAim: "Mouse aiming is optional.",
+    help1: "A/D fine-tune cue angle during aiming.",
+    help2: "W/S adjust power.",
+    help3: "With ball in hand: arrows or WASD move the cue ball.",
+    help4: "Enter/Space confirms cue ball placement (Shift = fine nudge).",
+    help5: "O for push out, V for safety.",
+    help6: "1/2 resolve decision prompts.",
+    help7: "Space shoots.",
+    mobileHintPlace: "Touch pad: move the cue ball in hand in four directions.",
+    mobileHintAim: "Touch pad: left/right aim, up/down adjust power.",
+    mobileControlsAria: "Billiards touch controls",
+    up: "Up",
+    left: "Left",
+    right: "Right",
+    down: "Down",
+    placeCueBall: "Lock cue ball",
+    autoCueBall: "Auto place",
+    speedToUnderstand: "Break, manage fouls, use push out/safety when needed, and win a duel race to",
+    racksUnit: "racks",
+    racks: "racks.",
+  },
+};
+
+const STATUS_LABELS = {
+  menu: { es: "menu", en: "menu" },
+  aim: { es: "apuntando", en: "aiming" },
+  placing: { es: "colocando blanca", en: "placing cue ball" },
+  moving: { es: "bolas en movimiento", en: "balls in motion" },
+  "ai-thinking": { es: "IA pensando", en: "AI thinking" },
+  decision: { es: "decision", en: "decision" },
+  "rack-over": { es: "rack cerrado", en: "rack over" },
+  "match-over": { es: "match finalizado", en: "match over" },
+};
+
+function resolveLocale() {
+  if (typeof navigator === "undefined" || typeof navigator.language !== "string") return "en";
+  return navigator.language.toLowerCase().startsWith("es") ? "es" : "en";
+}
+
+function localizeLabel(label, locale) {
+  if (typeof label === "string") return label;
+  return label?.[locale] ?? label?.es ?? "";
+}
+
+function modeLabel(modeKey, locale) {
+  return localizeLabel(MODE_PRESETS[modeKey]?.label, locale) || modeKey;
+}
+
+function modeSummary(modeKey, locale) {
+  return localizeLabel(MODE_PRESETS[modeKey]?.summary, locale) || "";
+}
+
+function difficultyLabel(difficultyKey, locale) {
+  return localizeLabel(DIFFICULTY_PRESETS[difficultyKey]?.label, locale) || difficultyKey;
+}
+
+function pocketLabel(pocketId, locale) {
+  const pocket = POCKETS.find((entry) => entry.id === pocketId);
+  if (!pocket) return null;
+  return localizeLabel(pocket.label, locale) || pocketId;
+}
+
+function localizePlayerName(name, locale) {
+  if (locale === "es" || !name) return name;
+  let out = String(name);
+  out = out.replace(/^Tu$/i, "You");
+  out = out.replace(/^IA\s+/i, "AI ");
+  out = out.replace(/\bRecreativo\b/g, "Casual");
+  return out;
+}
+
+function statusLabel(status, locale) {
+  return STATUS_LABELS[status]?.[locale] ?? status;
+}
+
+function modeHasPockets(modeKey) {
+  return modeKey !== "carom-libre";
+}
+
+function isKellyMode(modeKey) {
+  return modeKey === "kelly";
+}
+
+function isCaromMode(modeKey) {
+  return modeKey === "carom-libre";
+}
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -163,6 +438,10 @@ function lerpAngle(start, end, t) {
   return normalizeAngle(start + delta * clamp(t, 0, 1));
 }
 
+function scaleAiDuration(durationMs) {
+  return Math.max(40, Math.round(durationMs * AI_ACTION_SLOWDOWN));
+}
+
 function createAiLedState(active = {}) {
   return {
     turn: Boolean(active.turn),
@@ -182,10 +461,99 @@ function ballGroupFromNumber(number) {
   return null;
 }
 
-function groupLabel(group) {
-  if (group === "solids") return "lisas";
-  if (group === "stripes") return "rayas";
-  return "abierta";
+function groupLabel(group, locale = "es") {
+  if (group === "solids") return locale === "es" ? "lisas" : "solids";
+  if (group === "stripes") return locale === "es" ? "rayas" : "stripes";
+  return locale === "es" ? "abierta" : "open table";
+}
+
+function localizeRuntimeText(text, locale) {
+  if (locale === "es" || text == null) return text;
+  let out = String(text);
+  const replacements = [
+    [/Configura la mesa y pulsa Empezar\./g, "Set up the table and press Start."],
+    [/Push out no disponible en esta entrada\./g, "Push out is not available on this visit."],
+    [/Elige una tronera para cantar (.+) antes de tirar\./g, "Choose a pocket to call $1 before shooting."],
+    [/La 8 se recoloca tras el saque\./g, "The 8 is spotted again after the break."],
+    [/Safety declarado para el proximo tiro\./g, "Safety declared for the next shot."],
+    [/Safety cancelado\./g, "Safety cancelled."],
+    [/Blanca colocada automaticamente\./g, "Cue ball auto-placed."],
+    [/Blanca en mano fijada con teclado\./g, "Cue ball in hand locked from keyboard controls."],
+    [/Blanca en mano colocada\./g, "Cue ball in hand placed."],
+    [/Posicion invalida para la blanca\./g, "Invalid cue-ball position."],
+    [/La IA no encontro tiro claro y cede la mesa\./g, "AI found no clear shot and gives up the table."],
+    [/Scratch: la blanca cae en tronera\./g, "Scratch: the cue ball drops into a pocket."],
+    [/Falta: bola objetiva fuera de la mesa\./g, "Foul: object ball left the table."],
+    [/Falta: no hubo contacto con una bola objetiva\./g, "Foul: no contact with an object ball."],
+    [/Falta: primero debias tocar la (\d+)\./g, "Foul: you had to hit the $1 first."],
+    [/Falta: con mesa resuelta debes tocar primero la 8\./g, "Foul: with your group cleared, you must hit the 8 first."],
+    [/Falta: con mesa abierta no puedes tocar primero la 8\./g, "Foul: on an open table you cannot hit the 8 first."],
+    [/Falta: debias tocar primero una (lisas|rayas|abierta)\./g, "Foul: you had to hit a $1 ball first."],
+    [/Falta: ninguna bola toco banda tras el contacto\./g, "Foul: no ball hit a rail after contact."],
+    [/Saque ilegal: menos de cuatro bolas objetivas tocaron banda\./g, "Illegal break: fewer than four object balls reached a rail."],
+    [/gana por tres faltas consecutivas\./g, "wins by three consecutive fouls."],
+    [/queda avisado con dos faltas seguidas\./g, "is now on two fouls in a row."],
+    [/decide tras push out\./g, "decides after push out."],
+    [/acepta la mesa tras push out\./g, "accepts the table after push out."],
+    [/devuelve el tiro a /g, "passes the shot back to "],
+    [/mantiene la entrada\. Push out disponible\./g, "keeps control. Push out available."],
+    [/entra con opcion de push out\./g, "comes in with a push out option."],
+    [/mantiene la entrada\./g, "keeps control."],
+    [/toma el turno\./g, "takes the turn."],
+    [/decide tras safety con bola legal embocada\./g, "decides after a safety with a legal pocketed ball."],
+    [/acepta la mesa tras safety\./g, "accepts the table after safety."],
+    [/entra tras safety\./g, "comes in after safety."],
+    [/decide tras tiro cantado no valido\./g, "decides after an invalid called shot."],
+    [/acepta la mesa tras tiro no cantado\./g, "accepts the table after an uncalled shot."],
+    [/emboca la 10 legalmente y gana el rack\./g, "pockets the 10 legally and wins the rack."],
+    [/emboca la 10 antes de tiempo: se repone y sigue\./g, "pockets the 10 early: it is spotted and play continues."],
+    [/mantiene la entrada con tiro cantado valido\./g, "keeps control with a valid called shot."],
+    [/tira a tronera\./g, "shoots for the pocket."],
+    [/tira con trayectoria alternativa por banda\./g, "shoots using an alternate rail route."],
+    [/tira de seguridad\./g, "plays a safety shot."],
+    [/declara push out\./g, "declares push out."],
+    [/juega un safety\./g, "plays a safety."],
+    [/ejecuta el tiro\./g, "takes the shot."],
+    [/Dificultad /g, "Difficulty "],
+    [/Tronera cantada: /g, "Called pocket: "],
+    [/Jugar mesa/g, "Play table"],
+    [/Devolver tiro/g, "Pass shot back"],
+    [/rompe en /g, "breaks in "],
+    [/toma /g, "takes "],
+    [/sigue en mesa con /g, "stays at the table with "],
+    [/bola\(s\) de su grupo\./g, "ball(s) of their group."],
+    [/entra a mesa\./g, "comes to the table."],
+    [/gana: 8 ilegal o en tronera incorrecta\./g, "wins: illegal 8-ball or wrong pocket."],
+    [/cierra la 8 en /g, "finishes the 8 in "],
+    [/emboca la 9 y gana el rack\./g, "pockets the 9 and wins the rack."],
+    [/IA en espera\./g, "AI idle."],
+    [/IA analizando mesa y rutas posibles\./g, "AI analyzing table and possible routes."],
+    [/IA autocolocando blanca en mano\./g, "AI auto-placing cue ball in hand."],
+    [/IA cantando tronera objetivo\./g, "AI calling target pocket."],
+    [/IA ajustando angulo de tiro\./g, "AI adjusting shot angle."],
+    [/IA calibrando potencia\./g, "AI calibrating shot power."],
+    [/IA preparando push out\./g, "AI preparing push out."],
+    [/IA preparando safety tactico\./g, "AI preparing tactical safety."],
+    [/IA ejecutando tiro\./g, "AI executing shot."],
+  ];
+  replacements.forEach(([pattern, value]) => {
+    out = out.replace(pattern, value);
+  });
+  out = out.replace(/\bBola 8\b/g, "8-Ball");
+  out = out.replace(/\bBola 9\b/g, "9-Ball");
+  out = out.replace(/\bBola 10\b/g, "10-Ball");
+  out = out.replace(/\blisas\b/g, "solids");
+  out = out.replace(/\brayas\b/g, "stripes");
+  out = out.replace(/\babierta\b/g, "open table");
+  out = out.replace(/\bIA\b/g, "AI");
+  out = out.replace(/Sup\. izq\./g, "Top left");
+  out = out.replace(/Sup\. centro/g, "Top center");
+  out = out.replace(/Sup\. dcha\./g, "Top right");
+  out = out.replace(/Inf\. izq\./g, "Bottom left");
+  out = out.replace(/Inf\. centro/g, "Bottom center");
+  out = out.replace(/Inf\. dcha\./g, "Bottom right");
+  out = out.replace(/tronera cantada/g, "called pocket");
+  return out;
 }
 
 function drawRoundedRect(ctx, x, y, width, height, radius) {
@@ -322,7 +690,22 @@ function buildEightBallNumbers() {
   return numbers;
 }
 
+function buildKellyNumbers() {
+  return shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
+}
+
+function buildCaromBalls() {
+  return [
+    makeCueBall(PLAY_LEFT + 160, TABLE_CENTER_Y),
+    makeObjectBall(1, TABLE_CENTER_X + 90, TABLE_CENTER_Y - 48),
+    makeObjectBall(2, TABLE_CENTER_X + 190, TABLE_CENTER_Y + 54),
+  ];
+}
+
 function buildRackBalls(modeKey) {
+  if (isCaromMode(modeKey)) {
+    return buildCaromBalls();
+  }
   const cue = makeCueBall(HEAD_STRING_X - 74, TABLE_CENTER_Y);
   if (modeKey === "nine-ball") {
     const positions = buildDiamondRackPositions();
@@ -345,27 +728,46 @@ function buildRackBalls(modeKey) {
     }
     return [cue, ...positions.map((position, index) => makeObjectBall(numbers[index], position.x, position.y))];
   }
+  if (isKellyMode(modeKey)) {
+    const positions = buildTriangleRackPositions();
+    const numbers = buildKellyNumbers();
+    return [cue, ...positions.map((position, index) => makeObjectBall(numbers[index], position.x, position.y))];
+  }
   const positions = buildTriangleRackPositions();
   const numbers = buildEightBallNumbers();
   return [cue, ...positions.map((position, index) => makeObjectBall(numbers[index], position.x, position.y))];
 }
 
-function createPlayers(difficultyKey) {
-  return [
-    { name: "Tu", type: "human", group: null, racksWon: 0, foulsInRow: 0 },
-    { name: `IA ${DIFFICULTY_PRESETS[difficultyKey].label}`, type: "ai", group: null, racksWon: 0, foulsInRow: 0 },
-  ];
+function createPlayers(difficultyKey, locale, modeKey, participantCount = 2) {
+  if (!isKellyMode(modeKey)) {
+    return [
+      { name: locale === "es" ? "Tu" : "You", type: "human", group: null, racksWon: 0, foulsInRow: 0, kellyTarget: null },
+      { name: `${locale === "es" ? "IA" : "AI"} ${difficultyLabel(difficultyKey, locale)}`, type: "ai", group: null, racksWon: 0, foulsInRow: 0, kellyTarget: null },
+    ];
+  }
+  const total = clamp(Math.round(Number(participantCount) || 2), 2, 15);
+  return Array.from({ length: total }, (_, index) => ({
+    name: index === 0 ? (locale === "es" ? "Tu" : "You") : `${locale === "es" ? "IA" : "AI"} ${index}`,
+    type: index === 0 ? "human" : "ai",
+    group: null,
+    racksWon: 0,
+    foulsInRow: 0,
+    kellyTarget: null,
+  }));
 }
 
-function createRuntimeState(modeKey = "eight-ball", difficultyKey = "club") {
+function createRuntimeState(modeKey = "eight-ball", difficultyKey = "club", locale = resolveLocale(), participantCount = 2) {
+  const initialMessage = locale === "es" ? "Configura la mesa y pulsa Empezar." : "Set up the table and press Start.";
   return {
+    locale,
     modeKey,
     difficultyKey,
-    raceTo: 3,
-    players: createPlayers(difficultyKey),
+    participantCount: isKellyMode(modeKey) ? clamp(Math.round(Number(participantCount) || 2), 2, 15) : 2,
+    raceTo: isCaromMode(modeKey) ? 10 : isKellyMode(modeKey) ? 1 : 3,
+    players: createPlayers(difficultyKey, locale, modeKey, participantCount),
     currentPlayer: PLAYER_HUMAN,
     breakerIndex: PLAYER_HUMAN,
-    nextBreaker: PLAYER_AI,
+    nextBreaker: isKellyMode(modeKey) ? 1 : PLAYER_AI,
     phase: "menu",
     balls: [],
     tableOpen: modeKey === "eight-ball",
@@ -380,8 +782,8 @@ function createRuntimeState(modeKey = "eight-ball", difficultyKey = "club") {
     aiTimerMs: 0,
     rackWinner: null,
     matchWinner: null,
-    message: "Configura la mesa y pulsa Empezar.",
-    log: ["Configura la mesa y pulsa Empezar."],
+    message: initialMessage,
+    log: [initialMessage],
     aiRoutine: null,
     aiLeds: createAiLedState(),
     aiAction: AI_ACTION_LABELS.idle,
@@ -393,6 +795,24 @@ function createRuntimeState(modeKey = "eight-ball", difficultyKey = "club") {
 
 function cloneWins(players) {
   return players.map((player) => player.racksWon);
+}
+
+function nextPlayerIndex(state, fromIndex = state.currentPlayer) {
+  if (!isKellyMode(state.modeKey)) {
+    return fromIndex === PLAYER_HUMAN ? PLAYER_AI : PLAYER_HUMAN;
+  }
+  if (!state.players.length) return 0;
+  return (fromIndex + 1) % state.players.length;
+}
+
+function assignKellyTargets(state) {
+  if (!isKellyMode(state.modeKey)) return;
+  const drawPool = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
+  state.players.forEach((player, index) => {
+    player.group = null;
+    player.foulsInRow = 0;
+    player.kellyTarget = drawPool[index] ?? null;
+  });
 }
 
 function getCueBall(state) {
@@ -420,7 +840,7 @@ function clearAiTelemetry(state) {
 }
 
 function setAiTelemetry(state, action, leds = {}) {
-  const aiTurnActive = state.currentPlayer === PLAYER_AI;
+  const aiTurnActive = state.players[state.currentPlayer]?.type === "ai";
   state.aiAction = action;
   state.aiLeds = createAiLedState({ turn: aiTurnActive, ...leds });
 }
@@ -445,6 +865,17 @@ function getLowestNumber(state) {
 }
 
 function getLegalNumbers(state, playerIndex) {
+  if (isCaromMode(state.modeKey)) {
+    return state.balls
+      .filter((ball) => !ball.pocketed && ball.number > 0)
+      .map((ball) => ball.number);
+  }
+  if (isKellyMode(state.modeKey)) {
+    const target = state.players[playerIndex]?.kellyTarget ?? null;
+    if (target == null) return [];
+    const targetBall = state.balls.find((ball) => ball.number === target);
+    return targetBall && !targetBall.pocketed ? [target] : [];
+  }
   if (state.modeKey === "nine-ball" || state.modeKey === "ten-ball") {
     const lowest = getLowestNumber(state);
     return lowest == null ? [] : [lowest];
@@ -563,7 +994,7 @@ function moveToTurnStart(state) {
     state.phase = state.ballInHand.active ? "placing" : "aim";
   } else {
     state.phase = "ai-thinking";
-    state.aiTimerMs = Math.round(DIFFICULTY_PRESETS[state.difficultyKey].thinkMs * 0.42);
+    state.aiTimerMs = scaleAiDuration(Math.round(DIFFICULTY_PRESETS[state.difficultyKey].thinkMs * 0.42));
     state.aiRoutine = null;
     state.aiPlanPreview = null;
     setAiTelemetry(state, AI_ACTION_LABELS.scan);
@@ -574,13 +1005,19 @@ function startRack(state, breakerIndex) {
   state.players.forEach((player) => {
     player.group = null;
     player.foulsInRow = 0;
+    if (!isKellyMode(state.modeKey)) {
+      player.kellyTarget = null;
+    }
   });
   state.balls = buildRackBalls(state.modeKey);
+  if (isKellyMode(state.modeKey)) {
+    assignKellyTargets(state);
+  }
   state.currentPlayer = breakerIndex;
   state.breakerIndex = breakerIndex;
-  state.nextBreaker = breakerIndex === PLAYER_HUMAN ? PLAYER_AI : PLAYER_HUMAN;
+  state.nextBreaker = nextPlayerIndex(state, breakerIndex);
   state.tableOpen = state.modeKey === "eight-ball";
-  state.breakShot = true;
+  state.breakShot = !isCaromMode(state.modeKey);
   state.pushOutAvailable = false;
   state.ballInHand = { active: false, restrictHeadString: false };
   state.safetyDeclared = false;
@@ -590,7 +1027,26 @@ function startRack(state, breakerIndex) {
   state.rackWinner = null;
   state.matchWinner = null;
   state.shotCount = 0;
-  addLog(state, `${state.players[breakerIndex].name} rompe en ${MODE_PRESETS[state.modeKey].label}.`);
+  if (isCaromMode(state.modeKey)) {
+    addLog(state, state.locale === "es"
+      ? `${state.players[breakerIndex].name} abre la serie de carambola.`
+      : `${state.players[breakerIndex].name} opens the carom inning.`);
+  } else if (isKellyMode(state.modeKey)) {
+    const assignmentPreview = state.players
+      .slice(0, 6)
+      .map((player) => `${player.name}: ${player.kellyTarget ?? "-"}`)
+      .join(" | ");
+    const remainingAssignments = state.players.length - 6;
+    const assignmentSuffix = remainingAssignments > 0
+      ? (state.locale === "es" ? ` | +${remainingAssignments} mas` : ` | +${remainingAssignments} more`)
+      : "";
+    const assignments = `${assignmentPreview}${assignmentSuffix}`;
+    addLog(state, state.locale === "es"
+      ? `${state.players[breakerIndex].name} rompe en Kelly. Objetivos -> ${assignments}.`
+      : `${state.players[breakerIndex].name} breaks in Kelly. Targets -> ${assignments}.`);
+  } else {
+    addLog(state, `${state.players[breakerIndex].name} rompe en ${modeLabel(state.modeKey, state.locale)}.`);
+  }
   moveToTurnStart(state);
 }
 
@@ -784,6 +1240,9 @@ function chooseBankPlans(state, playerIndex, cueX, cueY, difficulty) {
 }
 
 function evaluateAiPlanScore(state, playerIndex, plan, difficulty) {
+  if (isKellyMode(state.modeKey) || isCaromMode(state.modeKey)) {
+    return plan.score;
+  }
   const opponentIndex = playerIndex === PLAYER_HUMAN ? PLAYER_AI : PLAYER_HUMAN;
   let score = plan.score;
   const ownFouls = state.players[playerIndex]?.foulsInRow ?? 0;
@@ -835,6 +1294,28 @@ function shouldAiDeclareSafety(state, plan, difficulty, forcePushOut) {
 function chooseAiPlan(state, playerIndex, cueX, cueY, options = {}) {
   const difficulty = DIFFICULTY_PRESETS[state.difficultyKey];
   const deterministic = Boolean(options.deterministic);
+  if (isCaromMode(state.modeKey)) {
+    const objectBalls = state.balls
+      .filter((ball) => !ball.pocketed && ball.number > 0)
+      .sort((a, b) => distance(cueX, cueY, a.x, a.y) - distance(cueX, cueY, b.x, b.y));
+    const firstObject = objectBalls[0];
+    if (!firstObject) return null;
+    const baseAngle = Math.atan2(firstObject.y - cueY, firstObject.x - cueX);
+    return {
+      type: "contact",
+      route: "direct",
+      ballId: firstObject.id,
+      ballNumber: firstObject.number,
+      pocketId: null,
+      angle: baseAngle + (deterministic ? 0 : (Math.random() * 2 - 1) * difficulty.aimNoise * 0.35),
+      power: clamp(0.66 + (deterministic ? 0 : (Math.random() * 2 - 1) * difficulty.powerNoise * 0.4), 0.4, 0.95),
+      score: distance(cueX, cueY, firstObject.x, firstObject.y),
+      cueDistance: distance(cueX, cueY, firstObject.x, firstObject.y),
+      objectDistance: 0,
+      cutPenalty: 0,
+      tacticalScore: distance(cueX, cueY, firstObject.x, firstObject.y),
+    };
+  }
   const directPlans = choosePocketPlans(state, playerIndex, cueX, cueY);
   const bankPlans = difficulty.allowBankShots
     ? chooseBankPlans(state, playerIndex, cueX, cueY, difficulty).slice(0, 8)
@@ -888,7 +1369,7 @@ function assignGroup(state, playerIndex, group) {
   state.players[playerIndex].group = group;
   state.players[1 - playerIndex].group = group === "solids" ? "stripes" : "solids";
   state.tableOpen = false;
-  addLog(state, `${state.players[playerIndex].name} toma ${groupLabel(group)}.`);
+  addLog(state, `${state.players[playerIndex].name} toma ${groupLabel(group, state.locale)}.`);
 }
 
 function setTurnFoulCount(state, playerIndex, foul) {
@@ -897,13 +1378,14 @@ function setTurnFoulCount(state, playerIndex, foul) {
 }
 
 function createShotContext(state, playerIndex, options = {}) {
-  const requiredFirstNumber = getLegalNumbers(state, playerIndex)[0] ?? null;
+  const legalNumbers = getLegalNumbers(state, playerIndex);
+  const requiredFirstNumber = legalNumbers[0] ?? null;
   return {
     playerIndex,
     breakShot: state.breakShot,
     startTableOpen: state.tableOpen,
     requiredFirstNumber,
-    calledBallNumber: requiredFirstNumber,
+    calledBallNumber: isKellyMode(state.modeKey) ? (state.players[playerIndex]?.kellyTarget ?? requiredFirstNumber) : requiredFirstNumber,
     shooterGroup: state.players[playerIndex].group,
     canShootBlack: needsPocketCall(state, playerIndex),
     calledPocketId: options.calledPocketId ?? state.calledPocketId,
@@ -915,6 +1397,7 @@ function createShotContext(state, playerIndex, options = {}) {
     pocketedIds: [],
     outOfTableIds: [],
     cuePocketed: false,
+    cueObjectHitOrder: [],
   };
 }
 
@@ -963,7 +1446,7 @@ function startShot(state, angle, power, options = {}) {
 function switchTurn(state, options = {}) {
   const { ballInHand = false, restrictHeadString = false, reason = null, pushOutAvailable = false } = options;
   state.breakShot = false;
-  state.currentPlayer = state.currentPlayer === PLAYER_HUMAN ? PLAYER_AI : PLAYER_HUMAN;
+  state.currentPlayer = nextPlayerIndex(state, state.currentPlayer);
   state.pendingDecision = null;
   state.safetyDeclared = false;
   state.pushOutAvailable = pushOutAvailable;
@@ -1012,14 +1495,15 @@ function queueTakeOrPassDecision(state, {
   takeReason,
   passReason,
 }) {
+  const locale = state.locale ?? "es";
   state.pendingDecision = {
     type,
     chooserIndex,
     returnToIndex,
     prompt,
     options: [
-      { id: "take", label: "Jugar mesa" },
-      { id: "pass-back", label: "Devolver tiro" },
+      { id: "take", label: locale === "es" ? "Jugar mesa" : "Play table" },
+      { id: "pass-back", label: locale === "es" ? "Devolver tiro" : "Pass shot back" },
     ],
     takeReason,
     passReason,
@@ -1072,6 +1556,103 @@ function resolvePendingDecisionIfAi(state) {
   return true;
 }
 
+function evaluateCaromShot(state, shot, shooterIndex) {
+  const shooter = state.players[shooterIndex];
+  const cueHits = new Set(shot.cueObjectHitOrder ?? []);
+  const foul = shot.cuePocketed || shot.outOfTableIds.length > 0;
+  if (foul) {
+    switchTurn(state, {
+      reason: state.locale === "es"
+        ? "Falta en carambola: turno cedido."
+        : "Carom foul: turn lost.",
+    });
+    return;
+  }
+  if (cueHits.size >= 2) {
+    shooter.racksWon += 1;
+    if (shooter.racksWon >= state.raceTo) {
+      state.matchWinner = shooterIndex;
+      state.phase = "match-over";
+      addLog(state, state.locale === "es"
+        ? `${shooter.name} gana la serie de carambola (${shooter.racksWon}/${state.raceTo}).`
+        : `${shooter.name} wins the carom set (${shooter.racksWon}/${state.raceTo}).`);
+      clearAiTelemetry(state);
+      return;
+    }
+    continueTurn(state, {
+      reason: state.locale === "es"
+        ? `Carambola valida de ${shooter.name}. Punto ${shooter.racksWon}/${state.raceTo}.`
+        : `Valid carom by ${shooter.name}. Point ${shooter.racksWon}/${state.raceTo}.`,
+    });
+    return;
+  }
+  switchTurn(state, {
+    reason: state.locale === "es"
+      ? `${shooter.name} no completa carambola. Cambia el turno.`
+      : `${shooter.name} does not complete a carom. Turn changes.`,
+  });
+}
+
+function kellyTargetOwner(state, number) {
+  return state.players.findIndex((player) => player.kellyTarget === number);
+}
+
+function evaluateKellyShot(state, shot, shooterIndex) {
+  const shooter = state.players[shooterIndex];
+  const firstHitBall = shot.firstHitBallId ? getBallById(state, shot.firstHitBallId) : null;
+  const pocketedBalls = shot.pocketedIds.map((ballId) => getBallById(state, ballId)).filter(Boolean);
+  const ownTarget = shooter.kellyTarget ?? null;
+  const illegalFirstContact = Boolean(ownTarget != null && firstHitBall && firstHitBall.number !== ownTarget);
+  const foul = ownTarget == null || shot.cuePocketed || !firstHitBall || illegalFirstContact || shot.outOfTableIds.length > 0;
+  const ownTargetPocketed = ownTarget != null && pocketedBalls.some((ball) => ball.number === ownTarget);
+
+  pocketedBalls.forEach((ball) => {
+    if (ball.number <= 0) return;
+    const ownerIndex = kellyTargetOwner(state, ball.number);
+    if (ownerIndex === -1 || ownerIndex === shooterIndex) return;
+    respotBall(state, ball.number);
+  });
+
+  if (ownTargetPocketed && !foul) {
+    finishRack(state, shooterIndex, state.locale === "es"
+      ? `${shooter.name} emboca su bola objetivo (${ownTarget}) y gana Kelly.`
+      : `${shooter.name} pockets their target ball (${ownTarget}) and wins Kelly.`);
+    return;
+  }
+
+  if (foul) {
+    if (ownTargetPocketed) {
+      respotBall(state, ownTarget);
+    }
+    const foulReason = state.locale === "es"
+      ? (ownTarget == null
+        ? `${shooter.name} no tiene bola objetivo asignada.`
+        : !firstHitBall
+          ? `${shooter.name} falla contacto legal en Kelly.`
+          : illegalFirstContact
+            ? `${shooter.name} golpea primero una bola incorrecta en Kelly.`
+            : `Falta de ${shooter.name} en Kelly.`)
+      : (ownTarget == null
+        ? `${shooter.name} has no assigned target ball.`
+        : !firstHitBall
+          ? `${shooter.name} misses legal contact in Kelly.`
+          : illegalFirstContact
+            ? `${shooter.name} hits the wrong first ball in Kelly.`
+            : `${shooter.name} commits a Kelly foul.`);
+    switchTurn(state, {
+      ballInHand: true,
+      reason: foulReason,
+    });
+    return;
+  }
+
+  switchTurn(state, {
+    reason: state.locale === "es"
+      ? `${shooter.name} no emboca su objetivo.`
+      : `${shooter.name} does not pocket their target.`,
+  });
+}
+
 function evaluateShot(state) {
   const shot = state.shot;
   if (!shot) return;
@@ -1092,6 +1673,16 @@ function evaluateShot(state) {
     .filter((ball) => ball && ball.number > 0);
   const remainingObjectBalls = state.balls.filter((ball) => !ball.pocketed && ball.number > 0);
   let foulReason = null;
+
+  if (isCaromMode(state.modeKey)) {
+    evaluateCaromShot(state, shot, shooterIndex);
+    return;
+  }
+
+  if (isKellyMode(state.modeKey)) {
+    evaluateKellyShot(state, shot, shooterIndex);
+    return;
+  }
 
   if (shot.cuePocketed) {
     foulReason = "Scratch: la blanca cae en tronera.";
@@ -1118,7 +1709,7 @@ function evaluateShot(state) {
           foulReason = foulReason ?? "Falta: con mesa abierta no puedes tocar primero la 8.";
         }
       } else if (shooter.group && !ballMatchesGroup(firstHitBall, shooter.group)) {
-        foulReason = foulReason ?? `Falta: debias tocar primero una ${groupLabel(shooter.group)}.`;
+        foulReason = foulReason ?? `Falta: debias tocar primero una ${groupLabel(shooter.group, state.locale)}.`;
       }
     }
 
@@ -1142,7 +1733,7 @@ function evaluateShot(state) {
           finishRack(state, opponentIndex, `${state.players[opponentIndex].name} gana: 8 ilegal o en tronera incorrecta.`);
           return;
         }
-        finishRack(state, shooterIndex, `${shooter.name} cierra la 8 en ${POCKETS.find((pocket) => pocket.id === shot.calledPocketId)?.label ?? "tronera cantada"}.`);
+        finishRack(state, shooterIndex, `${shooter.name} cierra la 8 en ${pocketLabel(shot.calledPocketId, state.locale) ?? "tronera cantada"}.`);
         return;
       }
     }
@@ -1415,6 +2006,7 @@ function getAimPreview(state) {
 }
 
 function updatePhysics(state, dt) {
+  const hasPockets = modeHasPockets(state.modeKey);
   const activeBalls = getActiveBalls(state);
   activeBalls.forEach((ball) => {
     ball.x += ball.vx * dt;
@@ -1432,19 +2024,22 @@ function updatePhysics(state, dt) {
       knockBallOffTable(state, ball);
       continue;
     }
-    const pocket = POCKETS.find((entry) => distance(ball.x, ball.y, entry.x, entry.y) < entry.radius - (ball.id === "cue" ? 3 : 1));
-    if (pocket) {
-      pocketBall(state, ball, pocket.id);
-      continue;
+    if (hasPockets) {
+      const pocket = POCKETS.find((entry) => distance(ball.x, ball.y, entry.x, entry.y) < entry.radius - (ball.id === "cue" ? 3 : 1));
+      if (pocket) {
+        pocketBall(state, ball, pocket.id);
+        continue;
+      }
     }
 
     const nearCornerY = Math.abs(ball.y - PLAY_TOP) < 48 || Math.abs(ball.y - PLAY_BOTTOM) < 48;
-    if (ball.x - BALL_RADIUS <= PLAY_LEFT && !nearCornerY) {
+    const canBounceVerticalRail = !hasPockets || !nearCornerY;
+    if (ball.x - BALL_RADIUS <= PLAY_LEFT && canBounceVerticalRail) {
       ball.x = PLAY_LEFT + BALL_RADIUS;
       ball.vx = Math.abs(ball.vx) * RESTITUTION;
       markRailContact(state, ball);
     }
-    if (ball.x + BALL_RADIUS >= PLAY_RIGHT && !nearCornerY) {
+    if (ball.x + BALL_RADIUS >= PLAY_RIGHT && canBounceVerticalRail) {
       ball.x = PLAY_RIGHT - BALL_RADIUS;
       ball.vx = -Math.abs(ball.vx) * RESTITUTION;
       markRailContact(state, ball);
@@ -1452,12 +2047,13 @@ function updatePhysics(state, dt) {
 
     const nearCornerX = Math.abs(ball.x - PLAY_LEFT) < 52 || Math.abs(ball.x - PLAY_RIGHT) < 52;
     const nearSideX = Math.abs(ball.x - TABLE_CENTER_X) < 42;
-    if (ball.y - BALL_RADIUS <= PLAY_TOP && !(nearCornerX || nearSideX)) {
+    const canBounceHorizontalRail = !hasPockets || !(nearCornerX || nearSideX);
+    if (ball.y - BALL_RADIUS <= PLAY_TOP && canBounceHorizontalRail) {
       ball.y = PLAY_TOP + BALL_RADIUS;
       ball.vy = Math.abs(ball.vy) * RESTITUTION;
       markRailContact(state, ball);
     }
-    if (ball.y + BALL_RADIUS >= PLAY_BOTTOM && !(nearCornerX || nearSideX)) {
+    if (ball.y + BALL_RADIUS >= PLAY_BOTTOM && canBounceHorizontalRail) {
       ball.y = PLAY_BOTTOM - BALL_RADIUS;
       ball.vy = -Math.abs(ball.vy) * RESTITUTION;
       markRailContact(state, ball);
@@ -1498,6 +2094,14 @@ function updatePhysics(state, dt) {
         }
         if (ballB.id === "cue" && ballA.number > 0) {
           state.shot.firstHitBallId = ballA.id;
+        }
+      }
+      if (state.shot) {
+        if (ballA.id === "cue" && ballB.number > 0 && !state.shot.cueObjectHitOrder.includes(ballB.id)) {
+          state.shot.cueObjectHitOrder.push(ballB.id);
+        }
+        if (ballB.id === "cue" && ballA.number > 0 && !state.shot.cueObjectHitOrder.includes(ballA.id)) {
+          state.shot.cueObjectHitOrder.push(ballA.id);
         }
       }
     }
@@ -1573,7 +2177,7 @@ function buildAiRoutine(state) {
   if (hasBallInHand && placement) {
     steps.push({
       kind: "auto-place",
-      durationMs: Math.max(170, Math.round(difficulty.thinkMs * 0.35)),
+      durationMs: scaleAiDuration(Math.max(170, Math.round(difficulty.thinkMs * 0.35))),
       x: placement.x,
       y: placement.y,
     });
@@ -1581,26 +2185,26 @@ function buildAiRoutine(state) {
   if (calledPocketId) {
     steps.push({
       kind: "set-pocket",
-      durationMs: Math.max(110, Math.round(difficulty.thinkMs * 0.2)),
+      durationMs: scaleAiDuration(Math.max(110, Math.round(difficulty.thinkMs * 0.2))),
       pocketId: calledPocketId,
     });
   }
   steps.push({
     kind: "adjust-aim",
-    durationMs: Math.max(140, Math.round(difficulty.thinkMs * 0.28)),
+    durationMs: scaleAiDuration(Math.max(140, Math.round(difficulty.thinkMs * 0.28))),
     targetAngle: plan.angle,
   });
   steps.push({
     kind: "adjust-power",
-    durationMs: Math.max(130, Math.round(difficulty.thinkMs * 0.24)),
+    durationMs: scaleAiDuration(Math.max(130, Math.round(difficulty.thinkMs * 0.24))),
     targetPower,
   });
   if (forcePushOut) {
-    steps.push({ kind: "push-out", durationMs: 110 });
+    steps.push({ kind: "push-out", durationMs: scaleAiDuration(110) });
   } else if (useSafety) {
-    steps.push({ kind: "safety", durationMs: 110 });
+    steps.push({ kind: "safety", durationMs: scaleAiDuration(110) });
   }
-  steps.push({ kind: "shoot", durationMs: 95 });
+  steps.push({ kind: "shoot", durationMs: scaleAiDuration(95) });
 
   state.aiPlanPreview = createAiPlanPreview(plan, forcePushOut, useSafety, calledPocketId, targetPower);
   return {
@@ -1876,26 +2480,33 @@ function drawTable(ctx, state, preview, placementGhost) {
     ctx.fill();
   }
 
-  POCKETS.forEach((pocket) => {
-    const selected = state.calledPocketId === pocket.id;
-    ctx.beginPath();
-    ctx.fillStyle = selected ? "#fde68a" : "#05080f";
-    ctx.arc(pocket.x, pocket.y, pocket.radius, 0, Math.PI * 2);
-    ctx.fill();
-    if (selected) {
+  if (modeHasPockets(state.modeKey)) {
+    POCKETS.forEach((pocket) => {
+      const selected = state.calledPocketId === pocket.id;
       ctx.beginPath();
-      ctx.strokeStyle = "rgba(250, 204, 21, 0.8)";
-      ctx.lineWidth = 3;
-      ctx.arc(pocket.x, pocket.y, pocket.radius + 4, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-  });
+      ctx.fillStyle = selected ? "#fde68a" : "#05080f";
+      ctx.arc(pocket.x, pocket.y, pocket.radius, 0, Math.PI * 2);
+      ctx.fill();
+      if (selected) {
+        ctx.beginPath();
+        ctx.strokeStyle = "rgba(250, 204, 21, 0.8)";
+        ctx.lineWidth = 3;
+        ctx.arc(pocket.x, pocket.y, pocket.radius + 4, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    });
+  }
 
   if (preview) {
+    const aiGuide = state.phase === "ai-thinking" && state.players[state.currentPlayer]?.type === "ai";
     const legal = preview.hitBall ? getLegalNumbers(state, state.currentPlayer).includes(preview.hitBall.number) : false;
-    ctx.strokeStyle = legal ? "rgba(125, 211, 252, 0.86)" : "rgba(248, 113, 113, 0.72)";
-    ctx.lineWidth = 2.4;
-    ctx.setLineDash([10, 8]);
+    ctx.strokeStyle = aiGuide
+      ? "rgba(250, 204, 21, 0.94)"
+      : legal
+        ? "rgba(125, 211, 252, 0.86)"
+        : "rgba(248, 113, 113, 0.72)";
+    ctx.lineWidth = aiGuide ? 4.2 : 2.4;
+    ctx.setLineDash(aiGuide ? [14, 6] : [10, 8]);
     ctx.beginPath();
     ctx.moveTo(preview.x1, preview.y1);
     ctx.lineTo(preview.x2, preview.y2);
@@ -1903,8 +2514,12 @@ function drawTable(ctx, state, preview, placementGhost) {
     ctx.setLineDash([]);
     if (preview.hitBall) {
       ctx.beginPath();
-      ctx.strokeStyle = legal ? "rgba(125, 211, 252, 0.9)" : "rgba(248, 113, 113, 0.82)";
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = aiGuide
+        ? "rgba(250, 204, 21, 0.98)"
+        : legal
+          ? "rgba(125, 211, 252, 0.9)"
+          : "rgba(248, 113, 113, 0.82)";
+      ctx.lineWidth = aiGuide ? 3 : 2;
       ctx.arc(preview.hitBall.x, preview.hitBall.y, BALL_RADIUS + 6, 0, Math.PI * 2);
       ctx.stroke();
     }
@@ -2009,19 +2624,24 @@ function drawTable(ctx, state, preview, placementGhost) {
 }
 
 function buildSnapshot(state) {
+  const locale = state.locale ?? "es";
   const cueBall = getCueBall(state);
   const legalNumbers = getLegalNumbers(state, state.currentPlayer);
   return {
+    locale,
     mode: "billiards_pool",
     variant: state.modeKey,
     status: state.phase,
+    statusLabel: statusLabel(state.phase, locale),
+    participantCount: state.participantCount ?? 2,
+    hasPockets: modeHasPockets(state.modeKey),
     coordinates: "origin_top_left_x_right_y_down_table_pixels",
-    modeLabel: MODE_PRESETS[state.modeKey].label,
+    modeLabel: modeLabel(state.modeKey, locale),
     difficultyKey: state.difficultyKey,
-    difficultyLabel: DIFFICULTY_PRESETS[state.difficultyKey].label,
+    difficultyLabel: difficultyLabel(state.difficultyKey, locale),
     raceTo: state.raceTo,
     currentPlayer: state.currentPlayer,
-    currentPlayerName: state.players[state.currentPlayer]?.name ?? "-",
+    currentPlayerName: localizePlayerName(state.players[state.currentPlayer]?.name ?? "-", locale),
     breakerIndex: state.breakerIndex,
     nextBreaker: state.nextBreaker,
     tableOpen: state.tableOpen,
@@ -2031,14 +2651,17 @@ function buildSnapshot(state) {
     restrictHeadString: state.ballInHand.restrictHeadString,
     safetyDeclared: state.safetyDeclared,
     calledPocketId: state.calledPocketId,
-    calledPocketLabel: POCKETS.find((pocket) => pocket.id === state.calledPocketId)?.label ?? null,
+    calledPocketLabel: pocketLabel(state.calledPocketId, locale),
     needsPocketCall: needsPocketCall(state, state.currentPlayer),
     pendingDecision: state.pendingDecision
       ? {
           type: state.pendingDecision.type,
           chooserIndex: state.pendingDecision.chooserIndex,
-          prompt: state.pendingDecision.prompt,
-          options: state.pendingDecision.options,
+          prompt: localizeRuntimeText(state.pendingDecision.prompt, locale),
+          options: state.pendingDecision.options.map((option) => ({
+            ...option,
+            label: localizeRuntimeText(option.label, locale),
+          })),
         }
       : null,
     canDeclarePushOut: state.phase === "aim"
@@ -2057,20 +2680,27 @@ function buildSnapshot(state) {
       power: Number(state.cueControl.power.toFixed(2)),
     },
     ai: {
-      action: state.aiAction,
+      action: localizeRuntimeText(state.aiAction, locale),
       leds: state.aiLeds,
       planPreview: state.aiPlanPreview,
       thinking: state.phase === "ai-thinking",
     },
-    players: state.players.map((player, index) => ({
-      name: player.name,
-      type: player.type,
-      group: player.group,
-      groupLabel: groupLabel(player.group),
-      remainingGroupBalls: countRemainingGroupBalls(state, index),
-      racksWon: player.racksWon,
-      foulsInRow: player.foulsInRow,
-    })),
+    players: state.players.map((player, index) => {
+      const targetBall = player.kellyTarget != null
+        ? state.balls.find((ball) => ball.number === player.kellyTarget)
+        : null;
+      return {
+        name: localizePlayerName(player.name, locale),
+        type: player.type,
+        group: player.group,
+        groupLabel: groupLabel(player.group, locale),
+        kellyTarget: player.kellyTarget ?? null,
+        kellyTargetPocketed: targetBall ? targetBall.pocketed : null,
+        remainingGroupBalls: countRemainingGroupBalls(state, index),
+        racksWon: player.racksWon,
+        foulsInRow: player.foulsInRow,
+      };
+    }),
     cueBall: cueBall
       ? {
           x: Number(cueBall.x.toFixed(1)),
@@ -2096,32 +2726,54 @@ function buildSnapshot(state) {
     rackWinner: state.rackWinner,
     matchWinner: state.matchWinner,
     shotCount: state.shotCount,
-    message: state.message,
-    log: state.log,
+    message: localizeRuntimeText(state.message, locale),
+    log: state.log.map((entry) => localizeRuntimeText(entry, locale)),
     controls: {
-      keyboard: "A/D (o flechas) giran en apuntado, W/S potencia, en blanca en mano flechas/WASD mueven bola, Enter/Space confirman o tiran, P autocoloca, O push out, V safety, R reinicia rack, N siguiente, F fullscreen",
-      mouse: "Mueve para apuntar y clic para colocar blanca en mano si lo prefieres",
-      touch: "Use on-screen aim/power buttons and Shoot",
+      keyboard: locale === "es"
+        ? "A/D (o flechas) giran en apuntado, W/S potencia, en blanca en mano flechas/WASD mueven bola, Enter/Space confirman o tiran, P autocoloca, O push out, V safety, R reinicia rack, N siguiente, F fullscreen"
+        : "A/D (or arrows) adjust aim, W/S adjust power, with ball in hand arrows/WASD move the cue ball, Enter/Space confirm or shoot, P auto-places, O push out, V safety, R restarts rack, N next rack, F fullscreen.",
+      mouse: locale === "es"
+        ? "Mueve para apuntar y clic para colocar blanca en mano si lo prefieres"
+        : "Move to aim and click to place cue ball in hand if needed.",
+      touch: locale === "es"
+        ? "Usa los botones tactiles de apuntado/potencia y Tirar."
+        : "Use on-screen aim/power controls and Shoot.",
     },
   };
 }
 
-function eventToWorld(canvas, event) {
+function eventToWorld(canvas, event, options = {}) {
+  const { rotateTable = false } = options;
   const rect = canvas.getBoundingClientRect();
   const source = event.touches?.[0] ?? event.changedTouches?.[0] ?? event;
   if (!source) return null;
+  const normalizedX = clamp((source.clientX - rect.left) / rect.width, 0, 1);
+  const normalizedY = clamp((source.clientY - rect.top) / rect.height, 0, 1);
+  if (rotateTable) {
+    return {
+      x: (1 - normalizedY) * TABLE_WIDTH,
+      y: normalizedX * TABLE_HEIGHT,
+    };
+  }
   return {
-    x: ((source.clientX - rect.left) / rect.width) * TABLE_WIDTH,
-    y: ((source.clientY - rect.top) / rect.height) * TABLE_HEIGHT,
+    x: normalizedX * TABLE_WIDTH,
+    y: normalizedY * TABLE_HEIGHT,
   };
 }
 
-function createRuntime({ canvas, onSnapshot, onFullscreenRequest }) {
+function readMobileViewport() {
+  if (typeof window === "undefined") return { isMobile: false, isPortrait: false };
+  const width = Math.max(window.innerWidth || 0, document.documentElement?.clientWidth || 0);
+  const height = Math.max(window.innerHeight || 0, document.documentElement?.clientHeight || 0);
+  return { isMobile: width <= 920, isPortrait: height >= width };
+}
+
+function createRuntime({ canvas, onSnapshot, onFullscreenRequest, isTableRotated = () => false, locale = resolveLocale() }) {
   const ctx = canvas.getContext("2d");
   const runtime = {
     canvas,
     ctx,
-    state: createRuntimeState(),
+    state: createRuntimeState("eight-ball", "club", locale, 2),
     pointer: { x: TABLE_CENTER_X, y: TABLE_CENTER_Y, active: false },
     lastFrame: 0,
     rafId: 0,
@@ -2129,7 +2781,9 @@ function createRuntime({ canvas, onSnapshot, onFullscreenRequest }) {
       onSnapshot(buildSnapshot(this.state));
     },
     draw() {
-      const preview = (this.state.phase === "aim" || this.state.phase === "placing") ? getAimPreview(this.state) : null;
+      const preview = (this.state.phase === "aim" || this.state.phase === "placing" || this.state.phase === "ai-thinking")
+        ? getAimPreview(this.state)
+        : null;
       const placementGhost = this.state.phase === "placing" && this.pointer.active
         ? {
             x: this.pointer.x,
@@ -2143,12 +2797,17 @@ function createRuntime({ canvas, onSnapshot, onFullscreenRequest }) {
       this.publish();
       this.draw();
     },
-    resetToMenu(modeKey = this.state.modeKey, difficultyKey = this.state.difficultyKey) {
-      this.state = createRuntimeState(modeKey, difficultyKey);
+    resetToMenu(modeKey = this.state.modeKey, difficultyKey = this.state.difficultyKey, participantCount = this.state.participantCount ?? 2) {
+      this.state = createRuntimeState(modeKey, difficultyKey, this.state.locale ?? locale, participantCount);
       this.refresh();
     },
     startMatch() {
-      const nextState = createRuntimeState(this.state.modeKey, this.state.difficultyKey);
+      const nextState = createRuntimeState(
+        this.state.modeKey,
+        this.state.difficultyKey,
+        this.state.locale ?? locale,
+        this.state.participantCount ?? 2
+      );
       startRack(nextState, PLAYER_HUMAN);
       this.state = nextState;
       this.refresh();
@@ -2159,7 +2818,12 @@ function createRuntime({ canvas, onSnapshot, onFullscreenRequest }) {
         return;
       }
       const wins = cloneWins(this.state.players);
-      const nextState = createRuntimeState(this.state.modeKey, this.state.difficultyKey);
+      const nextState = createRuntimeState(
+        this.state.modeKey,
+        this.state.difficultyKey,
+        this.state.locale ?? locale,
+        this.state.participantCount ?? 2
+      );
       nextState.players.forEach((player, index) => {
         player.racksWon = wins[index];
       });
@@ -2174,7 +2838,12 @@ function createRuntime({ canvas, onSnapshot, onFullscreenRequest }) {
         return;
       }
       const wins = cloneWins(this.state.players);
-      const nextState = createRuntimeState(this.state.modeKey, this.state.difficultyKey);
+      const nextState = createRuntimeState(
+        this.state.modeKey,
+        this.state.difficultyKey,
+        this.state.locale ?? locale,
+        this.state.participantCount ?? 2
+      );
       nextState.players.forEach((player, index) => {
         player.racksWon = wins[index];
       });
@@ -2183,22 +2852,45 @@ function createRuntime({ canvas, onSnapshot, onFullscreenRequest }) {
       this.refresh();
     },
     setMode(modeKey) {
+      if (this.state.phase !== "menu") return;
       if (!MODE_PRESETS[modeKey]) return;
-      this.resetToMenu(modeKey, this.state.difficultyKey);
+      const participantCount = isKellyMode(modeKey) ? (this.state.participantCount ?? 2) : 2;
+      this.resetToMenu(modeKey, this.state.difficultyKey, participantCount);
+    },
+    setParticipantCount(participantCount) {
+      if (this.state.phase !== "menu") return;
+      const normalized = clamp(Math.round(Number(participantCount) || 2), 2, 15);
+      const nextCount = isKellyMode(this.state.modeKey) ? normalized : 2;
+      this.resetToMenu(this.state.modeKey, this.state.difficultyKey, nextCount);
     },
     setDifficulty(difficultyKey) {
+      if (this.state.phase !== "menu") return;
       if (!DIFFICULTY_PRESETS[difficultyKey]) return;
+      const localeKey = this.state.locale ?? locale;
       this.state.difficultyKey = difficultyKey;
-      this.state.players[PLAYER_AI].name = `IA ${DIFFICULTY_PRESETS[difficultyKey].label}`;
+      if (isKellyMode(this.state.modeKey)) {
+        this.state.players.forEach((player, index) => {
+          if (index === PLAYER_HUMAN) {
+            player.name = localeKey === "es" ? "Tu" : "You";
+          } else {
+            player.name = `${localeKey === "es" ? "IA" : "AI"} ${index}`;
+          }
+        });
+      } else {
+        this.state.players[PLAYER_AI].name = `${localeKey === "es" ? "IA" : "AI"} ${difficultyLabel(difficultyKey, localeKey)}`;
+      }
       if (this.state.phase === "menu") {
-        addLog(this.state, `Dificultad ${DIFFICULTY_PRESETS[difficultyKey].label}.`);
+        addLog(this.state, localeKey === "es" ? `Dificultad ${difficultyLabel(difficultyKey, localeKey)}.` : `Difficulty ${difficultyLabel(difficultyKey, localeKey)}.`);
       }
       this.refresh();
     },
     setCalledPocket(pocketId) {
       if (!POCKETS.some((pocket) => pocket.id === pocketId)) return;
       this.state.calledPocketId = pocketId;
-      addLog(this.state, `Tronera cantada: ${POCKETS.find((pocket) => pocket.id === pocketId)?.label}.`);
+      const localeKey = this.state.locale ?? locale;
+      addLog(this.state, localeKey === "es"
+        ? `Tronera cantada: ${pocketLabel(pocketId, localeKey)}.`
+        : `Called pocket: ${pocketLabel(pocketId, localeKey)}.`);
       this.refresh();
     },
     toggleSafety() {
@@ -2445,11 +3137,11 @@ function createRuntime({ canvas, onSnapshot, onFullscreenRequest }) {
     },
     start() {
       const move = (event) => {
-        const worldPoint = eventToWorld(canvas, event);
+        const worldPoint = eventToWorld(canvas, event, { rotateTable: isTableRotated() });
         this.setPointer(worldPoint);
       };
       const down = (event) => {
-        const worldPoint = eventToWorld(canvas, event);
+        const worldPoint = eventToWorld(canvas, event, { rotateTable: isTableRotated() });
         this.placeCueFromPointer(worldPoint);
       };
       const wheel = (event) => {
@@ -2486,15 +3178,25 @@ function createRuntime({ canvas, onSnapshot, onFullscreenRequest }) {
   return runtime;
 }
 
-function createDefaultSnapshot() {
-  return buildSnapshot(createRuntimeState());
+function createDefaultSnapshot(locale = resolveLocale()) {
+  return buildSnapshot(createRuntimeState("eight-ball", "club", locale));
 }
 
 function BilliardsClubGame() {
   const canvasRef = useRef(null);
   const shellRef = useRef(null);
   const runtimeRef = useRef(null);
-  const [snapshot, setSnapshot] = useState(createDefaultSnapshot);
+  const tableRotatedRef = useRef(false);
+  const [locale] = useState(() => resolveLocale());
+  const [snapshot, setSnapshot] = useState(() => createDefaultSnapshot(locale));
+  const [mobileViewport, setMobileViewport] = useState(() => readMobileViewport());
+  const [preferVerticalTable, setPreferVerticalTable] = useState(true);
+  const useVerticalTable = mobileViewport.isMobile && mobileViewport.isPortrait && preferVerticalTable;
+  const ui = UI_COPY[locale] ?? UI_COPY.en;
+
+  useEffect(() => {
+    tableRotatedRef.current = useVerticalTable;
+  }, [useVerticalTable]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -2502,6 +3204,8 @@ function BilliardsClubGame() {
     const runtime = createRuntime({
       canvas,
       onSnapshot: setSnapshot,
+      isTableRotated: () => tableRotatedRef.current,
+      locale,
       onFullscreenRequest: () => {
         const shell = shellRef.current;
         if (!shell) return;
@@ -2515,7 +3219,7 @@ function BilliardsClubGame() {
       runtime.destroy();
       runtimeRef.current = null;
     };
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     const onChange = () => {
@@ -2529,12 +3233,26 @@ function BilliardsClubGame() {
     };
   }, []);
 
+  useEffect(() => {
+    const updateViewport = () => {
+      setMobileViewport(readMobileViewport());
+    };
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    window.addEventListener("orientationchange", updateViewport);
+    return () => {
+      window.removeEventListener("resize", updateViewport);
+      window.removeEventListener("orientationchange", updateViewport);
+    };
+  }, []);
+
   const startMatch = useCallback(() => runtimeRef.current?.startMatch(), []);
   const restartRack = useCallback(() => runtimeRef.current?.restartRack(), []);
   const nextRack = useCallback(() => runtimeRef.current?.nextRack(), []);
   const resetMatch = useCallback(() => runtimeRef.current?.resetToMenu(), []);
   const setMode = useCallback((modeKey) => runtimeRef.current?.setMode(modeKey), []);
   const setDifficulty = useCallback((difficultyKey) => runtimeRef.current?.setDifficulty(difficultyKey), []);
+  const setParticipantCount = useCallback((participantCount) => runtimeRef.current?.setParticipantCount(participantCount), []);
   const setPocket = useCallback((pocketId) => runtimeRef.current?.setCalledPocket(pocketId), []);
   const adjustAim = useCallback((delta) => runtimeRef.current?.adjustAim(delta), []);
   const adjustPower = useCallback((delta) => runtimeRef.current?.adjustPower(delta), []);
@@ -2543,6 +3261,8 @@ function BilliardsClubGame() {
   const toggleSafety = useCallback(() => runtimeRef.current?.toggleSafety(), []);
   const resolveDecision = useCallback((optionId) => runtimeRef.current?.resolveDecision(optionId), []);
   const autoPlaceCueBall = useCallback(() => runtimeRef.current?.autoPlaceCueBall(), []);
+  const nudgeCueBall = useCallback((dx, dy) => runtimeRef.current?.nudgeCueBall(dx, dy), []);
+  const confirmCuePlacement = useCallback(() => runtimeRef.current?.confirmCuePlacement("teclado"), []);
   const requestFullscreen = useCallback(() => {
     const shell = shellRef.current;
     if (!shell) return;
@@ -2563,91 +3283,149 @@ function BilliardsClubGame() {
   const aiThinking = Boolean(snapshot.ai?.thinking);
   const aiPlan = snapshot.ai?.planPreview ?? null;
   const ledClass = (active, baseClass = "") => [baseClass, aiThinking && active ? "led-active" : ""].filter(Boolean).join(" ");
+  const canConfigureBeforeStart = snapshot.status === "menu";
+  const modeObjective = snapshot.variant === "kelly"
+    ? `${modeSummary(snapshot.variant, locale)} ${locale === "es" ? `Participantes: ${snapshot.participantCount}.` : `Players: ${snapshot.participantCount}.`}`
+    : modeSummary(snapshot.variant, locale);
+  const raceUnit = isCaromMode(snapshot.variant)
+    ? ui.pointsUnit
+    : isKellyMode(snapshot.variant)
+      ? ui.winsUnit
+      : ui.racksUnit;
+  const scoreboardHeadline = snapshot.players.length === 2
+    ? `${snapshot.players[0]?.racksWon ?? 0} - ${snapshot.players[1]?.racksWon ?? 0}`
+    : (() => {
+        const topScore = Math.max(...snapshot.players.map((player) => player.racksWon), 0);
+        const leaders = snapshot.players.filter((player) => player.racksWon === topScore).map((player) => player.name);
+        const leaderLabel = leaders.length > 3
+          ? `${leaders.slice(0, 3).join(", ")}...`
+          : leaders.join(", ");
+        return `${ui.leader}: ${leaderLabel || "-"} (${topScore})`;
+      })();
+  const showKellyTargets = snapshot.variant === "kelly";
+  const showGroupInfo = snapshot.variant === "eight-ball";
+  const mobileDirectionalHint = canPlace
+    ? ui.mobileHintPlace
+    : ui.mobileHintAim;
+  const gameClassName = [
+    "mini-game",
+    "billiards-game",
+    mobileViewport.isMobile ? "billiards-mobile" : "",
+    mobileViewport.isMobile && mobileViewport.isPortrait ? "billiards-mobile-portrait" : "",
+    mobileViewport.isMobile && !mobileViewport.isPortrait ? "billiards-mobile-landscape" : "",
+    useVerticalTable ? "billiards-table-vertical" : "",
+  ].filter(Boolean).join(" ");
 
   return (
-    <div className="mini-game billiards-game">
+    <div className={gameClassName}>
       <div className="mini-head">
         <div>
-          <h4>Billar Pool Club</h4>
-          <p>Pool arcade-profesional con fisica top-down, modos Bola 8/Bola 9/Bola 10, push out, safety y IA tactica.</p>
+          <h4>{ui.title}</h4>
+          <p>{ui.subtitle}</p>
         </div>
         <div className="billiards-head-actions">
-          {snapshot.status === "menu" ? <button id="billiards-start-btn" type="button" onClick={startMatch}>Empezar</button> : null}
-          {snapshot.status === "rack-over" ? <button id="billiards-next-rack-btn" type="button" onClick={nextRack}>Siguiente rack</button> : null}
-          <button type="button" onClick={restartRack}>Repetir rack</button>
-          <button type="button" onClick={resetMatch}>Nuevo match</button>
-          <button id="billiards-fullscreen-btn" type="button" onClick={requestFullscreen}>Pantalla completa</button>
+          {snapshot.status === "menu" ? <button id="billiards-start-btn" type="button" onClick={startMatch}>{ui.start}</button> : null}
+          {snapshot.status === "rack-over" ? <button id="billiards-next-rack-btn" type="button" onClick={nextRack}>{ui.nextRack}</button> : null}
+          <button type="button" onClick={restartRack}>{ui.restartRack}</button>
+          <button type="button" onClick={resetMatch}>{ui.newMatch}</button>
+          {mobileViewport.isMobile && mobileViewport.isPortrait ? (
+            <button id="billiards-orientation-btn" type="button" onClick={() => setPreferVerticalTable((previous) => !previous)}>
+              {useVerticalTable ? ui.orientationHorizontal : ui.orientationVertical}
+            </button>
+          ) : null}
+          <button id="billiards-fullscreen-btn" type="button" onClick={requestFullscreen}>{ui.fullscreen}</button>
         </div>
       </div>
 
       <div className="billiards-toolbar">
-        <div className="billiards-segment">
-          {Object.entries(MODE_PRESETS).map(([modeKey, preset]) => (
-            <button
-              key={modeKey}
-              id={`billiards-mode-${modeKey}`}
-              type="button"
-              className={snapshot.variant === modeKey ? "active" : ""}
-              onClick={() => setMode(modeKey)}
+        <div className="billiards-setup-row">
+          <label className="billiards-select-field" htmlFor="billiards-mode-select">
+            <span>{ui.gameMode}</span>
+            <select
+              id="billiards-mode-select"
+              value={snapshot.variant}
+              onChange={(event) => setMode(event.target.value)}
+              disabled={!canConfigureBeforeStart}
             >
-              {preset.label}
-            </button>
-          ))}
-        </div>
-        <div className="billiards-segment">
-          {Object.entries(DIFFICULTY_PRESETS).map(([difficultyKey, preset]) => (
-            <button
-              key={difficultyKey}
-              id={`billiards-difficulty-${difficultyKey}`}
-              type="button"
-              className={snapshot.difficultyKey === difficultyKey ? "active" : ""}
-              onClick={() => setDifficulty(difficultyKey)}
+              {Object.entries(MODE_PRESETS).map(([modeKey, preset]) => (
+                <option key={modeKey} value={modeKey}>{localizeLabel(preset.label, locale)}</option>
+              ))}
+            </select>
+          </label>
+          <label className="billiards-select-field" htmlFor="billiards-ai-select">
+            <span>{ui.aiMode}</span>
+            <select
+              id="billiards-ai-select"
+              value={snapshot.difficultyKey}
+              onChange={(event) => setDifficulty(event.target.value)}
+              disabled={!canConfigureBeforeStart}
             >
-              {preset.label}
-            </button>
-          ))}
+              {Object.entries(DIFFICULTY_PRESETS).map(([difficultyKey, preset]) => (
+                <option key={difficultyKey} value={difficultyKey}>{localizeLabel(preset.label, locale)}</option>
+              ))}
+            </select>
+          </label>
+          {snapshot.variant === "kelly" ? (
+            <label className="billiards-select-field" htmlFor="billiards-participants-select">
+              <span>{ui.participants}</span>
+              <select
+                id="billiards-participants-select"
+                value={snapshot.participantCount}
+                onChange={(event) => setParticipantCount(event.target.value)}
+                disabled={!canConfigureBeforeStart}
+              >
+                {Array.from({ length: 14 }, (_, index) => {
+                  const count = index + 2;
+                  return <option key={count} value={count}>{count}</option>;
+                })}
+              </select>
+            </label>
+          ) : null}
+          <p className="billiards-mode-goal">
+            <strong>{ui.modeGoal}</strong> {modeObjective}
+          </p>
         </div>
         <div className="billiards-chipline">
           <span className="hud-pill billiards-turn-pill">
             <span className={`billiards-led-dot ${aiThinking && aiLeds.turn ? "on" : ""}`} aria-hidden="true" />
-            Turno: {snapshot.currentPlayerName}
+            {ui.turn}: {snapshot.currentPlayerName}
           </span>
-          <span className="hud-pill">Modo: {snapshot.modeLabel}</span>
-          <span className="hud-pill">Objetivo: race to {snapshot.raceTo}</span>
-          {snapshot.tableOpen ? <span className="hud-pill">Mesa abierta</span> : null}
-          {snapshot.ballInHand ? <span className="hud-pill">Blanca en mano</span> : null}
-          {snapshot.pushOutAvailable ? <span className="hud-pill">Push out disponible</span> : null}
-          {snapshot.safetyDeclared ? <span className="hud-pill">Safety activo</span> : null}
+          <span className="hud-pill">{ui.mode}: {snapshot.modeLabel}</span>
+          <span className="hud-pill">{ui.raceTo} {snapshot.raceTo}</span>
+          {snapshot.tableOpen ? <span className="hud-pill">{ui.tableOpen}</span> : null}
+          {snapshot.ballInHand ? <span className="hud-pill">{ui.ballInHand}</span> : null}
+          {snapshot.pushOutAvailable ? <span className="hud-pill">{ui.pushOutAvailable}</span> : null}
+          {snapshot.safetyDeclared ? <span className="hud-pill">{ui.safetyActive}</span> : null}
         </div>
       </div>
 
       <div className="billiards-layout">
         <div className="billiards-stage phaser-canvas-shell" ref={shellRef}>
           <div className="phaser-canvas-host billiards-canvas-host">
-            <canvas id="billiards-canvas" ref={canvasRef} width={TABLE_WIDTH} height={TABLE_HEIGHT} className="billiards-canvas" aria-label="Mesa de billar" />
+            <canvas id="billiards-canvas" ref={canvasRef} width={TABLE_WIDTH} height={TABLE_HEIGHT} className="billiards-canvas" aria-label={locale === "es" ? "Mesa de billar" : "Pool table"} />
           </div>
           {overlayVisible ? (
             <div className="billiards-overlay">
               {snapshot.status === "menu" ? (
                 <>
-                  <h5>Billar Pool Club</h5>
-                  <p>{MODE_PRESETS[snapshot.variant].summary}</p>
-                  <p>Rompe, gestiona faltas, usa push out/safety cuando toque y gana un duelo al mejor de {snapshot.raceTo} racks.</p>
-                  <button id="billiards-overlay-start" type="button" onClick={startMatch}>Abrir mesa</button>
+                  <h5>{ui.title}</h5>
+                  <p>{modeObjective}</p>
+                  <p>{ui.speedToUnderstand} {snapshot.raceTo} {raceUnit}.</p>
+                  <button id="billiards-overlay-start" type="button" onClick={startMatch}>{ui.openTableButton}</button>
                 </>
               ) : null}
               {snapshot.status === "rack-over" ? (
                 <>
-                  <h5>Rack cerrado</h5>
+                  <h5>{ui.rackClosedTitle}</h5>
                   <p>{snapshot.message}</p>
-                  <button type="button" onClick={nextRack}>Preparar siguiente rack</button>
+                  <button type="button" onClick={nextRack}>{ui.prepareNextRack}</button>
                 </>
               ) : null}
               {snapshot.status === "match-over" ? (
                 <>
-                  <h5>Match finalizado</h5>
+                  <h5>{ui.matchFinishedTitle}</h5>
                   <p>{snapshot.message}</p>
-                  <button type="button" onClick={resetMatch}>Volver al menu</button>
+                  <button type="button" onClick={resetMatch}>{ui.backToMenu}</button>
                 </>
               ) : null}
             </div>
@@ -2657,16 +3435,25 @@ function BilliardsClubGame() {
         <aside className="billiards-sidepanel">
           <section className="billiards-panel scoreboard">
             <header>
-              <span>Marcador</span>
-              <strong>{snapshot.players[0]?.racksWon} - {snapshot.players[1]?.racksWon}</strong>
+              <span>{ui.scoreboard}</span>
+              <strong>{scoreboardHeadline}</strong>
             </header>
             <div className="billiards-score-row">
-              {snapshot.players.map((player) => (
-                <article key={player.name} className={snapshot.currentPlayerName === player.name ? "active" : ""}>
+              {snapshot.players.map((player, index) => (
+                <article key={`${player.name}-${index}`} className={snapshot.currentPlayer === index ? "active" : ""}>
                   <h6>{player.name}</h6>
-                  <p>Grupo: {player.groupLabel}</p>
-                  {player.group ? <p>Restantes: {player.remainingGroupBalls}</p> : null}
-                  {snapshot.variant === "nine-ball" || snapshot.variant === "ten-ball" ? <p>Faltas seguidas: {player.foulsInRow}</p> : null}
+                  <p>{raceUnit}: {player.racksWon}</p>
+                  {showGroupInfo ? <p>{ui.group}: {player.groupLabel}</p> : null}
+                  {showGroupInfo && player.group ? <p>{ui.remaining}: {player.remainingGroupBalls}</p> : null}
+                  {showKellyTargets ? (
+                    <p>
+                      {ui.targetBall}: {player.kellyTarget ?? "-"}{" "}
+                      {player.kellyTarget == null
+                        ? ""
+                        : `(${player.kellyTargetPocketed ? ui.pocketed : ui.onTable})`}
+                    </p>
+                  ) : null}
+                  {snapshot.variant === "nine-ball" || snapshot.variant === "ten-ball" ? <p>{ui.foulsInRow}: {player.foulsInRow}</p> : null}
                 </article>
               ))}
             </div>
@@ -2674,38 +3461,38 @@ function BilliardsClubGame() {
 
           <section className="billiards-panel state">
             <header>
-              <span>Telemetria</span>
-              <strong>{snapshot.status}</strong>
+              <span>{ui.telemetry}</span>
+              <strong>{snapshot.statusLabel ?? snapshot.status}</strong>
             </header>
-            <p>Objetivo legal: {snapshot.legalTargets.length ? snapshot.legalTargets.join(", ") : "-"}</p>
-            <p>Potencia: {Math.round(snapshot.cueControl.power * 100)}%</p>
-            <p>Angulo: {snapshot.cueControl.angleDegrees}&deg;</p>
-            <p>Bola mas baja: {snapshot.lowestBall ?? "-"}</p>
-            <p>Push out: {snapshot.pushOutAvailable ? "si" : "no"}</p>
-            <p>Safety: {snapshot.safetyDeclared ? "declarado" : "no"}</p>
-            {snapshot.calledPocketLabel ? <p>Tronera cantada: {snapshot.calledPocketLabel}</p> : null}
+            <p>{ui.legalTarget}: {snapshot.legalTargets.length ? snapshot.legalTargets.join(", ") : "-"}</p>
+            <p>{ui.power}: {Math.round(snapshot.cueControl.power * 100)}%</p>
+            <p>{ui.angle}: {snapshot.cueControl.angleDegrees}&deg;</p>
+            <p>{ui.lowestBall}: {snapshot.lowestBall ?? "-"}</p>
+            <p>{ui.pushOut}: {snapshot.pushOutAvailable ? ui.yes : ui.no}</p>
+            <p>{ui.safety}: {snapshot.safetyDeclared ? ui.declared : ui.no}</p>
+            {snapshot.calledPocketLabel ? <p>{ui.calledPocket}: {snapshot.calledPocketLabel}</p> : null}
           </section>
 
           <section className="billiards-panel ai-console">
             <header>
-              <span>Cabina IA</span>
-              <strong>{aiThinking ? "analizando" : "standby"}</strong>
+              <span>{ui.aiConsole}</span>
+              <strong>{aiThinking ? ui.analyzing : ui.standby}</strong>
             </header>
-            <p>{snapshot.ai?.action ?? AI_ACTION_LABELS.idle}</p>
-            <div className="billiards-led-grid" aria-label="Indicadores LED de acciones IA">
-              <span className={`billiards-led-pill ${aiThinking && aiLeds.turn ? "on" : ""}`}>Turno IA</span>
-              <span className={`billiards-led-pill ${aiThinking && aiLeds.autoPlace ? "on" : ""}`}>Auto colocar</span>
-              <span className={`billiards-led-pill ${aiThinking && aiLeds.pocket ? "on" : ""}`}>Tronera</span>
-              <span className={`billiards-led-pill ${aiThinking && aiLeds.aim ? "on" : ""}`}>Ajuste angulo</span>
-              <span className={`billiards-led-pill ${aiThinking && aiLeds.power ? "on" : ""}`}>Ajuste potencia</span>
-              <span className={`billiards-led-pill ${aiThinking && aiLeds.pushOut ? "on" : ""}`}>Push out</span>
-              <span className={`billiards-led-pill ${aiThinking && aiLeds.safety ? "on" : ""}`}>Safety</span>
-              <span className={`billiards-led-pill ${aiThinking && aiLeds.shoot ? "on" : ""}`}>Tirar</span>
+            <p>{snapshot.ai?.action ?? localizeRuntimeText(AI_ACTION_LABELS.idle, locale)}</p>
+            <div className="billiards-led-grid" aria-label={ui.aiLedGroup}>
+              <span className={`billiards-led-pill ${aiThinking && aiLeds.turn ? "on" : ""}`}>{ui.aiTurn}</span>
+              <span className={`billiards-led-pill ${aiThinking && aiLeds.autoPlace ? "on" : ""}`}>{ui.autoPlace}</span>
+              <span className={`billiards-led-pill ${aiThinking && aiLeds.pocket ? "on" : ""}`}>{ui.pocket}</span>
+              <span className={`billiards-led-pill ${aiThinking && aiLeds.aim ? "on" : ""}`}>{ui.aimAdjust}</span>
+              <span className={`billiards-led-pill ${aiThinking && aiLeds.power ? "on" : ""}`}>{ui.powerAdjust}</span>
+              <span className={`billiards-led-pill ${aiThinking && aiLeds.pushOut ? "on" : ""}`}>{ui.pushOut}</span>
+              <span className={`billiards-led-pill ${aiThinking && aiLeds.safety ? "on" : ""}`}>{ui.safety}</span>
+              <span className={`billiards-led-pill ${aiThinking && aiLeds.shoot ? "on" : ""}`}>{ui.shoot}</span>
             </div>
             {aiPlan ? (
               <p>
-                Plan: {aiPlan.type === "pot" ? "tronera directa" : aiPlan.type === "kick" ? "trayectoria alternativa" : "contacto"}
-                {aiPlan.route ? ` (${aiPlan.route})` : ""}, bola {aiPlan.ballNumber ?? "-"}, potencia {Math.round(aiPlan.power * 100)}%.
+                {ui.plan}: {aiPlan.type === "pot" ? ui.planPot : aiPlan.type === "kick" ? ui.planKick : ui.planContact}
+                {aiPlan.route ? ` (${aiPlan.route})` : ""}, {ui.ball} {aiPlan.ballNumber ?? "-"}, {ui.power.toLowerCase()} {Math.round(aiPlan.power * 100)}%.
               </p>
             ) : null}
           </section>
@@ -2713,8 +3500,8 @@ function BilliardsClubGame() {
           {snapshot.pendingDecision ? (
             <section className="billiards-panel decision">
               <header>
-                <span>Decision</span>
-                <strong>Turno: {snapshot.currentPlayerName}</strong>
+                <span>{ui.decision}</span>
+                <strong>{ui.turn}: {snapshot.currentPlayerName}</strong>
               </header>
               <p>{snapshot.pendingDecision.prompt}</p>
               <div className="billiards-control-group">
@@ -2735,8 +3522,8 @@ function BilliardsClubGame() {
           {snapshot.needsPocketCall ? (
             <section className="billiards-panel pockets">
               <header>
-                <span>{snapshot.variant === "ten-ball" ? "Cantar tiro" : "Cantar la 8"}</span>
-                <strong>Elige tronera</strong>
+                <span>{snapshot.variant === "ten-ball" ? ui.callShot : ui.callEight}</span>
+                <strong>{ui.choosePocket}</strong>
               </header>
               <div className="billiards-pocket-grid">
                 {POCKETS.map((pocket) => (
@@ -2747,7 +3534,7 @@ function BilliardsClubGame() {
                     className={snapshot.calledPocketId === pocket.id ? "active" : ""}
                     onClick={() => setPocket(pocket.id)}
                   >
-                    {pocket.label}
+                    {localizeLabel(pocket.label, locale)}
                   </button>
                 ))}
               </div>
@@ -2758,26 +3545,82 @@ function BilliardsClubGame() {
 
       <div className="billiards-control-deck">
         <div className="billiards-control-group">
-          <button id="billiards-aim-left" type="button" className={ledClass(aiLeds.aim)} onClick={() => adjustAim(-AIM_STEP)} disabled={!canAim}>Aim -</button>
-          <button id="billiards-aim-right" type="button" className={ledClass(aiLeds.aim)} onClick={() => adjustAim(AIM_STEP)} disabled={!canAim}>Aim +</button>
-          <button id="billiards-power-minus" type="button" className={ledClass(aiLeds.power)} onClick={() => adjustPower(-POWER_STEP)} disabled={!(canAim || canPlace)}>- Potencia</button>
-          <button id="billiards-power-plus" type="button" className={ledClass(aiLeds.power)} onClick={() => adjustPower(POWER_STEP)} disabled={!(canAim || canPlace)}>+ Potencia</button>
-          <button id="billiards-push-out" type="button" className={ledClass(aiLeds.pushOut)} onClick={declarePushOut} disabled={!canPushOut}>Push Out</button>
-          <button id="billiards-safety" type="button" className={`${snapshot.safetyDeclared ? "active" : ""} ${ledClass(aiLeds.safety)}`.trim()} onClick={toggleSafety} disabled={!canSafety}>Safety</button>
-          <button id="billiards-shoot-btn" type="button" className={ledClass(aiLeds.shoot)} onClick={shoot} disabled={!canAim}>Tirar</button>
-          <button id="billiards-auto-place" type="button" className={ledClass(aiLeds.autoPlace)} onClick={autoPlaceCueBall} disabled={!canPlace}>Auto colocar</button>
+          <button id="billiards-aim-left" type="button" className={ledClass(aiLeds.aim)} onClick={() => adjustAim(-AIM_STEP)} disabled={!canAim}>{ui.aimMinus}</button>
+          <button id="billiards-aim-right" type="button" className={ledClass(aiLeds.aim)} onClick={() => adjustAim(AIM_STEP)} disabled={!canAim}>{ui.aimPlus}</button>
+          <button id="billiards-power-minus" type="button" className={ledClass(aiLeds.power)} onClick={() => adjustPower(-POWER_STEP)} disabled={!(canAim || canPlace)}>{ui.powerMinus}</button>
+          <button id="billiards-power-plus" type="button" className={ledClass(aiLeds.power)} onClick={() => adjustPower(POWER_STEP)} disabled={!(canAim || canPlace)}>{ui.powerPlus}</button>
+          <button id="billiards-push-out" type="button" className={ledClass(aiLeds.pushOut)} onClick={declarePushOut} disabled={!canPushOut}>{ui.pushOut}</button>
+          <button id="billiards-safety" type="button" className={`${snapshot.safetyDeclared ? "active" : ""} ${ledClass(aiLeds.safety)}`.trim()} onClick={toggleSafety} disabled={!canSafety}>{ui.safety}</button>
+          <button id="billiards-shoot-btn" type="button" className={ledClass(aiLeds.shoot)} onClick={shoot} disabled={!canAim}>{ui.shootButton}</button>
+          <button id="billiards-auto-place" type="button" className={ledClass(aiLeds.autoPlace)} onClick={autoPlaceCueBall} disabled={!canPlace}>{ui.autoPlace}</button>
         </div>
         <div className="billiards-help-copy">
-          <span>Raton opcional para apuntar.</span>
-          <span>A/D ajustan el taco en fase de apuntado.</span>
-          <span>W/S regulan potencia.</span>
-          <span>En blanca en mano: flechas o WASD mueven la bola.</span>
-          <span>Enter/Space fijan la blanca (Shift = ajuste fino).</span>
-          <span>O push out, V safety.</span>
-          <span>1/2 resuelven decisiones.</span>
-          <span>Space tira.</span>
+          <span>{ui.optionalMouseAim}</span>
+          <span>{ui.help1}</span>
+          <span>{ui.help2}</span>
+          <span>{ui.help3}</span>
+          <span>{ui.help4}</span>
+          <span>{ui.help5}</span>
+          <span>{ui.help6}</span>
+          <span>{ui.help7}</span>
         </div>
       </div>
+
+      {mobileViewport.isMobile ? (
+        <div className="billiards-mobile-controls" role="group" aria-label={ui.mobileControlsAria}>
+          <p className="billiards-mobile-hint">{mobileDirectionalHint}</p>
+          <div className="billiards-mobile-grid">
+            <div className="billiards-mobile-pad">
+              <button
+                type="button"
+                onClick={() => (canPlace ? nudgeCueBall(0, -PLACE_NUDGE_STEP) : adjustPower(POWER_STEP))}
+                disabled={!(canAim || canPlace)}
+                aria-label={canPlace ? (locale === "es" ? "Mover blanca arriba" : "Move cue ball up") : (locale === "es" ? "Aumentar potencia" : "Increase power")}
+              >
+                {ui.up}
+              </button>
+              <button
+                type="button"
+                onClick={() => (canPlace ? nudgeCueBall(-PLACE_NUDGE_STEP, 0) : adjustAim(-AIM_STEP))}
+                disabled={!(canAim || canPlace)}
+                aria-label={canPlace ? (locale === "es" ? "Mover blanca izquierda" : "Move cue ball left") : (locale === "es" ? "Apuntar a la izquierda" : "Aim left")}
+              >
+                {ui.left}
+              </button>
+              <button
+                type="button"
+                onClick={() => (canPlace ? nudgeCueBall(PLACE_NUDGE_STEP, 0) : adjustAim(AIM_STEP))}
+                disabled={!(canAim || canPlace)}
+                aria-label={canPlace ? (locale === "es" ? "Mover blanca derecha" : "Move cue ball right") : (locale === "es" ? "Apuntar a la derecha" : "Aim right")}
+              >
+                {ui.right}
+              </button>
+              <button
+                type="button"
+                onClick={() => (canPlace ? nudgeCueBall(0, PLACE_NUDGE_STEP) : adjustPower(-POWER_STEP))}
+                disabled={!(canAim || canPlace)}
+                aria-label={canPlace ? (locale === "es" ? "Mover blanca abajo" : "Move cue ball down") : (locale === "es" ? "Reducir potencia" : "Decrease power")}
+              >
+                {ui.down}
+              </button>
+            </div>
+            <div className="billiards-mobile-actions">
+              <button
+                id="billiards-mobile-main-action"
+                type="button"
+                className="billiards-mobile-primary"
+                onClick={() => (canPlace ? confirmCuePlacement() : shoot())}
+                disabled={!(canAim || canPlace)}
+              >
+                {canPlace ? ui.placeCueBall : ui.shootButton}
+              </button>
+              <button type="button" onClick={autoPlaceCueBall} disabled={!canPlace}>{ui.autoCueBall}</button>
+              <button type="button" onClick={declarePushOut} disabled={!canPushOut}>{ui.pushOut}</button>
+              <button type="button" onClick={toggleSafety} disabled={!canSafety}>{ui.safety}</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="billiards-log-strip">
         {snapshot.log.map((entry, index) => (
