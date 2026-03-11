@@ -22,6 +22,8 @@ const STOP_SPEED = 5;
 const RESTITUTION = 0.985;
 const AIM_STEP = Math.PI / 180 * 1.6;
 const POWER_STEP = 0.05;
+const PLACE_NUDGE_STEP = 9;
+const PLACE_NUDGE_FINE_STEP = 4;
 const MAX_LOG_ITEMS = 6;
 const PLAYER_HUMAN = 0;
 const PLAYER_AI = 1;
@@ -35,30 +37,79 @@ const MODE_PRESETS = {
     label: "Bola 9",
     summary: "Orden numerico, blanca en mano y regla de tres faltas.",
   },
+  "ten-ball": {
+    label: "Bola 10",
+    summary: "Tiro cantado, push out y reposicion de la 10.",
+  },
 };
 
 const DIFFICULTY_PRESETS = {
   casual: {
     label: "Recreativo",
-    aimNoise: 0.08,
-    powerNoise: 0.13,
-    pickSpread: 4,
-    thinkMs: 620,
+    aimNoise: 0.11,
+    powerNoise: 0.16,
+    pickSpread: 5,
+    thinkMs: 760,
+    placeStepX: 92,
+    placeStepY: 84,
+    allowBankShots: false,
+    bankShotWeight: 210,
+    pushOutScoreThreshold: 760,
+    safetyRiskThreshold: 980,
+    safetyChanceOnRisk: 0.24,
+    safetyChanceOnContact: 0.36,
+    keyBallBonus: 12,
+    powerDistanceWeight: 0.16,
+    placementBias: 0.14,
   },
   club: {
     label: "Club",
-    aimNoise: 0.04,
-    powerNoise: 0.08,
+    aimNoise: 0.045,
+    powerNoise: 0.09,
     pickSpread: 2,
-    thinkMs: 520,
+    thinkMs: 560,
+    placeStepX: 74,
+    placeStepY: 66,
+    allowBankShots: true,
+    bankShotWeight: 116,
+    pushOutScoreThreshold: 860,
+    safetyRiskThreshold: 900,
+    safetyChanceOnRisk: 0.2,
+    safetyChanceOnContact: 0.26,
+    keyBallBonus: 22,
+    powerDistanceWeight: 0.26,
+    placementBias: 0.1,
   },
   pro: {
     label: "Pro",
-    aimNoise: 0.018,
-    powerNoise: 0.04,
+    aimNoise: 0.013,
+    powerNoise: 0.035,
     pickSpread: 1,
-    thinkMs: 420,
+    thinkMs: 460,
+    placeStepX: 56,
+    placeStepY: 52,
+    allowBankShots: true,
+    bankShotWeight: 56,
+    pushOutScoreThreshold: 935,
+    safetyRiskThreshold: 840,
+    safetyChanceOnRisk: 0.16,
+    safetyChanceOnContact: 0.18,
+    keyBallBonus: 36,
+    powerDistanceWeight: 0.38,
+    placementBias: 0.06,
   },
+};
+
+const AI_ACTION_LABELS = {
+  idle: "IA en espera.",
+  scan: "IA analizando mesa y rutas posibles.",
+  autoPlace: "IA autocolocando blanca en mano.",
+  setPocket: "IA cantando tronera objetivo.",
+  adjustAim: "IA ajustando angulo de tiro.",
+  adjustPower: "IA calibrando potencia.",
+  pushOut: "IA preparando push out.",
+  safety: "IA preparando safety tactico.",
+  shoot: "IA ejecutando tiro.",
 };
 
 const BALL_COLORS = {
@@ -105,6 +156,24 @@ function normalizeAngle(angle) {
   while (next <= -Math.PI) next += Math.PI * 2;
   while (next > Math.PI) next -= Math.PI * 2;
   return next;
+}
+
+function lerpAngle(start, end, t) {
+  const delta = normalizeAngle(end - start);
+  return normalizeAngle(start + delta * clamp(t, 0, 1));
+}
+
+function createAiLedState(active = {}) {
+  return {
+    turn: Boolean(active.turn),
+    autoPlace: Boolean(active.autoPlace),
+    pocket: Boolean(active.pocket),
+    aim: Boolean(active.aim),
+    power: Boolean(active.power),
+    pushOut: Boolean(active.pushOut),
+    safety: Boolean(active.safety),
+    shoot: Boolean(active.shoot),
+  };
 }
 
 function ballGroupFromNumber(number) {
@@ -213,6 +282,22 @@ function buildDiamondRackPositions() {
   return positions;
 }
 
+function buildTenBallRackPositions() {
+  const offsets = [1, 2, 3, 4];
+  const positions = [];
+  const xSpacing = BALL_RADIUS * 1.82;
+  const ySpacing = BALL_RADIUS * 1.04;
+  offsets.forEach((count, row) => {
+    for (let index = 0; index < count; index += 1) {
+      positions.push({
+        x: FOOT_SPOT_X + row * xSpacing,
+        y: TABLE_CENTER_Y + (index * 2 - (count - 1)) * ySpacing,
+      });
+    }
+  });
+  return positions;
+}
+
 function buildEightBallNumbers() {
   const solids = shuffle([1, 2, 3, 4, 5, 6, 7]);
   const stripes = shuffle([9, 10, 11, 12, 13, 14, 15]);
@@ -241,8 +326,23 @@ function buildRackBalls(modeKey) {
   const cue = makeCueBall(HEAD_STRING_X - 74, TABLE_CENTER_Y);
   if (modeKey === "nine-ball") {
     const positions = buildDiamondRackPositions();
-    const rest = shuffle([2, 3, 4, 5, 6, 7, 8, 10]);
+    const rest = shuffle([2, 3, 4, 5, 6, 7, 8]);
     const numbers = [1, rest[0], rest[1], rest[2], 9, rest[3], rest[4], rest[5], rest[6]];
+    return [cue, ...positions.map((position, index) => makeObjectBall(numbers[index], position.x, position.y))];
+  }
+  if (modeKey === "ten-ball") {
+    const positions = buildTenBallRackPositions();
+    const rest = shuffle([2, 3, 4, 5, 6, 7, 8, 9]);
+    const numbers = new Array(10).fill(null);
+    numbers[0] = 1;
+    numbers[4] = 10;
+    let ptr = 0;
+    for (let i = 0; i < numbers.length; i += 1) {
+      if (numbers[i] == null) {
+        numbers[i] = rest[ptr];
+        ptr += 1;
+      }
+    }
     return [cue, ...positions.map((position, index) => makeObjectBall(numbers[index], position.x, position.y))];
   }
   const positions = buildTriangleRackPositions();
@@ -270,15 +370,22 @@ function createRuntimeState(modeKey = "eight-ball", difficultyKey = "club") {
     balls: [],
     tableOpen: modeKey === "eight-ball",
     breakShot: true,
+    pushOutAvailable: false,
     ballInHand: { active: false, restrictHeadString: false },
     cueControl: { angle: 0, power: 0.74 },
+    safetyDeclared: false,
     calledPocketId: null,
     shot: null,
+    pendingDecision: null,
     aiTimerMs: 0,
     rackWinner: null,
     matchWinner: null,
     message: "Configura la mesa y pulsa Empezar.",
     log: ["Configura la mesa y pulsa Empezar."],
+    aiRoutine: null,
+    aiLeds: createAiLedState(),
+    aiAction: AI_ACTION_LABELS.idle,
+    aiPlanPreview: null,
     fullscreen: false,
     shotCount: 0,
   };
@@ -305,6 +412,19 @@ function addLog(state, text) {
   state.log = [text, ...state.log.filter((entry) => entry !== text)].slice(0, MAX_LOG_ITEMS);
 }
 
+function clearAiTelemetry(state) {
+  state.aiRoutine = null;
+  state.aiPlanPreview = null;
+  state.aiAction = AI_ACTION_LABELS.idle;
+  state.aiLeds = createAiLedState();
+}
+
+function setAiTelemetry(state, action, leds = {}) {
+  const aiTurnActive = state.currentPlayer === PLAYER_AI;
+  state.aiAction = action;
+  state.aiLeds = createAiLedState({ turn: aiTurnActive, ...leds });
+}
+
 function ballMatchesGroup(ball, group) {
   if (!ball || !group) return false;
   return ballGroupFromNumber(ball.number) === group;
@@ -325,7 +445,7 @@ function getLowestNumber(state) {
 }
 
 function getLegalNumbers(state, playerIndex) {
-  if (state.modeKey === "nine-ball") {
+  if (state.modeKey === "nine-ball" || state.modeKey === "ten-ball") {
     const lowest = getLowestNumber(state);
     return lowest == null ? [] : [lowest];
   }
@@ -345,11 +465,23 @@ function getLegalNumbers(state, playerIndex) {
 }
 
 function needsPocketCall(state, playerIndex) {
+  if (state.modeKey === "ten-ball") {
+    const legalNumbers = getLegalNumbers(state, playerIndex);
+    return !state.breakShot && !state.safetyDeclared && legalNumbers.length > 0;
+  }
   if (state.modeKey !== "eight-ball") return false;
   if (state.tableOpen) return false;
   const player = state.players[playerIndex];
   if (!player.group) return false;
   return countRemainingGroupBalls(state, playerIndex) === 0;
+}
+
+function supportsPushOut(modeKey) {
+  return modeKey === "nine-ball" || modeKey === "ten-ball";
+}
+
+function supportsSafetyCall(modeKey) {
+  return modeKey === "eight-ball" || modeKey === "ten-ball";
 }
 
 function setCueControlForTurn(state) {
@@ -411,15 +543,30 @@ function prepareCueBallForPlacement(state, restrictHeadString) {
 
 function moveToTurnStart(state) {
   if (state.matchWinner != null || state.rackWinner != null) return;
-  if (!needsPocketCall(state, state.currentPlayer)) {
+  if (state.pendingDecision) {
+    if (state.pendingDecision.chooserIndex === PLAYER_HUMAN) {
+      state.currentPlayer = PLAYER_HUMAN;
+      state.phase = "decision";
+      return;
+    }
+    resolvePendingDecisionIfAi(state);
+    return;
+  }
+  if (state.modeKey === "ten-ball") {
+    state.calledPocketId = null;
+  } else if (!needsPocketCall(state, state.currentPlayer)) {
     state.calledPocketId = null;
   }
   setCueControlForTurn(state);
   if (state.currentPlayer === PLAYER_HUMAN) {
+    clearAiTelemetry(state);
     state.phase = state.ballInHand.active ? "placing" : "aim";
   } else {
     state.phase = "ai-thinking";
-    state.aiTimerMs = DIFFICULTY_PRESETS[state.difficultyKey].thinkMs;
+    state.aiTimerMs = Math.round(DIFFICULTY_PRESETS[state.difficultyKey].thinkMs * 0.42);
+    state.aiRoutine = null;
+    state.aiPlanPreview = null;
+    setAiTelemetry(state, AI_ACTION_LABELS.scan);
   }
 }
 
@@ -434,8 +581,11 @@ function startRack(state, breakerIndex) {
   state.nextBreaker = breakerIndex === PLAYER_HUMAN ? PLAYER_AI : PLAYER_HUMAN;
   state.tableOpen = state.modeKey === "eight-ball";
   state.breakShot = true;
+  state.pushOutAvailable = false;
   state.ballInHand = { active: false, restrictHeadString: false };
+  state.safetyDeclared = false;
   state.shot = null;
+  state.pendingDecision = null;
   state.calledPocketId = null;
   state.rackWinner = null;
   state.matchWinner = null;
@@ -503,17 +653,22 @@ function choosePocketPlans(state, playerIndex, cueX, cueY) {
       const aimAngle = Math.atan2(contactY - cueY, contactX - cueX);
       const centerAngle = Math.atan2(ball.y - cueY, ball.x - cueX);
       const cutPenalty = Math.abs(normalizeAngle(aimAngle - centerAngle));
-      const score = cueDistance + objectDistance * 0.82 + cutPenalty * 180 + (ball.number === 8 || ball.number === 9 ? -22 : 0);
+      const isKeyBall = ball.number === 8 || ball.number === 9 || ball.number === 10;
+      const score = cueDistance + objectDistance * 0.82 + cutPenalty * 180 + (isKeyBall ? -22 : 0);
       const basePower = clamp(0.34 + cueDistance / 560 + objectDistance / 920, 0.28, 0.88);
 
       plans.push({
         type: "pot",
+        route: "direct",
         ballId: ball.id,
         ballNumber: ball.number,
         pocketId: pocket.id,
         angle: aimAngle,
         power: basePower,
         score,
+        cueDistance,
+        objectDistance,
+        cutPenalty,
       });
     });
   });
@@ -531,40 +686,193 @@ function chooseFallbackPlan(state, playerIndex, cueX, cueY) {
   if (!target) return null;
   return {
     type: "contact",
+    route: "direct",
     ballId: target.id,
     ballNumber: target.number,
     pocketId: null,
     angle: Math.atan2(target.y - cueY, target.x - cueX),
     power: state.breakShot ? 0.92 : 0.48,
     score: 9999,
+    cueDistance: distance(cueX, cueY, target.x, target.y),
+    objectDistance: 0,
+    cutPenalty: 0,
   };
 }
 
-function chooseAiPlan(state, playerIndex, cueX, cueY) {
+function computeBankBouncePoint(cueX, cueY, targetX, targetY, railId) {
+  const cushionLeft = PLAY_LEFT + BALL_RADIUS;
+  const cushionRight = PLAY_RIGHT - BALL_RADIUS;
+  const cushionTop = PLAY_TOP + BALL_RADIUS;
+  const cushionBottom = PLAY_BOTTOM - BALL_RADIUS;
+
+  if (railId === "left" || railId === "right") {
+    const railX = railId === "left" ? cushionLeft : cushionRight;
+    const mirroredX = railX * 2 - targetX;
+    const denominator = mirroredX - cueX;
+    if (Math.abs(denominator) < 1e-4) return null;
+    const t = (railX - cueX) / denominator;
+    if (t <= 0.06 || t >= 0.94) return null;
+    const y = cueY + (targetY - cueY) * t;
+    if (y < cushionTop || y > cushionBottom) return null;
+    return { x: railX, y };
+  }
+
+  const railY = railId === "top" ? cushionTop : cushionBottom;
+  const mirroredY = railY * 2 - targetY;
+  const denominator = mirroredY - cueY;
+  if (Math.abs(denominator) < 1e-4) return null;
+  const t = (railY - cueY) / denominator;
+  if (t <= 0.06 || t >= 0.94) return null;
+  const x = cueX + (targetX - cueX) * t;
+  if (x < cushionLeft || x > cushionRight) return null;
+  return { x, y: railY };
+}
+
+function chooseBankPlans(state, playerIndex, cueX, cueY, difficulty) {
+  const legalNumbers = getLegalNumbers(state, playerIndex);
+  const legalBalls = state.balls
+    .filter((ball) => !ball.pocketed && legalNumbers.includes(ball.number))
+    .sort((a, b) => distance(cueX, cueY, a.x, a.y) - distance(cueX, cueY, b.x, b.y))
+    .slice(0, difficulty.allowBankShots ? 5 : 0);
+  const rails = ["left", "right", "top", "bottom"];
+  const plans = [];
+
+  legalBalls.forEach((ball) => {
+    rails.forEach((railId) => {
+      const bounce = computeBankBouncePoint(cueX, cueY, ball.x, ball.y, railId);
+      if (!bounce) return;
+      const ignoreIds = new Set([ball.id, "cue"]);
+      if (!segmentClear(state, cueX, cueY, bounce.x, bounce.y, ignoreIds, BALL_DIAMETER * 0.84)) return;
+      if (!segmentClear(state, bounce.x, bounce.y, ball.x, ball.y, ignoreIds, BALL_DIAMETER * 0.9)) return;
+
+      let pocketId = POCKETS[0].id;
+      let nearestPocketDistance = Number.POSITIVE_INFINITY;
+      POCKETS.forEach((pocket) => {
+        const d = distance(ball.x, ball.y, pocket.x, pocket.y);
+        if (d < nearestPocketDistance) {
+          nearestPocketDistance = d;
+          pocketId = pocket.id;
+        }
+      });
+      const cueDistance = distance(cueX, cueY, bounce.x, bounce.y);
+      const objectDistance = distance(bounce.x, bounce.y, ball.x, ball.y);
+      const totalDistance = cueDistance + objectDistance;
+      const aimAngle = Math.atan2(bounce.y - cueY, bounce.x - cueX);
+      const centerAngle = Math.atan2(ball.y - cueY, ball.x - cueX);
+      const cutPenalty = Math.abs(normalizeAngle(aimAngle - centerAngle));
+      const score = totalDistance + cutPenalty * 240 + nearestPocketDistance * 0.1 + difficulty.bankShotWeight;
+      const power = clamp(0.42 + totalDistance / 980 + cutPenalty * 0.2, 0.3, 0.95);
+
+      plans.push({
+        type: "kick",
+        route: `bank-${railId}`,
+        ballId: ball.id,
+        ballNumber: ball.number,
+        pocketId,
+        angle: aimAngle,
+        power,
+        score,
+        cueDistance,
+        objectDistance,
+        cutPenalty,
+      });
+    });
+  });
+
+  plans.sort((a, b) => a.score - b.score);
+  return plans;
+}
+
+function evaluateAiPlanScore(state, playerIndex, plan, difficulty) {
+  const opponentIndex = playerIndex === PLAYER_HUMAN ? PLAYER_AI : PLAYER_HUMAN;
+  let score = plan.score;
+  const ownFouls = state.players[playerIndex]?.foulsInRow ?? 0;
+  const opponentFouls = state.players[opponentIndex]?.foulsInRow ?? 0;
+  const isKeyBall = plan.ballNumber === 8 || plan.ballNumber === 9 || plan.ballNumber === 10;
+
+  if (plan.type === "kick" && !difficulty.allowBankShots) {
+    score += 180;
+  }
+  if (isKeyBall) {
+    score -= difficulty.keyBallBonus;
+  }
+  score += ownFouls * 26;
+  score -= opponentFouls * 11;
+  score += (plan.cutPenalty ?? 0) * 90;
+  if (state.modeKey === "eight-ball") {
+    const ownRemaining = countRemainingGroupBalls(state, playerIndex);
+    const opponentRemaining = countRemainingGroupBalls(state, opponentIndex);
+    if (ownRemaining > 0 && opponentRemaining > 0) {
+      score += (ownRemaining - opponentRemaining) * 5;
+    }
+  }
+  return score;
+}
+
+function tuneAiPower(state, plan, difficulty) {
+  const cueDistance = plan.cueDistance ?? 280;
+  const objectDistance = plan.objectDistance ?? 0;
+  const travelDistance = cueDistance + objectDistance * 0.72;
+  const distanceFactor = clamp((travelDistance - 250) / 760, 0, 1);
+  const routeBoost = plan.type === "kick" ? 0.09 : 0;
+  const cutBoost = clamp((plan.cutPenalty ?? 0) / 1.2, 0, 1) * 0.07;
+  const breakBoost = state.breakShot ? 0.14 : 0;
+  const dynamicBias = (distanceFactor - 0.45) * difficulty.powerDistanceWeight;
+  return clamp(plan.power + dynamicBias + routeBoost + cutBoost + breakBoost, 0.2, 1);
+}
+
+function shouldAiDeclareSafety(state, plan, difficulty, forcePushOut) {
+  if (forcePushOut) return false;
+  if (!supportsSafetyCall(state.modeKey) || state.breakShot) return false;
+  const riskyShot = plan.type !== "pot"
+    || plan.score >= difficulty.safetyRiskThreshold
+    || (plan.cutPenalty ?? 0) > 0.7;
+  if (!riskyShot) return false;
+  const chance = plan.type === "pot" ? difficulty.safetyChanceOnRisk : difficulty.safetyChanceOnContact;
+  return Math.random() < chance;
+}
+
+function chooseAiPlan(state, playerIndex, cueX, cueY, options = {}) {
   const difficulty = DIFFICULTY_PRESETS[state.difficultyKey];
-  const plans = choosePocketPlans(state, playerIndex, cueX, cueY);
-  const selectedPlan = plans[Math.min(Math.floor(Math.random() * difficulty.pickSpread), Math.max(plans.length - 1, 0))] ?? chooseFallbackPlan(state, playerIndex, cueX, cueY);
+  const deterministic = Boolean(options.deterministic);
+  const directPlans = choosePocketPlans(state, playerIndex, cueX, cueY);
+  const bankPlans = difficulty.allowBankShots
+    ? chooseBankPlans(state, playerIndex, cueX, cueY, difficulty).slice(0, 8)
+    : [];
+  const ranked = [...directPlans.slice(0, 12), ...bankPlans]
+    .map((plan) => ({
+      ...plan,
+      tacticalScore: evaluateAiPlanScore(state, playerIndex, plan, difficulty),
+    }))
+    .sort((a, b) => a.tacticalScore - b.tacticalScore);
+  const fallback = chooseFallbackPlan(state, playerIndex, cueX, cueY);
+  const spread = deterministic ? 1 : difficulty.pickSpread;
+  const selectedPlan = ranked[Math.min(Math.floor(Math.random() * spread), Math.max(ranked.length - 1, 0))] ?? fallback;
   if (!selectedPlan) return null;
+  const tunedPower = tuneAiPower(state, selectedPlan, difficulty);
   return {
     ...selectedPlan,
-    angle: selectedPlan.angle + (Math.random() * 2 - 1) * difficulty.aimNoise,
-    power: clamp(selectedPlan.power + (Math.random() * 2 - 1) * difficulty.powerNoise, 0.2, 1),
+    angle: selectedPlan.angle + (deterministic ? 0 : (Math.random() * 2 - 1) * difficulty.aimNoise),
+    power: clamp(tunedPower + (deterministic ? 0 : (Math.random() * 2 - 1) * difficulty.powerNoise), 0.2, 1),
   };
 }
 
 function chooseAiPlacement(state, playerIndex, restrictHeadString) {
+  const difficulty = DIFFICULTY_PRESETS[state.difficultyKey];
   const xStart = PLAY_LEFT + 90;
   const xEnd = restrictHeadString ? HEAD_STRING_X - 20 : PLAY_RIGHT - 120;
   const yStart = PLAY_TOP + 70;
   const yEnd = PLAY_BOTTOM - 70;
+  const stepX = difficulty.placeStepX;
+  const stepY = difficulty.placeStepY;
   let best = null;
 
-  for (let y = yStart; y <= yEnd; y += 66) {
-    for (let x = xStart; x <= xEnd; x += 74) {
+  for (let y = yStart; y <= yEnd; y += stepY) {
+    for (let x = xStart; x <= xEnd; x += stepX) {
       if (!isCuePlacementValid(state, x, y, restrictHeadString)) continue;
-      const plan = chooseAiPlan(state, playerIndex, x, y);
+      const plan = chooseAiPlan(state, playerIndex, x, y, { deterministic: true });
       if (!plan) continue;
-      const score = plan.score + distance(x, y, HEAD_STRING_X - 80, TABLE_CENTER_Y) * 0.1;
+      const score = plan.tacticalScore + distance(x, y, HEAD_STRING_X - 80, TABLE_CENTER_Y) * difficulty.placementBias;
       if (!best || score < best.score) {
         best = { x, y, score };
       }
@@ -584,11 +892,33 @@ function assignGroup(state, playerIndex, group) {
 }
 
 function setTurnFoulCount(state, playerIndex, foul) {
-  if (state.modeKey !== "nine-ball") return;
+  if (state.modeKey !== "nine-ball" && state.modeKey !== "ten-ball") return;
   state.players[playerIndex].foulsInRow = foul ? state.players[playerIndex].foulsInRow + 1 : 0;
 }
 
-function startShot(state, angle, power) {
+function createShotContext(state, playerIndex, options = {}) {
+  const requiredFirstNumber = getLegalNumbers(state, playerIndex)[0] ?? null;
+  return {
+    playerIndex,
+    breakShot: state.breakShot,
+    startTableOpen: state.tableOpen,
+    requiredFirstNumber,
+    calledBallNumber: requiredFirstNumber,
+    shooterGroup: state.players[playerIndex].group,
+    canShootBlack: needsPocketCall(state, playerIndex),
+    calledPocketId: options.calledPocketId ?? state.calledPocketId,
+    isPushOut: Boolean(options.isPushOut),
+    safetyDeclared: Boolean(options.safetyDeclared),
+    firstHitBallId: null,
+    railAfterContact: false,
+    breakRailContacts: new Set(),
+    pocketedIds: [],
+    outOfTableIds: [],
+    cuePocketed: false,
+  };
+}
+
+function startShot(state, angle, power, options = {}) {
   const cueBall = getCueBall(state);
   if (!cueBall || cueBall.pocketed) return false;
   if (!(state.phase === "aim" || state.phase === "placing")) return false;
@@ -596,36 +926,47 @@ function startShot(state, angle, power) {
   if (state.phase === "placing") {
     state.phase = "aim";
   }
-  if (needsPocketCall(state, state.currentPlayer) && !state.calledPocketId) {
-    addLog(state, "Elige una tronera para cantar la 8 antes de tirar.");
+  const forcePushOut = Boolean(options.forcePushOut);
+  if (forcePushOut && !(state.pushOutAvailable && supportsPushOut(state.modeKey))) {
+    addLog(state, "Push out no disponible en esta entrada.");
     return false;
   }
+  if (!forcePushOut && needsPocketCall(state, state.currentPlayer) && !state.calledPocketId) {
+    const ballName = state.modeKey === "ten-ball" ? "la bola legal" : "la 8";
+    addLog(state, `Elige una tronera para cantar ${ballName} antes de tirar.`);
+    return false;
+  }
+  const useSafety = !forcePushOut && state.safetyDeclared && supportsSafetyCall(state.modeKey) && !state.breakShot;
 
   const speed = lerp(300, state.breakShot ? 1700 : 1460, clamp(power, 0.18, 1));
   cueBall.vx = Math.cos(angle) * speed;
   cueBall.vy = Math.sin(angle) * speed;
   state.phase = "moving";
   state.shotCount += 1;
-  state.shot = {
-    playerIndex: state.currentPlayer,
-    breakShot: state.breakShot,
-    startTableOpen: state.tableOpen,
-    requiredFirstNumber: getLegalNumbers(state, state.currentPlayer)[0] ?? null,
-    shooterGroup: state.players[state.currentPlayer].group,
-    canShootBlack: needsPocketCall(state, state.currentPlayer),
-    calledPocketId: state.calledPocketId,
-    firstHitBallId: null,
-    railAfterContact: false,
-    breakRailContacts: new Set(),
-    pocketedIds: [],
-    cuePocketed: false,
-  };
-  addLog(state, `${state.players[state.currentPlayer].name} ejecuta el tiro.`);
+  state.shot = createShotContext(state, state.currentPlayer, {
+    calledPocketId: forcePushOut ? null : state.calledPocketId,
+    isPushOut: forcePushOut,
+    safetyDeclared: useSafety,
+  });
+  state.pushOutAvailable = false;
+  state.pendingDecision = null;
+  state.safetyDeclared = false;
+  if (forcePushOut) {
+    addLog(state, `${state.players[state.currentPlayer].name} declara push out.`);
+  } else if (useSafety) {
+    addLog(state, `${state.players[state.currentPlayer].name} juega un safety.`);
+  } else {
+    addLog(state, `${state.players[state.currentPlayer].name} ejecuta el tiro.`);
+  }
   return true;
 }
-function switchTurn(state, ballInHand, restrictHeadString, reason) {
+function switchTurn(state, options = {}) {
+  const { ballInHand = false, restrictHeadString = false, reason = null, pushOutAvailable = false } = options;
   state.breakShot = false;
   state.currentPlayer = state.currentPlayer === PLAYER_HUMAN ? PLAYER_AI : PLAYER_HUMAN;
+  state.pendingDecision = null;
+  state.safetyDeclared = false;
+  state.pushOutAvailable = pushOutAvailable;
   state.ballInHand = { active: ballInHand, restrictHeadString };
   if (ballInHand) {
     prepareCueBallForPlacement(state, restrictHeadString);
@@ -634,8 +975,12 @@ function switchTurn(state, ballInHand, restrictHeadString, reason) {
   moveToTurnStart(state);
 }
 
-function continueTurn(state, reason) {
+function continueTurn(state, options = {}) {
+  const { reason = null, pushOutAvailable = false } = options;
   state.breakShot = false;
+  state.pendingDecision = null;
+  state.safetyDeclared = false;
+  state.pushOutAvailable = pushOutAvailable;
   state.ballInHand = { active: false, restrictHeadString: false };
   if (reason) addLog(state, reason);
   moveToTurnStart(state);
@@ -644,6 +989,10 @@ function continueTurn(state, reason) {
 function finishRack(state, winnerIndex, reason) {
   state.players[winnerIndex].racksWon += 1;
   state.rackWinner = winnerIndex;
+  clearAiTelemetry(state);
+  state.pendingDecision = null;
+  state.pushOutAvailable = false;
+  state.safetyDeclared = false;
   state.ballInHand = { active: false, restrictHeadString: false };
   state.calledPocketId = null;
   addLog(state, reason);
@@ -655,6 +1004,74 @@ function finishRack(state, winnerIndex, reason) {
   }
 }
 
+function queueTakeOrPassDecision(state, {
+  type,
+  chooserIndex,
+  returnToIndex,
+  prompt,
+  takeReason,
+  passReason,
+}) {
+  state.pendingDecision = {
+    type,
+    chooserIndex,
+    returnToIndex,
+    prompt,
+    options: [
+      { id: "take", label: "Jugar mesa" },
+      { id: "pass-back", label: "Devolver tiro" },
+    ],
+    takeReason,
+    passReason,
+  };
+  state.breakShot = false;
+  state.pushOutAvailable = false;
+  state.safetyDeclared = false;
+  state.calledPocketId = null;
+  addLog(state, prompt);
+}
+
+function pickAiDecision(state, chooserIndex) {
+  const cueBall = getCueBall(state);
+  if (!cueBall) return "take";
+  const plans = choosePocketPlans(state, chooserIndex, cueBall.x, cueBall.y);
+  const bestScore = plans[0]?.score ?? Infinity;
+  return bestScore < 830 ? "take" : "pass-back";
+}
+
+function resolvePendingDecision(state, optionId) {
+  const decision = state.pendingDecision;
+  if (!decision) return;
+  const pick = optionId ?? "take";
+  const take = pick !== "pass-back";
+  state.pendingDecision = null;
+  state.breakShot = false;
+  state.pushOutAvailable = false;
+  state.safetyDeclared = false;
+  state.ballInHand = { active: false, restrictHeadString: false };
+
+  if (take) {
+    state.currentPlayer = decision.chooserIndex;
+    if (decision.takeReason) addLog(state, decision.takeReason);
+  } else {
+    state.currentPlayer = decision.returnToIndex;
+    if (decision.passReason) addLog(state, decision.passReason);
+  }
+  moveToTurnStart(state);
+}
+
+function resolvePendingDecisionIfAi(state) {
+  if (!state.pendingDecision) return false;
+  if (state.pendingDecision.chooserIndex === PLAYER_HUMAN) {
+    state.currentPlayer = PLAYER_HUMAN;
+    state.phase = "decision";
+    return true;
+  }
+  const option = pickAiDecision(state, state.pendingDecision.chooserIndex);
+  resolvePendingDecision(state, option);
+  return true;
+}
+
 function evaluateShot(state) {
   const shot = state.shot;
   if (!shot) return;
@@ -663,41 +1080,51 @@ function evaluateShot(state) {
   const shooterIndex = shot.playerIndex;
   const opponentIndex = shooterIndex === PLAYER_HUMAN ? PLAYER_AI : PLAYER_HUMAN;
   const shooter = state.players[shooterIndex];
+  const opponent = state.players[opponentIndex];
   const firstHitBall = shot.firstHitBallId ? getBallById(state, shot.firstHitBallId) : null;
   const pocketedBalls = shot.pocketedIds.map((ballId) => getBallById(state, ballId)).filter(Boolean);
   const objectPocketed = pocketedBalls.filter((ball) => ball.number > 0);
   const pocketedEight = pocketedBalls.find((ball) => ball.number === 8) ?? null;
   const pocketedNine = pocketedBalls.find((ball) => ball.number === 9) ?? null;
+  const pocketedTen = pocketedBalls.find((ball) => ball.number === 10) ?? null;
+  const objectOutOfTable = shot.outOfTableIds
+    .map((ballId) => getBallById(state, ballId))
+    .filter((ball) => ball && ball.number > 0);
+  const remainingObjectBalls = state.balls.filter((ball) => !ball.pocketed && ball.number > 0);
   let foulReason = null;
 
   if (shot.cuePocketed) {
     foulReason = "Scratch: la blanca cae en tronera.";
   }
-  if (!firstHitBall) {
-    foulReason = foulReason ?? "Falta: no hubo contacto con una bola objetiva.";
+  if (objectOutOfTable.length > 0) {
+    foulReason = foulReason ?? "Falta: bola objetiva fuera de la mesa.";
   }
-
-  if (state.modeKey === "nine-ball") {
-    const requiredFirst = shot.requiredFirstNumber ?? 9;
-    if (firstHitBall && firstHitBall.number !== requiredFirst) {
-      foulReason = foulReason ?? `Falta: primero debias tocar la ${requiredFirst}.`;
+  if (!shot.isPushOut) {
+    if (!firstHitBall) {
+      foulReason = foulReason ?? "Falta: no hubo contacto con una bola objetiva.";
     }
-  } else if (firstHitBall) {
-    if (shot.canShootBlack) {
-      if (firstHitBall.number !== 8) {
-        foulReason = foulReason ?? "Falta: con mesa resuelta debes tocar primero la 8.";
+    if (state.modeKey === "nine-ball" || state.modeKey === "ten-ball") {
+      const requiredFirst = shot.requiredFirstNumber ?? (state.modeKey === "nine-ball" ? 9 : 10);
+      if (firstHitBall && firstHitBall.number !== requiredFirst) {
+        foulReason = foulReason ?? `Falta: primero debias tocar la ${requiredFirst}.`;
       }
-    } else if (shot.startTableOpen) {
-      if (firstHitBall.number === 8) {
-        foulReason = foulReason ?? "Falta: con mesa abierta no puedes tocar primero la 8.";
+    } else if (firstHitBall) {
+      if (shot.canShootBlack) {
+        if (firstHitBall.number !== 8) {
+          foulReason = foulReason ?? "Falta: con mesa resuelta debes tocar primero la 8.";
+        }
+      } else if (shot.startTableOpen) {
+        if (firstHitBall.number === 8) {
+          foulReason = foulReason ?? "Falta: con mesa abierta no puedes tocar primero la 8.";
+        }
+      } else if (shooter.group && !ballMatchesGroup(firstHitBall, shooter.group)) {
+        foulReason = foulReason ?? `Falta: debias tocar primero una ${groupLabel(shooter.group)}.`;
       }
-    } else if (shooter.group && !ballMatchesGroup(firstHitBall, shooter.group)) {
-      foulReason = foulReason ?? `Falta: debias tocar primero una ${groupLabel(shooter.group)}.`;
     }
-  }
 
-  if (objectPocketed.length === 0 && !shot.railAfterContact) {
-    foulReason = foulReason ?? "Falta: ninguna bola toco banda tras el contacto.";
+    if (objectPocketed.length === 0 && !shot.railAfterContact) {
+      foulReason = foulReason ?? "Falta: ninguna bola toco banda tras el contacto.";
+    }
   }
 
   if (shot.breakShot && objectPocketed.length === 0 && shot.breakRailContacts.size < 4) {
@@ -728,52 +1155,174 @@ function evaluateShot(state) {
     }
 
     if (foulReason) {
-      switchTurn(state, true, false, foulReason);
+      switchTurn(state, { ballInHand: true, restrictHeadString: false, reason: foulReason });
       return;
     }
 
     setTurnFoulCount(state, shooterIndex, false);
+    if (shot.safetyDeclared) {
+      switchTurn(state, { reason: `${opponent.name} entra tras safety declarado.` });
+      return;
+    }
     const activeGroup = state.players[shooterIndex].group;
     const ownPocketed = activeGroup
       ? objectPocketed.filter((ball) => ballMatchesGroup(ball, activeGroup)).length
       : 0;
 
     if (ownPocketed > 0) {
-      continueTurn(state, `${shooter.name} sigue en mesa con ${ownPocketed} bola(s) de su grupo.`);
+      continueTurn(state, { reason: `${shooter.name} sigue en mesa con ${ownPocketed} bola(s) de su grupo.` });
       return;
     }
 
-    switchTurn(state, false, false, `${state.players[opponentIndex].name} entra a mesa.`);
+    switchTurn(state, { reason: `${opponent.name} entra a mesa.` });
     return;
   }
 
-  if (pocketedNine && foulReason) {
-    respotBall(state, 9);
+  if (state.modeKey === "nine-ball") {
+    if (pocketedNine && foulReason) {
+      respotBall(state, 9);
+    }
+
+    if (foulReason) {
+      setTurnFoulCount(state, shooterIndex, true);
+      if (state.players[shooterIndex].foulsInRow >= 3) {
+        finishRack(state, opponentIndex, `${opponent.name} gana por tres faltas consecutivas.`);
+        return;
+      }
+      const warning = state.players[shooterIndex].foulsInRow === 2
+        ? ` ${shooter.name} queda avisado con dos faltas seguidas.`
+        : "";
+      switchTurn(state, { ballInHand: true, reason: `${foulReason}${warning}` });
+      return;
+    }
+
+    setTurnFoulCount(state, shooterIndex, false);
+    if (pocketedNine) {
+      finishRack(state, shooterIndex, `${shooter.name} emboca la 9 y gana el rack.`);
+      return;
+    }
+    if (shot.isPushOut) {
+      queueTakeOrPassDecision(state, {
+        type: "push-out-choice",
+        chooserIndex: opponentIndex,
+        returnToIndex: shooterIndex,
+        prompt: `${opponent.name} decide tras push out.`,
+        takeReason: `${opponent.name} acepta la mesa tras push out.`,
+        passReason: `${opponent.name} devuelve el tiro a ${shooter.name}.`,
+      });
+      resolvePendingDecisionIfAi(state);
+      return;
+    }
+    if (shot.breakShot) {
+      if (objectPocketed.length > 0) {
+        continueTurn(state, { reason: `${shooter.name} mantiene la entrada. Push out disponible.`, pushOutAvailable: true });
+      } else {
+        switchTurn(state, { reason: `${opponent.name} entra con opcion de push out.`, pushOutAvailable: true });
+      }
+      return;
+    }
+    if (objectPocketed.length > 0) {
+      continueTurn(state, { reason: `${shooter.name} mantiene la entrada.` });
+      return;
+    }
+    switchTurn(state, { reason: `${opponent.name} toma el turno.` });
+    return;
+  }
+
+  if (pocketedTen && foulReason) {
+    respotBall(state, 10);
   }
 
   if (foulReason) {
     setTurnFoulCount(state, shooterIndex, true);
     if (state.players[shooterIndex].foulsInRow >= 3) {
-      finishRack(state, opponentIndex, `${state.players[opponentIndex].name} gana por tres faltas consecutivas.`);
+      finishRack(state, opponentIndex, `${opponent.name} gana por tres faltas consecutivas.`);
       return;
     }
     const warning = state.players[shooterIndex].foulsInRow === 2
       ? ` ${shooter.name} queda avisado con dos faltas seguidas.`
       : "";
-    switchTurn(state, true, false, `${foulReason}${warning}`);
+    switchTurn(state, { ballInHand: true, reason: `${foulReason}${warning}` });
     return;
   }
 
   setTurnFoulCount(state, shooterIndex, false);
-  if (pocketedNine) {
-    finishRack(state, shooterIndex, `${shooter.name} emboca la 9 y gana el rack.`);
+  if (shot.isPushOut) {
+    queueTakeOrPassDecision(state, {
+      type: "push-out-choice",
+      chooserIndex: opponentIndex,
+      returnToIndex: shooterIndex,
+      prompt: `${opponent.name} decide tras push out.`,
+      takeReason: `${opponent.name} acepta la mesa tras push out.`,
+      passReason: `${opponent.name} devuelve el tiro a ${shooter.name}.`,
+    });
+    resolvePendingDecisionIfAi(state);
     return;
   }
-  if (objectPocketed.length > 0) {
-    continueTurn(state, `${shooter.name} mantiene la entrada.`);
+
+  if (shot.breakShot) {
+    if (pocketedTen) {
+      respotBall(state, 10);
+    }
+    if (objectPocketed.length > 0 || pocketedTen) {
+      continueTurn(state, { reason: `${shooter.name} mantiene la entrada. Push out disponible.`, pushOutAvailable: true });
+    } else {
+      switchTurn(state, { reason: `${opponent.name} entra con opcion de push out.`, pushOutAvailable: true });
+    }
     return;
   }
-  switchTurn(state, false, false, `${state.players[opponentIndex].name} toma el turno.`);
+
+  const calledPocketId = shot.calledPocketId;
+  const calledBallNumber = shot.calledBallNumber;
+  const calledBallPocketed = objectPocketed.find((ball) => (
+    ball.number === calledBallNumber && calledPocketId && ball.lastPocketId === calledPocketId
+  ));
+  const legalObjectPocketed = objectPocketed.some((ball) => ball.number === calledBallNumber);
+
+  if (shot.safetyDeclared) {
+    if (pocketedTen) respotBall(state, 10);
+    if (legalObjectPocketed) {
+      queueTakeOrPassDecision(state, {
+        type: "ten-ball-return-choice",
+        chooserIndex: opponentIndex,
+        returnToIndex: shooterIndex,
+        prompt: `${opponent.name} decide tras safety con bola legal embocada.`,
+        takeReason: `${opponent.name} acepta la mesa tras safety.`,
+        passReason: `${opponent.name} devuelve el tiro a ${shooter.name}.`,
+      });
+      resolvePendingDecisionIfAi(state);
+      return;
+    }
+    switchTurn(state, { reason: `${opponent.name} entra tras safety.` });
+    return;
+  }
+
+  if (!calledBallPocketed) {
+    if (pocketedTen) respotBall(state, 10);
+    queueTakeOrPassDecision(state, {
+      type: "ten-ball-return-choice",
+      chooserIndex: opponentIndex,
+      returnToIndex: shooterIndex,
+      prompt: `${opponent.name} decide tras tiro cantado no valido.`,
+      takeReason: `${opponent.name} acepta la mesa tras tiro no cantado.`,
+      passReason: `${opponent.name} devuelve el tiro a ${shooter.name}.`,
+    });
+    resolvePendingDecisionIfAi(state);
+    return;
+  }
+
+  if (calledBallPocketed.number === 10) {
+    if (remainingObjectBalls.length === 0) {
+      finishRack(state, shooterIndex, `${shooter.name} emboca la 10 legalmente y gana el rack.`);
+      return;
+    }
+    respotBall(state, 10);
+    continueTurn(state, { reason: `${shooter.name} emboca la 10 antes de tiempo: se repone y sigue.` });
+    return;
+  }
+
+  if (pocketedTen) respotBall(state, 10);
+  continueTurn(state, { reason: `${shooter.name} mantiene la entrada con tiro cantado valido.` });
 }
 
 function markRailContact(state, ball) {
@@ -794,6 +1343,23 @@ function pocketBall(state, ball, pocketId) {
   ball.lastPocketId = pocketId;
   if (state.shot) {
     state.shot.pocketedIds.push(ball.id);
+    if (ball.id === "cue") {
+      state.shot.cuePocketed = true;
+    } else {
+      state.shot.railAfterContact = true;
+    }
+  }
+}
+
+function knockBallOffTable(state, ball) {
+  if (ball.pocketed) return;
+  ball.pocketed = true;
+  ball.vx = 0;
+  ball.vy = 0;
+  ball.lastPocketId = "out";
+  if (state.shot) {
+    state.shot.pocketedIds.push(ball.id);
+    state.shot.outOfTableIds.push(ball.id);
     if (ball.id === "cue") {
       state.shot.cuePocketed = true;
     } else {
@@ -856,6 +1422,16 @@ function updatePhysics(state, dt) {
   });
 
   for (const ball of activeBalls) {
+    const outMargin = BALL_DIAMETER * 1.8;
+    if (
+      ball.x < PLAY_LEFT - outMargin ||
+      ball.x > PLAY_RIGHT + outMargin ||
+      ball.y < PLAY_TOP - outMargin ||
+      ball.y > PLAY_BOTTOM + outMargin
+    ) {
+      knockBallOffTable(state, ball);
+      continue;
+    }
     const pocket = POCKETS.find((entry) => distance(ball.x, ball.y, entry.x, entry.y) < entry.radius - (ball.id === "cue" ? 3 : 1));
     if (pocket) {
       pocketBall(state, ball, pocket.id);
@@ -951,55 +1527,269 @@ function updatePhysics(state, dt) {
   }
 }
 
-function updateAi(state, dt) {
-  state.aiTimerMs -= dt * 1000;
-  if (state.aiTimerMs > 0) return;
+function createAiPlanPreview(plan, forcePushOut, useSafety, calledPocketId, targetPower) {
+  return {
+    type: plan.type,
+    route: plan.route,
+    ballNumber: plan.ballNumber ?? null,
+    pocketId: calledPocketId ?? plan.pocketId ?? null,
+    power: Number(targetPower.toFixed(2)),
+    score: Number((plan.tacticalScore ?? plan.score).toFixed(1)),
+    forcePushOut,
+    safety: useSafety,
+  };
+}
 
+function buildAiRoutine(state) {
   const cueBall = getCueBall(state);
-  if (!cueBall) return;
+  if (!cueBall) return null;
+  const difficulty = DIFFICULTY_PRESETS[state.difficultyKey];
+  const hasBallInHand = state.ballInHand.active;
+  const placement = hasBallInHand
+    ? chooseAiPlacement(state, state.currentPlayer, state.ballInHand.restrictHeadString)
+    : null;
+  const shotX = placement?.x ?? cueBall.x;
+  const shotY = placement?.y ?? cueBall.y;
+  const canPushOut = state.pushOutAvailable && supportsPushOut(state.modeKey);
+  let forcePushOut = false;
+  let plan = chooseAiPlan(state, state.currentPlayer, shotX, shotY);
+  if (canPushOut) {
+    const directPlans = choosePocketPlans(state, state.currentPlayer, shotX, shotY);
+    const bestScore = directPlans[0]?.score ?? Number.POSITIVE_INFINITY;
+    forcePushOut = directPlans.length === 0 || bestScore > difficulty.pushOutScoreThreshold;
+    if (forcePushOut) {
+      plan = chooseFallbackPlan(state, state.currentPlayer, shotX, shotY);
+    }
+  }
+  if (!plan) return null;
 
+  const calledPocketId = needsPocketCall(state, state.currentPlayer) && !forcePushOut
+    ? (plan.pocketId ?? POCKETS[0].id)
+    : null;
+  const useSafety = shouldAiDeclareSafety(state, plan, difficulty, forcePushOut);
+  const targetPower = forcePushOut ? clamp(plan.power * 0.62, 0.22, 0.56) : plan.power;
+  const steps = [];
+
+  if (hasBallInHand && placement) {
+    steps.push({
+      kind: "auto-place",
+      durationMs: Math.max(170, Math.round(difficulty.thinkMs * 0.35)),
+      x: placement.x,
+      y: placement.y,
+    });
+  }
+  if (calledPocketId) {
+    steps.push({
+      kind: "set-pocket",
+      durationMs: Math.max(110, Math.round(difficulty.thinkMs * 0.2)),
+      pocketId: calledPocketId,
+    });
+  }
+  steps.push({
+    kind: "adjust-aim",
+    durationMs: Math.max(140, Math.round(difficulty.thinkMs * 0.28)),
+    targetAngle: plan.angle,
+  });
+  steps.push({
+    kind: "adjust-power",
+    durationMs: Math.max(130, Math.round(difficulty.thinkMs * 0.24)),
+    targetPower,
+  });
+  if (forcePushOut) {
+    steps.push({ kind: "push-out", durationMs: 110 });
+  } else if (useSafety) {
+    steps.push({ kind: "safety", durationMs: 110 });
+  }
+  steps.push({ kind: "shoot", durationMs: 95 });
+
+  state.aiPlanPreview = createAiPlanPreview(plan, forcePushOut, useSafety, calledPocketId, targetPower);
+  return {
+    plan,
+    placement,
+    calledPocketId,
+    forcePushOut,
+    useSafety,
+    targetAngle: plan.angle,
+    targetPower,
+    steps,
+    stepIndex: 0,
+    stepElapsedMs: 0,
+  };
+}
+
+function executeAiShot(state, routine) {
+  const cueBall = getCueBall(state);
+  if (!cueBall) {
+    clearAiTelemetry(state);
+    return;
+  }
   if (state.ballInHand.active) {
-    const placement = chooseAiPlacement(state, state.currentPlayer, state.ballInHand.restrictHeadString);
-    cueBall.x = placement.x;
-    cueBall.y = placement.y;
+    state.ballInHand = { active: false, restrictHeadString: false };
+  }
+  if (needsPocketCall(state, state.currentPlayer) && !routine.forcePushOut && !state.calledPocketId) {
+    state.calledPocketId = routine.calledPocketId ?? POCKETS[0].id;
+  }
+
+  state.cueControl.angle = routine.targetAngle;
+  state.cueControl.power = routine.targetPower;
+  const speed = lerp(280, state.breakShot ? 1700 : 1460, clamp(routine.targetPower, 0.18, 1));
+  cueBall.vx = Math.cos(routine.targetAngle) * speed;
+  cueBall.vy = Math.sin(routine.targetAngle) * speed;
+  state.phase = "moving";
+  state.shotCount += 1;
+  state.shot = createShotContext(state, state.currentPlayer, {
+    calledPocketId: routine.forcePushOut ? null : state.calledPocketId,
+    isPushOut: routine.forcePushOut,
+    safetyDeclared: routine.useSafety,
+  });
+  state.pushOutAvailable = false;
+  state.pendingDecision = null;
+  state.safetyDeclared = false;
+  state.aiRoutine = null;
+  setAiTelemetry(state, AI_ACTION_LABELS.shoot, { shoot: true });
+
+  if (routine.forcePushOut) {
+    addLog(state, `${state.players[state.currentPlayer].name} declara push out.`);
+  } else if (routine.useSafety) {
+    addLog(state, `${state.players[state.currentPlayer].name} juega un safety.`);
+  } else {
+    const shotType = routine.plan.type === "pot"
+      ? "a tronera"
+      : routine.plan.type === "kick"
+        ? "con trayectoria alternativa por banda"
+        : "de seguridad";
+    addLog(state, `${state.players[state.currentPlayer].name} tira ${shotType}.`);
+  }
+}
+
+function startAiStep(state, step) {
+  step.started = true;
+  if (step.kind === "auto-place") {
+    const cueBall = getCueBall(state);
+    step.startX = cueBall?.x ?? step.x;
+    step.startY = cueBall?.y ?? step.y;
+    setAiTelemetry(state, AI_ACTION_LABELS.autoPlace, { autoPlace: true });
+    return;
+  }
+  if (step.kind === "set-pocket") {
+    state.calledPocketId = step.pocketId;
+    setAiTelemetry(state, AI_ACTION_LABELS.setPocket, { pocket: true });
+    return;
+  }
+  if (step.kind === "adjust-aim") {
+    step.startAngle = state.cueControl.angle;
+    setAiTelemetry(state, AI_ACTION_LABELS.adjustAim, { aim: true });
+    return;
+  }
+  if (step.kind === "adjust-power") {
+    step.startPower = state.cueControl.power;
+    setAiTelemetry(state, AI_ACTION_LABELS.adjustPower, { power: true });
+    return;
+  }
+  if (step.kind === "push-out") {
+    setAiTelemetry(state, AI_ACTION_LABELS.pushOut, { pushOut: true });
+    return;
+  }
+  if (step.kind === "safety") {
+    state.safetyDeclared = true;
+    setAiTelemetry(state, AI_ACTION_LABELS.safety, { safety: true });
+    return;
+  }
+  setAiTelemetry(state, AI_ACTION_LABELS.shoot, { shoot: true });
+}
+
+function applyAiStepProgress(state, step, progress) {
+  if (step.kind === "auto-place") {
+    const cueBall = getCueBall(state);
+    if (!cueBall) return;
+    cueBall.x = lerp(step.startX, step.x, progress);
+    cueBall.y = lerp(step.startY, step.y, progress);
     cueBall.pocketed = false;
     cueBall.vx = 0;
     cueBall.vy = 0;
+    return;
+  }
+  if (step.kind === "adjust-aim") {
+    state.cueControl.angle = lerpAngle(step.startAngle, step.targetAngle, progress);
+    return;
+  }
+  if (step.kind === "adjust-power") {
+    state.cueControl.power = clamp(lerp(step.startPower, step.targetPower, progress), 0.18, 1);
+  }
+}
+
+function completeAiStep(state, routine, step) {
+  if (step.kind === "auto-place") {
+    const cueBall = getCueBall(state);
+    if (cueBall) {
+      cueBall.x = step.x;
+      cueBall.y = step.y;
+      cueBall.pocketed = false;
+      cueBall.vx = 0;
+      cueBall.vy = 0;
+    }
     state.ballInHand = { active: false, restrictHeadString: false };
+    return false;
   }
-
-  if (needsPocketCall(state, state.currentPlayer) && !state.calledPocketId) {
-    const planForCall = chooseAiPlan(state, state.currentPlayer, cueBall.x, cueBall.y);
-    state.calledPocketId = planForCall?.pocketId ?? POCKETS[0].id;
+  if (step.kind === "set-pocket") {
+    state.calledPocketId = step.pocketId;
+    return false;
   }
+  if (step.kind === "adjust-aim") {
+    state.cueControl.angle = step.targetAngle;
+    return false;
+  }
+  if (step.kind === "adjust-power") {
+    state.cueControl.power = step.targetPower;
+    return false;
+  }
+  if (step.kind === "shoot") {
+    executeAiShot(state, routine);
+    return true;
+  }
+  return false;
+}
 
-  const plan = chooseAiPlan(state, state.currentPlayer, cueBall.x, cueBall.y);
-  if (!plan) {
-    switchTurn(state, false, false, "La IA no encontro tiro claro y cede la mesa.");
+function updateAi(state, dt) {
+  if (state.pendingDecision) {
+    resolvePendingDecisionIfAi(state);
     return;
   }
 
-  state.cueControl.angle = plan.angle;
-  state.cueControl.power = plan.power;
-  const speed = lerp(280, state.breakShot ? 1700 : 1460, clamp(plan.power, 0.18, 1));
-  cueBall.vx = Math.cos(plan.angle) * speed;
-  cueBall.vy = Math.sin(plan.angle) * speed;
-  state.phase = "moving";
-  state.shot = {
-    playerIndex: state.currentPlayer,
-    breakShot: state.breakShot,
-    startTableOpen: state.tableOpen,
-    requiredFirstNumber: getLegalNumbers(state, state.currentPlayer)[0] ?? null,
-    shooterGroup: state.players[state.currentPlayer].group,
-    canShootBlack: needsPocketCall(state, state.currentPlayer),
-    calledPocketId: state.calledPocketId,
-    firstHitBallId: null,
-    railAfterContact: false,
-    breakRailContacts: new Set(),
-    pocketedIds: [],
-    cuePocketed: false,
-  };
-  addLog(state, `${state.players[state.currentPlayer].name} tira ${plan.type === "pot" ? "a tronera" : "de seguridad"}.`);
+  if (state.aiTimerMs > 0) {
+    state.aiTimerMs -= dt * 1000;
+    setAiTelemetry(state, AI_ACTION_LABELS.scan);
+    return;
+  }
+
+  if (!state.aiRoutine) {
+    state.aiRoutine = buildAiRoutine(state);
+    if (!state.aiRoutine) {
+      switchTurn(state, { reason: "La IA no encontro tiro claro y cede la mesa." });
+      return;
+    }
+  }
+
+  const step = state.aiRoutine.steps[state.aiRoutine.stepIndex];
+  if (!step) {
+    executeAiShot(state, state.aiRoutine);
+    return;
+  }
+  if (!step.started) {
+    startAiStep(state, step);
+  }
+
+  const durationMs = Math.max(40, step.durationMs || 100);
+  state.aiRoutine.stepElapsedMs += dt * 1000;
+  const progress = clamp(state.aiRoutine.stepElapsedMs / durationMs, 0, 1);
+  applyAiStepProgress(state, step, progress);
+
+  if (progress >= 1) {
+    const finishedShot = completeAiStep(state, state.aiRoutine, step);
+    if (finishedShot) return;
+    state.aiRoutine.stepIndex += 1;
+    state.aiRoutine.stepElapsedMs = 0;
+  }
 }
 
 function advanceSimulation(state, milliseconds) {
@@ -1236,17 +2026,41 @@ function buildSnapshot(state) {
     nextBreaker: state.nextBreaker,
     tableOpen: state.tableOpen,
     breakShot: state.breakShot,
+    pushOutAvailable: state.pushOutAvailable,
     ballInHand: state.ballInHand.active,
     restrictHeadString: state.ballInHand.restrictHeadString,
+    safetyDeclared: state.safetyDeclared,
     calledPocketId: state.calledPocketId,
     calledPocketLabel: POCKETS.find((pocket) => pocket.id === state.calledPocketId)?.label ?? null,
     needsPocketCall: needsPocketCall(state, state.currentPlayer),
+    pendingDecision: state.pendingDecision
+      ? {
+          type: state.pendingDecision.type,
+          chooserIndex: state.pendingDecision.chooserIndex,
+          prompt: state.pendingDecision.prompt,
+          options: state.pendingDecision.options,
+        }
+      : null,
+    canDeclarePushOut: state.phase === "aim"
+      && state.currentPlayer === PLAYER_HUMAN
+      && state.pushOutAvailable
+      && supportsPushOut(state.modeKey),
+    canDeclareSafety: state.phase === "aim"
+      && state.currentPlayer === PLAYER_HUMAN
+      && !state.breakShot
+      && supportsSafetyCall(state.modeKey),
     legalTargets: legalNumbers,
     lowestBall: getLowestNumber(state),
     cueControl: {
       angleRadians: state.cueControl.angle,
       angleDegrees: Math.round((state.cueControl.angle * 180) / Math.PI),
       power: Number(state.cueControl.power.toFixed(2)),
+    },
+    ai: {
+      action: state.aiAction,
+      leds: state.aiLeds,
+      planPreview: state.aiPlanPreview,
+      thinking: state.phase === "ai-thinking",
     },
     players: state.players.map((player, index) => ({
       name: player.name,
@@ -1285,8 +2099,8 @@ function buildSnapshot(state) {
     message: state.message,
     log: state.log,
     controls: {
-      keyboard: "Mouse aims, A/D rotate, W/S power, Space shoots, R repeats rack, N next rack, F fullscreen",
-      mouse: "Move to aim, click table to place cue ball when you have ball in hand",
+      keyboard: "A/D (o flechas) giran en apuntado, W/S potencia, en blanca en mano flechas/WASD mueven bola, Enter/Space confirman o tiran, P autocoloca, O push out, V safety, R reinicia rack, N siguiente, F fullscreen",
+      mouse: "Mueve para apuntar y clic para colocar blanca en mano si lo prefieres",
       touch: "Use on-screen aim/power buttons and Shoot",
     },
   };
@@ -1387,6 +2201,13 @@ function createRuntime({ canvas, onSnapshot, onFullscreenRequest }) {
       addLog(this.state, `Tronera cantada: ${POCKETS.find((pocket) => pocket.id === pocketId)?.label}.`);
       this.refresh();
     },
+    toggleSafety() {
+      if (this.state.phase !== "aim" || this.state.currentPlayer !== PLAYER_HUMAN) return;
+      if (!supportsSafetyCall(this.state.modeKey) || this.state.breakShot) return;
+      this.state.safetyDeclared = !this.state.safetyDeclared;
+      addLog(this.state, this.state.safetyDeclared ? "Safety declarado para el proximo tiro." : "Safety cancelado.");
+      this.refresh();
+    },
     adjustAim(delta) {
       if (this.state.phase !== "aim") return;
       this.state.cueControl.angle = normalizeAngle(this.state.cueControl.angle + delta);
@@ -1406,6 +2227,36 @@ function createRuntime({ canvas, onSnapshot, onFullscreenRequest }) {
       addLog(this.state, "Blanca colocada automaticamente.");
       this.refresh();
     },
+    confirmCuePlacement(source = "teclado") {
+      if (!this.state.ballInHand.active || this.state.currentPlayer !== PLAYER_HUMAN || this.state.phase !== "placing") return;
+      this.state.ballInHand = { active: false, restrictHeadString: false };
+      this.state.phase = "aim";
+      setCueControlForTurn(this.state);
+      addLog(this.state, source === "teclado" ? "Blanca en mano fijada con teclado." : "Blanca en mano colocada.");
+      this.refresh();
+    },
+    nudgeCueBall(dx, dy) {
+      if (!this.state.ballInHand.active || this.state.currentPlayer !== PLAYER_HUMAN || this.state.phase !== "placing") return;
+      const cueBall = getCueBall(this.state);
+      if (!cueBall) return;
+      const restrict = this.state.ballInHand.restrictHeadString;
+      const xMax = restrict ? HEAD_STRING_X - BALL_RADIUS - 2 : PLAY_RIGHT - BALL_RADIUS - 2;
+      let nextX = clamp(cueBall.x + dx, PLAY_LEFT + BALL_RADIUS + 2, xMax);
+      let nextY = clamp(cueBall.y + dy, PLAY_TOP + BALL_RADIUS + 2, PLAY_BOTTOM - BALL_RADIUS - 2);
+      if (!isCuePlacementValid(this.state, nextX, nextY, restrict)) {
+        const fallback = findNearestPlacement(this.state, nextX, nextY, restrict);
+        if (!isCuePlacementValid(this.state, fallback.x, fallback.y, restrict)) return;
+        nextX = fallback.x;
+        nextY = fallback.y;
+      }
+      cueBall.x = nextX;
+      cueBall.y = nextY;
+      cueBall.pocketed = false;
+      cueBall.vx = 0;
+      cueBall.vy = 0;
+      this.pointer = { x: nextX, y: nextY, active: true };
+      this.refresh();
+    },
     shoot() {
       const didShoot = startShot(this.state, this.state.cueControl.angle, this.state.cueControl.power);
       if (didShoot) {
@@ -1413,6 +2264,20 @@ function createRuntime({ canvas, onSnapshot, onFullscreenRequest }) {
       } else {
         this.draw();
       }
+    },
+    declarePushOut() {
+      if (!(this.state.phase === "aim" && this.state.currentPlayer === PLAYER_HUMAN)) return;
+      const didShoot = startShot(this.state, this.state.cueControl.angle, this.state.cueControl.power, { forcePushOut: true });
+      if (didShoot) {
+        this.refresh();
+      } else {
+        this.draw();
+      }
+    },
+    resolveDecision(optionId) {
+      if (this.state.phase !== "decision" || !this.state.pendingDecision) return;
+      resolvePendingDecision(this.state, optionId);
+      this.refresh();
     },
     setPointer(worldPoint) {
       if (!worldPoint) return;
@@ -1441,11 +2306,7 @@ function createRuntime({ canvas, onSnapshot, onFullscreenRequest }) {
       cueBall.pocketed = false;
       cueBall.vx = 0;
       cueBall.vy = 0;
-      this.state.ballInHand = { active: false, restrictHeadString: false };
-      this.state.phase = "aim";
-      setCueControlForTurn(this.state);
-      addLog(this.state, "Blanca en mano colocada.");
-      this.refresh();
+      this.confirmCuePlacement("raton");
     },
     setFullscreenState(isFullscreen) {
       this.state.fullscreen = Boolean(isFullscreen);
@@ -1471,17 +2332,62 @@ function createRuntime({ canvas, onSnapshot, onFullscreenRequest }) {
         event.preventDefault();
         return;
       }
+      if (this.state.phase === "decision") {
+        if (event.code === "Digit1" || event.code === "Numpad1" || event.code === "Enter") {
+          this.resolveDecision("take");
+          event.preventDefault();
+          return;
+        }
+        if (event.code === "Digit2" || event.code === "Numpad2") {
+          this.resolveDecision("pass-back");
+          event.preventDefault();
+        }
+        return;
+      }
       if (this.state.phase === "menu" && (event.code === "Enter" || event.code === "Space")) {
         this.startMatch();
         event.preventDefault();
         return;
       }
-      if (this.state.phase === "placing" && event.code === "KeyP") {
-        this.autoPlaceCueBall();
-        event.preventDefault();
+      if (this.state.phase === "placing") {
+        const step = event.shiftKey ? PLACE_NUDGE_FINE_STEP : PLACE_NUDGE_STEP;
+        switch (event.code) {
+          case "ArrowLeft":
+          case "KeyA":
+            this.nudgeCueBall(-step, 0);
+            event.preventDefault();
+            return;
+          case "ArrowRight":
+          case "KeyD":
+            this.nudgeCueBall(step, 0);
+            event.preventDefault();
+            return;
+          case "ArrowUp":
+          case "KeyW":
+            this.nudgeCueBall(0, -step);
+            event.preventDefault();
+            return;
+          case "ArrowDown":
+          case "KeyS":
+            this.nudgeCueBall(0, step);
+            event.preventDefault();
+            return;
+          case "Enter":
+          case "Space":
+            this.confirmCuePlacement("teclado");
+            event.preventDefault();
+            return;
+          case "KeyP":
+            this.autoPlaceCueBall();
+            event.preventDefault();
+            return;
+          default:
+            return;
+        }
+      }
+      if (this.state.phase !== "aim") {
         return;
       }
-      if (this.state.phase !== "aim") return;
       switch (event.code) {
         case "ArrowLeft":
         case "KeyA":
@@ -1501,6 +2407,14 @@ function createRuntime({ canvas, onSnapshot, onFullscreenRequest }) {
         case "ArrowDown":
         case "KeyS":
           this.adjustPower(-POWER_STEP);
+          event.preventDefault();
+          break;
+        case "KeyO":
+          this.declarePushOut();
+          event.preventDefault();
+          break;
+        case "KeyV":
+          this.toggleSafety();
           event.preventDefault();
           break;
         case "Enter":
@@ -1625,6 +2539,9 @@ function BilliardsClubGame() {
   const adjustAim = useCallback((delta) => runtimeRef.current?.adjustAim(delta), []);
   const adjustPower = useCallback((delta) => runtimeRef.current?.adjustPower(delta), []);
   const shoot = useCallback(() => runtimeRef.current?.shoot(), []);
+  const declarePushOut = useCallback(() => runtimeRef.current?.declarePushOut(), []);
+  const toggleSafety = useCallback(() => runtimeRef.current?.toggleSafety(), []);
+  const resolveDecision = useCallback((optionId) => runtimeRef.current?.resolveDecision(optionId), []);
   const autoPlaceCueBall = useCallback(() => runtimeRef.current?.autoPlaceCueBall(), []);
   const requestFullscreen = useCallback(() => {
     const shell = shellRef.current;
@@ -1640,13 +2557,19 @@ function BilliardsClubGame() {
   const humanTurn = snapshot.currentPlayer === PLAYER_HUMAN;
   const canAim = snapshot.status === "aim" && humanTurn;
   const canPlace = snapshot.status === "placing" && humanTurn;
+  const canPushOut = Boolean(snapshot.canDeclarePushOut);
+  const canSafety = Boolean(snapshot.canDeclareSafety);
+  const aiLeds = snapshot.ai?.leds ?? createAiLedState();
+  const aiThinking = Boolean(snapshot.ai?.thinking);
+  const aiPlan = snapshot.ai?.planPreview ?? null;
+  const ledClass = (active, baseClass = "") => [baseClass, aiThinking && active ? "led-active" : ""].filter(Boolean).join(" ");
 
   return (
     <div className="mini-game billiards-game">
       <div className="mini-head">
         <div>
           <h4>Billar Pool Club</h4>
-          <p>Pool arcade-profesional con fisica top-down, modos Bola 8/Bola 9, faltas, blanca en mano e IA tactica.</p>
+          <p>Pool arcade-profesional con fisica top-down, modos Bola 8/Bola 9/Bola 10, push out, safety y IA tactica.</p>
         </div>
         <div className="billiards-head-actions">
           {snapshot.status === "menu" ? <button id="billiards-start-btn" type="button" onClick={startMatch}>Empezar</button> : null}
@@ -1685,11 +2608,16 @@ function BilliardsClubGame() {
           ))}
         </div>
         <div className="billiards-chipline">
-          <span className="hud-pill">Turno: {snapshot.currentPlayerName}</span>
+          <span className="hud-pill billiards-turn-pill">
+            <span className={`billiards-led-dot ${aiThinking && aiLeds.turn ? "on" : ""}`} aria-hidden="true" />
+            Turno: {snapshot.currentPlayerName}
+          </span>
           <span className="hud-pill">Modo: {snapshot.modeLabel}</span>
           <span className="hud-pill">Objetivo: race to {snapshot.raceTo}</span>
           {snapshot.tableOpen ? <span className="hud-pill">Mesa abierta</span> : null}
           {snapshot.ballInHand ? <span className="hud-pill">Blanca en mano</span> : null}
+          {snapshot.pushOutAvailable ? <span className="hud-pill">Push out disponible</span> : null}
+          {snapshot.safetyDeclared ? <span className="hud-pill">Safety activo</span> : null}
         </div>
       </div>
 
@@ -1704,7 +2632,7 @@ function BilliardsClubGame() {
                 <>
                   <h5>Billar Pool Club</h5>
                   <p>{MODE_PRESETS[snapshot.variant].summary}</p>
-                  <p>Rompe, gestiona faltas, canta la 8 y gana un duelo al mejor de {snapshot.raceTo} racks.</p>
+                  <p>Rompe, gestiona faltas, usa push out/safety cuando toque y gana un duelo al mejor de {snapshot.raceTo} racks.</p>
                   <button id="billiards-overlay-start" type="button" onClick={startMatch}>Abrir mesa</button>
                 </>
               ) : null}
@@ -1738,7 +2666,7 @@ function BilliardsClubGame() {
                   <h6>{player.name}</h6>
                   <p>Grupo: {player.groupLabel}</p>
                   {player.group ? <p>Restantes: {player.remainingGroupBalls}</p> : null}
-                  {snapshot.variant === "nine-ball" ? <p>Faltas seguidas: {player.foulsInRow}</p> : null}
+                  {snapshot.variant === "nine-ball" || snapshot.variant === "ten-ball" ? <p>Faltas seguidas: {player.foulsInRow}</p> : null}
                 </article>
               ))}
             </div>
@@ -1753,13 +2681,61 @@ function BilliardsClubGame() {
             <p>Potencia: {Math.round(snapshot.cueControl.power * 100)}%</p>
             <p>Angulo: {snapshot.cueControl.angleDegrees}&deg;</p>
             <p>Bola mas baja: {snapshot.lowestBall ?? "-"}</p>
+            <p>Push out: {snapshot.pushOutAvailable ? "si" : "no"}</p>
+            <p>Safety: {snapshot.safetyDeclared ? "declarado" : "no"}</p>
             {snapshot.calledPocketLabel ? <p>Tronera cantada: {snapshot.calledPocketLabel}</p> : null}
           </section>
+
+          <section className="billiards-panel ai-console">
+            <header>
+              <span>Cabina IA</span>
+              <strong>{aiThinking ? "analizando" : "standby"}</strong>
+            </header>
+            <p>{snapshot.ai?.action ?? AI_ACTION_LABELS.idle}</p>
+            <div className="billiards-led-grid" aria-label="Indicadores LED de acciones IA">
+              <span className={`billiards-led-pill ${aiThinking && aiLeds.turn ? "on" : ""}`}>Turno IA</span>
+              <span className={`billiards-led-pill ${aiThinking && aiLeds.autoPlace ? "on" : ""}`}>Auto colocar</span>
+              <span className={`billiards-led-pill ${aiThinking && aiLeds.pocket ? "on" : ""}`}>Tronera</span>
+              <span className={`billiards-led-pill ${aiThinking && aiLeds.aim ? "on" : ""}`}>Ajuste angulo</span>
+              <span className={`billiards-led-pill ${aiThinking && aiLeds.power ? "on" : ""}`}>Ajuste potencia</span>
+              <span className={`billiards-led-pill ${aiThinking && aiLeds.pushOut ? "on" : ""}`}>Push out</span>
+              <span className={`billiards-led-pill ${aiThinking && aiLeds.safety ? "on" : ""}`}>Safety</span>
+              <span className={`billiards-led-pill ${aiThinking && aiLeds.shoot ? "on" : ""}`}>Tirar</span>
+            </div>
+            {aiPlan ? (
+              <p>
+                Plan: {aiPlan.type === "pot" ? "tronera directa" : aiPlan.type === "kick" ? "trayectoria alternativa" : "contacto"}
+                {aiPlan.route ? ` (${aiPlan.route})` : ""}, bola {aiPlan.ballNumber ?? "-"}, potencia {Math.round(aiPlan.power * 100)}%.
+              </p>
+            ) : null}
+          </section>
+
+          {snapshot.pendingDecision ? (
+            <section className="billiards-panel decision">
+              <header>
+                <span>Decision</span>
+                <strong>Turno: {snapshot.currentPlayerName}</strong>
+              </header>
+              <p>{snapshot.pendingDecision.prompt}</p>
+              <div className="billiards-control-group">
+                {snapshot.pendingDecision.options.map((option, index) => (
+                  <button
+                    key={option.id}
+                    id={`billiards-decision-${option.id}`}
+                    type="button"
+                    onClick={() => resolveDecision(option.id)}
+                  >
+                    {index + 1}. {option.label}
+                  </button>
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           {snapshot.needsPocketCall ? (
             <section className="billiards-panel pockets">
               <header>
-                <span>Cantar la 8</span>
+                <span>{snapshot.variant === "ten-ball" ? "Cantar tiro" : "Cantar la 8"}</span>
                 <strong>Elige tronera</strong>
               </header>
               <div className="billiards-pocket-grid">
@@ -1782,17 +2758,23 @@ function BilliardsClubGame() {
 
       <div className="billiards-control-deck">
         <div className="billiards-control-group">
-          <button id="billiards-aim-left" type="button" onClick={() => adjustAim(-AIM_STEP)} disabled={!canAim}>Aim -</button>
-          <button id="billiards-aim-right" type="button" onClick={() => adjustAim(AIM_STEP)} disabled={!canAim}>Aim +</button>
-          <button id="billiards-power-minus" type="button" onClick={() => adjustPower(-POWER_STEP)} disabled={!(canAim || canPlace)}>- Potencia</button>
-          <button id="billiards-power-plus" type="button" onClick={() => adjustPower(POWER_STEP)} disabled={!(canAim || canPlace)}>+ Potencia</button>
-          <button id="billiards-shoot-btn" type="button" onClick={shoot} disabled={!canAim}>Tirar</button>
-          <button id="billiards-auto-place" type="button" onClick={autoPlaceCueBall} disabled={!canPlace}>Auto colocar</button>
+          <button id="billiards-aim-left" type="button" className={ledClass(aiLeds.aim)} onClick={() => adjustAim(-AIM_STEP)} disabled={!canAim}>Aim -</button>
+          <button id="billiards-aim-right" type="button" className={ledClass(aiLeds.aim)} onClick={() => adjustAim(AIM_STEP)} disabled={!canAim}>Aim +</button>
+          <button id="billiards-power-minus" type="button" className={ledClass(aiLeds.power)} onClick={() => adjustPower(-POWER_STEP)} disabled={!(canAim || canPlace)}>- Potencia</button>
+          <button id="billiards-power-plus" type="button" className={ledClass(aiLeds.power)} onClick={() => adjustPower(POWER_STEP)} disabled={!(canAim || canPlace)}>+ Potencia</button>
+          <button id="billiards-push-out" type="button" className={ledClass(aiLeds.pushOut)} onClick={declarePushOut} disabled={!canPushOut}>Push Out</button>
+          <button id="billiards-safety" type="button" className={`${snapshot.safetyDeclared ? "active" : ""} ${ledClass(aiLeds.safety)}`.trim()} onClick={toggleSafety} disabled={!canSafety}>Safety</button>
+          <button id="billiards-shoot-btn" type="button" className={ledClass(aiLeds.shoot)} onClick={shoot} disabled={!canAim}>Tirar</button>
+          <button id="billiards-auto-place" type="button" className={ledClass(aiLeds.autoPlace)} onClick={autoPlaceCueBall} disabled={!canPlace}>Auto colocar</button>
         </div>
         <div className="billiards-help-copy">
-          <span>Raton para apuntar.</span>
-          <span>A/D ajustan el taco.</span>
+          <span>Raton opcional para apuntar.</span>
+          <span>A/D ajustan el taco en fase de apuntado.</span>
           <span>W/S regulan potencia.</span>
+          <span>En blanca en mano: flechas o WASD mueven la bola.</span>
+          <span>Enter/Space fijan la blanca (Shift = ajuste fino).</span>
+          <span>O push out, V safety.</span>
+          <span>1/2 resuelven decisiones.</span>
           <span>Space tira.</span>
         </div>
       </div>

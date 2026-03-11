@@ -13189,6 +13189,11 @@ button.brisca-card.playable:disabled {
   border-color: rgba(250, 204, 21, 0.68);
 }
 
+.billiards-control-group button.active {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.32), rgba(251, 191, 36, 0.22));
+  border-color: rgba(250, 204, 21, 0.64);
+}
+
 .billiards-segment button:disabled,
 .billiards-control-group button:disabled {
   opacity: 0.45;
@@ -13196,10 +13201,47 @@ button.brisca-card.playable:disabled {
   transform: none;
 }
 
+.billiards-control-group button.led-active {
+  border-color: rgba(250, 204, 21, 0.8);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.38), rgba(250, 204, 21, 0.25));
+  box-shadow: 0 0 0.68rem rgba(250, 204, 21, 0.34);
+}
+
+.billiards-control-group button.led-active:disabled {
+  opacity: 0.88;
+}
+
 .billiards-chipline {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
+}
+
+.billiards-game .hud-pill {
+  border-color: rgba(250, 204, 21, 0.42);
+  background: rgba(30, 41, 59, 0.72);
+  color: #f8fafc;
+}
+
+.billiards-turn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+}
+
+.billiards-led-dot {
+  width: 0.58rem;
+  height: 0.58rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.52);
+  background: rgba(51, 65, 85, 0.86);
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.44);
+}
+
+.billiards-led-dot.on {
+  border-color: rgba(252, 211, 77, 0.88);
+  background: radial-gradient(circle at 40% 40%, #fef08a, #f59e0b 72%);
+  box-shadow: 0 0 0.5rem rgba(245, 158, 11, 0.68);
 }
 
 .billiards-layout {
@@ -13293,6 +13335,35 @@ button.brisca-card.playable:disabled {
   margin: 0.2rem 0 0;
   color: #d6e6df;
   font-size: 0.82rem;
+}
+
+.billiards-panel.ai-console p {
+  line-height: 1.4;
+}
+
+.billiards-led-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.36rem;
+  margin-top: 0.55rem;
+}
+
+.billiards-led-pill {
+  border-radius: 999px;
+  border: 1px solid rgba(100, 116, 139, 0.45);
+  background: rgba(15, 23, 42, 0.82);
+  color: #dce8e3;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.26rem 0.5rem;
+  text-align: center;
+}
+
+.billiards-led-pill.on {
+  border-color: rgba(252, 211, 77, 0.9);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.5), rgba(234, 179, 8, 0.28));
+  color: #fefce8;
+  box-shadow: 0 0 0.62rem rgba(245, 158, 11, 0.38);
 }
 
 .billiards-score-row {

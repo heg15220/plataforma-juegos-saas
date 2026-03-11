@@ -297,16 +297,16 @@ export const games = [
 
     title: "Billar Pool Club",
     category: "Arcade",
-    tagline: "Billar de estilo profesional con Bola 8, Bola 9, fisica precisa, faltas y IA tactica.",
+    tagline: "Billar de estilo profesional con Bola 8, Bola 9 y Bola 10, fisica precisa y IA tactica.",
     description:
-      "Mesa de pool top-down con sensacion de club real: saque, blanca en mano, lectura de angulos, grupos lisas/rayas, cierre cantado de la 8 y disciplina Bola 9 con tres faltas consecutivas.",
+      "Mesa de pool top-down con sensacion de club real: saque, blanca en mano, lectura de angulos, grupos lisas/rayas, cierre cantado de la 8, disciplina Bola 9 y Bola 10 con push out, safety y tres faltas consecutivas.",
     objective_es: "Gana un match al mejor de tres racks dominando el saque, las entradas largas y la gestion de faltas segun el modo elegido.",
-    howToPlay_es: "Apunta con el raton o ajusta con A/D, regula potencia con W/S o la rueda, tira con Espacio, coloca la blanca con clic cuando este en mano y canta la tronera al cerrar la 8.",
+    howToPlay_es: "Raton opcional para apuntar: ajusta con A/D, regula potencia con W/S o rueda, tira con Espacio. En blanca en mano usa flechas/WASD para moverla, Enter/Espacio para fijar, P para autocolocar y canta tronera al cerrar la 8.",
     highlights: [
-      "Dos disciplinas jugables: Bola 8 y Bola 9, con flujo de turnos y faltas diferenciadas.",
+      "Tres disciplinas jugables: Bola 8, Bola 9 y Bola 10, con flujo de turnos y faltas diferenciadas.",
       "Fisica de colision, bandas, troneras y friccion con avance temporal determinista.",
       "IA con busqueda de tiros directos a tronera y ruido por dificultad.",
-      "Cierre de Bola 8 cantando tronera y Bola 9 con regla de tres faltas consecutivas.",
+      "Cierre de Bola 8 cantando tronera, Bola 9 con regla de tres faltas y Bola 10 con tiro cantado.",
       "Bridge QA completo con `render_game_to_text`, estado de bolas y control de tiempo.",
     ],
     difficulty: "Media-Alta",
@@ -316,16 +316,16 @@ export const games = [
     techFocus: "Fisica de billar, evaluacion de faltas, estados de rack/match y automatizacion QA.",
 
     category_en: "Arcade",
-    tagline_en: "Professional-style billiards with 8-ball, 9-ball, precise physics, fouls, and tactical AI.",
+    tagline_en: "Professional-style billiards with 8-ball, 9-ball and 10-ball, precise physics and tactical AI.",
     description_en:
-      "A top-down pool table with club-level feel: break shot, cue-ball in hand, angle reading, solids/stripes grouping, called 8-ball finish, and 9-ball discipline with three-foul pressure.",
+      "A top-down pool table with club-level feel: break shot, cue-ball in hand, angle reading, solids/stripes grouping, called 8-ball finish, plus 9-ball and 10-ball with push out, safety, and three-foul pressure.",
     objective_en: "Win a best-of-three match by controlling the break, building long runs, and managing fouls under the selected rule set.",
-    howToPlay_en: "Aim with the mouse or fine tune with A/D, adjust power with W/S or the mouse wheel, shoot with Space, click to place cue ball in hand, and call the pocket before finishing the 8.",
+    howToPlay_en: "Mouse aiming is optional: fine tune with A/D, adjust power with W/S or wheel, and shoot with Space. With ball in hand, use arrows/WASD to move it, Enter/Space to confirm, P to auto-place, and call the pocket before finishing the 8.",
     highlights_en: [
-      "Two playable disciplines: 8-ball and 9-ball with differentiated turn flow and foul logic.",
+      "Three playable disciplines: 8-ball, 9-ball and 10-ball with differentiated turn flow and foul logic.",
       "Collision, cushion, pocket, and friction physics with deterministic time stepping.",
       "AI that searches direct potting lines and scales error by difficulty.",
-      "Called-pocket 8-ball finish and 9-ball three-consecutive-foul rule.",
+      "Called-pocket 8-ball finish, 9-ball three-consecutive-foul rule, and called-shot 10-ball.",
       "Full QA bridge with `render_game_to_text`, ball state, and deterministic time control.",
     ],
     difficulty_en: "Medium-High",
