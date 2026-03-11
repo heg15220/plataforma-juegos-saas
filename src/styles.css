@@ -13709,3 +13709,592 @@ button.brisca-card.playable:disabled {
     margin-top: 0.52rem;
   }
 }
+
+.bowling-game {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(244, 196, 111, 0.18), transparent 40%),
+    radial-gradient(circle at 100% 0%, rgba(38, 131, 176, 0.16), transparent 36%),
+    linear-gradient(165deg, #09111c 0%, #111d30 100%);
+  border-color: rgba(244, 196, 111, 0.2);
+  color: #e2e8f0;
+}
+
+.bowling-game .mini-head h4 {
+  color: #f5d7a2;
+}
+
+.bowling-game .mini-head p {
+  color: #d7e4f1;
+}
+
+.bowling-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.bowling-head-actions button,
+.bowling-control-actions button,
+.bowling-tabs button {
+  border: 1px solid rgba(244, 196, 111, 0.24);
+  border-radius: 999px;
+  background: rgba(9, 15, 25, 0.82);
+  color: #f8fafc;
+  padding: 0.46rem 0.88rem;
+  font-size: 0.77rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.bowling-head-actions button:hover,
+.bowling-control-actions button:hover,
+.bowling-tabs button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(244, 196, 111, 0.62);
+  background: rgba(22, 33, 51, 0.9);
+}
+
+.bowling-head-actions button:disabled,
+.bowling-control-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.bowling-toolbar {
+  margin-top: 0.72rem;
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(180px, 240px) minmax(0, 1fr);
+  gap: 0.72rem;
+  align-items: start;
+}
+
+.bowling-select-field {
+  display: grid;
+  gap: 0.26rem;
+}
+
+.bowling-select-field span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #d7e4f1;
+}
+
+.bowling-select-field select {
+  min-height: 40px;
+  border: 1px solid rgba(148, 163, 184, 0.42);
+  border-radius: 12px;
+  background: rgba(9, 15, 25, 0.86);
+  color: #f8fafc;
+  padding: 0.4rem 0.68rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.bowling-top-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.48rem;
+}
+
+.bowling-pill {
+  border: 1px solid rgba(244, 196, 111, 0.2);
+  border-radius: 999px;
+  background: rgba(12, 20, 34, 0.74);
+  padding: 0.42rem 0.68rem;
+  color: #d7e4f1;
+  font-size: 0.76rem;
+  line-height: 1.3;
+}
+
+.bowling-pill strong {
+  color: #f5d7a2;
+}
+
+.bowling-layout {
+  margin-top: 0.96rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr);
+  gap: 0.92rem;
+  align-items: start;
+}
+
+.bowling-stage {
+  position: relative;
+  border: 1px solid rgba(244, 196, 111, 0.16);
+  background: linear-gradient(145deg, rgba(9, 15, 25, 0.86), rgba(22, 33, 51, 0.72));
+  overflow: hidden;
+}
+
+.bowling-canvas-host {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: min(60vh, 620px);
+}
+
+.bowling-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  touch-action: none;
+}
+
+.bowling-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 1.4rem;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.72), rgba(2, 6, 23, 0.92));
+  text-align: center;
+}
+
+.bowling-overlay h5 {
+  margin: 0;
+  color: #f5d7a2;
+  font-size: 1.36rem;
+}
+
+.bowling-overlay p {
+  margin: 0;
+  max-width: 36rem;
+  color: #d7e4f1;
+  line-height: 1.42;
+}
+
+.bowling-overlay button {
+  border: none;
+  border-radius: 999px;
+  padding: 0.7rem 1.18rem;
+  background: linear-gradient(135deg, #d68b41, #f4c46f);
+  color: #132031;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.bowling-sidepanel {
+  display: grid;
+  gap: 0.72rem;
+  max-height: min(76vh, 980px);
+  overflow: auto;
+  padding-right: 0.18rem;
+  scrollbar-width: thin;
+}
+
+.bowling-panel {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 16px;
+  background: rgba(9, 15, 25, 0.72);
+  padding: 0.82rem 0.9rem;
+  min-width: 0;
+}
+
+.bowling-panel header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.65rem;
+  align-items: center;
+  margin-bottom: 0.6rem;
+  color: #f5d7a2;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.bowling-panel p {
+  margin: 0.22rem 0 0;
+  color: #d7e4f1;
+  font-size: 0.79rem;
+  line-height: 1.4;
+}
+
+.bowling-panel h6 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 0.77rem;
+}
+
+.bowling-panel-note {
+  color: #bcd0e4;
+}
+
+.bowling-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin-bottom: 0.5rem;
+}
+
+.bowling-summary-grid article {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 12px;
+  background: rgba(18, 28, 44, 0.72);
+  padding: 0.55rem 0.62rem;
+}
+
+.bowling-summary-grid p {
+  margin: 0.16rem 0 0;
+  font-size: 0.88rem;
+  color: #f8fafc;
+}
+
+.bowling-score-table-wrap {
+  overflow: auto;
+  border-radius: 12px;
+}
+
+.bowling-score-table {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+  font-size: 0.74rem;
+}
+
+.bowling-score-table th,
+.bowling-score-table td {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  text-align: center;
+  padding: 0.24rem;
+}
+
+.bowling-score-table th {
+  background: rgba(20, 31, 49, 0.92);
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.bowling-score-table tbody tr.active th,
+.bowling-score-table tbody tr.active td {
+  background: rgba(214, 139, 65, 0.12);
+}
+
+.bowling-frame-cell {
+  display: grid;
+  gap: 0.16rem;
+  min-width: 48px;
+}
+
+.bowling-rolls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-height: 18px;
+}
+
+.bowling-rolls.tenth {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.bowling-rolls span {
+  border-right: 1px solid rgba(148, 163, 184, 0.22);
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.bowling-rolls span:last-child {
+  border-right: none;
+}
+
+.bowling-rolls span.split::after {
+  content: "o";
+  margin-left: 0.14rem;
+  font-size: 0.62rem;
+  color: #fef08a;
+}
+
+.bowling-rolls span.foul {
+  color: #fda4af;
+}
+
+.bowling-total-cell {
+  font-weight: 800;
+  color: #f5d7a2;
+  min-width: 42px;
+}
+
+.bowling-stats-grid {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.bowling-stats-grid article {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 12px;
+  padding: 0.52rem 0.6rem;
+  background: rgba(18, 28, 44, 0.68);
+}
+
+.bowling-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.36rem;
+}
+
+.bowling-tabs button {
+  padding: 0.34rem 0.68rem;
+  font-size: 0.72rem;
+}
+
+.bowling-tabs button.active {
+  background: linear-gradient(135deg, rgba(214, 139, 65, 0.2), rgba(244, 196, 111, 0.18));
+  border-color: rgba(244, 196, 111, 0.56);
+}
+
+.bowling-rulebook,
+.bowling-assets-panel {
+  display: grid;
+  gap: 0.68rem;
+}
+
+.bowling-coverage-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.bowling-rule-chip,
+.bowling-rule-badge {
+  border-radius: 999px;
+  padding: 0.24rem 0.54rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.bowling-rule-chip.simulated,
+.bowling-rule-badge.simulated {
+  background: rgba(34, 197, 94, 0.14);
+  color: #b6f0c8;
+}
+
+.bowling-rule-chip.partial,
+.bowling-rule-badge.partial {
+  background: rgba(251, 191, 36, 0.14);
+  color: #f8df9a;
+}
+
+.bowling-rule-chip.documented,
+.bowling-rule-badge.documented {
+  background: rgba(59, 130, 246, 0.14);
+  color: #bed7ff;
+}
+
+.bowling-rule-groups {
+  display: grid;
+  gap: 0.7rem;
+  max-height: 56vh;
+  overflow: auto;
+  padding-right: 0.18rem;
+}
+
+.bowling-rule-group {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 14px;
+  background: rgba(18, 28, 44, 0.48);
+  padding: 0.62rem;
+}
+
+.bowling-rule-list {
+  display: grid;
+  gap: 0.42rem;
+  margin-top: 0.52rem;
+}
+
+.bowling-rule-item {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 12px;
+  background: rgba(7, 12, 22, 0.52);
+  padding: 0.5rem 0.56rem;
+}
+
+.bowling-rule-item-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.bowling-reference-meta {
+  display: grid;
+  gap: 0.14rem;
+}
+
+.bowling-reference-meta a {
+  color: #b9ddff;
+}
+
+.bowling-material-swatches {
+  display: grid;
+  gap: 0.42rem;
+}
+
+.bowling-swatch-card {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 0.56rem;
+  align-items: start;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 12px;
+  background: rgba(18, 28, 44, 0.6);
+  padding: 0.48rem 0.54rem;
+}
+
+.bowling-swatch-card p {
+  margin-top: 0.14rem;
+}
+
+.bowling-swatch-chip {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.03);
+}
+
+.bowling-reference-list {
+  display: grid;
+  gap: 0.34rem;
+}
+
+.bowling-reference-list h6 {
+  margin: 0;
+  color: #f5d7a2;
+}
+
+.bowling-file-item {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 12px;
+  background: rgba(18, 28, 44, 0.48);
+  padding: 0.52rem 0.58rem;
+}
+
+.bowling-file-item span {
+  display: inline-block;
+  margin-top: 0.14rem;
+  color: #f5d7a2;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.bowling-control-deck {
+  margin-top: 0.82rem;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 16px;
+  background: rgba(9, 15, 25, 0.66);
+  padding: 0.72rem 0.76rem;
+  display: grid;
+  gap: 0.64rem;
+}
+
+.bowling-control-deck > header {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #f5d7a2;
+}
+
+.bowling-control-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.52rem;
+}
+
+.bowling-control-grid label {
+  display: grid;
+  gap: 0.24rem;
+}
+
+.bowling-control-grid span {
+  color: #d7e4f1;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.bowling-control-grid strong {
+  color: #f5d7a2;
+  font-size: 0.76rem;
+}
+
+.bowling-control-grid input[type="range"] {
+  width: 100%;
+  accent-color: #d68b41;
+}
+
+.bowling-control-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+}
+
+.bowling-help-copy {
+  margin: 0.76rem 0 0;
+  color: #c6d8e8;
+  font-size: 0.78rem;
+}
+
+.bowling-log-strip {
+  margin-top: 0.62rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.bowling-log-strip span {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 999px;
+  background: rgba(12, 20, 34, 0.76);
+  padding: 0.3rem 0.56rem;
+  font-size: 0.74rem;
+  color: #d7e4f1;
+}
+
+@media (max-width: 1140px) {
+  .bowling-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 980px) {
+  .bowling-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bowling-sidepanel {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .bowling-canvas-host {
+    max-height: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .bowling-control-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bowling-summary-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bowling-score-table {
+    min-width: 640px;
+  }
+
+  .bowling-rule-item-head,
+  .bowling-panel header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 560px) {
+  .bowling-control-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

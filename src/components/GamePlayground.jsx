@@ -21,6 +21,7 @@ import resolveBrowserLanguage from "../utils/resolveBrowserLanguage";
 const PlatformerGame = lazy(() => import("../games/PlatformerGame"));
 const FighterGame = lazy(() => import("../games/FighterGame"));
 const BilliardsGame = lazy(() => import("../games/arcade/billiards-club"));
+const BowlingGame = lazy(() => import("../games/arcade/bowling-pro"));
 const KnowledgeSudokuGame = () => <KnowledgeArcadeGame variant="sudoku" />;
 const KnowledgeAhorcadoGame = () => <KnowledgeArcadeGame variant="ahorcado" />;
 const KnowledgePacienciaGame = () => <KnowledgeArcadeGame variant="paciencia" />;
@@ -66,6 +67,7 @@ const GAME_COMPONENTS = {
   "sports-head-soccer-arena": HeadSoccerGame,
   "arcade-pacman-maze-protocol": PacmanGame,
   "arcade-billar-pool-club": BilliardsGame,
+  "arcade-bowling-pro-tour": BowlingGame,
   "arcade-buscaminas-classic": MinesweeperGame,
   "racing-race2dpro": RaceGame2DPro,
   "racing-sunset-slipstream": SunsetSlipstream,
@@ -102,6 +104,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "fighter-neon-dojo": "Combate con A/D o flechas, salto W/arriba, jab J/espacio, heavy K/enter, guardia L/abajo y special U/B.",
     "sports-head-soccer-arena": "Flechas izquierda/derecha para mover, arriba para salto, Space para disparo y B para habilidad.",
     "arcade-billar-pool-club": "Raton opcional para apuntar: A/D afinan angulo, W/S regulan potencia, Space tira, O push out, V safety, 1/2 decisiones. En blanca en mano usa flechas/WASD para mover, Enter/Space para fijar y P para autocolocar. F pantalla completa.",
+    "arcade-bowling-pro-tour": "A/D ajustan linea, W/S potencia, Q/E efecto y Enter/Espacio lanza. R reinicia la serie y F activa pantalla completa.",
     "arcade-pacman-maze-protocol": "WASD o flechas para mover, Enter/Espacio para empezar, P/Esc para pausa, R reinicia, M sonido y G debug.",
     "arcade-buscaminas-classic": "Click izq abre, click der o pulsacion larga marca bandera. Flechas mueven cursor, Enter/Espacio abre, F marca, H sugiere IA, A ejecuta IA, R reinicia. En competitivo puntuan celdas + tiempo.",
     "racing-race2dpro": "Arriba/abajo acelerar/frenar, izq/der girar. Móvil: joystick táctil izq. + botones der. R reinicia.",
@@ -137,6 +140,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "fighter-neon-dojo": "Fight with A/D or arrows, jump W/up, jab J/space, heavy K/enter, guard L/down and special U/B.",
     "sports-head-soccer-arena": "Left/right arrows move, up jumps, Space shoots and B triggers skill.",
     "arcade-billar-pool-club": "Mouse aiming is optional: A/D fine tune angle, W/S adjust power, Space shoots, O push out, V safety, and 1/2 decisions. With ball in hand, use arrows/WASD to move the cue ball, Enter/Space to confirm, and P to auto-place. F toggles fullscreen.",
+    "arcade-bowling-pro-tour": "A/D adjust line, W/S power, Q/E spin, and Enter/Space throws. R restarts the series and F toggles fullscreen.",
     "arcade-pacman-maze-protocol": "Use arrows or WASD to move, Enter/Space to start, P/Esc to pause, R restart, M sound and G debug.",
     "arcade-buscaminas-classic": "Left click reveals, right click or long press marks. Arrows move cursor, Enter/Space reveals, F marks, H asks AI hint, A runs AI move, R restarts. Competitive mode scores cells + time.",
     "racing-race2dpro": "Up/down throttle/brake, left/right steer. Mobile: left touch joystick + right buttons. R restart.",

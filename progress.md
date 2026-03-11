@@ -2609,3 +2609,56 @@ Pendiente sugerido:
   - Ajustados flujos de runtime para preservar locale al resetear/iniciar racks y al cambiar dificultad.
 - Validacion tecnica
   - Compilacion OK con esbuild: `output/billiards-i18n-check.js`.
+## 2026-03-11 - Bolos Arcade: rebuild completo con pack de referencia + reglamento integrado
+- Rebuild del juego de bolos bajo `src/games/arcade/bowling-pro/`:
+  - `index.jsx` pasa a ser capa de integracion React.
+  - `runtime.js` extrae scoring, turnos, split, falta, IA y serializacion de estado.
+  - `render.js` rehace la escena de alley en perspectiva con dos pistas, monitors, approach, gutters, kickbacks, deck y ball return.
+  - `copy.js` centraliza copy ES/EN.
+  - `reference.js` incorpora inventario del repo externo, materiales interpretados y cobertura del reglamento.
+- UI/UX:
+  - Panel `Reglamento` con 26 reglas resumidas y marcadas como `simulada/parcial/documentada`.
+  - Panel `Assets y entorno` con repo MIT, inventario de ficheros, materiales y notas de implementacion.
+  - Marcador rehecho con `X`, `/`, `F`, split, acumulados y estadisticas de dobles/triples/racha de strikes.
+- Metadata/documentacion:
+  - `src/data/games.js` actualizado para reflejar el rebuild y el uso del pack `03-Bowling-Assets-Original`.
+  - Nueva nota tecnica `docs/bowling-pro-reference.md` con assets, mapeo de entorno y cobertura de las 26 reglas.
+- Verificacion:
+  - `npm run build` OK fuera de sandbox por `spawn EPERM` de esbuild dentro del sandbox.
+  - QA Playwright OK con `web_game_playwright_client.skill.mjs` sobre `#game=arcade-bowling-pro-tour`.
+  - Artefactos en `output/arcade-bowling-pro-rebuild/`: `shot-0..3.png` + `state-0..3.json`.
+  - Revisadas capturas: alley visible, cambio de pista A/B, guia de bola, rack completo y leave de split en gameplay.
+  - Sin `errors-*.json` nuevos en la carpeta de auditoria.
+## 2026-03-11 - Bolos Arcade: multi-IA + overlay de scoring
+- Cambios en curso sobre `src/games/arcade/bowling-pro/`:
+  - `runtime.js`: serie generalizada a 1 humano + 1..4 IAs, cierre de partida multi-jugador y estado `celebration` para mostrar `pleno/semipleno` en pantalla.
+  - `index.jsx`: nuevo desplegable de cantidad de IAs y preservacion de esa configuracion al empezar, reiniciar o cambiar dificultad.
+  - `render.js`: eliminado el banner superior del canvas con `Cuadro | Pista | Tu`; monitor superior adaptado a mas de dos jugadores.
+- Ajustes adicionales sobre la misma iteracion:
+  - Etiqueta sobre la bola activa: `YOU` para humano y `IA N` para rivales, siguiendo el turno actual.
+  - Feedback visual de usuario al ajustar `potencia`, `efecto` o `altura`: aparece un overlay animado en el canvas indicando si sube o baja el parametro.
+  - `ai-thinking` ahora anima la transicion de `aim/power/spin/loft` hacia el plan de la IA, con mas tiempo de preparacion por dificultad y tarjeta visual de `IA en ajuste/recolocando linea`.
+  - Tuning de balance:
+    - se reduce la facilidad de `pleno` del humano bajando `strikeSkill`, `carry` y aplicando un multiplicador adicional sobre `strikeChance`;
+    - se vuelve a ralentizar la IA aumentando `thinkMs` en todas las dificultades y suavizando mas la interpolacion de sus ajustes.
+    - se reduce tambien la ayuda artificial al `semipleno` para humano e IA: menor `spareChance`, uso de `breakpointX` real para medir precision y tope bastante mas bajo.
+    - se endurece la naturalidad del derribo en leaves cortos: si la bola pasa demasiado lejos del ultimo bolo o de un leave de 2 bolos, no se concede el derribo por fallback ni por precision asistida.
+- Pendiente inmediato:
+  - compilar,
+  - pasar Playwright sobre `#game=arcade-bowling-pro-tour`,
+  - revisar capturas y estado para confirmar que el overlay de scoring se ve y que el flujo multi-IA no rompe el marcador.
+- Verificacion parcial adicional:
+  - `vite dev -- --host 127.0.0.1 --port 4176` arranca correctamente dentro del sandbox tras los cambios de multi-IA, etiquetas sobre la bola, overlays de control y animacion de recolocacion de la IA.
+  - Siguen pendientes `npm run build` y Playwright con Chromium fuera del sandbox; los intentos de aprobacion se interrumpieron antes de completarlos.
+## 2026-03-11 - Bolos Arcade: tuning final del pleno por angulo de salida
+- `src/games/arcade/bowling-pro/runtime.js`
+  - El pleno ahora depende tambien de la calidad de salida lateral (`strikeLaunchQuality`): desde un costado extremo la probabilidad cae a `0`, mientras que desde el centro o con desplazamientos laterales moderados sigue existiendo opcion de pleno sin ser consistente.
+  - Se endurece la entrada real a pocket usando una ventana mas estrecha (`pocketEntryQuality`) para que incluso un tiro centrado no convierta pleno de forma automatica.
+- Verificacion parcial adicional:
+  - `npm run dev -- --host 127.0.0.1 --port 4176` vuelve a levantar Vite correctamente en sandbox tras este ajuste final.
+## 2026-03-11 - Bolos Arcade: prioridad de derribo por trayectoria
+- `src/games/arcade/bowling-pro/runtime.js`
+  - El derribo directo de bolos ahora se evalua en orden de trayectoria, no por filas fijas: primero los mas alineados con la linea de la bola y, si la alineacion es parecida, los mas cercanos.
+  - Nuevo sesgo explicito de impacto (`pinAlignmentFactor`, `pinProximityFactor`, `trajectoryBias`) para que los bolos fuera de la linea de tiro pierdan mucha probabilidad frente a los que caen bajo la trayectoria o muy cerca de ella.
+- Verificacion parcial adicional:
+  - `npm run dev -- --host 127.0.0.1 --port 4176` sigue levantando Vite correctamente tras este ajuste.

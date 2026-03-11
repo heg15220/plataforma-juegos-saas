@@ -1,0 +1,18 @@
+
+> plataforma-juegos-saas@0.1.0 dev
+> vite --host 127.0.0.1 --port 4180
+
+
+  [32m[1mVITE[22m v4.5.14[39m  [2mready in [0m[1m374[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m4180[22m/[39m
+[2m16:42:08[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/games/arcade/bowling-pro/index.jsx[22m
+[2m16:44:00[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/games/arcade/bowling-pro/index.jsx[22m
+[2m16:46:24[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m16:47:14[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/data/games.js[22m
+[2m17:04:12[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/games/arcade/bowling-pro/index.jsx[22m
+[2m17:04:23[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/games/arcade/bowling-pro/index.jsx[22m
+[2m17:04:38[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m
+[2m17:37:43[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/games/arcade/bowling-pro/index.jsx[22m
+[2m17:43:19[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/games/arcade/bowling-pro/index.jsx[22m
+[2m17:43:25[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles.css[22m

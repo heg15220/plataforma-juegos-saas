@@ -11,6 +11,7 @@ import pacmanMazeProtocolImage from "../assets/games/pacman-maze-protocol.svg";
 import pongNeonArenaImage from "../assets/games/pong-neon-arena.svg";
 import arcadeBuscaminasClassicImage from "../assets/games/arcade-buscaminas-classic.svg";
 import arcadeBillarPoolClubImage from "../assets/games/arcade-billar-pool-club.svg";
+import arcadeBowlingProTourImage from "../assets/games/arcade-bowling-pro-tour.svg";
 import knowledgeSudokuImage from "../assets/games/knowledge-sudoku.svg";
 import knowledgeDominoImage from "../assets/games/knowledge-domino.svg";
 import knowledgeAhorcadoImage from "../assets/games/knowledge-ahorcado.svg";
@@ -333,6 +334,54 @@ export const games = [
     viability_en: "High: 2D canvas with discrete rules, heuristic AI, and deterministic simulation.",
     visualStyle_en: "Club table with varnished wood, deep green felt, shot guide, and match HUD.",
     techFocus_en: "Billiards physics, foul evaluation, rack/match state flow, and QA automation.",
+  },
+
+  {
+    id: "arcade-bowling-pro-tour",
+    image: arcadeBowlingProTourImage,
+    sessionTime: "6-14 min",
+
+    title: "Bowling Pro Tour",
+    category: "Arcade",
+    tagline: "Bowling 1v1 rehecho con alley de referencia, marcador oficial, split detector e IA por dificultad.",
+    description:
+      "Juego de bolos profesional en navegador rehecho a partir del pack de referencia 03-Bowling-Assets-Original: entorno de alley reinterpretado en canvas, marcador completo por cuadros, reglas reales de strike/spare, detector de split, alternancia de pista A/B y panel integrado de assets + reglamento.",
+    objective_es: "Gana la serie de 10 cuadros frente a la IA sumando la mayor puntuacion acumulada con buena lectura de lineas y conversion de spares.",
+    howToPlay_es: "A/D ajustan linea, W/S potencia y Q/E efecto. Enter/Espacio lanza. R reinicia serie y F alterna pantalla completa.",
+    highlights: [
+      "Puntuacion oficial de bowling: strike, spare, cuadro abierto y decimo cuadro con bolas extra.",
+      "Detector de split, marca F por falta y resumen de dobles/triples por jugador.",
+      "IA en 4 niveles (Principiante, Club, Pro y Elite) con consistencia y toma de linea distintas.",
+      "Regla de estilo por par de pistas: cada cuadro alterna entre pista A y B.",
+      "Panel in-game con inventario del pack de Blender, materiales interpretados y cobertura reglamentaria.",
+      "HUD premium con alley en perspectiva, tabla por cuadro, acumulados y resumen estadistico.",
+      "Bridge QA con render_game_to_text y avance temporal determinista.",
+    ],
+    difficulty: "Variable (4 niveles IA)",
+    multiplayer: "Solo vs IA",
+    viability: "Alta: motor determinista de cuadros, scoring discreto y IA heuristica configurable.",
+    visualStyle: "Alley broadcast en perspectiva con ball return, monitores, boards, gutters y pin deck inspirados en el pack de Blender.",
+    techFocus: "Motor de reglas de bowling + simulacion de pinfall collider-inspired + panel de referencia de assets y reglamento.",
+
+    category_en: "Arcade",
+    tagline_en: "Rebuilt 1v1 bowling with a reference alley environment, official scoring, split detection, and tiered AI.",
+    description_en:
+      "Professional browser bowling rebuilt from the 03-Bowling-Assets-Original reference pack: a reinterpreted alley environment in canvas, full frame-by-frame scoring, real strike/spare rules, split detection, A/B lane alternation, and an integrated asset + rulebook panel.",
+    objective_en: "Win the 10-frame series against AI by maximizing cumulative score through strong line control and spare conversion.",
+    howToPlay_en: "A/D adjust line, W/S power, Q/E spin. Enter/Space throws. R restarts the series and F toggles fullscreen.",
+    highlights_en: [
+      "Official bowling scoring: strike, spare, open frame, and tenth-frame bonus balls.",
+      "Split detector and foul telemetry per player.",
+      "Four AI levels (Beginner, Club, Pro, Elite) with different consistency and lane decisions.",
+      "Pair-lane style rule: every frame alternates between lane A and B.",
+      "Premium HUD with per-frame marks, cumulative totals, and statistical recap.",
+      "QA bridge with render_game_to_text and deterministic time stepping.",
+    ],
+    difficulty_en: "Variable (4 AI tiers)",
+    multiplayer_en: "Solo vs AI",
+    viability_en: "High: deterministic frame engine, discrete scoring, and configurable heuristic AI.",
+    visualStyle_en: "Broadcast-inspired lane canvas with readable pins and competitive panel.",
+    techFocus_en: "Bowling rules engine + pinfall simulation + profile-driven AI.",
   },
 
   {

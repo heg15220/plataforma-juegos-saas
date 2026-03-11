@@ -1,0 +1,70 @@
+<svg width="800" height="460" viewBox="0 0 800 460" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="80" y1="20" x2="760" y2="440" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1322"/>
+      <stop offset="1" stop-color="#121C32"/>
+    </linearGradient>
+    <linearGradient id="lane" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#F8D5A4"/>
+      <stop offset="1" stop-color="#D28E4A"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(614 328) rotate(140) scale(118 118)">
+      <stop stop-color="#FBBF24" stop-opacity="0.65"/>
+      <stop offset="1" stop-color="#F59E0B" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ball" x1="560" y1="270" x2="666" y2="378" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#111827"/>
+      <stop offset="1" stop-color="#334155"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="460" rx="36" fill="url(#bg)"/>
+  <ellipse cx="400" cy="212" rx="340" ry="180" fill="#1F2A44" fill-opacity="0.35"/>
+
+  <rect x="150" y="58" width="500" height="344" rx="18" fill="#0A1222" fill-opacity="0.44" stroke="#FBBF24" stroke-opacity="0.42" stroke-width="2"/>
+  <rect x="188" y="86" width="424" height="286" rx="16" fill="url(#lane)" stroke="#FDE68A" stroke-opacity="0.68" stroke-width="2.5"/>
+
+  <g opacity="0.24" stroke="#FEF3C7">
+    <line x1="214" y1="100" x2="214" y2="356"/>
+    <line x1="248" y1="100" x2="248" y2="356"/>
+    <line x1="282" y1="100" x2="282" y2="356"/>
+    <line x1="316" y1="100" x2="316" y2="356"/>
+    <line x1="350" y1="100" x2="350" y2="356"/>
+    <line x1="384" y1="100" x2="384" y2="356"/>
+    <line x1="418" y1="100" x2="418" y2="356"/>
+    <line x1="452" y1="100" x2="452" y2="356"/>
+    <line x1="486" y1="100" x2="486" y2="356"/>
+    <line x1="520" y1="100" x2="520" y2="356"/>
+    <line x1="554" y1="100" x2="554" y2="356"/>
+    <line x1="588" y1="100" x2="588" y2="356"/>
+  </g>
+
+  <g>
+    <ellipse cx="400" cy="162" rx="8" ry="11.4" fill="#F8FAFC"/>
+    <ellipse cx="388" cy="180" rx="8" ry="11.4" fill="#F8FAFC"/>
+    <ellipse cx="412" cy="180" rx="8" ry="11.4" fill="#F8FAFC"/>
+    <ellipse cx="376" cy="198" rx="8" ry="11.4" fill="#F8FAFC"/>
+    <ellipse cx="400" cy="198" rx="8" ry="11.4" fill="#F8FAFC"/>
+    <ellipse cx="424" cy="198" rx="8" ry="11.4" fill="#F8FAFC"/>
+    <ellipse cx="364" cy="216" rx="8" ry="11.4" fill="#F8FAFC"/>
+    <ellipse cx="388" cy="216" rx="8" ry="11.4" fill="#F8FAFC"/>
+    <ellipse cx="412" cy="216" rx="8" ry="11.4" fill="#F8FAFC"/>
+    <ellipse cx="436" cy="216" rx="8" ry="11.4" fill="#F8FAFC"/>
+  </g>
+
+  <rect x="356" y="157" width="88" height="2.8" rx="1.4" fill="#DC2626"/>
+  <rect x="340" y="176" width="120" height="2.8" rx="1.4" fill="#DC2626"/>
+  <rect x="322" y="195" width="156" height="2.8" rx="1.4" fill="#DC2626"/>
+  <rect x="305" y="214" width="190" height="2.8" rx="1.4" fill="#DC2626"/>
+
+  <ellipse cx="614" cy="328" rx="88" ry="88" fill="url(#halo)"/>
+  <circle cx="614" cy="328" r="58" fill="url(#ball)"/>
+  <circle cx="594" cy="312" r="6.4" fill="#94A3B8" fill-opacity="0.82"/>
+  <circle cx="615" cy="340" r="5.4" fill="#94A3B8" fill-opacity="0.82"/>
+  <circle cx="636" cy="316" r="5.8" fill="#94A3B8" fill-opacity="0.82"/>
+
+  <path d="M566 332C507 276 484 228 486 172" stroke="#FBBF24" stroke-width="5.2" stroke-linecap="round" stroke-dasharray="12 11"/>
+
+  <rect x="52" y="42" width="250" height="70" rx="14" fill="#0F172A" fill-opacity="0.82" stroke="#FBBF24" stroke-opacity="0.54"/>
+  <text x="72" y="72" fill="#FDE68A" font-size="30" font-family="Segoe UI, Arial, sans-serif" font-weight="700">BOWLING</text>
+  <text x="72" y="95" fill="#E2E8F0" font-size="18" font-family="Segoe UI, Arial, sans-serif" font-weight="600">PRO TOUR</text>
+</svg>
