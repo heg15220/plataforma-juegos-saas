@@ -1,0 +1,61 @@
+<svg width="640" height="360" viewBox="0 0 640 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="640" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1a1008"/>
+      <stop offset="1" stop-color="#0b1724"/>
+    </linearGradient>
+    <linearGradient id="felt" x1="72" y1="56" x2="568" y2="304" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#19a06d"/>
+      <stop offset="1" stop-color="#0b5f43"/>
+    </linearGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="640" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#a16207"/>
+      <stop offset="1" stop-color="#5b3415"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" rx="28" fill="url(#bg)"/>
+  <rect x="40" y="36" width="560" height="288" rx="28" fill="url(#wood)"/>
+  <rect x="68" y="62" width="504" height="236" rx="20" fill="url(#felt)"/>
+  <g fill="#05080f">
+    <circle cx="68" cy="62" r="18"/>
+    <circle cx="320" cy="58" r="15"/>
+    <circle cx="572" cy="62" r="18"/>
+    <circle cx="68" cy="298" r="18"/>
+    <circle cx="320" cy="302" r="15"/>
+    <circle cx="572" cy="298" r="18"/>
+  </g>
+  <path d="M190 180L395 135" stroke="#F8FAFC" stroke-width="3" stroke-dasharray="9 8" opacity="0.9"/>
+  <g>
+    <circle cx="170" cy="184" r="18" fill="#F8FAFC"/>
+    <circle cx="170" cy="184" r="18" fill="url(#bg)" fill-opacity="0.1"/>
+  </g>
+  <g>
+    <circle cx="430" cy="126" r="18" fill="#111827"/>
+    <circle cx="430" cy="126" r="8.5" fill="#F8FAFC"/>
+    <text x="430" y="129" text-anchor="middle" fill="#111827" font-size="11" font-family="Bricolage Grotesque, sans-serif" font-weight="700">8</text>
+  </g>
+  <g>
+    <circle cx="468" cy="154" r="18" fill="#F8FAFC"/>
+    <rect x="450" y="146" width="36" height="16" rx="8" fill="#2563EB"/>
+    <circle cx="468" cy="154" r="8.5" fill="#F8FAFC"/>
+    <text x="468" y="157" text-anchor="middle" fill="#111827" font-size="10" font-family="Bricolage Grotesque, sans-serif" font-weight="700">10</text>
+  </g>
+  <g>
+    <circle cx="430" cy="182" r="18" fill="#EF4444"/>
+    <circle cx="430" cy="182" r="8.5" fill="#F8FAFC"/>
+    <text x="430" y="185" text-anchor="middle" fill="#111827" font-size="11" font-family="Bricolage Grotesque, sans-serif" font-weight="700">3</text>
+  </g>
+  <g>
+    <circle cx="468" cy="210" r="18" fill="#F8FAFC"/>
+    <rect x="450" y="202" width="36" height="16" rx="8" fill="#16A34A"/>
+    <circle cx="468" cy="210" r="8.5" fill="#F8FAFC"/>
+    <text x="468" y="213" text-anchor="middle" fill="#111827" font-size="10" font-family="Bricolage Grotesque, sans-serif" font-weight="700">14</text>
+  </g>
+  <g opacity="0.55" stroke="#FDE68A" stroke-width="2.2">
+    <path d="M100 74L112 80L100 86L88 80Z"/>
+    <path d="M540 74L552 80L540 86L528 80Z"/>
+    <path d="M100 286L112 292L100 298L88 292Z"/>
+    <path d="M540 286L552 292L540 298L528 292Z"/>
+  </g>
+  <text x="48" y="336" fill="#F5F5F4" font-size="30" font-family="Bricolage Grotesque, sans-serif" font-weight="700">Billar Pool Club</text>
+</svg>

@@ -1,0 +1,10 @@
+[
+  {
+    "type": "console.error",
+    "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+  },
+  {
+    "type": "console.error",
+    "text": "Failed to load resource: net::ERR_NETWORK_CHANGED"
+  }
+]

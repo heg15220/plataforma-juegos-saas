@@ -43,6 +43,7 @@ import SunsetSlipstream from "./racing/midnight-traffic";
 // Heavy engines use lazy() to keep initial bundle small
 const PlatformerGame = lazy(() => import("./PlatformerGame"));
 const FighterGame = lazy(() => import("./FighterGame"));
+const BilliardsGame = lazy(() => import("./arcade/billiards-club"));
 
 // KnowledgeArcadeGame variants
 const KnowledgeSudokuGame    = () => <KnowledgeArcadeGame variant="sudoku" />;
@@ -91,6 +92,7 @@ export const GAME_REGISTRY = {
   "fighter-neon-dojo":           FighterGame,
   "sports-head-soccer-arena":    HeadSoccerGame,
   "arcade-pacman-maze-protocol": PacmanGame,
+  "arcade-billar-pool-club":     BilliardsGame,
   "arcade-pong-neon-arena":      PongGame,
   "arcade-buscaminas-classic":   MinesweeperGame,
   "racing-race2dpro":            RaceGame2DPro,
@@ -133,6 +135,7 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "platformer-sky-runner":       "A/D o flechas para moverse, W/arriba/espacio para saltar, F acción.",
     "fighter-neon-dojo":           "A/D moverse, W saltar, J jab, K heavy, L guardia, U/B especial.",
     "sports-head-soccer-arena":    "Izq/der mover, arriba saltar, Espacio disparar, B habilidad.",
+    "arcade-billar-pool-club":     "Raton para apuntar, A/D afinan angulo, W/S potencia, Space tira, clic coloca la blanca en mano y F pantalla completa.",
     "arcade-pacman-maze-protocol": "WASD/flechas mover, Enter/Espacio empezar, P/Esc pausa, R reinicia, M sonido.",
     "arcade-pong-neon-arena":      "W/S o flechas arriba/abajo para mover vertical. A/D o flechas izq/der para avanzar o retroceder (sin cruzar el centro). Ratón también controla vertical. Enter/Espacio empezar, P pausa, R reinicia, M sonido, F pantalla completa.",
     "arcade-buscaminas-classic":   "Click izq abre, click der o pulsación larga marca bandera. Flechas mueven cursor, Enter/Espacio abre, F marca, H sugiere IA, A ejecuta IA y R reinicia. En competitivo puntúan celdas y tiempo.",
@@ -169,6 +172,7 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "platformer-sky-runner":       "A/D or arrows to move, W/up/space to jump, F action.",
     "fighter-neon-dojo":           "A/D move, W jump, J jab, K heavy, L guard, U/B special.",
     "sports-head-soccer-arena":    "Left/right move, up jump, Space shoot, B ability.",
+    "arcade-billar-pool-club":     "Mouse aims, A/D fine tune angle, W/S power, Space shoots, click places cue ball in hand, and F toggles fullscreen.",
     "arcade-pacman-maze-protocol": "WASD/arrows move, Enter/Space start, P/Esc pause, R restart, M sound.",
     "arcade-pong-neon-arena":      "W/S or up/down arrows for vertical. A/D or left/right arrows to advance or retreat (cannot cross centre line). Mouse also controls vertical. Enter/Space start, P pause, R restart, M sound, F fullscreen.",
     "arcade-buscaminas-classic":   "Left click reveals, right click or long press marks. Arrows move cursor, Enter/Space reveals, F marks, H asks AI hint, A runs AI move, R restarts. Competitive mode scores cells and time.",

@@ -13127,3 +13127,233 @@ button.brisca-card.playable:disabled {
     margin-top: 0.56rem;
   }
 }
+
+.billiards-game {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(250, 204, 21, 0.14), transparent 38%),
+    radial-gradient(circle at 100% 0%, rgba(34, 197, 94, 0.12), transparent 34%),
+    linear-gradient(165deg, #0f1720 0%, #162330 100%);
+  border-color: rgba(250, 204, 21, 0.18);
+  color: #e5efe9;
+}
+
+.billiards-game .mini-head h4 {
+  color: #f6f0dc;
+}
+
+.billiards-game .mini-head p {
+  color: #cfe3d7;
+}
+
+.billiards-head-actions,
+.billiards-segment,
+.billiards-control-group,
+.billiards-pocket-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.billiards-toolbar {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.billiards-segment button,
+.billiards-head-actions button,
+.billiards-control-group button,
+.billiards-pocket-grid button {
+  border: 1px solid rgba(245, 222, 179, 0.2);
+  border-radius: 999px;
+  background: rgba(12, 25, 36, 0.7);
+  color: #f8fafc;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.billiards-segment button:hover,
+.billiards-head-actions button:hover,
+.billiards-control-group button:hover,
+.billiards-pocket-grid button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(250, 204, 21, 0.42);
+}
+
+.billiards-segment button.active,
+.billiards-pocket-grid button.active {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.38), rgba(234, 179, 8, 0.2));
+  border-color: rgba(250, 204, 21, 0.68);
+}
+
+.billiards-segment button:disabled,
+.billiards-control-group button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.billiards-chipline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.billiards-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(240px, 0.9fr);
+  gap: 1rem;
+  align-items: start;
+  margin-top: 0.9rem;
+}
+
+.billiards-stage {
+  position: relative;
+  border-color: rgba(250, 204, 21, 0.16);
+  background: linear-gradient(145deg, rgba(18, 24, 34, 0.84), rgba(30, 41, 59, 0.68));
+}
+
+.billiards-canvas-host {
+  width: 100%;
+  max-height: 48vh;
+}
+
+.billiards-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+}
+
+.billiards-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 1.4rem;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(6, 10, 18, 0.72), rgba(6, 10, 18, 0.88));
+  text-align: center;
+}
+
+.billiards-overlay h5 {
+  margin: 0;
+  color: #fff7e0;
+  font-size: 1.4rem;
+}
+
+.billiards-overlay p {
+  margin: 0;
+  max-width: 34rem;
+  color: #d7e7df;
+}
+
+.billiards-overlay button {
+  border: none;
+  border-radius: 999px;
+  padding: 0.7rem 1.15rem;
+  background: linear-gradient(135deg, #f59e0b, #eab308);
+  color: #1f2937;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.billiards-sidepanel {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.billiards-panel {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.58);
+  padding: 0.85rem 0.95rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.billiards-panel header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: baseline;
+  margin-bottom: 0.65rem;
+  color: #fef3c7;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.billiards-panel p,
+.billiards-score-row p {
+  margin: 0.2rem 0 0;
+  color: #d6e6df;
+  font-size: 0.82rem;
+}
+
+.billiards-score-row {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.billiards-score-row article {
+  border-radius: 14px;
+  padding: 0.72rem 0.76rem;
+  background: rgba(9, 17, 28, 0.62);
+  border: 1px solid transparent;
+}
+
+.billiards-score-row article.active {
+  border-color: rgba(250, 204, 21, 0.42);
+  background: rgba(22, 33, 50, 0.78);
+}
+
+.billiards-score-row h6 {
+  margin: 0;
+  color: #f9fafb;
+  font-size: 0.88rem;
+}
+
+.billiards-control-deck {
+  margin-top: 0.9rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.billiards-help-copy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.85rem;
+  color: #bdd4c7;
+  font-size: 0.8rem;
+}
+
+.billiards-log-strip {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.billiards-log-strip span {
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  padding: 0.34rem 0.64rem;
+  color: #dce8e3;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 980px) {
+  .billiards-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .billiards-canvas-host {
+    max-height: none;
+  }
+}

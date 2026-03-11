@@ -10,6 +10,7 @@ import headSoccerArenaImage from "../assets/games/head-soccer-arena.svg";
 import pacmanMazeProtocolImage from "../assets/games/pacman-maze-protocol.svg";
 import pongNeonArenaImage from "../assets/games/pong-neon-arena.svg";
 import arcadeBuscaminasClassicImage from "../assets/games/arcade-buscaminas-classic.svg";
+import arcadeBillarPoolClubImage from "../assets/games/arcade-billar-pool-club.svg";
 import knowledgeSudokuImage from "../assets/games/knowledge-sudoku.svg";
 import knowledgeDominoImage from "../assets/games/knowledge-domino.svg";
 import knowledgeAhorcadoImage from "../assets/games/knowledge-ahorcado.svg";
@@ -287,6 +288,51 @@ export const games = [
     viability_en: "High: decoupled 2D Canvas engine with FSM AI and BFS pathfinding.",
     visualStyle_en: "Dark neon maze with clear route, pellet and ghost-state readability.",
     techFocus_en: "Modular engine/world/entities/ai/state architecture + decoupled React HUD.",
+  },
+
+  {
+    id: "arcade-billar-pool-club",
+    image: arcadeBillarPoolClubImage,
+    sessionTime: "5-12 min",
+
+    title: "Billar Pool Club",
+    category: "Arcade",
+    tagline: "Billar de estilo profesional con Bola 8, Bola 9, fisica precisa, faltas y IA tactica.",
+    description:
+      "Mesa de pool top-down con sensacion de club real: saque, blanca en mano, lectura de angulos, grupos lisas/rayas, cierre cantado de la 8 y disciplina Bola 9 con tres faltas consecutivas.",
+    objective_es: "Gana un match al mejor de tres racks dominando el saque, las entradas largas y la gestion de faltas segun el modo elegido.",
+    howToPlay_es: "Apunta con el raton o ajusta con A/D, regula potencia con W/S o la rueda, tira con Espacio, coloca la blanca con clic cuando este en mano y canta la tronera al cerrar la 8.",
+    highlights: [
+      "Dos disciplinas jugables: Bola 8 y Bola 9, con flujo de turnos y faltas diferenciadas.",
+      "Fisica de colision, bandas, troneras y friccion con avance temporal determinista.",
+      "IA con busqueda de tiros directos a tronera y ruido por dificultad.",
+      "Cierre de Bola 8 cantando tronera y Bola 9 con regla de tres faltas consecutivas.",
+      "Bridge QA completo con `render_game_to_text`, estado de bolas y control de tiempo.",
+    ],
+    difficulty: "Media-Alta",
+    multiplayer: "Solo vs IA",
+    viability: "Alta: canvas 2D con reglas discretas, IA heuristica y simulacion determinista.",
+    visualStyle: "Mesa de club con madera barnizada, paño verde profundo, guia de tiro y HUD de match.",
+    techFocus: "Fisica de billar, evaluacion de faltas, estados de rack/match y automatizacion QA.",
+
+    category_en: "Arcade",
+    tagline_en: "Professional-style billiards with 8-ball, 9-ball, precise physics, fouls, and tactical AI.",
+    description_en:
+      "A top-down pool table with club-level feel: break shot, cue-ball in hand, angle reading, solids/stripes grouping, called 8-ball finish, and 9-ball discipline with three-foul pressure.",
+    objective_en: "Win a best-of-three match by controlling the break, building long runs, and managing fouls under the selected rule set.",
+    howToPlay_en: "Aim with the mouse or fine tune with A/D, adjust power with W/S or the mouse wheel, shoot with Space, click to place cue ball in hand, and call the pocket before finishing the 8.",
+    highlights_en: [
+      "Two playable disciplines: 8-ball and 9-ball with differentiated turn flow and foul logic.",
+      "Collision, cushion, pocket, and friction physics with deterministic time stepping.",
+      "AI that searches direct potting lines and scales error by difficulty.",
+      "Called-pocket 8-ball finish and 9-ball three-consecutive-foul rule.",
+      "Full QA bridge with `render_game_to_text`, ball state, and deterministic time control.",
+    ],
+    difficulty_en: "Medium-High",
+    multiplayer_en: "Solo vs AI",
+    viability_en: "High: 2D canvas with discrete rules, heuristic AI, and deterministic simulation.",
+    visualStyle_en: "Club table with varnished wood, deep green felt, shot guide, and match HUD.",
+    techFocus_en: "Billiards physics, foul evaluation, rack/match state flow, and QA automation.",
   },
 
   {
