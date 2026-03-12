@@ -35,6 +35,7 @@ const KnowledgeTablaPeriodicaGame = () => <KnowledgeArcadeGame variant="tabla-pe
 const KnowledgeMapasGame = () => <KnowledgeArcadeGame variant="mapas" />;
 const KnowledgeMapasCaminoCortoGame = () => <KnowledgeArcadeGame variant="mapas-camino-corto" />;
 const KnowledgeAdivinaPaisGame = () => <KnowledgeArcadeGame variant="adivina-pais" />;
+const KnowledgeRefranesGame = () => <KnowledgeArcadeGame variant="refranes" />;
 
 const GAME_COMPONENTS = {
   "adventure-echoes": AdventureGame,
@@ -42,6 +43,7 @@ const GAME_COMPONENTS = {
   "racing-neon-lanes": RacingGame,
   "knowledge-quiz-nexus": KnowledgeGame,
   "knowledge-logic-vault": KnowledgeGame,
+  "knowledge-refranes-clasicos": KnowledgeRefranesGame,
   "knowledge-sudoku-sprint": KnowledgeSudokuGame,
   "knowledge-domino-chain": DominoStrategyGame,
   "knowledge-ahorcado-flash": KnowledgeAhorcadoGame,
@@ -80,6 +82,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "racing-neon-lanes": "Carriles con izquierda/derecha, velocidad con arriba/abajo, turbo (espacio) e item (I).",
     "knowledge-quiz-nexus": "Selecciona respuesta por boton y avanza al bloquear la pregunta.",
     "knowledge-logic-vault": "Selecciona respuesta por boton y avanza al bloquear la pregunta.",
+    "knowledge-refranes-clasicos": "5 rondas: lee el inicio del refran, escribe la continuacion y valida con Enter. N avanza una ronda ya revisada y R reinicia.",
     "knowledge-sudoku-sprint": "Mueve seleccion con flechas, escribe 1-4 (o A/S/D/F), limpia con Backspace/Delete y R para partida aleatoria.",
     "knowledge-domino-chain": "Domino clasico 4P por parejas: flechas izq/der eligen ficha, arriba/abajo extremo, Enter juega, P pasa, N avanza ronda y R reinicia.",
     "knowledge-ahorcado-flash": "Escribe letras para adivinar y, al terminar, usa Enter o el boton de partida aleatoria.",
@@ -116,6 +119,7 @@ const CONTROL_HINTS_BY_LOCALE = {
     "racing-neon-lanes": "Lane driving with left/right, speed with up/down, turbo (space) and item (I).",
     "knowledge-quiz-nexus": "Choose an answer button and continue after locking the question.",
     "knowledge-logic-vault": "Choose an answer button and continue after locking the question.",
+    "knowledge-refranes-clasicos": "5 rounds: read the proverb opening, type the continuation, and press Enter to check. N advances a reviewed round and R restarts.",
     "knowledge-sudoku-sprint": "Move selection with arrows, type 1-4 (or A/S/D/F), clear with Backspace/Delete and press R for a random match.",
     "knowledge-domino-chain": "Classic 4-player team domino: left/right chooses tile, up/down edge, Enter plays, P passes, N advances round, and R restarts.",
     "knowledge-ahorcado-flash": "Type letters to guess the word and, after finishing, use Enter or the random-match button.",

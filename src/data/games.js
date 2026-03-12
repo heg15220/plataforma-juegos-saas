@@ -25,6 +25,7 @@ import knowledgeCalculoMentalImage from "../assets/games/knowledge-calculo-menta
 import knowledgeTablaPeriodicaImage from "../assets/games/knowledge-tabla-periodica.svg";
 import knowledgeMapasImage from "../assets/games/knowledge-mapas.svg";
 import knowledgeAdivinaPaisImage from "../assets/games/knowledge-adivina-pais.svg";
+import knowledgeRefranesImage from "../assets/games/knowledge-refranes.svg";
 import chessGrandmasterArenaImage from "../assets/games/chess-grandmaster-arena.svg";
 import strategySudokuTecnicasImage from "../assets/games/strategy-sudoku-tecnicas.svg";
 import strategyDamasProfesionalImage from "../assets/games/strategy-damas-professional.svg";
@@ -700,6 +701,55 @@ export const games = [
     viability_en: "High: large local bank with browser-language i18n.",
     visualStyle_en: "Premium quiz panel with neon identity and fast feedback readability.",
     techFocus_en: "Topic-balanced selection, es/en i18n and streak-based scoring.",
+  },
+
+  {
+    id: "knowledge-refranes-clasicos",
+    image: knowledgeRefranesImage,
+    sessionTime: "2-5 min",
+
+    title: "Reto de Refranes",
+    category: "Conocimiento",
+    tagline: "5 rondas para completar refranes del refranero espanol o ingles segun idioma.",
+    description:
+      "Modo de memoria verbal y cultura popular. En cada ronda se muestra el inicio de un refran y debes escribir la parte restante; si fallas, el juego revela la respuesta correcta antes de pasar al siguiente.",
+    objective_es:
+      "Completa 5 refranes por partida escribiendo la continuacion correcta y cierra la sesion con el maximo numero de aciertos.",
+    howToPlay_es:
+      "Lee el inicio del refran, escribe la parte que falta y valida con Enter o el boton. El navegador usa refranes espanoles si el idioma empieza por es y proverbios ingleses en cualquier otro caso.",
+    highlights: [
+      "Banco local de 500 refranes espanoles y 500 proverbios ingleses.",
+      "Partidas compactas de 5 rondas con revelado inmediato de la respuesta.",
+      "Validacion tolerante: acepta la continuacion o el refran completo.",
+      "Seleccion por idioma de navegador: es* -> espanol; resto -> ingles.",
+      "Bridge QA con prompt, respuesta, historial y progreso serializado.",
+    ],
+    difficulty: "Media",
+    multiplayer: "Solo",
+    viability: "Alta: dataset local cerrado, validacion textual y flujo de 5 rondas.",
+    visualStyle: "Tarjetas editoriales con foco en tipografia, cita y memoria verbal.",
+    techFocus: "Banco bilingue generado desde fuentes publicas, normalizacion de texto y validacion por prompt+respuesta.",
+
+    category_en: "Knowledge",
+    tagline_en: "5 rounds to complete Spanish or English proverbs based on browser language.",
+    description_en:
+      "Verbal-memory and folk-wisdom mode. Each round reveals the opening of a proverb and you must type the missing continuation; when you fail, the correct answer is shown before the next round.",
+    objective_en:
+      "Complete 5 proverbs per match by typing the correct continuation and finish with the highest possible score.",
+    howToPlay_en:
+      "Read the proverb opening, type the missing ending, and submit with Enter or the button. Browsers with locale starting with es use Spanish sayings; all others use English proverbs.",
+    highlights_en: [
+      "Local bank of 500 Spanish sayings and 500 English proverbs.",
+      "Compact 5-round matches with immediate answer reveal.",
+      "Forgiving validation: accepts either the continuation or the full proverb.",
+      "Browser-language switch: es* -> Spanish; everything else -> English.",
+      "QA bridge with serialized prompt, answer, history, and progress.",
+    ],
+    difficulty_en: "Medium",
+    multiplayer_en: "Solo",
+    viability_en: "High: closed local dataset, text validation and a clear 5-round loop.",
+    visualStyle_en: "Editorial quote-card layout focused on typography and proverb recall.",
+    techFocus_en: "Bilingual public-source proverb bank, text normalization, and prompt-plus-answer validation.",
   },
 
   {

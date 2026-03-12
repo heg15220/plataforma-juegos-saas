@@ -27,6 +27,14 @@ function GameLaunchModal({ game, onClose }) {
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
+  useEffect(() => {
+    const handleCloseRequest = () => {
+      onClose();
+    };
+    window.addEventListener("launch-game-close", handleCloseRequest);
+    return () => window.removeEventListener("launch-game-close", handleCloseRequest);
+  }, [onClose]);
+
   return (
     <div
       className="launch-overlay"

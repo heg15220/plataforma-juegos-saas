@@ -78,6 +78,13 @@
   - backlog priorizado P0/P1/P2,
   - plan UX/accesibilidad/KPIs,
   - prompt maestro reutilizable para futuras iteraciones.
+
+## 2026-03-12 - Juego de refranes (investigacion y plan)
+- Localizada la integracion actual de juegos de `Conocimiento`: catalogo en `src/data/games.js`, duplicacion de registro en `src/games/registry.jsx` y `src/components/GamePlayground.jsx`, y variantes de `KnowledgeArcadeGame`.
+- Fuente candidata para ingles validada con red: categoria `Category:English proverbs` de Wiktionary (API `categorymembers`, >500 entradas disponibles y estructuradas).
+- Fuente candidata para espanol validada con red: paginas alfabeticas `Refranes en español (...)` de Wikiquote en espanol, con wikitext accesible y volumen suficiente.
+- Decision tecnica: generar un banco reproducible `es/en` de 500 refranes por idioma con script, filtros basicos de calidad/deduplicacion y campos ya partidos en `inicio` + `resto`.
+- Siguiente bloque: crear generador, materializar dataset, implementar el minijuego de 5 rondas y validar con tests/build/Playwright.
   - arquitectura objetivo por modulos (`physics`, `camera`, `ai`, `render`, `fx`, `hud`, `content`);
   - roadmap por fases P0/P1/P2/P3 con criterios de salida;
   - pipeline de assets 3D y estrategia LOD/rendimiento;
