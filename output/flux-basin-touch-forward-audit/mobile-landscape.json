@@ -1,0 +1,94 @@
+{
+  "embeddedMetrics": {
+    "orientation": "landscape",
+    "stageBeforeSide": true,
+    "shell": {
+      "width": 833,
+      "height": 468
+    },
+    "canvas": {
+      "width": 827,
+      "height": 465
+    },
+    "canvasStyle": {
+      "width": "827.031px",
+      "height": "465.203px",
+      "maxHeight": "none"
+    }
+  },
+  "before": {
+    "deviceProfile": "touch",
+    "ball": {
+      "active": false,
+      "x": 132,
+      "y": 430,
+      "vx": 0,
+      "vy": 0,
+      "radius": 18,
+      "targetDwellMs": 0
+    },
+    "target": {
+      "w": 108,
+      "h": 110,
+      "innerW": 58,
+      "innerH": 62,
+      "tolerance": 18,
+      "magnetRadius": 84,
+      "holdMs": 180,
+      "settleSpeed": 160,
+      "rimForgiveness": 15,
+      "x": 724,
+      "y": 316
+    },
+    "message": "Arrastra desde la orbita hasta el punto final del tiro y suelta. En movil y tablet la linea que marcas define direccion y fuerza, sin trayectorias punteadas."
+  },
+  "during": {
+    "playState": "aiming",
+    "deviceProfile": "touch",
+    "aim": {
+      "angleDeg": -38,
+      "power": 0.91,
+      "launchSpeed": 1084.4,
+      "dragging": false
+    },
+    "ball": {
+      "active": false,
+      "x": 132,
+      "y": 430,
+      "vx": 0,
+      "vy": 0,
+      "radius": 18,
+      "targetDwellMs": 0
+    }
+  },
+  "after": {
+    "playState": "idle",
+    "message": "",
+    "ball": {
+      "active": false,
+      "x": 132,
+      "y": 430,
+      "vx": 0,
+      "vy": 0,
+      "radius": 18,
+      "targetDwellMs": 0
+    },
+    "aim": {
+      "angleDeg": -38,
+      "power": 0.91,
+      "launchSpeed": 1084.4,
+      "dragging": false
+    }
+  },
+  "fullscreenMetrics": {
+    "fullscreen": false,
+    "shell": {
+      "width": 827,
+      "height": 466
+    },
+    "canvas": {
+      "width": 825,
+      "height": 464
+    }
+  }
+}

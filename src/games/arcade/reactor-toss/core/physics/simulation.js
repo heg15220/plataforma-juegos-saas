@@ -9,12 +9,43 @@ import {
 } from "./constants";
 
 const EPSILON = 0.0001;
+const PREVIEW_MAX_FRAMES = 360;
+const PREVIEW_SAMPLE_EVERY = 3;
 
 const sqr = (value) => value * value;
 
 const distance = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
 
 const ballSpeed = (ball) => Math.hypot(ball.vx, ball.vy);
+
+const redistributePreviewDots = (points, sampleCount) => {
+  if (!points.length || sampleCount <= 0) {
+    return [];
+  }
+  if (points.length <= sampleCount) {
+    return points;
+  }
+
+  const finalIndex = points.length - 1;
+  const result = [];
+
+  for (let index = 0; index < sampleCount; index += 1) {
+    const pointIndex = Math.round((index / Math.max(1, sampleCount - 1)) * finalIndex);
+    const point = points[pointIndex];
+    const previous = result[result.length - 1];
+    if (!previous || previous.x !== point.x || previous.y !== point.y) {
+      result.push(point);
+    }
+  }
+
+  const lastPoint = points[finalIndex];
+  const finalPoint = result[result.length - 1];
+  if (!finalPoint || finalPoint.x !== lastPoint.x || finalPoint.y !== lastPoint.y) {
+    result.push(lastPoint);
+  }
+
+  return result;
+};
 
 const normalize = (x, y) => {
   const length = Math.hypot(x, y) || 1;
@@ -152,7 +183,8 @@ export function resolveOscillation(base, movement, clockMs) {
   const amplitude = range / 2;
   const phase = (movement.phase ?? 0) * Math.PI * 2;
   const t = clockMs / 1000;
-  const offset = Math.sin(t * (movement.speed ?? 1) * 0.5 + phase) * amplitude;
+  const angularSpeed = amplitude > EPSILON ? (movement.speed ?? 1) / amplitude : movement.speed ?? 1;
+  const offset = Math.sin(t * angularSpeed + phase) * amplitude;
 
   if (movement.axis === "x") {
     return { x: center + offset, y: base.y };
@@ -445,23 +477,24 @@ export function buildPreviewDots(level, aim, clockMs, sampleCount = MAX_AIM_DOTS
   const posedObstacles = level.obstacles.map((obstacle) => resolveObstaclePose(obstacle, clockMs));
   const portalPairs = createPortalPairs(posedObstacles);
   const target = resolveTargetPose(level.target, clockMs);
-  const dots = [];
+  const trace = [];
 
-  for (let frame = 0; frame < 240 && dots.length < sampleCount; frame += 1) {
+  for (let frame = 0; frame < PREVIEW_MAX_FRAMES; frame += 1) {
     posedObstacles.forEach((obstacle) => applyFieldForces(ball, obstacle, 1 / 60));
     integrateBall(ball, physicsProfile, 1 / 60);
     stepObstacles(ball, level, posedObstacles, portalPairs, physicsProfile);
     const capture = applyTargetForces(ball, target, 1 / 60);
+    const outOfBounds = isBallOutOfBounds(ball, level.bounds);
 
-    if (frame % 8 === 0) {
-      dots.push({ x: ball.x, y: ball.y });
+    if (frame % PREVIEW_SAMPLE_EVERY === 0 || capture.captured || outOfBounds) {
+      trace.push({ x: ball.x, y: ball.y });
     }
-    if (capture.captured || isBallOutOfBounds(ball, level.bounds)) {
+    if (capture.captured || outOfBounds) {
       break;
     }
   }
 
-  return dots;
+  return redistributePreviewDots(trace, sampleCount);
 }
 
 export function withinStage(ball) {

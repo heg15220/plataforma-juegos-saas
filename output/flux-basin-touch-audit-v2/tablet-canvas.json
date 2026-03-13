@@ -1,0 +1,11 @@
+{
+  "beforeMessage": "Arrastra la orbita con el dedo y suelta. En movil y tablet el apuntado es directo, sin trayectorias punteadas.",
+  "playState": "aiming",
+  "deviceProfile": "touch",
+  "aim": {
+    "angleDeg": -48.01,
+    "power": 0.48,
+    "launchSpeed": 723.61,
+    "dragging": true
+  }
+}

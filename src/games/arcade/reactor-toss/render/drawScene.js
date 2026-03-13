@@ -333,6 +333,57 @@ function drawAimPreview(ctx, level, aim) {
   });
 }
 
+function drawTouchAimPreview(ctx, level, runtime) {
+  const currentX = runtime.transient.dragCurrentX || level.ballSpawn.x;
+  const currentY = runtime.transient.dragCurrentY || level.ballSpawn.y;
+  const angle = Math.atan2(currentY - level.ballSpawn.y, currentX - level.ballSpawn.x);
+  const arrowSize = 18;
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(190, 247, 255, 0.32)";
+  ctx.lineWidth = 5;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(level.ballSpawn.x, level.ballSpawn.y);
+  ctx.lineTo(currentX, currentY);
+  ctx.stroke();
+
+  ctx.setLineDash([12, 10]);
+  ctx.strokeStyle = "rgba(255, 216, 120, 0.38)";
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(level.ballSpawn.x, level.ballSpawn.y);
+  ctx.lineTo(currentX, currentY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = "rgba(126, 231, 255, 0.18)";
+  ctx.beginPath();
+  ctx.arc(level.ballSpawn.x, level.ballSpawn.y, 30, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(255, 245, 195, 0.82)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(currentX, currentY, 22, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(255, 245, 195, 0.82)";
+  ctx.beginPath();
+  ctx.moveTo(currentX, currentY);
+  ctx.lineTo(
+    currentX - Math.cos(angle - Math.PI / 6) * arrowSize,
+    currentY - Math.sin(angle - Math.PI / 6) * arrowSize
+  );
+  ctx.lineTo(
+    currentX - Math.cos(angle + Math.PI / 6) * arrowSize,
+    currentY - Math.sin(angle + Math.PI / 6) * arrowSize
+  );
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
 function drawTopHud(ctx, level, runtime) {
   ctx.save();
   roundRectPath(ctx, 18, 16, 324, 52, 16);
@@ -406,7 +457,11 @@ export function drawFluxScene(ctx, runtime) {
   });
 
   if (runtime.playState === "aiming") {
-    drawAimPreview(ctx, level, aim);
+    if (runtime.deviceProfile === "touch") {
+      drawTouchAimPreview(ctx, level, runtime);
+    } else {
+      drawAimPreview(ctx, level, aim);
+    }
   }
 
   drawTrail(ctx, ball.trail ?? []);

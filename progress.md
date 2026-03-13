@@ -2790,3 +2790,85 @@ Pendiente sugerido:
     - `output/arcade-orchard-match-blast-rebuild-audit/`
   - Validado progreso de partida en `state-0..2.json` (score/cosecha/carga/objetivos/board serializado) y capturas con render del tablero ampliado.
   - Sin `errors-*.json` en la auditoria de rebuild.
+
+## 2026-03-13 - Flux Basin: preview mas largo + mas tiempo por nivel
+- Ajustado `src/games/arcade/reactor-toss/core/physics/simulation.js` para que la previsualizacion ya no corte el arranque de la parabola:
+  - ahora simula hasta `360` frames, muestrea la traza completa y redistribuye los dots visibles a lo largo de toda la ruta estimada;
+  - esto evita que niveles con tiros largos muestren una ayuda truncada antes de llegar al objetivo.
+- Ajustados parametros globales en `src/games/arcade/reactor-toss/core/physics/constants.js`:
+  - `timeLimitMs` sube de `24000` a `45000`;
+  - `previewDots` sube a `18` (`standard`) y `26` (`comfort`);
+  - `MAX_AIM_DOTS` sube a `30`.
+- Ajustado copy de ayuda en `src/games/arcade/reactor-toss/copy.js` para eliminar la referencia a "preview limitada".
+- Recalibrado `flux-01` en `src/games/arcade/reactor-toss/core/level/world1.js` moviendo el objetivo a `x: 724, y: 316`:
+  - la guia visual ahora converge con el cubo en el estado inicial;
+  - el disparo por defecto vuelve a limpiar el nivel 1 y desbloquear el nivel 2 en QA automatizada.
+- Verificacion:
+  - `npm run build` OK dos veces tras los cambios.
+  - Playwright preview check OK en `output/flux-basin-preview-check-v2/`:
+    - `shot-0.png` revisada visualmente, con la trayectoria alcanzando el cubo del nivel 1;
+    - `state-0.json` confirma `remainingMs ~= 43783`, es decir, limite de `45s`.
+  - Playwright regresion OK en `output/flux-basin-regression-check-v2/`:
+    - `state-0.json` termina en `flux-02` con `totalStars: 3`, confirmando clear del nivel 1;
+    - sin `errors-*.json` nuevos en la carpeta.
+
+## 2026-03-13 - Flux Basin: modo movil/tablet con drag directo + render mas nitido
+- `src/games/arcade/reactor-toss/runtime.js`
+  - anadida deteccion de `deviceProfile` (`desktop` / `touch`) y helpers para separar controles tactiles de desktop;
+  - el canvas ahora sincroniza su backing store con el tamano CSS y el `devicePixelRatio`, con tope `3x` en touch/fullscreen para mejorar nitidez;
+  - en touch se desactiva la previsualizacion punteada, se amplifica el radio de agarre y se arrastra la orbita directamente con el dedo, manteniendo el clamp a `MAX_DRAG_DISTANCE`;
+  - `startLevel()` ya usa un mensaje `readyTouch` especifico para no hablar de trayectorias de desktop en movil/tablet.
+- `src/games/arcade/reactor-toss/render/drawScene.js`
+  - la bola se renderiza en la posicion de drag mientras el usuario apunta en touch;
+  - nueva guia tactil elastica (linea + halo) en lugar del arco punteado de PC.
+- `src/games/arcade/reactor-toss/index.jsx`
+  - deteccion reactiva de `pointer: coarse` / `maxTouchPoints`;
+  - ocultados en touch el boton de ayuda de trayectoria y la botonera inferior de apuntado desktop;
+  - el footer usa ahora `readyTouch` cuando el layout activo es tactil.
+- `src/games/arcade/reactor-toss/copy.js`
+  - anadidos textos `controlsTouch` y `messages.readyTouch` en ES/EN para explicar el control directo en movil/tablet.
+- `src/styles.css`
+  - reforzado el shell fullscreen del canvas para centrar el juego y mantener el area util del lienzo en touch.
+- Verificacion:
+  - `npm run build` OK tras el remate de `readyTouch` y del fallback del footer.
+  - Regresion desktop con cliente Playwright local OK en `output/flux-basin-desktop-post-touch-v2/`:
+    - `state-0.json` mantiene `deviceProfile: "desktop"` y `remainingMs ~= 43950`;
+    - `shot-0.png` revisada: la trayectoria desktop sigue alcanzando el objetivo del nivel 1.
+  - QA tactil personalizada generada en `output/flux-basin-touch-audit/`:
+    - `mobile.json` confirma `deviceProfile: "touch"` y canvas `343x193 -> 899x506` con `dpr: 2.625`;
+    - `tablet.json` confirma `deviceProfile: "touch"`, drag activo y canvas `684x385 -> 1369x770` con `dpr: 2`;
+    - `tablet-drag.png` revisada: sin trayectoria punteada, con arrastre directo de la orbita y guia tactil visible.
+  - QA tactil refinada en `output/flux-basin-touch-audit-v2/`:
+    - `mobile.json` y `tablet.json` ya muestran el mensaje `readyTouch` y `deviceProfile: "touch"`;
+    - `mobile-canvas.json` y `tablet-canvas.json` confirman `playState: "aiming"` con `aim.dragging: true`;
+    - `mobile-canvas-drag.png` y `tablet-canvas-drag.png` revisadas: la bola se arrastra directamente, aparece la guia tactil y no hay dots de desktop.
+  - Limitacion conocida:
+    - en headless Chromium el flag de Fullscreen API no llega a activarse (`fullscreen: false`), asi que la validacion de fullscreen se basa en el render observado y en el backing store de alta densidad, no en el evento nativo del navegador.
+
+## 2026-03-13 - Flux Basin: landscape touch + swipe largo sin clamp corto
+- `src/games/arcade/reactor-toss/runtime.js`
+  - eliminado el clamp corto del gesto tactil basado en `MAX_DRAG_DISTANCE`; en touch ya no se recorta el arrastre a un radio artificial.
+  - el punto visible de drag ahora solo se limita con un `overscan` amplio para que la bola y la guia no desaparezcan por completo del canvas al sobrearrastrar.
+  - `updateAimFromPointer()` en touch deja que `power` crezca con la distancia real del gesto y calcula `launchSpeed` con `computeLaunchSpeed(..., { allowOverflow: true })`;
+  - el disparo usa `aim.launchSpeed` directamente, con la unica salvaguarda final del motor en `MAX_BALL_SPEED` para no volver caotica la simulacion.
+- `src/games/arcade/reactor-toss/core/physics/constants.js`
+  - `computeLaunchSpeed()` ahora soporta `allowOverflow` para extender linealmente la velocidad de salida mas alla del antiguo techo de desktop, pero manteniendo el clamp fisico global.
+- `src/styles.css`
+  - nuevo bloque responsive `orientation: landscape` + `max-height` para touch:
+    - el escenario pasa delante (`stageBeforeSide`);
+    - el canvas recibe mas protagonismo vertical;
+    - se compactan cabecera y paneles;
+    - se ocultan tagline, hints y footer redundantes para liberar altura util.
+- `src/games/arcade/reactor-toss/copy.js`
+  - el texto tactil ahora deja claro que la distancia real del deslizamiento define la fuerza.
+- Verificacion:
+  - `npm run build` OK tras el ajuste.
+  - Regresion desktop OK en `output/flux-basin-desktop-touch-unclamped/`:
+    - `state-0.json` mantiene `deviceProfile: "desktop"` y `launchSpeed: 1084.4`;
+    - `shot-0.png` revisada: la trayectoria desktop sigue llegando al objetivo del nivel 1.
+  - QA landscape touch en `output/flux-basin-touch-landscape-audit-v2/`:
+    - `mobile-landscape.json` y `tablet-landscape.json` confirman `orientation: "landscape"` y `stageBeforeSide: true`;
+    - `mobile-landscape-viewport.png` y `tablet-landscape-viewport.png` revisadas: el canvas queda antes de los paneles y ocupa el foco visual;
+    - `mobile-landscape-drag-shell.png` y `tablet-landscape-drag-shell.png` revisadas: la guia tactil sigue el gesto y no aparecen dots de desktop;
+    - `mobile-landscape.json` reporta `aim.power: 3.289` y `launchSpeed: 1480`, superando el antiguo techo de `1084.4/1160` asociado al gesto capado;
+    - `tablet-landscape.json` reporta `aim.power: 1.543` y `launchSpeed: 1480`, validando el mismo comportamiento en tablet horizontal.

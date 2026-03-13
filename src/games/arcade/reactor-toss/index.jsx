@@ -24,7 +24,7 @@ const DEFAULT_SNAPSHOT = {
   launches: 0,
   rebounds: 0,
   elapsedMs: 0,
-  timeLimitMs: 24000,
+  timeLimitMs: 45000,
   selectedSkinId: "ember-core",
   selectedSkinName: "Ember",
   unlockedSkinIds: ["ember-core"],
@@ -48,6 +48,7 @@ const DEFAULT_SNAPSHOT = {
   levelHints: [],
   coordinates: "origin_top_left_x_right_y_down_pixels",
   fullscreen: false,
+  deviceProfile: "desktop",
 };
 
 function formatTime(ms) {
@@ -57,6 +58,15 @@ function formatTime(ms) {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
+function resolveDeviceProfile() {
+  if (typeof window === "undefined") {
+    return "desktop";
+  }
+  const coarsePointer = window.matchMedia?.("(pointer: coarse)")?.matches;
+  const hasTouchPoints = (navigator.maxTouchPoints ?? 0) > 0;
+  return coarsePointer || hasTouchPoints ? "touch" : "desktop";
+}
+
 function FluxBasinGame() {
   const locale = useMemo(() => (resolveBrowserLanguage() === "es" ? "es" : "en"), []);
   const ui = useMemo(() => localize(UI_COPY, locale), [locale]);
@@ -64,6 +74,7 @@ function FluxBasinGame() {
   const shellRef = useRef(null);
   const runtimeRef = useRef(null);
   const [snapshot, setSnapshot] = useState(DEFAULT_SNAPSHOT);
+  const [deviceProfile, setDeviceProfile] = useState(resolveDeviceProfile);
 
   const requestFullscreen = useCallback(async () => {
     const element = shellRef.current;
@@ -98,6 +109,7 @@ function FluxBasinGame() {
       ui,
       onSnapshot: setSnapshot,
       onFullscreenRequest: requestFullscreen,
+      deviceProfile,
     });
     runtimeRef.current = runtime;
     runtime.start();
@@ -105,7 +117,7 @@ function FluxBasinGame() {
       runtime.destroy();
       runtimeRef.current = null;
     };
-  }, [locale, requestFullscreen, ui]);
+  }, [deviceProfile, locale, requestFullscreen, ui]);
 
   useEffect(() => {
     const onChange = () => {
@@ -118,6 +130,25 @@ function FluxBasinGame() {
       document.removeEventListener("webkitfullscreenchange", onChange);
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+    const media = window.matchMedia?.("(pointer: coarse)");
+    const updateDeviceProfile = () => setDeviceProfile(resolveDeviceProfile());
+    updateDeviceProfile();
+    window.addEventListener("resize", updateDeviceProfile);
+    media?.addEventListener?.("change", updateDeviceProfile);
+    return () => {
+      window.removeEventListener("resize", updateDeviceProfile);
+      media?.removeEventListener?.("change", updateDeviceProfile);
+    };
+  }, []);
+
+  useEffect(() => {
+    runtimeRef.current?.setDeviceProfile(deviceProfile);
+  }, [deviceProfile]);
 
   const buildTextPayload = useCallback(
     (state) => ({
@@ -144,6 +175,7 @@ function FluxBasinGame() {
         remainingMs: Math.max(0, state.timeLimitMs - state.elapsedMs),
       },
       settings: state.settings,
+      deviceProfile: state.deviceProfile,
       aim: {
         angleDeg: state.aim.angleDeg,
         power: state.aim.power,
@@ -197,12 +229,15 @@ function FluxBasinGame() {
   });
 
   const continueLevel = snapshot.levelId;
-  const isPlaying = snapshot.mode === "playing";
   const isLevelComplete = snapshot.mode === "levelComplete";
   const remainingMs = Math.max(0, snapshot.timeLimitMs - snapshot.elapsedMs);
+  const activeDeviceProfile = snapshot.deviceProfile ?? deviceProfile;
+  const isTouchLayout = activeDeviceProfile === "touch";
+  const controlsCopy = isTouchLayout ? ui.sections.controlsTouch : ui.sections.controls;
+  const readyMessage = isTouchLayout ? ui.messages.readyTouch : ui.messages.ready;
 
   return (
-    <div className="mini-game flux-basin-game">
+    <div className={`mini-game flux-basin-game flux-basin-game--${activeDeviceProfile}`}>
       <div className="mini-head flux-basin-head">
         <div>
           <p className="flux-basin-world">{ui.worldLabel}</p>
@@ -259,7 +294,7 @@ function FluxBasinGame() {
             <ul className="flux-basin-hints">
               {snapshot.levelHints.map((hint) => <li key={hint}>{hint}</li>)}
             </ul>
-            <p className="flux-basin-controls-copy">{ui.sections.controls}</p>
+            <p className="flux-basin-controls-copy">{controlsCopy}</p>
           </section>
 
           <section className="flux-basin-panel flux-basin-panel-settings">
@@ -274,9 +309,11 @@ function FluxBasinGame() {
               <button type="button" onClick={() => runtimeRef.current?.toggleVibration()}>
                 {ui.labels.vibration}: {snapshot.settings.vibrationEnabled ? ui.toggles.on : ui.toggles.off}
               </button>
-              <button type="button" onClick={() => runtimeRef.current?.setShowTrajectoryHelp(!snapshot.settings.showTrajectoryHelp)}>
-                {ui.labels.assist}: {snapshot.settings.showTrajectoryHelp ? ui.toggles.on : ui.toggles.off}
-              </button>
+              {!isTouchLayout ? (
+                <button type="button" onClick={() => runtimeRef.current?.setShowTrajectoryHelp(!snapshot.settings.showTrajectoryHelp)}>
+                  {ui.labels.assist}: {snapshot.settings.showTrajectoryHelp ? ui.toggles.on : ui.toggles.off}
+                </button>
+              ) : null}
               <button
                 type="button"
                 onClick={() => runtimeRef.current?.setInputProfile(snapshot.settings.inputProfile === "standard" ? "comfort" : "standard")}
@@ -357,7 +394,7 @@ function FluxBasinGame() {
                       >
                         <strong>{level.index + 1}</strong>
                         <span>{level.name}</span>
-                        <em>{"★".repeat(level.stars)}{"☆".repeat(3 - level.stars)}</em>
+                        <em>{"\u2605".repeat(level.stars)}{"\u2606".repeat(3 - level.stars)}</em>
                       </button>
                     ))}
                   </div>
@@ -367,10 +404,10 @@ function FluxBasinGame() {
 
             {isLevelComplete ? (
               <div className="flux-basin-overlay">
-                <div className="flux-basin-overlay-card">
+                <div className={`flux-basin-overlay-card ${snapshot.fullscreen ? "" : "flux-basin-overlay-card--compact"}`.trim()}>
                   <p className="flux-basin-overlay-eyebrow">{snapshot.resultLabel}</p>
                   <h5>{snapshot.medalLabel}</h5>
-                  <p>{ui.labels.stars}: {"★".repeat(snapshot.starsEarned)}{"☆".repeat(3 - snapshot.starsEarned)}</p>
+                  <p>{ui.labels.stars}: {"\u2605".repeat(snapshot.starsEarned)}{"\u2606".repeat(3 - snapshot.starsEarned)}</p>
                   <p>{ui.labels.best}: {snapshot.score}</p>
                   <div className="flux-basin-overlay-actions">
                     <button type="button" onClick={() => runtimeRef.current?.nextLevel()}>
@@ -406,18 +443,20 @@ function FluxBasinGame() {
           </div>
 
           <div className="flux-basin-stage-footer">
-            <p>{snapshot.message || ui.messages.ready}</p>
+            <p>{snapshot.message || readyMessage}</p>
             {snapshot.callout ? <p className="flux-basin-callout">{snapshot.callout}</p> : null}
           </div>
 
-          <div className="flux-basin-touch-controls" role="group" aria-label="Flux Basin touch controls">
-            <button type="button" {...holdButtonProps("aimLeft")}>← Aim</button>
-            <button type="button" {...holdButtonProps("aimRight")}>Aim →</button>
-            <button type="button" {...holdButtonProps("powerDown")}>− Power</button>
-            <button type="button" {...holdButtonProps("powerUp")}>+ Power</button>
-            <button type="button" onClick={() => runtimeRef.current?.fireBall()}>Launch</button>
-            <button type="button" onClick={() => runtimeRef.current?.restartLevel()}>{ui.labels.retry}</button>
-          </div>
+          {!isTouchLayout ? (
+            <div className="flux-basin-touch-controls" role="group" aria-label="Flux Basin touch controls">
+              <button type="button" {...holdButtonProps("aimLeft")}>Left Aim</button>
+              <button type="button" {...holdButtonProps("aimRight")}>Right Aim</button>
+              <button type="button" {...holdButtonProps("powerDown")}>Power -</button>
+              <button type="button" {...holdButtonProps("powerUp")}>Power +</button>
+              <button type="button" onClick={() => runtimeRef.current?.fireBall()}>Launch</button>
+              <button type="button" onClick={() => runtimeRef.current?.restartLevel()}>{ui.labels.retry}</button>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

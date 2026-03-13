@@ -1,0 +1,34 @@
+{
+  "before": {
+    "message": "Arrastra la orbita con el dedo y suelta. En movil y tablet el apuntado es directo, sin trayectorias punteadas.",
+    "deviceProfile": "touch",
+    "playState": "aiming"
+  },
+  "during": {
+    "message": "Arrastra la orbita con el dedo y suelta. En movil y tablet el apuntado es directo, sin trayectorias punteadas.",
+    "deviceProfile": "touch",
+    "playState": "aiming",
+    "aim": {
+      "angleDeg": -52.13,
+      "power": 0.407,
+      "launchSpeed": 662.05,
+      "dragging": true
+    }
+  },
+  "after": {
+    "message": "Orbita en vuelo.",
+    "deviceProfile": "touch",
+    "playState": "flying"
+  },
+  "metrics": {
+    "devicePixelRatio": 2,
+    "canvasClient": {
+      "width": 684,
+      "height": 385
+    },
+    "canvasBuffer": {
+      "width": 1369,
+      "height": 770
+    }
+  }
+}

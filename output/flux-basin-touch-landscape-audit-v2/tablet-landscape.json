@@ -1,0 +1,22 @@
+{
+  "layout": {
+    "orientation": "landscape",
+    "stageTop": 131.921875,
+    "sideTop": 629.96875,
+    "stageBeforeSide": true
+  },
+  "before": {
+    "deviceProfile": "touch",
+    "message": "Arrastra la orbita con el dedo y suelta. La distancia del gesto manda en la fuerza y en movil y tablet no hay trayectorias punteadas."
+  },
+  "during": {
+    "playState": "aiming",
+    "deviceProfile": "touch",
+    "aim": {
+      "angleDeg": -48.09,
+      "power": 1.543,
+      "launchSpeed": 1480,
+      "dragging": true
+    }
+  }
+}

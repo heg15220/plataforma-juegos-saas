@@ -44,6 +44,8 @@ import {
 const DEG_TO_RAD = Math.PI / 180;
 const AIM_MIN_DEG = -175;
 const AIM_MAX_DEG = -5;
+const TOUCH_AIM_MIN_DEG = -179;
+const TOUCH_AIM_MAX_DEG = 179;
 
 function localizeLabel(value, locale) {
   if (!value) {
@@ -83,14 +85,35 @@ function createLevelLookup(levels) {
   return new Map(levels.map((level) => [level.id, level]));
 }
 
+function levelHasTimedMotion(level) {
+  if (!level) {
+    return false;
+  }
+  if (level.target?.moving) {
+    return true;
+  }
+  return level.obstacles.some(
+    (obstacle) => obstacle.type === "movingBar" || obstacle.type === "gate"
+  );
+}
+
+function normalizeAngleDeg(angleDeg) {
+  let normalized = ((angleDeg + 180) % 360 + 360) % 360 - 180;
+  if (normalized <= -180) {
+    normalized = 180;
+  }
+  return normalized;
+}
+
 export default class FluxBasinRuntime {
-  constructor({ canvas, locale = "en", ui, onSnapshot, onFullscreenRequest }) {
+  constructor({ canvas, locale = "en", ui, onSnapshot, onFullscreenRequest, deviceProfile = "desktop" }) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.locale = locale === "es" ? "es" : "en";
     this.ui = ui;
     this.onSnapshot = onSnapshot;
     this.onFullscreenRequest = onFullscreenRequest;
+    this.deviceProfile = deviceProfile === "touch" ? "touch" : "desktop";
 
     this.levels = WORLD1_LEVELS;
     this.levelLookup = createLevelLookup(this.levels);
@@ -103,6 +126,14 @@ export default class FluxBasinRuntime {
     this.mode = "menu";
     this.playState = "idle";
     this.clockMs = 0;
+    this.levelClockMs = 0;
+    this.renderMetrics = {
+      cssWidth: 0,
+      cssHeight: 0,
+      pixelWidth: 0,
+      pixelHeight: 0,
+      dpr: 1,
+    };
     this.accumulatorMs = 0;
     this.lastFrameTime = 0;
     this.rafId = 0;
@@ -155,9 +186,8 @@ export default class FluxBasinRuntime {
   }
 
   start() {
-    this.canvas.width = STAGE_WIDTH;
-    this.canvas.height = STAGE_HEIGHT;
     this.canvas.style.touchAction = "none";
+    this.syncCanvasResolution();
     window.addEventListener("keydown", this.handleKeyDown);
     window.addEventListener("keyup", this.handleKeyUp);
     this.canvas.addEventListener("pointerdown", this.handlePointerDown);
@@ -244,7 +274,58 @@ export default class FluxBasinRuntime {
 
   setFullscreenState(fullscreen) {
     this.fullscreen = Boolean(fullscreen);
+    this.syncCanvasResolution(true);
     this.emit();
+  }
+
+  setDeviceProfile(deviceProfile) {
+    const nextProfile = deviceProfile === "touch" ? "touch" : "desktop";
+    if (nextProfile === this.deviceProfile) {
+      return;
+    }
+    this.deviceProfile = nextProfile;
+    this.syncCanvasResolution(true);
+    this.updatePreview();
+    this.emit();
+  }
+
+  usesTouchControls() {
+    return this.deviceProfile === "touch";
+  }
+
+  shouldShowTrajectoryPreview() {
+    return !this.usesTouchControls() && this.saveData.settings.showTrajectoryHelp;
+  }
+
+  getReadyMessage() {
+    return this.usesTouchControls() ? this.ui.messages.readyTouch : this.ui.messages.ready;
+  }
+
+  syncCanvasResolution(force = false) {
+    const rect = this.canvas.getBoundingClientRect();
+    const cssWidth = Math.max(1, rect.width || STAGE_WIDTH);
+    const cssHeight = Math.max(1, rect.height || STAGE_HEIGHT);
+    const maxDpr = this.fullscreen || this.usesTouchControls() ? 3 : 2;
+    const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, maxDpr));
+    const pixelWidth = Math.max(1, Math.round(cssWidth * dpr));
+    const pixelHeight = Math.max(1, Math.round(cssHeight * dpr));
+
+    if (
+      !force &&
+      this.renderMetrics.cssWidth === cssWidth &&
+      this.renderMetrics.cssHeight === cssHeight &&
+      this.renderMetrics.pixelWidth === pixelWidth &&
+      this.renderMetrics.pixelHeight === pixelHeight &&
+      this.renderMetrics.dpr === dpr
+    ) {
+      return;
+    }
+
+    this.renderMetrics = { cssWidth, cssHeight, pixelWidth, pixelHeight, dpr };
+    this.canvas.width = pixelWidth;
+    this.canvas.height = pixelHeight;
+    this.ctx.setTransform(pixelWidth / STAGE_WIDTH, 0, 0, pixelHeight / STAGE_HEIGHT, 0, 0);
+    this.ctx.imageSmoothingEnabled = true;
   }
 
   setVirtualControl(name, active) {
@@ -257,6 +338,7 @@ export default class FluxBasinRuntime {
     this.level = this.levelLookup.get(levelId) ?? this.levels[0];
     this.ball = createBall(this.level.ballSpawn);
     this.runStats = createRunStats(this.level.id);
+    this.levelClockMs = 0;
     if (!resetElapsed) {
       this.runStats.elapsedMs = 0;
     }
@@ -282,8 +364,8 @@ export default class FluxBasinRuntime {
   }
 
   poseLevel() {
-    this.posedObstacles = this.level.obstacles.map((obstacle) => resolveObstaclePose(obstacle, this.clockMs));
-    this.posedTarget = resolveTargetPose(this.level.target, this.clockMs);
+    this.posedObstacles = this.level.obstacles.map((obstacle) => resolveObstaclePose(obstacle, this.levelClockMs));
+    this.posedTarget = resolveTargetPose(this.level.target, this.levelClockMs);
     this.portalPairs = createPortalPairs(this.posedObstacles);
   }
 
@@ -291,12 +373,12 @@ export default class FluxBasinRuntime {
     if (!this.level) {
       return;
     }
-    if (!this.saveData.settings.showTrajectoryHelp) {
+    this.aim.launchSpeed = computeLaunchSpeed(this.aim.power, { allowOverflow: this.usesTouchControls() });
+    if (!this.shouldShowTrajectoryPreview()) {
       this.aim.dots = [];
       return;
     }
-    this.aim.launchSpeed = computeLaunchSpeed(this.aim.power);
-    this.aim.dots = buildPreviewDots(this.level, this.aim, this.clockMs, INPUT_PROFILES[this.saveData.settings.inputProfile].previewDots);
+    this.aim.dots = buildPreviewDots(this.level, this.aim, this.levelClockMs, INPUT_PROFILES[this.saveData.settings.inputProfile].previewDots);
   }
 
   openMenu() {
@@ -318,7 +400,7 @@ export default class FluxBasinRuntime {
     this.prepareLevel(allowedLevelId, true);
     this.mode = "playing";
     this.playState = "aiming";
-    this.transient.message = this.ui.messages.ready;
+    this.transient.message = this.getReadyMessage();
     this.emit();
   }
 
@@ -476,67 +558,94 @@ export default class FluxBasinRuntime {
     };
   }
 
+  getTouchDisplayPoint(point) {
+    const overscan = 72;
+    return {
+      x: clamp(point.x, -overscan, STAGE_WIDTH + overscan),
+      y: clamp(point.y, -overscan, STAGE_HEIGHT + overscan),
+    };
+  }
+
   handlePointerDown(event) {
     if (this.mode !== "playing" || this.playState !== "aiming") {
       return;
     }
+    const touchControls = this.usesTouchControls();
     const point = this.getCanvasPoint(event);
     const dx = point.x - this.level.ballSpawn.x;
     const dy = point.y - this.level.ballSpawn.y;
     const distanceSq = dx * dx + dy * dy;
-    if (distanceSq > sqr(this.level.ballSpawn.dragRadius ?? 88)) {
+    const activationRadius = (this.level.ballSpawn.dragRadius ?? 88) * (touchControls ? 1.35 : 1);
+    if (distanceSq > sqr(activationRadius)) {
       return;
     }
+
+    const dragPoint = touchControls
+      ? { x: this.level.ballSpawn.x, y: this.level.ballSpawn.y }
+      : point;
 
     this.audio.unlock();
     this.canvas.setPointerCapture?.(event.pointerId);
     this.transient.pointerId = event.pointerId;
     this.transient.dragging = true;
     this.aim.isDragging = true;
-    this.transient.dragStartX = point.x;
-    this.transient.dragStartY = point.y;
-    this.transient.dragCurrentX = point.x;
-    this.transient.dragCurrentY = point.y;
+    this.transient.dragStartX = dragPoint.x;
+    this.transient.dragStartY = dragPoint.y;
+    this.transient.dragCurrentX = dragPoint.x;
+    this.transient.dragCurrentY = dragPoint.y;
     this.audio.play("charge");
-    this.updateAimFromPointer(point);
+    if (!touchControls) {
+      this.updateAimFromPointer(point, dragPoint);
+    }
   }
 
   handlePointerMove(event) {
     if (!this.transient.dragging || event.pointerId !== this.transient.pointerId) {
       return;
     }
-    const point = this.getCanvasPoint(event);
-    this.transient.dragCurrentX = point.x;
-    this.transient.dragCurrentY = point.y;
-    this.updateAimFromPointer(point);
+    const rawPoint = this.getCanvasPoint(event);
+    const displayPoint = this.usesTouchControls() ? this.getTouchDisplayPoint(rawPoint) : rawPoint;
+    this.transient.dragCurrentX = displayPoint.x;
+    this.transient.dragCurrentY = displayPoint.y;
+    this.updateAimFromPointer(rawPoint, displayPoint);
   }
 
   handlePointerUp(event) {
     if (!this.transient.dragging || event.pointerId !== this.transient.pointerId) {
       return;
     }
-    const point = this.getCanvasPoint(event);
-    const launchDistance = distance(this.level.ballSpawn.x, this.level.ballSpawn.y, point.x, point.y);
+    const rawPoint = this.getCanvasPoint(event);
+    const displayPoint = this.usesTouchControls() ? this.getTouchDisplayPoint(rawPoint) : rawPoint;
+    const launchDistance = distance(this.level.ballSpawn.x, this.level.ballSpawn.y, rawPoint.x, rawPoint.y);
     this.transient.dragging = false;
     this.aim.isDragging = false;
     this.transient.pointerId = null;
     this.canvas.releasePointerCapture?.(event.pointerId);
     if (launchDistance >= MIN_DRAG_DISTANCE) {
-      this.updateAimFromPointer(point);
+      this.updateAimFromPointer(rawPoint, displayPoint);
       this.fireBall();
     }
     this.updatePreview();
   }
 
-  updateAimFromPointer(point) {
-    const vectorX = this.level.ballSpawn.x - point.x;
-    const vectorY = this.level.ballSpawn.y - point.y;
-    const distanceDrag = Math.min(MAX_DRAG_DISTANCE, Math.hypot(vectorX, vectorY));
+  updateAimFromPointer(point, displayPoint = point) {
+    const touchControls = this.usesTouchControls();
+    const visiblePoint = touchControls ? this.getTouchDisplayPoint(displayPoint) : displayPoint;
+    const vectorX = touchControls ? point.x - this.level.ballSpawn.x : this.level.ballSpawn.x - point.x;
+    const vectorY = touchControls ? point.y - this.level.ballSpawn.y : this.level.ballSpawn.y - point.y;
+    const distanceDrag = Math.hypot(vectorX, vectorY);
     const dragMultiplier = INPUT_PROFILES[this.saveData.settings.inputProfile].dragMultiplier;
-    const power = clamp((distanceDrag / MAX_DRAG_DISTANCE) * dragMultiplier, 0.18, 1);
-    const angleDeg = clamp(Math.atan2(vectorY, vectorX) / DEG_TO_RAD, AIM_MIN_DEG, AIM_MAX_DEG);
+    const rawPower = (distanceDrag / MAX_DRAG_DISTANCE) * dragMultiplier;
+    const power = touchControls ? Math.max(0.18, rawPower) : clamp(rawPower, 0.18, 1);
+    const rawAngleDeg = Math.atan2(vectorY, vectorX) / DEG_TO_RAD;
+    const angleDeg = touchControls
+      ? clamp(normalizeAngleDeg(rawAngleDeg), TOUCH_AIM_MIN_DEG, TOUCH_AIM_MAX_DEG)
+      : clamp(rawAngleDeg, AIM_MIN_DEG, AIM_MAX_DEG);
+    this.transient.dragCurrentX = visiblePoint.x;
+    this.transient.dragCurrentY = visiblePoint.y;
     this.aim.angleDeg = angleDeg;
     this.aim.power = power;
+    this.aim.launchSpeed = computeLaunchSpeed(power, { allowOverflow: touchControls });
     this.updatePreview();
   }
 
@@ -576,9 +685,10 @@ export default class FluxBasinRuntime {
     if (this.mode !== "playing" || this.playState !== "aiming") {
       return;
     }
+    const launchSpeed = this.aim.launchSpeed || computeLaunchSpeed(this.aim.power, { allowOverflow: this.usesTouchControls() });
     this.ball.active = true;
-    this.ball.vx = Math.cos(this.aim.angleDeg * DEG_TO_RAD) * computeLaunchSpeed(this.aim.power);
-    this.ball.vy = Math.sin(this.aim.angleDeg * DEG_TO_RAD) * computeLaunchSpeed(this.aim.power);
+    this.ball.vx = Math.cos(this.aim.angleDeg * DEG_TO_RAD) * launchSpeed;
+    this.ball.vy = Math.sin(this.aim.angleDeg * DEG_TO_RAD) * launchSpeed;
     this.ball.angularVelocity = this.ball.vx * 0.012;
     this.ball.portalLockMs = PORTAL_COOLDOWN_MS;
     this.ball.targetDwellMs = 0;
@@ -780,11 +890,15 @@ export default class FluxBasinRuntime {
     if (this.mode === "playing") {
       if (this.playState !== "paused") {
         this.runStats.elapsedMs += dtMs;
+        this.levelClockMs += dtMs;
       }
 
       if (this.playState === "aiming") {
         this.poseLevel();
         this.adjustAimByKeyboard(dtMs);
+        if (levelHasTimedMotion(this.level) && !this.aim.isDragging) {
+          this.updatePreview();
+        }
       } else if (this.playState === "flying") {
         this.updateFlight(dtMs);
       } else if (this.playState === "recovering") {
@@ -805,6 +919,7 @@ export default class FluxBasinRuntime {
   }
 
   render() {
+    this.syncCanvasResolution();
     this.poseLevel();
     drawFluxScene(this.ctx, this);
   }
@@ -869,7 +984,7 @@ export default class FluxBasinRuntime {
       aim: {
         angleDeg: Number(this.aim.angleDeg.toFixed(2)),
         power: Number(this.aim.power.toFixed(3)),
-        launchSpeed: Number(computeLaunchSpeed(this.aim.power).toFixed(2)),
+        launchSpeed: Number(this.aim.launchSpeed.toFixed(2)),
         isDragging: this.aim.isDragging,
         dots: this.aim.dots,
       },
@@ -880,6 +995,7 @@ export default class FluxBasinRuntime {
       callout: this.transient.callout,
       coordinates: "origin_top_left_x_right_y_down_pixels",
       fullscreen: Boolean(this.fullscreen),
+      deviceProfile: this.deviceProfile,
     });
   }
 }

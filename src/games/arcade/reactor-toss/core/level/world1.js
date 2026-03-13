@@ -19,7 +19,7 @@ export const WORLD1_LEVELS = [
     difficultyBand: "teach",
     backgroundId: "neon-grid",
     ballSpawn: { x: 132, y: 430, aimDeg: -38, power: 0.91 },
-    target: { x: 806, y: 188 },
+    target: { x: 724, y: 316 },
     obstacles: [],
     starRules: { parTimeMs: 4200, parBounces: 1 },
     tutorialHints: hints(
@@ -33,7 +33,7 @@ export const WORLD1_LEVELS = [
     taxonomy: "direct",
     difficultyBand: "teach",
     backgroundId: "alloy-dawn",
-    ballSpawn: { x: 154, y: 410, aimDeg: -42, power: 0.53 },
+    ballSpawn: { x: 154, y: 410, aimDeg: -39, power: 0.97 },
     target: { x: 764, y: 154 },
     obstacles: [{ type: "wall", x: 642, y: 270, w: 132, h: 18, tint: "#5a6c92" }],
     starRules: { parTimeMs: 5200, parBounces: 1 },
@@ -48,7 +48,7 @@ export const WORLD1_LEVELS = [
     taxonomy: "one-bounce",
     difficultyBand: "teach",
     backgroundId: "prism-bay",
-    ballSpawn: { x: 148, y: 426, aimDeg: -24, power: 0.5 },
+    ballSpawn: { x: 148, y: 426, aimDeg: -61, power: 0.64 },
     target: { x: 810, y: 190 },
     obstacles: [{ type: "bumper", x: 430, y: 326, radius: 38 }],
     starRules: { parTimeMs: 6200, parBounces: 2 },
@@ -96,7 +96,7 @@ export const WORLD1_LEVELS = [
     taxonomy: "timing",
     difficultyBand: "reinforce",
     backgroundId: "prism-bay",
-    ballSpawn: { x: 138, y: 432, aimDeg: -38, power: 0.6 },
+    ballSpawn: { x: 138, y: 432, aimDeg: -61, power: 0.85 },
     target: { x: 814, y: 164 },
     obstacles: [
       {
