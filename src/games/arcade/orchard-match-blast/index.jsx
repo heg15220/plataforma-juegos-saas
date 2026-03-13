@@ -4,9 +4,40 @@ import resolveBrowserLanguage from "../../../utils/resolveBrowserLanguage";
 
 const ROWS = 8;
 const COLS = 9;
-const TIME_MS = 180000;
+const BASE_TIME_MS = 180000;
 const MAX_MOVES = 32;
-const TARGET_SCORE = 14800;
+const DEFAULT_TARGET_SCORE = 14800;
+const DEFAULT_TARGET_SCORE_OPTION_ID = "orchard";
+const TARGET_SCORE_OPTIONS = [
+  {
+    id: "sprout",
+    score: 12000,
+    timeMs: BASE_TIME_MS,
+    accent: "#34d399",
+    label: { es: "Basica", en: "Basic" },
+  },
+  {
+    id: "orchard",
+    score: DEFAULT_TARGET_SCORE,
+    timeMs: BASE_TIME_MS + 60000,
+    accent: "#60a5fa",
+    label: { es: "Clasica", en: "Standard" },
+  },
+  {
+    id: "harvest",
+    score: 18000,
+    timeMs: BASE_TIME_MS + 120000,
+    accent: "#f59e0b",
+    label: { es: "Avanzada", en: "Advanced" },
+  },
+  {
+    id: "legend",
+    score: 22000,
+    timeMs: BASE_TIME_MS + 180000,
+    accent: "#f472b6",
+    label: { es: "Extrema", en: "Extreme" },
+  },
+];
 const TARGET_HARVEST = 120;
 const TARGET_SPECIALS = 7;
 
@@ -36,13 +67,13 @@ const FX_TOTAL_MS = 1180;
 
 const HS_KEY = "arcade_orchard_match_blast_high_score_v2";
 
-const FRUITS = [
-  { key: "apple", main: "#ef4444", shade: "#991b1b", glow: "#fecaca" },
-  { key: "lemon", main: "#facc15", shade: "#a16207", glow: "#fef08a" },
-  { key: "blueberry", main: "#2563eb", shade: "#1e3a8a", glow: "#bfdbfe" },
-  { key: "grape", main: "#7c3aed", shade: "#4c1d95", glow: "#ddd6fe" },
-  { key: "mint", main: "#10b981", shade: "#065f46", glow: "#a7f3d0" },
-  { key: "peach", main: "#fb923c", shade: "#9a3412", glow: "#fed7aa" },
+const BLOCK_TYPES = [
+  { key: "red", main: "#ef4444", shade: "#991b1b", glow: "#fecaca" },
+  { key: "yellow", main: "#facc15", shade: "#a16207", glow: "#fef08a" },
+  { key: "blue", main: "#2563eb", shade: "#1e3a8a", glow: "#bfdbfe" },
+  { key: "purple", main: "#7c3aed", shade: "#4c1d95", glow: "#ddd6fe" },
+  { key: "green", main: "#10b981", shade: "#065f46", glow: "#a7f3d0" },
+  { key: "orange", main: "#fb923c", shade: "#9a3412", glow: "#fed7aa" },
 ];
 
 const DIRS = [
@@ -60,6 +91,9 @@ const COPY = {
     shuffle: "Mezclar",
     bloom: "Bloom",
     fullscreen: "Pantalla completa",
+    targetScoreLabel: "Meta de puntos",
+    targetScoreShort: "Meta",
+    targetPresetHint: "Elige la meta antes de iniciar la run. Cada nivel sube +1:00.",
     modeMenu: "Pulsa Iniciar run para comenzar.",
     modePlay: "Combina, encadena cascadas y controla el ritmo.",
     modeWon: "Objetivos completados. Victoria.",
@@ -92,7 +126,7 @@ const COPY = {
     lost: "No completaste todos los objetivos.",
     moveBonus: "mov extra",
     controls:
-      "Raton/touch: selecciona 2 casillas adyacentes. Teclado: flechas, Enter/Espacio, H pista, S mezclar, B Bloom, R reinicia, F fullscreen.",
+      "Raton/touch: selecciona 2 bloques de color adyacentes. Elige meta de puntos antes de iniciar. Teclado: flechas, Enter/Espacio, H pista, S mezclar, B Bloom, R reinicia, F fullscreen.",
   },
   en: {
     title: "Orchard Match Blast",
@@ -103,6 +137,9 @@ const COPY = {
     shuffle: "Shuffle",
     bloom: "Bloom",
     fullscreen: "Fullscreen",
+    targetScoreLabel: "Score goal",
+    targetScoreShort: "Goal",
+    targetPresetHint: "Pick the score goal before starting a run. Each level adds +1:00.",
     modeMenu: "Press Start run to begin.",
     modePlay: "Match, chain cascades, and control your tempo.",
     modeWon: "Objectives complete. Victory.",
@@ -135,7 +172,7 @@ const COPY = {
     lost: "Not all objectives were completed.",
     moveBonus: "extra move",
     controls:
-      "Mouse/touch: pick 2 adjacent cells. Keyboard: arrows, Enter/Space, H hint, S shuffle, B Bloom, R restart, F fullscreen.",
+      "Mouse/touch: pick 2 adjacent color blocks. Choose the score goal before starting. Keyboard: arrows, Enter/Space, H hint, S shuffle, B Bloom, R restart, F fullscreen.",
   },
 };
 
@@ -152,6 +189,10 @@ const parseKey = (raw) => {
 const inBounds = (row, col) => row >= 0 && row < ROWS && col >= 0 && col < COLS;
 const adjacent = (a, b) => Math.abs(a.row - b.row) + Math.abs(a.col - b.col) === 1;
 const easeOutCubic = (t) => 1 - (1 - t) ** 3;
+const getTargetScoreOptionById = (optionId) =>
+  TARGET_SCORE_OPTIONS.find((option) => option.id === optionId) ??
+  TARGET_SCORE_OPTIONS.find((option) => option.id === DEFAULT_TARGET_SCORE_OPTION_ID) ??
+  TARGET_SCORE_OPTIONS[0];
 
 function createRng(seed) {
   let state = seed >>> 0;
@@ -164,7 +205,7 @@ function createRng(seed) {
   };
 }
 
-const randomType = (rng) => Math.floor(rng() * FRUITS.length);
+const randomType = (rng) => Math.floor(rng() * BLOCK_TYPES.length);
 const makeCell = (type, special = SPECIAL_NONE) => ({ type, special });
 const cloneCell = (cell) => (cell ? { ...cell } : null);
 const cloneBoard = (board) => board.map((row) => row.map((cell) => cloneCell(cell)));
@@ -278,7 +319,7 @@ function buildFreshBoard(rng) {
             board[row - 1][col]?.type === t &&
             board[row - 2][col]?.type === t;
           if (!blockedH && !blockedV) break;
-          t = (t + 1 + Math.floor(rng() * 4)) % FRUITS.length;
+          t = (t + 1 + Math.floor(rng() * 4)) % BLOCK_TYPES.length;
         }
         board[row][col] = makeCell(t);
       }
@@ -539,11 +580,11 @@ function resolveBloomBlast(board, center, rng) {
 }
 
 function layoutFromSize(width, height) {
-  const w = clamp(safeInt(width, 980), 360, 1360);
+  const w = clamp(safeInt(width, 980), 360, 2400);
   const h = clamp(safeInt(height, 760), 420, 1080);
   const pad = clamp(Math.round(w * 0.02), 8, 24);
   const hudTop = clamp(Math.round(h * 0.015), 4, 12);
-  const hudHeight = clamp(Math.round(h * 0.11), 58, 108);
+  const hudHeight = clamp(Math.round(h * 0.12), 78, 122);
   const footerHeight = clamp(Math.round(h * 0.082), 36, 72);
   const availH = h - hudTop - hudHeight - footerHeight - 12;
   const availW = w - pad * 2;
@@ -652,13 +693,28 @@ function OrchardMatchBlastGame() {
   const canvasRef = useRef(null);
   const rngRef = useRef(createRng(0x7a2e57c9));
   const [highScore, setHighScore] = useState(0);
+  const [targetScorePresetId, setTargetScorePresetId] = useState(
+    DEFAULT_TARGET_SCORE_OPTION_ID
+  );
+  const targetScorePreset = useMemo(
+    () => getTargetScoreOptionById(targetScorePresetId),
+    [targetScorePresetId]
+  );
+  const numberFormatter = useMemo(
+    () => new Intl.NumberFormat(locale === "es" ? "es-ES" : "en-US"),
+    [locale]
+  );
+  const formatScore = useCallback(
+    (value) => numberFormatter.format(Math.max(0, Math.round(Number(value) || 0))),
+    [numberFormatter]
+  );
   const [size, setSize] = useState({ width: 980, height: 760 });
   const layout = useMemo(() => layoutFromSize(size.width, size.height), [size]);
 
   const createInitial = useCallback(() => {
     const board = buildFreshBoard(rngRef.current);
     return {
-      variant: "arcade_orchard_match_blast_rebuild_v2",
+      variant: "arcade_orchard_match_blast_rebuild_v3",
       coordinates: "origin_top_left_x_right_y_down_board_grid",
       mode: "menu",
       board,
@@ -679,8 +735,10 @@ function OrchardMatchBlastGame() {
       lastClear: 0,
       lastGain: 0,
       moves: MAX_MOVES,
-      timeMs: TIME_MS,
-      targetScore: TARGET_SCORE,
+      timeMs: targetScorePreset.timeMs,
+      targetTimeMs: targetScorePreset.timeMs,
+      targetScore: targetScorePreset.score,
+      targetScorePresetId: targetScorePreset.id,
       targetHarvest: TARGET_HARVEST,
       targetSpecials: TARGET_SPECIALS,
       specialsTriggered: 0,
@@ -692,7 +750,7 @@ function OrchardMatchBlastGame() {
       message: copy.modeMenu,
       fullscreen: false,
     };
-  }, [copy.modeMenu]);
+  }, [copy.modeMenu, targetScorePreset.id, targetScorePreset.score, targetScorePreset.timeMs]);
 
   const [game, setGame] = useState(createInitial);
 
@@ -711,7 +769,7 @@ function OrchardMatchBlastGame() {
 
     const resize = () => {
       const rect = node.getBoundingClientRect();
-      const width = clamp(Math.floor(rect.width || 980), 360, 1360);
+      const width = clamp(Math.floor(rect.width || 980), 360, 2400);
       const viewportSpace = Math.max(420, Math.floor(window.innerHeight - rect.top - 14));
       const preferredHeight = Math.floor(width * 0.78);
       const height = clamp(Math.min(Math.max(preferredHeight, 460), viewportSpace), 420, 1080);
@@ -865,6 +923,27 @@ function OrchardMatchBlastGame() {
   const startRun = useCallback(() => {
     setGame(() => ({ ...createInitial(), mode: "playing", message: copy.modePlay }));
   }, [copy.modePlay, createInitial]);
+
+  const selectTargetScorePreset = useCallback(
+    (nextPresetId) => {
+      const resolved = getTargetScoreOptionById(nextPresetId);
+      setTargetScorePresetId(resolved.id);
+      setGame((prev) => {
+        if (prev.mode === "playing") return prev;
+        const message =
+          prev.mode === "won" ? copy.modeWon : prev.mode === "lost" ? copy.modeLost : copy.modeMenu;
+        return {
+          ...prev,
+          timeMs: resolved.timeMs,
+          targetTimeMs: resolved.timeMs,
+          targetScore: resolved.score,
+          targetScorePresetId: resolved.id,
+          message,
+        };
+      });
+    },
+    [copy.modeLost, copy.modeMenu, copy.modeWon]
+  );
 
   const showHint = useCallback(() => {
     setGame((prev) => {
@@ -1220,60 +1299,72 @@ function OrchardMatchBlastGame() {
     ctx.fillRect(0, 0, layout.w, layout.h);
     ctx.globalAlpha = 1;
 
-    roundRectPath(ctx, hudX, hudY, hudW, hudH, 16);
+    roundRectPath(ctx, hudX, hudY, hudW, hudH, 18);
     const hudGrad = ctx.createLinearGradient(hudX, hudY, hudX, hudY + hudH);
-    hudGrad.addColorStop(0, "rgba(15,23,42,0.84)");
-    hudGrad.addColorStop(1, "rgba(15,23,42,0.58)");
+    hudGrad.addColorStop(0, "rgba(2,6,23,0.9)");
+    hudGrad.addColorStop(1, "rgba(15,23,42,0.68)");
     ctx.fillStyle = hudGrad;
     ctx.fill();
-    ctx.strokeStyle = "rgba(148,163,184,0.34)";
+    ctx.strokeStyle = "rgba(125,211,252,0.26)";
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    const row1Y = hudY + 16;
-    const row2Y = hudY + 35;
-    ctx.textBaseline = "middle";
-    ctx.font = "700 14px system-ui, -apple-system, Segoe UI, sans-serif";
-    ctx.fillStyle = "#e2e8f0";
-    ctx.fillText(`${copy.score}: ${game.score}`, hudX + 12, row1Y);
-    ctx.fillText(`${copy.moves}: ${game.moves}`, hudX + 12, row2Y);
-    ctx.fillText(`${copy.harvest}: ${game.harvest}/${game.targetHarvest}`, hudX + 156, row2Y);
-    ctx.textAlign = "right";
-    ctx.fillText(`${copy.time}: ${fmtTime(game.timeMs)}`, hudX + hudW - 12, row1Y);
-    ctx.fillText(`${copy.combo}: x${Math.max(1, game.comboNow)}`, hudX + hudW - 12, row2Y);
-    ctx.fillStyle = "#bae6fd";
-    ctx.fillText(`${copy.flow}: x${Math.max(1, game.flowChain)}`, hudX + hudW - 12, row2Y + 17);
-    ctx.fillStyle = "#dbeafe";
-    ctx.textAlign = "left";
-
-    const bars = [
-      { label: copy.goalScore, value: game.score / game.targetScore, color: "#60a5fa" },
-      { label: copy.goalHarvest, value: game.harvest / game.targetHarvest, color: "#34d399" },
+    const pillPad = 10;
+    const pillGapX = 8;
+    const pillGapY = 6;
+    const pillCols = hudW >= 920 ? 4 : 2;
+    const pillRows = Math.ceil(4 / pillCols);
+    const pillW = (hudW - pillPad * 2 - pillGapX * (pillCols - 1)) / pillCols;
+    const pillH = (hudH - 14 - pillGapY * (pillRows - 1)) / pillRows;
+    const hudPills = [
       {
-        label: copy.goalSpecials,
-        value: game.specialsTriggered / game.targetSpecials,
-        color: "#f472b6",
+        label: `${copy.score} / ${copy.targetScoreShort}`,
+        value: `${formatScore(game.score)} / ${formatScore(game.targetScore)}`,
+        accent: "rgba(96,165,250,0.48)",
       },
-      { label: copy.bloomCharge, value: game.bloomCharge / BLOOM_CHARGE_MAX, color: "#fbbf24" },
+      {
+        label: `${copy.moves} / ${copy.time}`,
+        value: `${game.moves} / ${fmtTime(game.timeMs)}`,
+        accent: "rgba(52,211,153,0.42)",
+      },
+      {
+        label: `${copy.combo} / ${copy.flow}`,
+        value: `x${Math.max(1, game.comboNow)} / x${Math.max(1, game.flowChain)}`,
+        accent: "rgba(251,191,36,0.46)",
+      },
+      {
+        label: `${copy.harvest} / ${copy.specials}`,
+        value: `${game.harvest}/${game.targetHarvest} / ${game.specialsTriggered}/${game.targetSpecials}`,
+        accent: "rgba(244,114,182,0.44)",
+      },
     ];
-    const barGap = 8;
-    const barW = (hudW - 24 - barGap * (bars.length - 1)) / bars.length;
-    const barH = 7;
-    const barY = hudY + hudH - 12;
-    bars.forEach((bar, index) => {
-      const x = hudX + 12 + index * (barW + barGap);
-      roundRectPath(ctx, x, barY, barW, barH, 5);
-      ctx.fillStyle = "rgba(148,163,184,0.25)";
+
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    hudPills.forEach((pill, index) => {
+      const col = index % pillCols;
+      const row = Math.floor(index / pillCols);
+      const x = hudX + pillPad + col * (pillW + pillGapX);
+      const y = hudY + 7 + row * (pillH + pillGapY);
+      roundRectPath(ctx, x, y, pillW, pillH, 10);
+      const cardGrad = ctx.createLinearGradient(x, y, x, y + pillH);
+      cardGrad.addColorStop(0, "rgba(15,23,42,0.84)");
+      cardGrad.addColorStop(1, "rgba(30,41,59,0.54)");
+      ctx.fillStyle = cardGrad;
       ctx.fill();
-      if (bar.value > 0) {
-        roundRectPath(ctx, x, barY, barW * clamp(bar.value, 0, 1), barH, 5);
-        ctx.fillStyle = bar.color;
-        ctx.fill();
-      }
-      ctx.font = "600 10px system-ui, -apple-system, Segoe UI, sans-serif";
-      ctx.fillStyle = "#dbeafe";
-      ctx.fillText(bar.label, x, barY - 7);
+      ctx.strokeStyle = pill.accent;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.font = "700 9px system-ui, -apple-system, Segoe UI, sans-serif";
+      ctx.fillStyle = "rgba(191,219,254,0.92)";
+      ctx.fillText(pill.label, x + 8, y + 6);
+
+      ctx.font = "800 12px system-ui, -apple-system, Segoe UI, sans-serif";
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillText(pill.value, x + 8, y + 20);
     });
+    ctx.textAlign = "left";
 
     roundRectPath(
       ctx,
@@ -1340,7 +1431,7 @@ function OrchardMatchBlastGame() {
           drawY = startY + (tileY - startY) * p;
         }
 
-        const fruit = FRUITS[boardCell.type];
+        const blockType = BLOCK_TYPES[boardCell.type];
         const pad = Math.max(2, layout.tile * 0.08);
 
         roundRectPath(
@@ -1360,9 +1451,9 @@ function OrchardMatchBlastGame() {
           tileX + layout.tile,
           drawY + layout.tile
         );
-        tileGrad.addColorStop(0, `${fruit.glow}eb`);
-        tileGrad.addColorStop(0.6, fruit.main);
-        tileGrad.addColorStop(1, fruit.shade);
+        tileGrad.addColorStop(0, `${blockType.glow}eb`);
+        tileGrad.addColorStop(0.6, blockType.main);
+        tileGrad.addColorStop(1, blockType.shade);
         roundRectPath(
           ctx,
           tileX + pad,
@@ -1616,7 +1707,7 @@ function OrchardMatchBlastGame() {
         ctx.fillRect(0, 0, layout.w, layout.h);
       }
     }
-  }, [copy, game, layout]);
+  }, [copy, formatScore, game, highScore, layout]);
 
   const payloadBuilder = useCallback(
     (state) => ({
@@ -1627,6 +1718,12 @@ function OrchardMatchBlastGame() {
       score: state.score,
       highScore,
       targetScore: state.targetScore,
+      targetScorePresetId: state.targetScorePresetId,
+      targetScoreOptions: TARGET_SCORE_OPTIONS.map((option) => ({
+        id: option.id,
+        score: option.score,
+        timeMs: option.timeMs,
+      })),
       harvest: state.harvest,
       targetHarvest: state.targetHarvest,
       targetSpecials: state.targetSpecials,
@@ -1636,6 +1733,7 @@ function OrchardMatchBlastGame() {
       bloomBlasts: state.bloomBlasts,
       movesLeft: state.moves,
       timeRemainingMs: state.timeMs,
+      targetTimeMs: state.targetTimeMs,
       timeLabel: fmtTime(state.timeMs),
       bestCombo: state.bestCombo,
       comboNow: state.comboNow,
@@ -1651,8 +1749,8 @@ function OrchardMatchBlastGame() {
       board: state.board.map((row) =>
         row.map((cell) =>
           cell.special !== SPECIAL_NONE
-            ? `${FRUITS[cell.type].key}:${cell.special}`
-            : FRUITS[cell.type].key
+            ? `${BLOCK_TYPES[cell.type].key}:${cell.special}`
+            : BLOCK_TYPES[cell.type].key
         )
       ),
       message: state.message,
@@ -1665,7 +1763,7 @@ function OrchardMatchBlastGame() {
       controls: {
         keyboard:
           "Arrows move, Enter/Space select, H hint, S shuffle, B bloom, R restart, F fullscreen",
-        pointer: "Select two adjacent board cells to swap",
+        pointer: "Select two adjacent color blocks to swap",
       },
     }),
     [highScore]
@@ -1697,6 +1795,29 @@ function OrchardMatchBlastGame() {
         <div>
           <h4>{copy.title}</h4>
           <p>{copy.subtitle}</p>
+        </div>
+        <div className="orchard-target-controls">
+          <span>{copy.targetScoreLabel}</span>
+          <div className="orchard-target-options" role="group" aria-label={copy.targetScoreLabel}>
+            {TARGET_SCORE_OPTIONS.map((option) => {
+              const active = option.id === targetScorePreset.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={active ? "is-active" : ""}
+                  onClick={() => selectTargetScorePreset(option.id)}
+                  disabled={game.mode === "playing"}
+                  aria-pressed={active}
+                  style={{ "--orchard-target-accent": option.accent }}
+                >
+                  <strong>{option.label[locale]}</strong>
+                  <span>{`${formatScore(option.score)} / ${fmtTime(option.timeMs)}`}</span>
+                </button>
+              );
+            })}
+          </div>
+          <p>{copy.targetPresetHint}</p>
         </div>
         <div className="orchard-actions">
           <button type="button" onClick={startRun}>
@@ -1734,7 +1855,10 @@ function OrchardMatchBlastGame() {
 
       <div className="orchard-info-strip">
         <span>
-          {copy.score}: <strong>{game.score}</strong>
+          {copy.score}: <strong>{formatScore(game.score)}</strong>
+        </span>
+        <span>
+          {copy.targetScoreShort}: <strong>{formatScore(game.targetScore)}</strong>
         </span>
         <span>
           {copy.harvest}: <strong>{game.harvest}/{game.targetHarvest}</strong>
@@ -1743,7 +1867,7 @@ function OrchardMatchBlastGame() {
           {copy.specials}: <strong>{game.specialsTriggered}/{game.targetSpecials}</strong>
         </span>
         <span>
-          {copy.best}: <strong>{highScore}</strong>
+          {copy.best}: <strong>{formatScore(highScore)}</strong>
         </span>
         <span>
           {copy.moves}: <strong>{game.moves}</strong>

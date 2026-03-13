@@ -142,7 +142,7 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "platformer-sky-runner":       "A/D o flechas para moverse, W/arriba/espacio para saltar, F acción.",
     "fighter-neon-dojo":           "A/D moverse, W saltar, J jab, K heavy, L guardia, U/B especial.",
     "sports-head-soccer-arena":    "Izq/der mover, arriba saltar, Espacio disparar, B habilidad.",
-    "arcade-orchard-match-blast": "Match-3 original: intercambia dos casillas adyacentes. Flechas mueven cursor, Enter/Espacio confirma, H pista, S mezcla, R reinicia y F pantalla completa.",
+    "arcade-orchard-match-blast": "Match-3 original: intercambia dos bloques de color adyacentes. Flechas mueven cursor, Enter/Espacio confirma, H pista, S mezcla, B Bloom, R reinicia y F pantalla completa.",
     "arcade-billar-pool-club":     "Raton opcional para apuntar, A/D afinan angulo, W/S potencia, Space tira, O push out, V safety, 1/2 decisiones, flechas/WASD mueven la blanca en mano, Enter/Space confirma, P autocoloca y F pantalla completa.",
     "arcade-bowling-pro-tour":     "A/D ajustan linea, W/S potencia, Q/E efecto y Enter/Espacio lanza. R reinicia serie y F pantalla completa.",
     "arcade-pacman-maze-protocol": "WASD/flechas mover, Enter/Espacio empezar, P/Esc pausa, R reinicia, M sonido.",

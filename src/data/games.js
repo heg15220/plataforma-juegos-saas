@@ -300,14 +300,14 @@ export const games = [
 
     title: "Orchard Match Blast",
     category: "Arcade",
-    tagline: "Match-3 arcade propio con frutas de huerto, cascadas y objetivo de puntuacion.",
+    tagline: "Match-3 arcade propio con bloques de color, cascadas y objetivo de puntuacion.",
     description:
-      "Juego match-3 original inspirado en la mecanica Slide & Match: intercambia frutas adyacentes, activa cadenas de cascada y optimiza cada movimiento para alcanzar la meta de puntuacion antes de agotar tiempo o movimientos.",
-    objective_es: "Alcanza la puntuacion objetivo encadenando lineas de 3 o mas frutas antes de quedarte sin tiempo o movimientos.",
-    howToPlay_es: "Selecciona dos casillas adyacentes con raton/touch para intercambiarlas. Flechas mueven cursor, Enter/Espacio confirma, H muestra pista, S mezcla y R reinicia.",
+      "Juego match-3 original inspirado en la mecanica Slide & Match: intercambia bloques de color adyacentes, activa cadenas de cascada y optimiza cada movimiento para alcanzar la meta de puntuacion antes de agotar tiempo o movimientos.",
+    objective_es: "Alcanza la puntuacion objetivo encadenando lineas de 3 o mas bloques antes de quedarte sin tiempo o movimientos.",
+    howToPlay_es: "Selecciona dos bloques de color adyacentes con raton/touch para intercambiarlos. Flechas mueven cursor, Enter/Espacio confirma, H muestra pista, S mezcla, B activa Bloom y R reinicia.",
     highlights: [
       "Motor match-3 original con validacion de swaps y resolucion de cascadas.",
-      "Identidad visual propia basada en frutas y UI arcade de alto contraste.",
+      "Identidad visual propia con bloques de color y UI arcade de alto contraste.",
       "Partidas cortas con objetivo de score, limite de tiempo y de movimientos.",
       "Atajos de ayuda: pista inteligente, mezcla manual y control por teclado.",
       "Bridge QA con `render_game_to_text`, tablero serializado y `advanceTime` determinista.",
@@ -315,18 +315,18 @@ export const games = [
     difficulty: "Media",
     multiplayer: "Solo",
     viability: "Alta: reglas discretas sobre grid 8x8, estado ligero y bucle determinista.",
-    visualStyle: "Tablero neofrutal con orbes de color, overlays limpios y feedback de combos.",
+    visualStyle: "Tablero neon de bloques con overlays limpios y feedback de combos.",
     techFocus: "Deteccion de matches, cascadas por gravedad, busqueda de jugada posible y puente QA automatizable.",
 
     category_en: "Arcade",
-    tagline_en: "Original match-3 arcade with orchard fruits, cascades, and score goals.",
+    tagline_en: "Original match-3 arcade with color blocks, cascades, and score goals.",
     description_en:
-      "An original match-3 game inspired by the Slide & Match mechanic: swap adjacent fruits, trigger cascade chains, and optimize each move to reach the target score before running out of time or moves.",
-    objective_en: "Reach the target score by chaining lines of 3+ fruits before time or moves run out.",
-    howToPlay_en: "Swap two adjacent cells with mouse/touch. Arrows move cursor, Enter/Space confirms, H shows hint, S shuffles, and R restarts.",
+      "An original match-3 game inspired by the Slide & Match mechanic: swap adjacent color blocks, trigger cascade chains, and optimize each move to reach the target score before running out of time or moves.",
+    objective_en: "Reach the target score by chaining lines of 3+ color blocks before time or moves run out.",
+    howToPlay_en: "Swap two adjacent color blocks with mouse/touch. Arrows move cursor, Enter/Space confirms, H shows hint, S shuffles, B triggers Bloom, and R restarts.",
     highlights_en: [
       "Original match-3 engine with strict swap validation and cascade resolution.",
-      "Custom visual identity with orchard fruit pieces and arcade UI readability.",
+      "Custom visual identity with color blocks and high-contrast arcade UI readability.",
       "Short sessions with score target plus time and move constraints.",
       "Utility controls: smart hint, manual shuffle, and keyboard-first input.",
       "QA bridge with `render_game_to_text`, serialized board state, and deterministic `advanceTime`.",
@@ -334,7 +334,7 @@ export const games = [
     difficulty_en: "Medium",
     multiplayer_en: "Solo",
     viability_en: "High: discrete 8x8 grid rules, lightweight state, and deterministic loop.",
-    visualStyle_en: "Neo-orchard board with colorful orbs, clean overlays, and combo feedback.",
+    visualStyle_en: "Neon block board with clean overlays and combo feedback.",
     techFocus_en: "Match detection, gravity cascades, move-availability search, and automation-ready QA bridge.",
   },
 

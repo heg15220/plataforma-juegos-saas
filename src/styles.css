@@ -436,41 +436,67 @@ body {
 }
 
 .game-playground {
+  position: relative;
   margin-top: 1rem;
-  padding-top: 0.95rem;
-  border-top: 1px dashed #decfae;
+  padding: 0.95rem 0.95rem 1.08rem;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 8% -16%, rgba(125, 211, 252, 0.2), transparent 44%),
+    radial-gradient(circle at 92% 118%, rgba(74, 222, 128, 0.2), transparent 48%),
+    linear-gradient(145deg, #f8fbff 0%, #eff6ff 48%, #f0fdf4 100%);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+}
+
+.game-playground::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0));
+}
+
+.game-playground > * {
+  position: relative;
+  z-index: 1;
 }
 
 .playground-header {
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.72rem;
+  padding: 0.66rem 0.8rem;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.03), rgba(148, 163, 184, 0.08));
 }
 
 .playground-header h3 {
-  margin: 0;
+  margin: 0 0 0.16rem;
   font-family: "Bricolage Grotesque", sans-serif;
-  font-size: 1.03rem;
+  font-size: 1.04rem;
+  color: #0f172a;
 }
 
 .playground-header p {
-  margin: 0.32rem 0 0;
+  margin: 0.26rem 0 0;
   font-size: 0.87rem;
-  color: #566255;
+  color: #475569;
 }
 
 .playground-header .control-hint {
   margin-top: 0.3rem;
-  color: #0e655d;
-  font-size: 0.78rem;
+  color: #0f766e;
+  font-size: 0.79rem;
   font-weight: 600;
 }
 
 .unsupported-game {
-  margin: 0;
-  padding: 0.72rem;
-  border-radius: 10px;
-  background: #fff8e5;
-  border: 1px solid #ead9ba;
-  color: #5e614f;
+  margin: 0.2rem 0 0;
+  padding: 0.82rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: linear-gradient(155deg, rgba(248, 250, 252, 0.98), rgba(239, 246, 255, 0.96));
+  color: #475569;
   font-size: 0.87rem;
 }
 
@@ -14686,34 +14712,128 @@ button.brisca-card.playable:disabled {
   }
 }
 
+.orchard-match-game {
+  border-color: rgba(96, 165, 250, 0.33);
+  background:
+    radial-gradient(circle at 88% -18%, rgba(56, 189, 248, 0.2), transparent 46%),
+    radial-gradient(circle at 9% 122%, rgba(74, 222, 128, 0.17), transparent 50%),
+    linear-gradient(148deg, #0f172a 0%, #14263c 46%, #17344a 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 20px 34px rgba(2, 6, 23, 0.42);
+}
+
+.orchard-match-game .mini-head {
+  align-items: flex-start;
+  gap: 0.68rem;
+}
+
 .orchard-match-game .mini-head h4 {
-  color: #dbeafe;
+  color: #f8fafc;
 }
 
 .orchard-match-game .mini-head p {
-  color: #bfdbfe;
+  color: rgba(191, 219, 254, 0.96);
   max-width: 62ch;
+}
+
+.orchard-target-controls {
+  display: flex;
+  flex: 1 1 340px;
+  flex-direction: column;
+  gap: 0.36rem;
+  min-width: min(100%, 320px);
+}
+
+.orchard-target-controls > span {
+  color: #bfdbfe;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.orchard-target-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.34rem;
+}
+
+.orchard-target-options button {
+  --orchard-target-accent: #60a5fa;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 11px;
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.92), rgba(15, 23, 42, 0.74));
+  color: #dbeafe;
+  min-height: 47px;
+  padding: 0.3rem 0.4rem;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.orchard-target-options button strong {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.orchard-target-options button span {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.73rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.orchard-target-options button.is-active {
+  border-color: color-mix(in srgb, var(--orchard-target-accent) 74%, white 26%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--orchard-target-accent) 58%, white 42%);
+  background:
+    linear-gradient(150deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.88)),
+    radial-gradient(circle at 22% 16%, color-mix(in srgb, var(--orchard-target-accent) 28%, transparent), transparent 58%);
+}
+
+.orchard-target-options button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--orchard-target-accent) 62%, white 38%);
+}
+
+.orchard-target-options button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.orchard-target-controls p {
+  margin: 0;
+  color: rgba(191, 219, 254, 0.82);
+  font-size: 0.72rem;
 }
 
 .orchard-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.42rem;
+  justify-content: flex-end;
+  align-self: flex-end;
 }
 
 .orchard-actions button {
-  border: 1px solid rgba(147, 197, 253, 0.36);
+  border: 1px solid rgba(125, 211, 252, 0.45);
   border-radius: 999px;
-  background: linear-gradient(135deg, rgba(30, 64, 175, 0.6), rgba(21, 94, 117, 0.68));
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.74), rgba(3, 105, 161, 0.8));
   color: #f8fafc;
   font-weight: 700;
   font-size: 0.78rem;
-  padding: 0.38rem 0.72rem;
+  padding: 0.38rem 0.76rem;
   cursor: pointer;
+  transition: border-color 140ms ease, transform 140ms ease, filter 140ms ease;
 }
 
-.orchard-actions button:hover {
-  border-color: rgba(34, 197, 94, 0.72);
+.orchard-actions button:hover:not(:disabled) {
+  border-color: rgba(134, 239, 172, 0.82);
+  filter: brightness(1.07);
+  transform: translateY(-1px);
 }
 
 .orchard-actions button:disabled {
@@ -14724,12 +14844,15 @@ button.brisca-card.playable:disabled {
 
 .orchard-shell {
   width: 100%;
-  margin-top: 0.52rem;
-  padding: 0.2rem;
-  border-radius: 18px;
-  border: 1px solid rgba(148, 163, 184, 0.24);
+  margin-top: 0.58rem;
+  padding: 0.26rem;
+  border-radius: 20px;
+  border: 1px solid rgba(125, 211, 252, 0.28);
   overflow: hidden;
-  background: rgba(2, 6, 23, 0.75);
+  background:
+    linear-gradient(162deg, rgba(2, 6, 23, 0.9), rgba(15, 23, 42, 0.75)),
+    radial-gradient(circle at 82% -24%, rgba(56, 189, 248, 0.2), transparent 52%);
+  box-shadow: 0 14px 24px rgba(2, 6, 23, 0.44);
 }
 
 .orchard-canvas {
@@ -14739,10 +14862,28 @@ button.brisca-card.playable:disabled {
   max-height: none;
   touch-action: none;
   user-select: none;
+  border-radius: 15px;
+}
+
+.orchard-shell:fullscreen,
+.orchard-shell:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
+  max-height: 100vh;
+  border-radius: 0;
+  padding: 0.25rem;
+}
+
+.orchard-shell:fullscreen .orchard-canvas,
+.orchard-shell:-webkit-full-screen .orchard-canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 0;
 }
 
 .orchard-info-strip {
-  margin-top: 0.7rem;
+  margin-top: 0.72rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.42rem;
@@ -14750,10 +14891,10 @@ button.brisca-card.playable:disabled {
 
 .orchard-info-strip span {
   border-radius: 999px;
-  border: 1px solid rgba(147, 197, 253, 0.28);
-  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(125, 211, 252, 0.26);
+  background: rgba(15, 23, 42, 0.78);
   color: #dbeafe;
-  padding: 0.28rem 0.56rem;
+  padding: 0.28rem 0.62rem;
   font-size: 0.74rem;
 }
 
@@ -14764,27 +14905,45 @@ button.brisca-card.playable:disabled {
 .orchard-controls {
   margin-top: 0.62rem;
   margin-bottom: 0;
-  color: #cbd5e1;
+  color: rgba(219, 234, 254, 0.92);
   font-size: 0.8rem;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .launch-game-area .orchard-match-game {
   max-width: min(1260px, 100%);
-  padding: 0.35rem 0.45rem 0.58rem;
+  padding: 0.38rem 0.5rem 0.62rem;
+}
+
+.launch-game-area .orchard-match-game .mini-head {
+  justify-content: space-between;
 }
 
 .launch-game-area .orchard-shell {
-  margin-top: 0.4rem;
+  margin-top: 0.44rem;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 960px) {
+  .orchard-target-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .orchard-actions {
-    margin-top: 0.44rem;
+    margin-top: 0.36rem;
   }
 
   .orchard-actions button {
     font-size: 0.74rem;
     padding: 0.34rem 0.6rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .orchard-target-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .orchard-target-controls {
+    min-width: 100%;
   }
 }
