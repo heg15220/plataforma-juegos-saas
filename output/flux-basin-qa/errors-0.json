@@ -1,0 +1,10 @@
+[
+  {
+    "type": "console.error",
+    "text": "TypeError: Cannot read properties of undefined (reading 'colors')\n    at St (http://127.0.0.1:4173/assets/index-ead6ebc1.js:1:40803)\n    at xt (http://127.0.0.1:4173/assets/index-ead6ebc1.js:1:43167)\n    at Ct.render (http://127.0.0.1:4173/assets/index-ead6ebc1.js:1:62656)\n    at Ct.start (http://127.0.0.1:4173/assets/index-ead6ebc1.js:1:49138)\n    at http://127.0.0.1:4173/assets/index-ead6ebc1.js:1:66293\n    at Zo (http://127.0.0.1:4173/assets/index-06714b34.js:32:24283)\n    at M5 (http://127.0.0.1:4173/assets/index-06714b34.js:32:42406)\n    at http://127.0.0.1:4173/assets/index-06714b34.js:32:40723\n    at p (http://127.0.0.1:4173/assets/index-06714b34.js:17:1535)\n    at MessagePort.M (http://127.0.0.1:4173/assets/index-06714b34.js:17:1894)"
+  },
+  {
+    "type": "pageerror",
+    "text": "TypeError: Cannot read properties of undefined (reading 'colors')"
+  }
+]

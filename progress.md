@@ -85,6 +85,30 @@
 - Fuente candidata para espanol validada con red: paginas alfabeticas `Refranes en español (...)` de Wikiquote en espanol, con wikitext accesible y volumen suficiente.
 - Decision tecnica: generar un banco reproducible `es/en` de 500 refranes por idioma con script, filtros basicos de calidad/deduplicacion y campos ya partidos en `inicio` + `resto`.
 - Siguiente bloque: crear generador, materializar dataset, implementar el minijuego de 5 rondas y validar con tests/build/Playwright.
+
+## 2026-03-13 - Arcade reactor toss (licencia + arranque)
+- Nueva peticion en curso: implementar un juego estilo TigerBall dentro de `Arcade`, inspirado en `NuclearBall` del repo `AdriPanG/DVI`.
+- Licencia upstream verificada por red: `MIT License` en `https://github.com/AdriPanG/DVI/blob/master/LICENSE`.
+- Material upstream localizado en `NuclearBall/`: JS principal, assets visuales (`background`, `ball*`, `Barrel*`, `Box`, `Spike`, `saw`, `bomb`) y audio (`throw`, `explosion`, `lose`, `poison`).
+- Decision actual: reutilizar solo un subconjunto pequeno y claro de assets MIT con atribucion local, pero reimplementar motor, niveles y UX desde cero en React/canvas.
+- Siguiente bloque: crear `arcade-reactor-toss`, integrar catalogo/playground/registry, y validar con Vite + Playwright.
+
+## 2026-03-13 - Arcade reactor toss (implementacion + QA)
+- Nuevo juego integrado: `src/games/arcade/reactor-toss/` con runtime canvas propio, 8 misiones, tiros con fisica, barriles objetivo, sierras, pinchos, bomba limitada, ball skins, audio y bridge QA (`render_game_to_text` + `advanceTime`).
+- Assets MIT copiados de `NuclearBall` al nuevo juego y documentados en:
+  - `docs/nuclear-ball-reference.md`
+  - `src/games/arcade/reactor-toss/UPSTREAM_LICENSE.txt`
+- Catalogo/plataforma actualizados:
+  - portada nueva `src/assets/games/arcade-reactor-toss.svg`
+  - ficha en `src/data/games.js`
+  - lazy import y hints en `src/components/GamePlayground.jsx`
+  - registry paralelo en `src/games/registry.jsx`
+  - estilos dedicados en `src/styles.css`
+- Build validado: `npm run build` OK (fuera de sandbox por `spawn EPERM` de esbuild dentro del sandbox).
+- QA Playwright sobre `vite preview`:
+  - `output/arcade-reactor-toss/` confirma arranque desde menu, disparo, avance a mision 2, score acumulado, y uso de bomba sin errores de consola.
+  - `output/arcade-reactor-toss-controls/` confirma pausa/reanudacion + reinicio de mision y vuelta al estado `aiming`.
+- Gotcha relevante: el cliente del skill en `~/.codex/.../web_game_playwright_client.js` falla en Windows por ESM; se uso la copia local `web_game_playwright_client.mjs` para completar la validacion.
   - arquitectura objetivo por modulos (`physics`, `camera`, `ai`, `render`, `fx`, `hud`, `content`);
   - roadmap por fases P0/P1/P2/P3 con criterios de salida;
   - pipeline de assets 3D y estrategia LOD/rendimiento;
@@ -224,6 +248,39 @@
   - Nuevo banco de crucigramas ES/EN con plantillas validas y definiciones reales (horizontales/verticales).
   - Texto del boton actualizado a `Partida aleatoria` / `Random match`.
   - Reinicio ahora usa `getRandomKnowledgeMatchIdExcept(...)`.
+
+## 2026-03-13 - Arcade physics toss rewrite (nuevo encargo)
+- Nueva peticion en curso: rehacer el arcade de lanzamiento de pelota a recipiente como producto original mobile-first, sin reutilizar naming/copy/UX del runtime previo.
+- Decision tecnica: mantener la integracion del catalogo con el mismo `gameId` para reducir cambios de plataforma, pero sustituir el contenido por una IP nueva con arquitectura modular (`core/physics`, `core/level`, `core/entities`, `core/systems`, `ui`, `services`).
+- Direccion elegida: laboratorio neon-industrial original con identidad propia, objetivo tipo capsula magnetica y assets base desde `C:\Users\hugoe\Downloads\tigerball_asset_pack`.
+- Alcance MVP de esta pasada:
+  - 1 mundo / 20 niveles / 3 fondos / 5 skins.
+  - sistema de lanzamiento por drag, fisica 2D legible, estrellas, retry instantaneo y guardado versionado.
+  - catalogo/playground/copy/QA actualizados para el nuevo juego.
+
+## 2026-03-13 - Flux Basin (implementacion principal)
+- Nuevo runtime modular creado bajo `src/games/arcade/reactor-toss/`:
+  - `core/physics/constants.js` y `core/physics/simulation.js`
+  - `core/level/{schema,obstacleCatalog,themes,world1}.js`
+  - `core/entities/factories.js`
+  - `core/systems/{audio,particles}.js`
+  - `services/save.js`
+  - `render/drawScene.js`
+- Juego reescrito como IP original `Flux Basin`:
+  - 20 niveles del mundo `Neon Foundry`
+  - 10 tipos de obstaculo (`wall`, `ramp`, `bumper`, `movingBar`, `spikeStrip`, `fan`, `stickyPad`, `gravityWell`, `portal`, `gate`)
+  - objetivo/capsula con captura forgiving, previsualizacion limitada, trails, particulas y haptics
+  - 5 skins desbloqueables por estrellas y guardado local versionado
+- Shell React/UI nueva:
+  - menu principal
+  - overlay de seleccion de niveles
+  - panel de ajustes (audio, vibracion, perfil de input, ayuda visual, auto-retry)
+  - HUD lateral mobile-first y controles tactiles auxiliares
+- Integracion de plataforma actualizada:
+  - copy de catalogo y hints de control para `arcade-reactor-toss`
+  - portada SVG nueva
+  - assets del pack copiados a `src/games/arcade/reactor-toss/assets/original/`
+- Pendiente inmediato: build, validacion Playwright y correccion de defects de runtime/layout.
   - Limpieza de atajo `r` no operativo (conflicto con entrada de letras).
 - Juegos de Conocimiento no-Quiz con reinicio aleatorio:
   - `SudokuKnowledgeGame.jsx`, `DominoKnowledgeGame.jsx`, `PuzzleKnowledgeGame.jsx`, `SolitaireKnowledgeGame.jsx` migrados de `getNextKnowledgeMatchId(...)` a `getRandomKnowledgeMatchIdExcept(...)`.

@@ -1,0 +1,60 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="52" y1="24" x2="452" y2="488" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#091325"/>
+      <stop offset="0.52" stop-color="#112448"/>
+      <stop offset="1" stop-color="#18335D"/>
+    </linearGradient>
+    <linearGradient id="orb" x1="122" y1="146" x2="196" y2="226" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE28E"/>
+      <stop offset="0.58" stop-color="#FF9E35"/>
+      <stop offset="1" stop-color="#A84A0B"/>
+    </linearGradient>
+    <linearGradient id="arc" x1="162" y1="198" x2="344" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9FE9FF"/>
+      <stop offset="1" stop-color="#75FFC9"/>
+    </linearGradient>
+    <filter id="glow" x="0" y="0" width="512" height="512" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="16" result="blur"/>
+      <feBlend in="SourceGraphic" in2="blur" mode="screen"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="40" fill="url(#bg)"/>
+  <g opacity="0.24" stroke="#426CA5" stroke-width="8">
+    <path d="M32 84H480"/>
+    <path d="M32 136H480"/>
+    <path d="M32 188H480"/>
+    <path d="M32 240H480"/>
+    <path d="M32 292H480"/>
+    <path d="M32 344H480"/>
+    <path d="M32 396H480"/>
+    <path d="M32 448H480"/>
+  </g>
+  <g opacity="0.18" stroke="#35537F" stroke-width="6">
+    <path d="M64 332L64 512"/>
+    <path d="M128 332L128 512"/>
+    <path d="M192 332L192 512"/>
+    <path d="M256 332L256 512"/>
+    <path d="M320 332L320 512"/>
+    <path d="M384 332L384 512"/>
+    <path d="M448 332L448 512"/>
+  </g>
+  <rect x="68" y="214" width="120" height="28" rx="14" fill="#4F4A65"/>
+  <path d="M144 182C186 144 246 118 308 122C350 124 384 140 412 170" stroke="url(#arc)" stroke-width="16" stroke-linecap="round" stroke-dasharray="8 16" filter="url(#glow)"/>
+  <circle cx="122" cy="188" r="34" fill="url(#orb)"/>
+  <ellipse cx="108" cy="174" rx="16" ry="13" fill="#FFF8F0" opacity="0.94"/>
+  <circle cx="122" cy="188" r="34" stroke="#6A2D00" stroke-width="6"/>
+  <rect x="300" y="292" width="152" height="22" rx="11" fill="#56506B"/>
+  <rect x="178" y="344" width="130" height="28" rx="14" fill="#46D8BE"/>
+  <g filter="url(#glow)">
+    <path d="M360 214C360 204 368 196 378 196H414C424 196 432 204 432 214V264C432 280 420 292 404 292H388C372 292 360 280 360 264V214Z" fill="#67A3E4"/>
+    <ellipse cx="396" cy="196" rx="40" ry="16" fill="#152D73"/>
+    <ellipse cx="396" cy="196" rx="40" ry="16" stroke="#89BFFF" stroke-width="6"/>
+  </g>
+  <g fill="#DDE7F8">
+    <path d="M230 472L246 428L262 472H230Z"/>
+    <path d="M264 472L280 428L296 472H264Z"/>
+    <path d="M298 472L314 428L330 472H298Z"/>
+    <path d="M332 472L348 428L364 472H332Z"/>
+  </g>
+</svg>

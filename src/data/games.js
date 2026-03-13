@@ -13,6 +13,7 @@ import arcadeBuscaminasClassicImage from "../assets/games/arcade-buscaminas-clas
 import arcadeBillarPoolClubImage from "../assets/games/arcade-billar-pool-club.svg";
 import arcadeBowlingProTourImage from "../assets/games/arcade-bowling-pro-tour.svg";
 import arcadeOrchardMatchBlastImage from "../assets/games/arcade-orchard-match-blast.svg";
+import arcadeReactorTossImage from "../assets/games/arcade-reactor-toss.svg";
 import knowledgeSudokuImage from "../assets/games/knowledge-sudoku.svg";
 import knowledgeDominoImage from "../assets/games/knowledge-domino.svg";
 import knowledgeAhorcadoImage from "../assets/games/knowledge-ahorcado.svg";
@@ -291,6 +292,89 @@ export const games = [
     viability_en: "High: decoupled 2D Canvas engine with FSM AI and BFS pathfinding.",
     visualStyle_en: "Dark neon maze with clear route, pellet and ghost-state readability.",
     techFocus_en: "Modular engine/world/entities/ai/state architecture + decoupled React HUD.",
+  },
+
+  {
+    id: "arcade-reactor-toss",
+    image: arcadeReactorTossImage,
+    sessionTime: "1-3 min",
+
+    title: "Flux Basin",
+    category: "Arcade",
+    tagline: "Desliza para lanzar la pelota rayada al cubo. ¡Domina los rebotes en 12 niveles!",
+    description:
+      "Arcade de fisica al estilo TigerBall (Laxarus P.C., 2016): desliza en la direccion del lanzamiento, calibra la fuerza y deja que la gravedad y los rebotes lleven la pelota rayada directo al cubo azul.",
+    objective_es:
+      "Supera 12 niveles encestando la pelota en el cubo antes de quedarte sin vidas. Usa el comodin de forma tactica cuando el camino se cierre.",
+    howToPlay_es:
+      "Touch/raton: desliza en la direccion que deseas lanzar y suelta para disparar — la velocidad del deslizamiento determina la fuerza. Teclado: flechas o A/D ajustan angulo, W/S potencia, Enter/Espacio lanza, B comodin, R reinicia, P pausa.",
+    highlights: [
+      "Control de deslizamiento intuitivo: la direccion y velocidad del swipe definen angulo y fuerza.",
+      "Fisica realista con gravedad, rebotes energeticos en paredes, plataformas y cubos.",
+      "12 niveles de dificultad progresiva: anillos, bloques amarillos, sierras giratorias y zonas de peligro.",
+      "Tres tipos de piel de pelota: Tigre, Abeja, Sandia y Clasica.",
+      "Comodin limitado para resolver impases sin romper el ritmo arcade.",
+    ],
+    difficulty: "Media-Alta",
+    multiplayer: "Solo",
+    viability: "Alta: motor Canvas 2D propio con fisica ligera, colisiones discretas y estado serializable.",
+    visualStyle: "Paleta menta-turquesa con pelota rayada, cubos cilindricas teal, bloques amarillos y estrellas doradas.",
+    techFocus: "Fisica de proyectil con swipe-to-throw, colision circulo-AABB, progresion por niveles y bridge QA.",
+    tagline: "Arcade mobile-first de fisica y precision: tira hacia atras, rebota y captura la orbita en una capsula magnetica.",
+    description:
+      "Arcade 2D original ambientado en una fundicion neon-industrial. Dominas una orbita energetica con un unico gesto principal: tirar hacia atras y soltar. La dificultad crece con bumpers, rampas, compuertas temporizadas, portales, ventiladores, campos de gravedad y superficies gel.",
+    objective_es:
+      "Completa 20 niveles cortos llevando la orbita hasta la capsula receptora con el menor numero posible de intentos, rebotes y tiempo.",
+    howToPlay_es:
+      "Touch/raton: tira hacia atras desde la orbita y suelta. Teclado: flechas/A-D apuntan, W/S ajustan potencia, Enter/Espacio lanza, P pausa, R reinicia, L abre seleccion de nivel y F alterna pantalla completa.",
+    highlights: [
+      "20 niveles mobile-first con curva pedagogica: directo, bank shot, timing, portales y combinaciones.",
+      "10 prefabs de obstaculo preparados para escalar a nuevos mundos y 100+ niveles.",
+      "Sistema propio de 3 estrellas por precision, tiempo, limpieza y primer intento.",
+      "5 skins desbloqueables por estrellas acumuladas y guardado local versionado.",
+      "Feedback premium: preview limitada, trails, particulas, micro camera shake y vibracion movil.",
+    ],
+    viability: "Alta: runtime Canvas 2D desacoplado con fisica legible, guardado local y bridge QA determinista.",
+    visualStyle: "Laboratorio neon-industrial con materiales cartoon-premium, fondos oscuros de alto contraste y UI tactil compacta.",
+    techFocus: "Arquitectura modular por capas (physics/level/entities/systems/services), prefabs parametrizables y HUD React desacoplado.",
+
+    category_en: "Arcade",
+    tagline_en: "Swipe to toss the striped ball into the cup. Master the rebounds across 12 levels!",
+    description_en:
+      "A physics arcade in the spirit of TigerBall (Laxarus P.C., 2016): swipe in the throw direction, gauge the power, and let gravity and bounces carry the striped ball straight into the teal cup.",
+    objective_en:
+      "Clear 12 levels by sinking the ball into the cup before running out of lives. Use the wildcard tactically when a lane closes down.",
+    howToPlay_en:
+      "Touch/mouse: swipe in the throw direction and release to shoot — swipe speed sets the power. Keyboard: arrows or A/D adjust angle, W/S power, Enter/Space fires, B wildcard, R restart, P pause.",
+    highlights_en: [
+      "Intuitive swipe control: swipe direction and speed set angle and launch power.",
+      "Realistic physics with gravity, high-energy wall/platform/cup rebounds.",
+      "12 levels of progressive difficulty: rings, yellow sun-blocks, spinning saws, and danger zones.",
+      "Four ball skins: Tiger, Bee, Watermelon, Classic.",
+      "Limited wildcard to solve bottlenecks without breaking the arcade pace.",
+    ],
+    difficulty_en: "Medium-High",
+    multiplayer_en: "Solo",
+    viability_en: "High: custom Canvas 2D runtime with lightweight physics, discrete collisions, and serializable state.",
+    visualStyle_en: "Mint-teal palette with striped ball, teal cylindrical cups, yellow sun-blocks, and golden stars.",
+    techFocus_en: "Projectile physics with swipe-to-throw, circle-vs-AABB collisions, level progression, and QA bridge.",
+    tagline_en: "Mobile-first physics arcade: pull back, bank cleanly, and secure the orb inside a magnetic capsule.",
+    description_en:
+      "An original 2D physics arcade set inside a neon-industrial foundry. You command an energy orb with one main gesture: pull back and release. Difficulty escalates through bumpers, ramps, timed gates, portals, fans, gravity wells, and gel surfaces.",
+    objective_en:
+      "Clear 20 short levels by guiding the orb into the receiver capsule with as few attempts, rebounds, and seconds as possible.",
+    howToPlay_en:
+      "Touch/mouse: pull back from the orb and release. Keyboard: arrows/A-D aim, W/S power, Enter/Space launch, P pause, R restart, L opens level select, and F toggles fullscreen.",
+    highlights_en: [
+      "20 mobile-first levels with a proper teaching curve: direct shots, banks, timing, portals, and layered combinations.",
+      "10 obstacle prefabs ready to scale into new worlds and 100+ levels.",
+      "Original 3-star system based on precision, time, cleanliness, and first-try clears.",
+      "5 unlockable skins tied to cumulative stars plus versioned local save data.",
+      "Premium feedback: limited preview, trails, particles, micro camera shake, and mobile vibration.",
+    ],
+    viability_en: "High: decoupled Canvas 2D runtime with readable physics, local save, and deterministic QA hooks.",
+    visualStyle_en: "Neon-industrial laboratory with cartoon-premium materials, high-contrast dark backdrops, and compact tactile UI.",
+    techFocus_en: "Modular architecture across physics/level/entities/systems/services, parameterized prefabs, and a React HUD separated from simulation.",
   },
 
   {

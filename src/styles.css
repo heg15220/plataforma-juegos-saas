@@ -14947,3 +14947,565 @@ button.brisca-card.playable:disabled {
     min-width: 100%;
   }
 }
+
+.reactor-toss-game {
+  --reactor-ink: #1f4254;
+  --reactor-muted: #5c7c8f;
+  --reactor-panel: linear-gradient(180deg, rgba(241, 252, 255, 0.96), rgba(219, 246, 252, 0.96));
+  --reactor-line: rgba(92, 188, 207, 0.34);
+  display: grid;
+  gap: 1rem;
+}
+
+.reactor-toss-game .mini-head,
+.reactor-toss-hud,
+.reactor-toss-status,
+.reactor-toss-reference {
+  background: var(--reactor-panel);
+  border: 1px solid var(--reactor-line);
+  border-radius: 22px;
+  box-shadow: 0 18px 42px rgba(47, 146, 165, 0.12);
+}
+
+.reactor-toss-game .mini-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.1rem 1.2rem;
+}
+
+.reactor-toss-game .mini-head h4 {
+  margin: 0;
+  color: var(--reactor-ink);
+  font-family: Georgia, serif;
+  font-size: 1.75rem;
+}
+
+.reactor-toss-game .mini-head p,
+.reactor-toss-status p,
+.reactor-toss-reference p,
+.reactor-toss-reference li,
+.reactor-toss-reference summary {
+  color: var(--reactor-muted);
+}
+
+.reactor-toss-actions,
+.reactor-toss-touch-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.reactor-toss-actions button,
+.reactor-toss-touch-controls button {
+  border: 1px solid rgba(96, 198, 216, 0.38);
+  border-radius: 999px;
+  padding: 0.72rem 1rem;
+  background:
+    radial-gradient(circle at top, rgba(255, 232, 111, 0.42), transparent 58%),
+    rgba(255, 255, 255, 0.9);
+  color: var(--reactor-ink);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.reactor-toss-actions button:hover,
+.reactor-toss-touch-controls button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(96, 198, 216, 0.72);
+  background:
+    radial-gradient(circle at top, rgba(255, 217, 95, 0.52), transparent 58%),
+    rgba(255, 255, 255, 0.96);
+}
+
+.reactor-toss-hud {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  color: var(--reactor-ink);
+}
+
+.reactor-toss-hud span {
+  padding: 0.55rem 0.75rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.52);
+}
+
+.reactor-toss-shell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid rgba(101, 197, 215, 0.38);
+  background:
+    radial-gradient(circle at top left, rgba(255, 237, 138, 0.26), transparent 36%),
+    linear-gradient(180deg, rgba(222, 249, 252, 0.96), rgba(206, 243, 248, 0.96));
+  padding: 1rem;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.42), 0 22px 54px rgba(59, 151, 169, 0.14);
+}
+
+.reactor-toss-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 20px;
+  background: #c8f1f6;
+}
+
+.reactor-toss-shell:fullscreen,
+.reactor-toss-shell:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
+  max-height: 100vh;
+  border-radius: 0;
+  padding: 0.25rem;
+}
+
+.reactor-toss-shell:fullscreen .reactor-toss-canvas,
+.reactor-toss-shell:-webkit-full-screen .reactor-toss-canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 0;
+}
+
+.reactor-toss-status,
+.reactor-toss-reference {
+  padding: 1rem 1.1rem;
+}
+
+.reactor-toss-status p {
+  margin: 0;
+}
+
+.reactor-toss-status p + p {
+  margin-top: 0.35rem;
+}
+
+.reactor-toss-reference {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.reactor-toss-reference h5 {
+  margin: 0 0 0.35rem;
+  color: var(--reactor-ink);
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.reactor-toss-reference details {
+  border-radius: 18px;
+  border: 1px solid rgba(96, 198, 216, 0.24);
+  background: rgba(255, 255, 255, 0.54);
+  padding: 0.8rem 0.95rem;
+}
+
+.reactor-toss-reference summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.reactor-toss-reference ul {
+  margin: 0.75rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.reactor-toss-touch-controls {
+  justify-content: center;
+}
+
+@media (max-width: 900px) {
+  .reactor-toss-game .mini-head {
+    flex-direction: column;
+  }
+}
+
+.flux-basin-game {
+  display: grid;
+  gap: 0.95rem;
+  border-color: rgba(99, 215, 255, 0.26);
+  background:
+    radial-gradient(circle at 86% -22%, rgba(98, 231, 255, 0.16), transparent 44%),
+    radial-gradient(circle at 8% -18%, rgba(255, 189, 89, 0.12), transparent 42%),
+    linear-gradient(160deg, #091222 0%, #101c34 54%, #132744 100%);
+  color: #eef6ff;
+  box-shadow:
+    0 22px 36px rgba(2, 6, 23, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.flux-basin-world {
+  margin: 0 0 0.32rem;
+  color: #7ee7ff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.flux-basin-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.flux-basin-head h4 {
+  margin: 0;
+  color: #f6fbff;
+  font-size: clamp(1.5rem, 2vw, 1.8rem);
+}
+
+.flux-basin-head p {
+  margin: 0.34rem 0 0;
+  color: #bdd8ef;
+}
+
+.flux-basin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.flux-basin-actions button,
+.flux-basin-toggle-grid button,
+.flux-basin-overlay-actions button,
+.flux-basin-level-button,
+.flux-basin-touch-controls button {
+  border: 1px solid rgba(117, 215, 255, 0.24);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(14, 24, 42, 0.92), rgba(10, 17, 31, 0.88));
+  color: #f3fbff;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.flux-basin-actions button,
+.flux-basin-overlay-actions button,
+.flux-basin-touch-controls button {
+  padding: 0.72rem 0.96rem;
+}
+
+.flux-basin-actions button:hover,
+.flux-basin-toggle-grid button:hover,
+.flux-basin-overlay-actions button:hover,
+.flux-basin-level-button:hover,
+.flux-basin-touch-controls button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(117, 215, 255, 0.52);
+}
+
+.flux-basin-shell {
+  display: grid;
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: start;
+}
+
+.flux-basin-side {
+  display: grid;
+  gap: 0.72rem;
+}
+
+.flux-basin-panel,
+.flux-basin-stage-wrap {
+  border: 1px solid rgba(117, 215, 255, 0.18);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 88% -22%, rgba(98, 231, 255, 0.12), transparent 44%),
+    rgba(7, 15, 29, 0.82);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 26px rgba(2, 6, 23, 0.22);
+}
+
+.flux-basin-panel {
+  padding: 0.82rem;
+  display: grid;
+  gap: 0.68rem;
+}
+
+.flux-basin-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.48rem;
+}
+
+.flux-basin-stat-grid div {
+  display: grid;
+  gap: 0.12rem;
+  padding: 0.54rem 0.6rem;
+  border-radius: 14px;
+  border: 1px solid rgba(117, 215, 255, 0.14);
+  background: rgba(8, 19, 35, 0.56);
+}
+
+.flux-basin-stat-grid span,
+.flux-basin-settings-head p,
+.flux-basin-current-level p,
+.flux-basin-controls-copy,
+.flux-basin-stage-head p,
+.flux-basin-stage-footer p {
+  margin: 0;
+  color: #b8d1e8;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.flux-basin-stat-grid strong,
+.flux-basin-current-level strong,
+.flux-basin-settings-head strong,
+.flux-basin-stage-head strong {
+  color: #f7fbff;
+}
+
+.flux-basin-current-level {
+  display: grid;
+  gap: 0.16rem;
+}
+
+.flux-basin-hints {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.34rem;
+  color: #dceeff;
+  font-size: 0.8rem;
+}
+
+.flux-basin-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.46rem;
+}
+
+.flux-basin-toggle-grid button {
+  padding: 0.64rem 0.72rem;
+  text-align: left;
+  font-size: 0.78rem;
+}
+
+.flux-basin-stage-wrap {
+  padding: 0.82rem;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.flux-basin-stage-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+.flux-basin-stage-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.38rem;
+}
+
+.flux-basin-stage-chips span {
+  border-radius: 999px;
+  border: 1px solid rgba(117, 215, 255, 0.2);
+  background: rgba(10, 18, 32, 0.74);
+  color: #dff7ff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.22rem 0.56rem;
+}
+
+.flux-basin-canvas-shell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid rgba(117, 215, 255, 0.16);
+  background: rgba(6, 12, 22, 0.88);
+}
+
+.flux-basin-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #07111d;
+}
+
+.flux-basin-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(3, 8, 18, 0.64);
+  backdrop-filter: blur(4px);
+}
+
+.flux-basin-overlay-subtle {
+  background: rgba(3, 8, 18, 0.42);
+}
+
+.flux-basin-overlay-card {
+  width: min(420px, 100%);
+  display: grid;
+  gap: 0.68rem;
+  padding: 1rem 1.05rem;
+  border-radius: 24px;
+  border: 1px solid rgba(117, 215, 255, 0.18);
+  background:
+    radial-gradient(circle at 84% -24%, rgba(98, 231, 255, 0.12), transparent 48%),
+    rgba(8, 17, 31, 0.94);
+  box-shadow: 0 18px 28px rgba(2, 6, 23, 0.3);
+}
+
+.flux-basin-overlay-card h5 {
+  margin: 0;
+  color: #f7fbff;
+  font-size: 1.2rem;
+  font-family: "Bricolage Grotesque", sans-serif;
+}
+
+.flux-basin-overlay-card p {
+  margin: 0;
+  color: #c4dcf1;
+  line-height: 1.5;
+}
+
+.flux-basin-overlay-wide {
+  width: min(760px, 100%);
+}
+
+.flux-basin-overlay-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.flux-basin-overlay-eyebrow {
+  color: #7ee7ff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.flux-basin-overlay-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.flux-basin-level-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 0.46rem;
+}
+
+.flux-basin-level-button {
+  display: grid;
+  gap: 0.18rem;
+  min-height: 98px;
+  padding: 0.62rem 0.65rem;
+  text-align: left;
+}
+
+.flux-basin-level-button strong {
+  font-size: 1rem;
+}
+
+.flux-basin-level-button span {
+  color: #c8def2;
+  font-size: 0.74rem;
+  line-height: 1.3;
+}
+
+.flux-basin-level-button em {
+  color: #ffd978;
+  font-style: normal;
+  font-size: 0.82rem;
+}
+
+.flux-basin-level-button.completed {
+  border-color: rgba(93, 255, 201, 0.32);
+}
+
+.flux-basin-level-button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.flux-basin-stage-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.flux-basin-callout {
+  color: #7effc7;
+  font-weight: 700;
+}
+
+.flux-basin-touch-controls {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.42rem;
+}
+
+.flux-basin-touch-controls button {
+  font-size: 0.78rem;
+  min-height: 52px;
+}
+
+.flux-basin-canvas-shell:fullscreen,
+.flux-basin-canvas-shell:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
+  max-height: 100vh;
+  padding: 0;
+  border-radius: 0;
+}
+
+.flux-basin-canvas-shell:fullscreen .flux-basin-canvas,
+.flux-basin-canvas-shell:-webkit-full-screen .flux-basin-canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@media (max-width: 1080px) {
+  .flux-basin-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .flux-basin-side {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .flux-basin-head,
+  .flux-basin-stage-head,
+  .flux-basin-overlay-title,
+  .flux-basin-stage-footer {
+    flex-direction: column;
+  }
+
+  .flux-basin-side,
+  .flux-basin-toggle-grid,
+  .flux-basin-touch-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .flux-basin-stage-chips {
+    justify-content: flex-start;
+  }
+}
