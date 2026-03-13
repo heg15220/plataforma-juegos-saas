@@ -258,6 +258,26 @@
   - host del juego: `src/games/PacmanGame.jsx`.
 - Reglas implementadas:
   - pellets (10), power pellets (50), frightened, comido de fantasmas con escala 200/400/800/1600,
+
+## 2026-03-12 - Head Soccer rebuild desde cero
+- Reemplazado `src/games/HeadSoccerGame.jsx` por un host nuevo apoyado en modulos dedicados:
+  - `src/games/headSoccer/config.js`
+  - `src/games/headSoccer/engine.js`
+  - `src/games/headSoccer/render.js`
+  - `src/games/headSoccer/audio.js`
+- Nuevo estadio canvas inspirado en la referencia mobile: marcador superior con banderas, grada compacta, vallas, cesped rayado, porterias pequenas y personajes cabezones.
+- Rehechas las reglas base del juego:
+  - movimiento izquierda/derecha, salto, patada y poder;
+  - modos `Friendly`, `Arcade`, `Tournament`, `Survival`, `League`, `Death` y `Head Cup`;
+  - poderes `Dragon shot`, `Ice field`, `Thunder burst` y `Mega head`;
+  - snapshot QA via `render_game_to_text` y `advanceTime(ms)`.
+- Actualizada la portada `src/assets/games/head-soccer-arena.svg` y el bloque CSS especifico en `src/styles.css`.
+- Fix especifico posterior: el boton `Start` ahora fuerza una iteracion inmediata del motor para que la partida salga del estado `menu` sin esperar al siguiente frame del loop.
+- Validacion completada:
+  - import directo de modulos ESM nuevos OK con `node -e import(...)`.
+  - build OK: `npm run build` (fuera de sandbox por `esbuild spawn EPERM` dentro del sandbox).
+- Pendiente sugerido:
+  - levantar `vite preview` y ejecutar una ronda Playwright del skill para inspeccion visual completa del nuevo Head Soccer.
   - vidas/reset de posiciones, paso de nivel al limpiar pellets, tuneles laterales, pausa/menu/game over/win,
   - high score en `localStorage`, metrica FPS/frame time, debug overlay con hitboxes/intersecciones/targets.
 - Tests unitarios anadidos (Vitest):
@@ -2669,3 +2689,47 @@ Pendiente sugerido:
   - Nuevo sesgo explicito de impacto (`pinAlignmentFactor`, `pinProximityFactor`, `trajectoryBias`) para que los bolos fuera de la linea de tiro pierdan mucha probabilidad frente a los que caen bajo la trayectoria o muy cerca de ella.
 - Verificacion parcial adicional:
   - `npm run dev -- --host 127.0.0.1 --port 4176` sigue levantando Vite correctamente tras este ajuste.
+
+## 2026-03-13 - Arcade: Orchard Match Blast (match-3 original)
+- Nuevo juego Arcade implementado en `src/games/arcade/orchard-match-blast/index.jsx`:
+  - motor match-3 propio con intercambio adyacente, validacion de jugadas, cascadas por gravedad y puntuacion por cadena;
+  - objetivo de score con doble restriccion (tiempo + movimientos);
+  - controles mouse/touch + teclado (`flechas`, `Enter/Space`, `H`, `S`, `R`, `F`);
+  - bridge QA completo con `render_game_to_text` y `advanceTime`.
+- Integracion en plataforma:
+  - alta en catalogo Arcade en `src/data/games.js` con metadata ES/EN;
+  - wiring en `src/components/GamePlayground.jsx` y `src/games/registry.jsx`;
+  - portada nueva `src/assets/games/arcade-orchard-match-blast.svg`;
+  - estilos UI nuevos en `src/styles.css` (`.orchard-*`).
+- Referencia legal/tipologica:
+  - se sigue la mecanica generica slide-and-match sin copiar nombre, arte, sonido ni codigo de Candy Crush;
+  - el repo externo de referencia se uso solo como orientacion de mecanica, con implementacion 100% propia.
+- Validacion tecnica:
+  - `npm run build` OK (fuera de sandbox por `spawn EPERM` en sandbox).
+  - Playwright (skill client) ejecutado en:
+    - `output/arcade-orchard-match-blast-audit/`
+    - `output/arcade-orchard-match-blast-controls-audit/`
+  - Revisadas capturas (`shot-0..2.png`) y estados (`state-0..2.json`) con gameplay activo, swaps validos/no validos, score, tiempo y serializacion del tablero.
+  - Sin `errors-*.json` en ambas auditorias.
+
+## 2026-03-13 - Arcade: Orchard Match Blast (rebuild completo desde cero)
+- Rebuild integral de `src/games/arcade/orchard-match-blast/index.jsx`:
+  - motor match-3 nuevo con tablero `8x9`, gravedad/cascadas reescritas, analizador de matches horizontal/vertical y generacion de jugadas validas;
+  - sistema de especiales rehacido (`lineH`, `lineV`, `bomb`) con propagacion de clears y resolucion en cadena;
+  - objetivos mas profundos (score + cosecha + especiales) con timer/movimientos, combo, ritmo (`flow`) y bonus de movimiento por cascada;
+  - nueva habilidad `Bloom Blast` (carga al 100%) con detonacion de area `3x3` y sinergia con especiales;
+  - nueva capa de efectos visuales (explosion de clears, caida animada por fila origen/destino, pulses de UI) y HUD interno redisenado.
+- Adaptacion al espacio del componente:
+  - layout responsive nuevo (`layoutFromSize`) y resize reactivo por `ResizeObserver` + viewport;
+  - tablero ampliado dentro del canvas y mejor aprovechamiento horizontal (9 columnas) para reducir sensacion de area acotada.
+- Nota legal de referencia externa (`muratcansahn/candycrushreact`):
+  - revisado repo clonado en `C:\Users\hugoe\Downloads\_tmp_candycrushreact_ref`;
+  - no incluye `LICENSE` explicita, por lo que no se reutilizo codigo ni assets;
+  - se uso solo como orientacion de mecanica generica match-3.
+- Verificacion tecnica:
+  - `npm run build` OK fuera de sandbox (EPERM de esbuild dentro de sandbox).
+  - Playwright (skill client) ejecutado en:
+    - `output/arcade-orchard-match-blast-rebuild-probe/`
+    - `output/arcade-orchard-match-blast-rebuild-audit/`
+  - Validado progreso de partida en `state-0..2.json` (score/cosecha/carga/objetivos/board serializado) y capturas con render del tablero ampliado.
+  - Sin `errors-*.json` en la auditoria de rebuild.

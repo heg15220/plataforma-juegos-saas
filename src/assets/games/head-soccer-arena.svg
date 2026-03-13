@@ -1,54 +1,146 @@
 <svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="sky" x1="640" y1="0" x2="640" y2="720" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#38BDF8"/>
-      <stop offset="1" stop-color="#ECFEFF"/>
+      <stop stop-color="#67C2FF"/>
+      <stop offset="1" stop-color="#DDF3FF"/>
     </linearGradient>
-    <linearGradient id="grass" x1="0" y1="480" x2="0" y2="720" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#22C55E"/>
-      <stop offset="1" stop-color="#15803D"/>
-    </linearGradient>
-    <linearGradient id="ball" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#FFFFFF"/>
-      <stop offset="1" stop-color="#E2E8F0"/>
+    <linearGradient id="field" x1="640" y1="300" x2="640" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7CDD5A"/>
+      <stop offset="1" stop-color="#139E2E"/>
     </linearGradient>
   </defs>
+
   <rect width="1280" height="720" fill="url(#sky)"/>
-  <g opacity="0.4">
-    <circle cx="170" cy="140" r="58" fill="white"/>
-    <circle cx="1130" cy="100" r="48" fill="white"/>
-    <circle cx="1030" cy="170" r="35" fill="white"/>
+  <rect y="82" width="1280" height="120" fill="#89CEF8"/>
+  <rect y="214" width="1280" height="22" fill="#31475F"/>
+  <rect y="264" width="1280" height="26" fill="#2B4057"/>
+
+  <g opacity="0.55">
+    <rect x="24" y="96" width="86" height="54" fill="#7AB5E2"/>
+    <rect x="126" y="96" width="86" height="54" fill="#7AB5E2"/>
+    <rect x="228" y="96" width="86" height="54" fill="#7AB5E2"/>
+    <rect x="330" y="96" width="86" height="54" fill="#7AB5E2"/>
+    <rect x="432" y="96" width="86" height="54" fill="#7AB5E2"/>
+    <rect x="534" y="96" width="86" height="54" fill="#7AB5E2"/>
+    <rect x="636" y="96" width="86" height="54" fill="#7AB5E2"/>
+    <rect x="738" y="96" width="86" height="54" fill="#7AB5E2"/>
+    <rect x="840" y="96" width="86" height="54" fill="#7AB5E2"/>
+    <rect x="942" y="96" width="86" height="54" fill="#7AB5E2"/>
+    <rect x="1044" y="96" width="86" height="54" fill="#7AB5E2"/>
+    <rect x="1146" y="96" width="86" height="54" fill="#7AB5E2"/>
   </g>
-  <rect y="470" width="1280" height="250" fill="url(#grass)"/>
-  <g opacity="0.25">
-    <rect x="0" y="492" width="1280" height="26" fill="#4ADE80"/>
-    <rect x="0" y="540" width="1280" height="26" fill="#4ADE80"/>
-    <rect x="0" y="588" width="1280" height="26" fill="#4ADE80"/>
-  </g>
-  <rect x="80" y="286" width="188" height="186" rx="8" fill="#0F172A" fill-opacity="0.22" stroke="#E2E8F0" stroke-width="8"/>
-  <rect x="1012" y="286" width="188" height="186" rx="8" fill="#0F172A" fill-opacity="0.22" stroke="#E2E8F0" stroke-width="8"/>
-  <path d="M640 300V470" stroke="white" stroke-width="6" stroke-linecap="round"/>
-  <path d="M85 470H1195" stroke="white" stroke-width="6" stroke-linecap="round"/>
-  <circle cx="640" cy="470" r="72" stroke="white" stroke-width="6"/>
+
   <g>
-    <ellipse cx="408" cy="480" rx="54" ry="14" fill="#0F172A" fill-opacity="0.3"/>
-    <rect x="383" y="370" width="50" height="98" rx="24" fill="#F97316"/>
-    <circle cx="408" cy="350" r="50" fill="#FDE7CF" stroke="#1F2937" stroke-width="4"/>
-    <circle cx="394" cy="340" r="6" fill="#0F172A"/>
-    <circle cx="422" cy="340" r="6" fill="#0F172A"/>
+    <circle cx="56" cy="322" r="9" fill="#1F2937"/>
+    <circle cx="56" cy="336" r="11" fill="#F97316"/>
+    <circle cx="94" cy="328" r="9" fill="#1F2937"/>
+    <circle cx="94" cy="342" r="11" fill="#FACC15"/>
+    <circle cx="132" cy="322" r="9" fill="#1F2937"/>
+    <circle cx="132" cy="336" r="11" fill="#38BDF8"/>
+    <circle cx="170" cy="328" r="9" fill="#1F2937"/>
+    <circle cx="170" cy="342" r="11" fill="#EF4444"/>
+    <circle cx="208" cy="322" r="9" fill="#1F2937"/>
+    <circle cx="208" cy="336" r="11" fill="#22C55E"/>
+    <circle cx="246" cy="328" r="9" fill="#1F2937"/>
+    <circle cx="246" cy="342" r="11" fill="#A855F7"/>
+    <circle cx="284" cy="322" r="9" fill="#1F2937"/>
+    <circle cx="284" cy="336" r="11" fill="#FB7185"/>
+    <circle cx="322" cy="328" r="9" fill="#1F2937"/>
+    <circle cx="322" cy="342" r="11" fill="#14B8A6"/>
+    <circle cx="360" cy="322" r="9" fill="#1F2937"/>
+    <circle cx="360" cy="336" r="11" fill="#F8FAFC"/>
+    <circle cx="398" cy="328" r="9" fill="#1F2937"/>
+    <circle cx="398" cy="342" r="11" fill="#F97316"/>
+    <circle cx="882" cy="322" r="9" fill="#1F2937"/>
+    <circle cx="882" cy="336" r="11" fill="#FACC15"/>
+    <circle cx="920" cy="328" r="9" fill="#1F2937"/>
+    <circle cx="920" cy="342" r="11" fill="#38BDF8"/>
+    <circle cx="958" cy="322" r="9" fill="#1F2937"/>
+    <circle cx="958" cy="336" r="11" fill="#EF4444"/>
+    <circle cx="996" cy="328" r="9" fill="#1F2937"/>
+    <circle cx="996" cy="342" r="11" fill="#22C55E"/>
+    <circle cx="1034" cy="322" r="9" fill="#1F2937"/>
+    <circle cx="1034" cy="336" r="11" fill="#A855F7"/>
+    <circle cx="1072" cy="328" r="9" fill="#1F2937"/>
+    <circle cx="1072" cy="342" r="11" fill="#FB7185"/>
+    <circle cx="1110" cy="322" r="9" fill="#1F2937"/>
+    <circle cx="1110" cy="336" r="11" fill="#14B8A6"/>
+    <circle cx="1148" cy="328" r="9" fill="#1F2937"/>
+    <circle cx="1148" cy="342" r="11" fill="#F8FAFC"/>
+    <circle cx="1186" cy="322" r="9" fill="#1F2937"/>
+    <circle cx="1186" cy="336" r="11" fill="#F97316"/>
   </g>
+
+  <rect y="356" width="1280" height="364" fill="url(#field)"/>
+  <g opacity="0.18">
+    <rect y="382" width="1280" height="18" fill="#0F8B2B"/>
+    <rect y="434" width="1280" height="18" fill="#0F8B2B"/>
+    <rect y="486" width="1280" height="18" fill="#0F8B2B"/>
+    <rect y="538" width="1280" height="18" fill="#0F8B2B"/>
+    <rect y="590" width="1280" height="18" fill="#0F8B2B"/>
+  </g>
+
+  <path d="M86 468H1194" stroke="white" stroke-width="7"/>
+  <path d="M640 468V640" stroke="white" stroke-width="7"/>
+  <circle cx="640" cy="640" r="82" stroke="white" stroke-width="7"/>
+  <rect x="86" y="468" width="1108" height="172" stroke="white" stroke-width="7"/>
+
+  <g opacity="0.22">
+    <rect x="22" y="400" width="164" height="240" fill="#EEF7FF" stroke="white" stroke-width="7"/>
+    <rect x="1094" y="400" width="164" height="240" fill="#EEF7FF" stroke="white" stroke-width="7"/>
+  </g>
+
   <g>
-    <ellipse cx="890" cy="480" rx="54" ry="14" fill="#0F172A" fill-opacity="0.3"/>
-    <rect x="865" y="370" width="50" height="98" rx="24" fill="#38BDF8"/>
-    <circle cx="890" cy="350" r="50" fill="#FDE7CF" stroke="#1F2937" stroke-width="4"/>
-    <circle cx="876" cy="340" r="6" fill="#0F172A"/>
-    <circle cx="904" cy="340" r="6" fill="#0F172A"/>
+    <rect x="402" y="18" width="476" height="118" rx="22" fill="#1F4168"/>
+    <rect x="430" y="38" width="100" height="56" rx="10" fill="white" stroke="#1F2937" stroke-width="4"/>
+    <circle cx="480" cy="66" r="16" fill="#DC2626"/>
+    <path d="M480 50C490.5 50 499 58.5 499 69C499 79.5 490.5 88 480 88C469.5 88 461 79.5 461 69C461 58.5 469.5 50 480 50Z" fill="#2563EB"/>
+    <path d="M626 34H702" stroke="#FACC15" stroke-width="8" stroke-linecap="round"/>
+    <text x="664" y="60" text-anchor="middle" fill="#FACC15" font-family="Arial, sans-serif" font-size="24" font-weight="700">BONUS</text>
+    <text x="664" y="100" text-anchor="middle" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="54" font-weight="900">0:19</text>
+    <rect x="748" y="38" width="100" height="56" rx="10" fill="#1D4ED8" stroke="#1F2937" stroke-width="4"/>
+    <rect x="748" y="38" width="100" height="18.6" fill="#1D4ED8"/>
+    <rect x="748" y="56.6" width="100" height="18.6" fill="white"/>
+    <rect x="748" y="75.2" width="100" height="18.8" fill="#DC2626"/>
+    <path d="M620 118L664 96L708 118Z" fill="#FACC15" stroke="#7C2D12" stroke-width="4"/>
+    <circle cx="620" cy="114" r="10" fill="#FACC15"/>
+    <circle cx="664" cy="114" r="10" fill="#FACC15"/>
+    <circle cx="708" cy="114" r="10" fill="#FACC15"/>
   </g>
-  <circle cx="640" cy="412" r="42" fill="url(#ball)" stroke="#334155" stroke-width="5"/>
-  <circle cx="640" cy="412" r="17" stroke="#334155" stroke-width="3"/>
-  <g opacity="0.8">
-    <circle cx="610" cy="414" r="12" fill="#FB923C"/>
-    <circle cx="585" cy="418" r="8" fill="#FDBA74"/>
-    <circle cx="565" cy="422" r="5" fill="#FED7AA"/>
+
+  <g>
+    <text x="28" y="118" fill="#111827" font-family="Arial, sans-serif" font-size="54" font-weight="900">WINS:</text>
+    <text x="210" y="118" fill="#FACC15" font-family="Arial, sans-serif" font-size="54" font-weight="900">4</text>
+    <text x="28" y="176" fill="#111827" font-family="Arial, sans-serif" font-size="54" font-weight="900">GOAL:</text>
+    <text x="210" y="176" fill="#FACC15" font-family="Arial, sans-serif" font-size="54" font-weight="900">2</text>
+  </g>
+
+  <g>
+    <ellipse cx="302" cy="642" rx="78" ry="18" fill="rgba(15,23,42,0.22)"/>
+    <rect x="270" y="500" width="64" height="112" rx="26" fill="#FF7A17"/>
+    <circle cx="302" cy="458" r="62" fill="#F6DEC6"/>
+    <circle cx="284" cy="450" r="5" fill="#0F172A"/>
+    <circle cx="320" cy="450" r="5" fill="#0F172A"/>
+    <path d="M302 396C332 396 356 420 356 450C356 480 332 504 302 504" stroke="#F59E0B" stroke-width="8" stroke-linecap="round"/>
+    <path d="M282 612L272 650" stroke="#1F2937" stroke-width="6" stroke-linecap="round"/>
+    <path d="M322 612L332 650" stroke="#1F2937" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <g>
+    <ellipse cx="978" cy="642" rx="78" ry="18" fill="rgba(15,23,42,0.22)"/>
+    <rect x="946" y="438" width="64" height="164" rx="28" fill="#F59E0B"/>
+    <circle cx="978" cy="392" r="62" fill="#F6DEC6"/>
+    <circle cx="960" cy="384" r="5" fill="#0F172A"/>
+    <circle cx="996" cy="384" r="5" fill="#0F172A"/>
+    <path d="M958 600L950 640" stroke="#1F2937" stroke-width="6" stroke-linecap="round"/>
+    <path d="M998 600L1008 640" stroke="#1F2937" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <g>
+    <ellipse cx="1138" cy="518" rx="52" ry="16" fill="rgba(15,23,42,0.18)"/>
+    <circle cx="1138" cy="518" r="34" fill="white" stroke="#334155" stroke-width="5"/>
+    <circle cx="1138" cy="518" r="12" stroke="#334155" stroke-width="3"/>
+    <circle cx="1110" cy="520" r="12" fill="#FB923C" fill-opacity="0.75"/>
+    <circle cx="1088" cy="526" r="8" fill="#FCD34D" fill-opacity="0.52"/>
   </g>
 </svg>

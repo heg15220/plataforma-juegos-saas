@@ -12,6 +12,7 @@ import pongNeonArenaImage from "../assets/games/pong-neon-arena.svg";
 import arcadeBuscaminasClassicImage from "../assets/games/arcade-buscaminas-classic.svg";
 import arcadeBillarPoolClubImage from "../assets/games/arcade-billar-pool-club.svg";
 import arcadeBowlingProTourImage from "../assets/games/arcade-bowling-pro-tour.svg";
+import arcadeOrchardMatchBlastImage from "../assets/games/arcade-orchard-match-blast.svg";
 import knowledgeSudokuImage from "../assets/games/knowledge-sudoku.svg";
 import knowledgeDominoImage from "../assets/games/knowledge-domino.svg";
 import knowledgeAhorcadoImage from "../assets/games/knowledge-ahorcado.svg";
@@ -290,6 +291,51 @@ export const games = [
     viability_en: "High: decoupled 2D Canvas engine with FSM AI and BFS pathfinding.",
     visualStyle_en: "Dark neon maze with clear route, pellet and ghost-state readability.",
     techFocus_en: "Modular engine/world/entities/ai/state architecture + decoupled React HUD.",
+  },
+
+  {
+    id: "arcade-orchard-match-blast",
+    image: arcadeOrchardMatchBlastImage,
+    sessionTime: "3-8 min",
+
+    title: "Orchard Match Blast",
+    category: "Arcade",
+    tagline: "Match-3 arcade propio con frutas de huerto, cascadas y objetivo de puntuacion.",
+    description:
+      "Juego match-3 original inspirado en la mecanica Slide & Match: intercambia frutas adyacentes, activa cadenas de cascada y optimiza cada movimiento para alcanzar la meta de puntuacion antes de agotar tiempo o movimientos.",
+    objective_es: "Alcanza la puntuacion objetivo encadenando lineas de 3 o mas frutas antes de quedarte sin tiempo o movimientos.",
+    howToPlay_es: "Selecciona dos casillas adyacentes con raton/touch para intercambiarlas. Flechas mueven cursor, Enter/Espacio confirma, H muestra pista, S mezcla y R reinicia.",
+    highlights: [
+      "Motor match-3 original con validacion de swaps y resolucion de cascadas.",
+      "Identidad visual propia basada en frutas y UI arcade de alto contraste.",
+      "Partidas cortas con objetivo de score, limite de tiempo y de movimientos.",
+      "Atajos de ayuda: pista inteligente, mezcla manual y control por teclado.",
+      "Bridge QA con `render_game_to_text`, tablero serializado y `advanceTime` determinista.",
+    ],
+    difficulty: "Media",
+    multiplayer: "Solo",
+    viability: "Alta: reglas discretas sobre grid 8x8, estado ligero y bucle determinista.",
+    visualStyle: "Tablero neofrutal con orbes de color, overlays limpios y feedback de combos.",
+    techFocus: "Deteccion de matches, cascadas por gravedad, busqueda de jugada posible y puente QA automatizable.",
+
+    category_en: "Arcade",
+    tagline_en: "Original match-3 arcade with orchard fruits, cascades, and score goals.",
+    description_en:
+      "An original match-3 game inspired by the Slide & Match mechanic: swap adjacent fruits, trigger cascade chains, and optimize each move to reach the target score before running out of time or moves.",
+    objective_en: "Reach the target score by chaining lines of 3+ fruits before time or moves run out.",
+    howToPlay_en: "Swap two adjacent cells with mouse/touch. Arrows move cursor, Enter/Space confirms, H shows hint, S shuffles, and R restarts.",
+    highlights_en: [
+      "Original match-3 engine with strict swap validation and cascade resolution.",
+      "Custom visual identity with orchard fruit pieces and arcade UI readability.",
+      "Short sessions with score target plus time and move constraints.",
+      "Utility controls: smart hint, manual shuffle, and keyboard-first input.",
+      "QA bridge with `render_game_to_text`, serialized board state, and deterministic `advanceTime`.",
+    ],
+    difficulty_en: "Medium",
+    multiplayer_en: "Solo",
+    viability_en: "High: discrete 8x8 grid rules, lightweight state, and deterministic loop.",
+    visualStyle_en: "Neo-orchard board with colorful orbs, clean overlays, and combo feedback.",
+    techFocus_en: "Match detection, gravity cascades, move-availability search, and automation-ready QA bridge.",
   },
 
   {

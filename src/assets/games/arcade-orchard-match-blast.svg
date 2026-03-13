@@ -1,0 +1,104 @@
+<svg width="800" height="480" viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Orchard Match Blast cover</title>
+  <desc id="desc">Arcade match-3 game cover with orchard fruit spheres in a glowing board.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="52%" stop-color="#1d4ed8" />
+      <stop offset="100%" stop-color="#0b1120" />
+    </linearGradient>
+    <radialGradient id="orbA" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#fecaca" />
+      <stop offset="100%" stop-color="#dc2626" />
+    </radialGradient>
+    <radialGradient id="orbB" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="100%" stop-color="#ca8a04" />
+    </radialGradient>
+    <radialGradient id="orbC" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#bfdbfe" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </radialGradient>
+    <radialGradient id="orbD" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#ddd6fe" />
+      <stop offset="100%" stop-color="#5b21b6" />
+    </radialGradient>
+    <radialGradient id="orbE" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#a7f3d0" />
+      <stop offset="100%" stop-color="#047857" />
+    </radialGradient>
+    <radialGradient id="orbF" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#fed7aa" />
+      <stop offset="100%" stop-color="#c2410c" />
+    </radialGradient>
+  </defs>
+
+  <rect width="800" height="480" rx="28" fill="url(#bg)" />
+  <circle cx="130" cy="70" r="130" fill="#38bdf8" opacity="0.28" />
+  <circle cx="680" cy="90" r="150" fill="#a78bfa" opacity="0.2" />
+
+  <rect x="186" y="90" width="430" height="300" rx="24" fill="#0f172a" fill-opacity="0.78" stroke="#93c5fd" stroke-opacity="0.4" stroke-width="3" />
+
+  <g transform="translate(220,124)">
+    <g transform="translate(0,0)">
+      <rect width="72" height="72" rx="14" fill="#111827" fill-opacity="0.76" />
+      <circle cx="36" cy="36" r="24" fill="url(#orbA)" />
+      <ellipse cx="28" cy="24" rx="7" ry="5" fill="#ffffff" fill-opacity="0.3" />
+    </g>
+    <g transform="translate(86,0)">
+      <rect width="72" height="72" rx="14" fill="#111827" fill-opacity="0.76" />
+      <circle cx="36" cy="36" r="24" fill="url(#orbB)" />
+      <ellipse cx="28" cy="24" rx="7" ry="5" fill="#ffffff" fill-opacity="0.3" />
+    </g>
+    <g transform="translate(172,0)">
+      <rect width="72" height="72" rx="14" fill="#111827" fill-opacity="0.76" />
+      <circle cx="36" cy="36" r="24" fill="url(#orbC)" />
+      <ellipse cx="28" cy="24" rx="7" ry="5" fill="#ffffff" fill-opacity="0.3" />
+    </g>
+    <g transform="translate(258,0)">
+      <rect width="72" height="72" rx="14" fill="#111827" fill-opacity="0.76" />
+      <circle cx="36" cy="36" r="24" fill="url(#orbD)" />
+      <ellipse cx="28" cy="24" rx="7" ry="5" fill="#ffffff" fill-opacity="0.3" />
+    </g>
+
+    <g transform="translate(0,86)">
+      <rect width="72" height="72" rx="14" fill="#111827" fill-opacity="0.76" />
+      <circle cx="36" cy="36" r="24" fill="url(#orbE)" />
+      <ellipse cx="28" cy="24" rx="7" ry="5" fill="#ffffff" fill-opacity="0.3" />
+    </g>
+    <g transform="translate(86,86)">
+      <rect width="72" height="72" rx="14" fill="#111827" fill-opacity="0.76" />
+      <circle cx="36" cy="36" r="24" fill="url(#orbF)" />
+      <ellipse cx="28" cy="24" rx="7" ry="5" fill="#ffffff" fill-opacity="0.3" />
+    </g>
+    <g transform="translate(172,86)">
+      <rect width="72" height="72" rx="14" fill="#111827" fill-opacity="0.76" />
+      <circle cx="36" cy="36" r="24" fill="url(#orbA)" />
+      <ellipse cx="28" cy="24" rx="7" ry="5" fill="#ffffff" fill-opacity="0.3" />
+    </g>
+    <g transform="translate(258,86)">
+      <rect width="72" height="72" rx="14" fill="#111827" fill-opacity="0.76" />
+      <circle cx="36" cy="36" r="24" fill="url(#orbC)" />
+      <ellipse cx="28" cy="24" rx="7" ry="5" fill="#ffffff" fill-opacity="0.3" />
+    </g>
+
+    <g transform="translate(86,172)">
+      <rect width="72" height="72" rx="14" fill="#111827" fill-opacity="0.76" stroke="#22c55e" stroke-width="3" />
+      <circle cx="36" cy="36" r="24" fill="url(#orbD)" />
+      <ellipse cx="28" cy="24" rx="7" ry="5" fill="#ffffff" fill-opacity="0.3" />
+    </g>
+    <g transform="translate(172,172)">
+      <rect width="72" height="72" rx="14" fill="#111827" fill-opacity="0.76" stroke="#22c55e" stroke-width="3" />
+      <circle cx="36" cy="36" r="24" fill="url(#orbD)" />
+      <ellipse cx="28" cy="24" rx="7" ry="5" fill="#ffffff" fill-opacity="0.3" />
+    </g>
+    <g transform="translate(258,172)">
+      <rect width="72" height="72" rx="14" fill="#111827" fill-opacity="0.76" stroke="#22c55e" stroke-width="3" />
+      <circle cx="36" cy="36" r="24" fill="url(#orbD)" />
+      <ellipse cx="28" cy="24" rx="7" ry="5" fill="#ffffff" fill-opacity="0.3" />
+    </g>
+  </g>
+
+  <text x="52" y="404" fill="#f8fafc" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="44" font-weight="700">Orchard Match Blast</text>
+  <text x="54" y="438" fill="#bfdbfe" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="20">Arcade match-3 original</text>
+</svg>

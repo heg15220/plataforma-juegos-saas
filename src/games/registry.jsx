@@ -45,6 +45,7 @@ const PlatformerGame = lazy(() => import("./PlatformerGame"));
 const FighterGame = lazy(() => import("./FighterGame"));
 const BilliardsGame = lazy(() => import("./arcade/billiards-club"));
 const BowlingGame = lazy(() => import("./arcade/bowling-pro"));
+const OrchardMatchBlastGame = lazy(() => import("./arcade/orchard-match-blast"));
 
 // KnowledgeArcadeGame variants
 const KnowledgeSudokuGame    = () => <KnowledgeArcadeGame variant="sudoku" />;
@@ -95,6 +96,7 @@ export const GAME_REGISTRY = {
   "fighter-neon-dojo":           FighterGame,
   "sports-head-soccer-arena":    HeadSoccerGame,
   "arcade-pacman-maze-protocol": PacmanGame,
+  "arcade-orchard-match-blast": OrchardMatchBlastGame,
   "arcade-billar-pool-club":     BilliardsGame,
   "arcade-bowling-pro-tour":     BowlingGame,
   "arcade-pong-neon-arena":      PongGame,
@@ -140,6 +142,7 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "platformer-sky-runner":       "A/D o flechas para moverse, W/arriba/espacio para saltar, F acción.",
     "fighter-neon-dojo":           "A/D moverse, W saltar, J jab, K heavy, L guardia, U/B especial.",
     "sports-head-soccer-arena":    "Izq/der mover, arriba saltar, Espacio disparar, B habilidad.",
+    "arcade-orchard-match-blast": "Match-3 original: intercambia dos casillas adyacentes. Flechas mueven cursor, Enter/Espacio confirma, H pista, S mezcla, R reinicia y F pantalla completa.",
     "arcade-billar-pool-club":     "Raton opcional para apuntar, A/D afinan angulo, W/S potencia, Space tira, O push out, V safety, 1/2 decisiones, flechas/WASD mueven la blanca en mano, Enter/Space confirma, P autocoloca y F pantalla completa.",
     "arcade-bowling-pro-tour":     "A/D ajustan linea, W/S potencia, Q/E efecto y Enter/Espacio lanza. R reinicia serie y F pantalla completa.",
     "arcade-pacman-maze-protocol": "WASD/flechas mover, Enter/Espacio empezar, P/Esc pausa, R reinicia, M sonido.",
@@ -179,6 +182,7 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "platformer-sky-runner":       "A/D or arrows to move, W/up/space to jump, F action.",
     "fighter-neon-dojo":           "A/D move, W jump, J jab, K heavy, L guard, U/B special.",
     "sports-head-soccer-arena":    "Left/right move, up jump, Space shoot, B ability.",
+    "arcade-orchard-match-blast": "Original match-3: swap two adjacent cells. Arrows move cursor, Enter/Space confirms, H hint, S shuffle, R restart, and F toggles fullscreen.",
     "arcade-billar-pool-club":     "Mouse aiming is optional: A/D fine tune angle, W/S power, Space shoots, O push out, V safety, 1/2 decisions, arrows/WASD move cue ball in hand, Enter/Space confirms, P auto-places, and F toggles fullscreen.",
     "arcade-bowling-pro-tour":     "A/D adjust line, W/S power, Q/E spin, Enter/Space throw. R restarts the series and F toggles fullscreen.",
     "arcade-pacman-maze-protocol": "WASD/arrows move, Enter/Space start, P/Esc pause, R restart, M sound.",
