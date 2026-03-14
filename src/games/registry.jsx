@@ -47,6 +47,7 @@ const BilliardsGame = lazy(() => import("./arcade/billiards-club"));
 const BowlingGame = lazy(() => import("./arcade/bowling-pro"));
 const OrchardMatchBlastGame = lazy(() => import("./arcade/orchard-match-blast"));
 const ReactorTossGame = lazy(() => import("./arcade/reactor-toss"));
+const PrismStackGame = lazy(() => import("./arcade/prism-stack"));
 
 // KnowledgeArcadeGame variants
 const KnowledgeSudokuGame    = () => <KnowledgeArcadeGame variant="sudoku" />;
@@ -98,6 +99,7 @@ export const GAME_REGISTRY = {
   "sports-head-soccer-arena":    HeadSoccerGame,
   "arcade-pacman-maze-protocol": PacmanGame,
   "arcade-reactor-toss":         ReactorTossGame,
+  "arcade-prism-stack-protocol": PrismStackGame,
   "arcade-orchard-match-blast": OrchardMatchBlastGame,
   "arcade-billar-pool-club":     BilliardsGame,
   "arcade-bowling-pro-tour":     BowlingGame,
@@ -145,6 +147,7 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "fighter-neon-dojo":           "A/D moverse, W saltar, J jab, K heavy, L guardia, U/B especial.",
     "sports-head-soccer-arena":    "Izq/der mover, arriba saltar, Espacio disparar, B habilidad.",
     "arcade-reactor-toss": "Touch/raton: tira hacia atras desde la orbita y suelta. Flechas o A/D apuntan, W/S ajustan potencia, Enter/Espacio lanza, P pausa, R reinicia, L selecciona nivel, M audio y F pantalla completa.",
+    "arcade-prism-stack-protocol": "Falling blocks original: A/D o flechas laterales desplazan, abajo acelera, W/X o flecha arriba rotan, Z rota inverso, Espacio hace hard drop, C usa Pulse, P pausa, R reinicia, M audio y F pantalla completa.",
     "arcade-orchard-match-blast": "Match-3 original: intercambia dos bloques de color adyacentes. Flechas mueven cursor, Enter/Espacio confirma, H pista, S mezcla, B Bloom, R reinicia y F pantalla completa.",
     "arcade-billar-pool-club":     "Raton opcional para apuntar, A/D afinan angulo, W/S potencia, Space tira, O push out, V safety, 1/2 decisiones, flechas/WASD mueven la blanca en mano, Enter/Space confirma, P autocoloca y F pantalla completa.",
     "arcade-bowling-pro-tour":     "A/D ajustan linea, W/S potencia, Q/E efecto y Enter/Espacio lanza. R reinicia serie y F pantalla completa.",
@@ -186,6 +189,7 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "fighter-neon-dojo":           "A/D move, W jump, J jab, K heavy, L guard, U/B special.",
     "sports-head-soccer-arena":    "Left/right move, up jump, Space shoot, B ability.",
     "arcade-reactor-toss": "Touch/mouse: pull back from the orb and release. Arrows or A/D aim, W/S tune power, Enter/Space launches, P pauses, R restarts, L opens level select, M audio, and F fullscreen.",
+    "arcade-prism-stack-protocol": "Original falling blocks: A/D or left/right shifts, Down soft drops, W/X or Up rotates clockwise, Z rotates back, Space hard drops, C fires Pulse, P pauses, R restarts, M toggles audio, and F fullscreen.",
     "arcade-orchard-match-blast": "Original match-3: swap two adjacent cells. Arrows move cursor, Enter/Space confirms, H hint, S shuffle, R restart, and F toggles fullscreen.",
     "arcade-billar-pool-club":     "Mouse aiming is optional: A/D fine tune angle, W/S power, Space shoots, O push out, V safety, 1/2 decisions, arrows/WASD move cue ball in hand, Enter/Space confirms, P auto-places, and F toggles fullscreen.",
     "arcade-bowling-pro-tour":     "A/D adjust line, W/S power, Q/E spin, Enter/Space throw. R restarts the series and F toggles fullscreen.",

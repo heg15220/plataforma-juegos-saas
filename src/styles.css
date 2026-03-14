@@ -15664,3 +15664,346 @@ button.brisca-card.playable:disabled {
     justify-content: flex-start;
   }
 }
+
+.prism-stack-game {
+  position: relative;
+  gap: 1rem;
+  overflow: hidden;
+  color: #edf5ef;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(255, 177, 102, 0.22), transparent 28%),
+    linear-gradient(145deg, rgba(7, 26, 34, 0.95), rgba(13, 43, 49, 0.9));
+  border: 1px solid rgba(126, 206, 194, 0.18);
+  box-shadow: 0 32px 80px rgba(2, 7, 12, 0.38);
+}
+
+.prism-stack-game::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.04) 0, rgba(255, 255, 255, 0) 30%),
+    repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.028) 0,
+      rgba(255, 255, 255, 0.028) 1px,
+      transparent 1px,
+      transparent 28px
+    );
+  pointer-events: none;
+}
+
+.prism-stack-game > * {
+  position: relative;
+  z-index: 1;
+}
+
+.prism-stack-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.prism-stack-world {
+  margin: 0 0 0.24rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #8fd5cf;
+}
+
+.prism-stack-head h4 {
+  margin: 0;
+}
+
+.prism-stack-head p {
+  margin: 0.22rem 0 0;
+  max-width: 34rem;
+}
+
+.prism-stack-actions,
+.prism-stack-overlay-actions,
+.prism-stack-touch-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.prism-stack-actions button,
+.prism-stack-overlay-actions button,
+.prism-stack-touch-controls button {
+  min-height: 2.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(180deg, rgba(255, 178, 108, 0.26), rgba(255, 120, 86, 0.14));
+  color: #f6fbf7;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.prism-stack-actions button:hover,
+.prism-stack-overlay-actions button:hover,
+.prism-stack-touch-controls button:hover {
+  transform: translateY(-1px);
+}
+
+.prism-stack-shell {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(0, 1.4fr) minmax(220px, 1fr);
+  gap: 0.9rem;
+}
+
+.prism-stack-panel,
+.prism-stack-stage-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 1rem;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(10, 25, 33, 0.88), rgba(10, 27, 34, 0.72));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.prism-stack-panel-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.prism-stack-panel-copy span,
+.prism-stack-preview-copy span,
+.prism-stack-stage-copy p,
+.prism-stack-system-card p,
+.prism-stack-stage-footer p,
+.prism-stack-stat-grid span {
+  color: rgba(237, 245, 239, 0.72);
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.prism-stack-panel-copy strong,
+.prism-stack-preview-copy strong,
+.prism-stack-system-head strong,
+.prism-stack-stage-copy strong,
+.prism-stack-stat-grid strong {
+  color: #fff7ea;
+}
+
+.prism-stack-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.prism-stack-stat-grid div,
+.prism-stack-system-card,
+.prism-stack-preview-card {
+  padding: 0.8rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(7, 19, 25, 0.6);
+}
+
+.prism-stack-system-head,
+.prism-stack-stage-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.prism-stack-gauge {
+  width: 100%;
+  height: 0.8rem;
+  padding: 0.1rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.prism-stack-gauge span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ffd76c, #ff8c61);
+}
+
+.prism-stack-stage-wrap {
+  padding: 0.9rem;
+}
+
+.prism-stack-stage-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.prism-stack-stage-copy p {
+  margin: 0;
+}
+
+.prism-stack-stage-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.prism-stack-stage-chips span {
+  padding: 0.28rem 0.58rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff4dc;
+  font-size: 0.78rem;
+}
+
+.prism-stack-canvas-shell {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(5, 12, 16, 0.9), rgba(8, 20, 25, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  min-height: min(74vh, 660px);
+}
+
+.prism-stack-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(74vh, 660px);
+  aspect-ratio: 560 / 660;
+}
+
+.prism-stack-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(4, 9, 13, 0.54);
+  backdrop-filter: blur(6px);
+}
+
+.prism-stack-overlay--subtle {
+  background: rgba(4, 9, 13, 0.42);
+}
+
+.prism-stack-overlay-card {
+  max-width: 28rem;
+  padding: 1.2rem;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(10, 23, 31, 0.96), rgba(10, 27, 34, 0.9));
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.28);
+}
+
+.prism-stack-overlay-card h5,
+.prism-stack-overlay-card p {
+  margin: 0 0 0.6rem;
+}
+
+.prism-stack-overlay-card--compact {
+  max-width: 24rem;
+}
+
+.prism-stack-overlay-eyebrow {
+  color: #87d8cf;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+.prism-stack-stage-footer p {
+  margin: 0;
+}
+
+.prism-stack-preview-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.prism-stack-preview-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.prism-stack-preview-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.prism-stack-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 0.62rem);
+  grid-template-rows: repeat(5, 0.62rem);
+  gap: 0.18rem;
+}
+
+.prism-stack-preview-grid span {
+  border-radius: 0.2rem;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.prism-stack-touch-controls {
+  display: none;
+}
+
+.prism-stack-canvas-shell:fullscreen,
+.prism-stack-canvas-shell:-webkit-full-screen {
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: #041016;
+}
+
+.prism-stack-canvas-shell:fullscreen .prism-stack-canvas,
+.prism-stack-canvas-shell:-webkit-full-screen .prism-stack-canvas {
+  width: min(92vw, 860px);
+  max-height: 92vh;
+}
+
+@media (max-width: 1120px) {
+  .prism-stack-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .prism-stack-panel--left,
+  .prism-stack-panel--right {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+@media (max-width: 760px) {
+  .prism-stack-head,
+  .prism-stack-stage-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .prism-stack-panel--left,
+  .prism-stack-panel--right,
+  .prism-stack-stat-grid,
+  .prism-stack-preview-card {
+    grid-template-columns: 1fr;
+  }
+
+  .prism-stack-touch-controls {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .prism-stack-stage-footer {
+    display: none;
+  }
+
+  .prism-stack-actions button {
+    flex: 1 1 calc(50% - 0.5rem);
+  }
+}

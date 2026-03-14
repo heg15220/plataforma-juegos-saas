@@ -14,6 +14,7 @@ import arcadeBillarPoolClubImage from "../assets/games/arcade-billar-pool-club.s
 import arcadeBowlingProTourImage from "../assets/games/arcade-bowling-pro-tour.svg";
 import arcadeOrchardMatchBlastImage from "../assets/games/arcade-orchard-match-blast.svg";
 import arcadeReactorTossImage from "../assets/games/arcade-reactor-toss.svg";
+import arcadePrismStackProtocolImage from "../assets/games/arcade-prism-stack-protocol.svg";
 import knowledgeSudokuImage from "../assets/games/knowledge-sudoku.svg";
 import knowledgeDominoImage from "../assets/games/knowledge-domino.svg";
 import knowledgeAhorcadoImage from "../assets/games/knowledge-ahorcado.svg";
@@ -375,6 +376,55 @@ export const games = [
     viability_en: "High: decoupled Canvas 2D runtime with readable physics, local save, and deterministic QA hooks.",
     visualStyle_en: "Neon-industrial laboratory with cartoon-premium materials, high-contrast dark backdrops, and compact tactile UI.",
     techFocus_en: "Modular architecture across physics/level/entities/systems/services, parameterized prefabs, and a React HUD separated from simulation.",
+  },
+
+  {
+    id: "arcade-prism-stack-protocol",
+    image: arcadePrismStackProtocolImage,
+    sessionTime: "4-10 min",
+
+    title: "Prism Stack Protocol",
+    category: "Arcade",
+    tagline: "Falling blocks original con matriz 9x18, piezas pentomino y Pulse tactico.",
+    description:
+      "Arcade de bloques descendentes inspirado en el genero pero construido con identidad propia: matriz 9x18, prismas de 5 celdas, forja cromatica sci-fi y una mecanica de Pulse que libera la columna dominante en momentos criticos.",
+    objective_es:
+      "Completa bandas horizontales para ventilar la forja, manten la presion bajo control y encadena limpiezas suficientes para subir de fase sin que la pila alcance el marco superior.",
+    howToPlay_es:
+      "A/D o flechas laterales desplazan, abajo acelera, W/X o flecha arriba rota horario, Z rota antihorario, Espacio hace hard drop, C activa Pulse, P pausa, R reinicia, M audio y F pantalla completa.",
+    highlights: [
+      "Identidad legalmente diferenciada: matriz 9x18, piezas pentomino propias, sin ghost piece y direccion visual original.",
+      "Pulse tactico desde el arranque: elimina la celda superior de la columna mas alta y congela la gravedad un instante.",
+      "Motor modular con colisiones, rotaciones con kicks, scoring por bandas y serializacion QA legible.",
+      "HUD profesional con presion, combo, cola tactica, mejores marcas persistentes y soporte touch/desktop.",
+      "Audio sintetizado propio para movimientos, rotaciones, limpiezas, Pulse y game over.",
+    ],
+    difficulty: "Media-Alta",
+    multiplayer: "Solo",
+    viability: "Alta: grid discreto, runtime Canvas desacoplado, logica pura testeable y `advanceTime` determinista.",
+    visualStyle: "Forja cromatica de vidrio y metal cepillado con glow teal-ambar, HUD de laboratorio y bloques prismáticos.",
+    techFocus: "Arquitectura modular React + Canvas con runtime fijo, piezas pentomino, Pulse, persistencia local y puente QA.",
+
+    category_en: "Arcade",
+    tagline_en: "Original falling blocks with a 9x18 matrix, pentomino pieces, and tactical Pulse.",
+    description_en:
+      "A falling-block arcade inspired by the genre but built with its own identity: 9x18 matrix, five-cell prisms, a chromatic sci-fi forge, and a Pulse mechanic that vents the dominant column in critical moments.",
+    objective_en:
+      "Complete horizontal bands to vent the forge, keep pressure under control, and chain enough clears to climb phases before the stack reaches the top frame.",
+    howToPlay_en:
+      "A/D or left/right shifts, Down soft drops, W/X or Up rotates clockwise, Z rotates counter-clockwise, Space hard drops, C triggers Pulse, P pauses, R restarts, M toggles audio, and F fullscreen.",
+    highlights_en: [
+      "Legally differentiated identity: 9x18 matrix, custom pentomino pieces, no ghost piece, and original art direction.",
+      "Tactical Pulse from the start: removes the top cell from the tallest column and briefly freezes gravity.",
+      "Modular engine with collisions, kick-based rotations, band scoring, and QA-friendly serialization.",
+      "Professional HUD with pressure, combo, tactical queue, persistent best records, and touch/desktop support.",
+      "Original synthesized audio for movement, rotation, clears, Pulse, and game over.",
+    ],
+    difficulty_en: "Medium-High",
+    multiplayer_en: "Solo",
+    viability_en: "High: discrete grid, decoupled Canvas runtime, testable pure logic, and deterministic `advanceTime`.",
+    visualStyle_en: "Chromatic forge of glass and brushed metal with teal-amber glow, lab-grade HUD, and faceted prism blocks.",
+    techFocus_en: "Modular React + Canvas architecture with fixed runtime, pentomino pieces, Pulse, local persistence, and QA bridge.",
   },
 
   {

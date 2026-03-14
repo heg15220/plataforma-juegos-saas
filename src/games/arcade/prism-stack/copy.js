@@ -1,0 +1,176 @@
+export const UI_COPY = {
+  es: {
+    title: "Prism Stack Protocol",
+    subtitle: "Arcade original de bandas resonantes y prismas modulares inestables.",
+    worldLabel: "Arcade · Resonance Forge",
+    labels: {
+      play: "Jugar",
+      resume: "Reanudar",
+      pause: "Pausa",
+      restart: "Nueva sesion",
+      menu: "Menu",
+      fullscreen: "Pantalla completa",
+      audio: "Audio",
+      score: "Puntuacion",
+      best: "Mejor",
+      bands: "Bandas",
+      level: "Fase",
+      combo: "Combo",
+      pressure: "Presion",
+      pulse: "Pulse",
+      queue: "Cola tactica",
+      objective: "Objetivo",
+      controls: "Controles",
+      system: "Sistema",
+      time: "Tiempo",
+    },
+    sections: {
+      objective:
+        "Acumula bandas completas en una matriz 9x18 usando prismas pentomino propios. Cada limpieza ventila la forja, sube la fase y te acerca a nuevas cargas de Pulse.",
+      identity:
+        "El juego evita replicar la presentacion clasica del referente: tablero 9x18, piezas de 5 celdas, identidad visual propia, sin ghost piece y con un recurso tactico de Pulse desde el arranque.",
+      controls:
+        "Flechas o A/D desplazan, abajo acelera, W/X rota en sentido horario, Z rota en sentido antihorario, Espacio hace hard drop, C activa Pulse, P pausa, R reinicia, M audio y F pantalla completa.",
+      controlsTouch:
+        "Touch: usa los botones laterales para desplazar, girar, acelerar la caida, slam y activar Pulse. El juego abre con una carga de Pulse para rescates tacticos.",
+      system:
+        "Cada 4 bandas limpias ganas una carga extra de Pulse hasta un maximo de 2. Pulse elimina la celda superior de la columna mas alta y congela la gravedad un instante.",
+      menuTagline: "Una forja cromatica donde el control de espacio importa tanto como la lectura de ritmo.",
+    },
+    overlays: {
+      menuTitle: "Resonance Forge",
+      menuBody:
+        "Un falling-block original para la seccion arcade. Estructura modular, HUD legible, QA determinista y un ritmo mas tactico que reactivo.",
+      menuCta: "Inicia una forja nueva y domina la subida de presion.",
+      pausedTitle: "Sesion en pausa",
+      pausedBody: "La matriz mantiene su estado. Reanuda para continuar la cadena o reinicia la sesion.",
+      gameOverTitle: "Sobrecarga critica",
+      gameOverBody: "La pila alcanzo el marco superior. Reinicia para otra corrida o vuelve al menu.",
+    },
+    messages: {
+      ready: "Forja lista. Despliega el primer prisma y limpia bandas para estabilizar la matriz.",
+      start: "Sesion iniciada. Mantén espacio libre en la zona central para rotaciones seguras.",
+      pulseReady: "Pulse listo. Guarda la carga para rescatar la columna mas alta.",
+      pulseUsed: "Pulse disparado. La columna dominante ha sido ventilada.",
+      pause: "Simulacion pausada.",
+      resume: "Simulacion reanudada.",
+      levelUp: "Nueva fase desbloqueada. La presion del descenso aumenta.",
+      charge: "Nueva carga de Pulse disponible.",
+      noPulse: "No quedan cargas de Pulse.",
+      gameOver: "La matriz entro en sobrecarga critica.",
+      audioOn: "Audio activado.",
+      audioOff: "Audio silenciado.",
+      cleared: "Banda limpia.",
+      slam: "Hard drop confirmado.",
+    },
+    danger: {
+      calm: "Estable",
+      warning: "Creciente",
+      critical: "Critica",
+    },
+    phaseNames: [
+      "Calibracion",
+      "Carga",
+      "Resonancia",
+      "Compresion",
+      "Sobretension",
+      "Redline",
+    ],
+    clearNames: {
+      1: "Single band",
+      2: "Double lattice",
+      3: "Triad collapse",
+      4: "Prism cascade",
+      5: "Cataclysm pulse",
+    },
+  },
+  en: {
+    title: "Prism Stack Protocol",
+    subtitle: "Original arcade about resonant bands and unstable modular prisms.",
+    worldLabel: "Arcade · Resonance Forge",
+    labels: {
+      play: "Play",
+      resume: "Resume",
+      pause: "Pause",
+      restart: "New run",
+      menu: "Menu",
+      fullscreen: "Fullscreen",
+      audio: "Audio",
+      score: "Score",
+      best: "Best",
+      bands: "Bands",
+      level: "Phase",
+      combo: "Combo",
+      pressure: "Pressure",
+      pulse: "Pulse",
+      queue: "Tactical queue",
+      objective: "Objective",
+      controls: "Controls",
+      system: "System",
+      time: "Time",
+    },
+    sections: {
+      objective:
+        "Build complete bands on a 9x18 matrix using custom pentomino prisms. Every clear vents the forge, raises the phase, and moves you closer to extra Pulse charges.",
+      identity:
+        "The game avoids cloning the classic reference presentation: 9x18 matrix, five-cell pieces, original art direction, no ghost piece, and a Pulse rescue mechanic from the start.",
+      controls:
+        "Arrows or A/D shift, Down accelerates, W/X rotate clockwise, Z rotates counter-clockwise, Space hard drops, C triggers Pulse, P pauses, R restarts, M toggles audio, and F fullscreen.",
+      controlsTouch:
+        "Touch: use the side controls to shift, rotate, speed up the fall, slam, and fire Pulse. Every session opens with one Pulse charge for tactical rescues.",
+      system:
+        "Every 4 cleared bands grants an extra Pulse charge up to a maximum of 2. Pulse removes the top cell from the tallest column and freezes gravity briefly.",
+      menuTagline: "A chromatic forge where space control matters as much as raw speed.",
+    },
+    overlays: {
+      menuTitle: "Resonance Forge",
+      menuBody:
+        "An original falling-block arcade for the Arcade section. Modular structure, readable HUD, deterministic QA, and a more tactical pacing than a straight clone.",
+      menuCta: "Start a new forge run and control the rising pressure.",
+      pausedTitle: "Run paused",
+      pausedBody: "The matrix state is preserved. Resume to continue the chain or restart the run.",
+      gameOverTitle: "Critical overload",
+      gameOverBody: "The stack reached the upper frame. Restart for another run or return to the menu.",
+    },
+    messages: {
+      ready: "Forge primed. Deploy the first prism and clear bands to stabilize the matrix.",
+      start: "Run started. Keep central space open for safer rotations.",
+      pulseReady: "Pulse ready. Save the charge for the tallest column rescue.",
+      pulseUsed: "Pulse fired. The dominant column has been vented.",
+      pause: "Simulation paused.",
+      resume: "Simulation resumed.",
+      levelUp: "New phase unlocked. Falling pressure is rising.",
+      charge: "New Pulse charge available.",
+      noPulse: "No Pulse charges left.",
+      gameOver: "The matrix entered critical overload.",
+      audioOn: "Audio enabled.",
+      audioOff: "Audio muted.",
+      cleared: "Band cleared.",
+      slam: "Hard drop confirmed.",
+    },
+    danger: {
+      calm: "Stable",
+      warning: "Rising",
+      critical: "Critical",
+    },
+    phaseNames: [
+      "Calibration",
+      "Load",
+      "Resonance",
+      "Compression",
+      "Overstress",
+      "Redline",
+    ],
+    clearNames: {
+      1: "Single band",
+      2: "Double lattice",
+      3: "Triad collapse",
+      4: "Prism cascade",
+      5: "Cataclysm pulse",
+    },
+  },
+};
+
+export function localize(copy, locale) {
+  return copy[locale] ?? copy.en;
+}

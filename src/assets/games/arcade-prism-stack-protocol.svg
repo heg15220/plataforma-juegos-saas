@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-labelledby="title desc">
+  <title id="title">Prism Stack Protocol cover art</title>
+  <desc id="desc">Original arcade cover with glowing modular prism blocks inside a resonance forge.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#081e28"/>
+      <stop offset="52%" stop-color="#15454b"/>
+      <stop offset="100%" stop-color="#213d34"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="30%" cy="18%" r="60%">
+      <stop offset="0%" stop-color="#ffb972" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#ffb972" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="panel" x1="0" x2="1">
+      <stop offset="0%" stop-color="#0f2230" stop-opacity="0.92"/>
+      <stop offset="100%" stop-color="#112a31" stop-opacity="0.82"/>
+    </linearGradient>
+    <linearGradient id="cellA" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#ffe2bf"/>
+      <stop offset="50%" stop-color="#ff8d5f"/>
+      <stop offset="100%" stop-color="#76392c"/>
+    </linearGradient>
+    <linearGradient id="cellB" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#dcfff8"/>
+      <stop offset="50%" stop-color="#51c8b8"/>
+      <stop offset="100%" stop-color="#244d46"/>
+    </linearGradient>
+    <linearGradient id="cellC" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f2e4ff"/>
+      <stop offset="50%" stop-color="#c48bff"/>
+      <stop offset="100%" stop-color="#4f3769"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <rect width="800" height="600" fill="url(#glow)"/>
+
+  <g opacity="0.08" stroke="#ffffff">
+    <path d="M-20 60 240 320" />
+    <path d="M60 0 440 380" />
+    <path d="M200 0 620 420" />
+    <path d="M360 0 760 400" />
+    <path d="M500 0 820 320" />
+  </g>
+
+  <rect x="120" y="80" width="560" height="440" rx="34" fill="url(#panel)" stroke="#73cbd0" stroke-opacity="0.25" stroke-width="3"/>
+  <rect x="262" y="120" width="278" height="330" rx="28" fill="#0a151b" fill-opacity="0.92" stroke="#f8e5b5" stroke-opacity="0.12" stroke-width="2"/>
+
+  <g transform="translate(285 150)">
+    <g opacity="0.12" stroke="#7cb2b7">
+      <path d="M0 0H232"/>
+      <path d="M0 38H232"/>
+      <path d="M0 76H232"/>
+      <path d="M0 114H232"/>
+      <path d="M0 152H232"/>
+      <path d="M0 190H232"/>
+      <path d="M0 228H232"/>
+      <path d="M0 266H232"/>
+      <path d="M0 304H232"/>
+      <path d="M0 0V304"/>
+      <path d="M38 0V304"/>
+      <path d="M76 0V304"/>
+      <path d="M114 0V304"/>
+      <path d="M152 0V304"/>
+      <path d="M190 0V304"/>
+      <path d="M228 0V304"/>
+    </g>
+
+    <g>
+      <rect x="38" y="190" width="34" height="34" rx="8" fill="url(#cellB)"/>
+      <rect x="76" y="190" width="34" height="34" rx="8" fill="url(#cellB)"/>
+      <rect x="114" y="190" width="34" height="34" rx="8" fill="url(#cellB)"/>
+      <rect x="114" y="228" width="34" height="34" rx="8" fill="url(#cellB)"/>
+      <rect x="114" y="266" width="34" height="34" rx="8" fill="url(#cellB)"/>
+
+      <rect x="152" y="76" width="34" height="34" rx="8" fill="url(#cellA)"/>
+      <rect x="152" y="114" width="34" height="34" rx="8" fill="url(#cellA)"/>
+      <rect x="152" y="152" width="34" height="34" rx="8" fill="url(#cellA)"/>
+      <rect x="190" y="152" width="34" height="34" rx="8" fill="url(#cellA)"/>
+      <rect x="190" y="190" width="34" height="34" rx="8" fill="url(#cellA)"/>
+
+      <rect x="38" y="114" width="34" height="34" rx="8" fill="url(#cellC)"/>
+      <rect x="76" y="76" width="34" height="34" rx="8" fill="url(#cellC)"/>
+      <rect x="76" y="114" width="34" height="34" rx="8" fill="url(#cellC)"/>
+      <rect x="76" y="152" width="34" height="34" rx="8" fill="url(#cellC)"/>
+      <rect x="114" y="114" width="34" height="34" rx="8" fill="url(#cellC)"/>
+    </g>
+  </g>
+
+  <g fill="#edf4ef">
+    <text x="150" y="164" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="18" letter-spacing="2">ARCADE · RESONANCE FORGE</text>
+    <text x="150" y="226" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="52" font-weight="700">Prism Stack</text>
+    <text x="150" y="274" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="52" font-weight="700">Protocol</text>
+    <text x="150" y="334" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="24" fill="#b7ddd6">
+      Falling blocks reinvented with pentomino prisms,
+    </text>
+    <text x="150" y="366" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="24" fill="#b7ddd6">
+      tactical Pulse rescues, and an original 9x18 matrix.
+    </text>
+  </g>
+</svg>
