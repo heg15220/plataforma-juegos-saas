@@ -15405,6 +15405,9 @@ button.brisca-card.playable:disabled {
 
 .flux-basin-overlay-wide {
   width: min(760px, 100%);
+  max-height: min(500px, calc(100% - 0.5rem));
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
 }
 
 .flux-basin-overlay-title {
@@ -15430,15 +15433,19 @@ button.brisca-card.playable:disabled {
 
 .flux-basin-level-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
-  gap: 0.46rem;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 0.42rem;
+  min-height: 0;
+  overflow-y: auto;
+  align-content: start;
+  padding-right: 0.2rem;
 }
 
 .flux-basin-level-button {
   display: grid;
   gap: 0.18rem;
-  min-height: 98px;
-  padding: 0.62rem 0.65rem;
+  min-height: 84px;
+  padding: 0.55rem 0.58rem;
   text-align: left;
 }
 

@@ -61,7 +61,6 @@ function KnowledgeArcadeGame({ variant }) {
   if (variant === "refranes") {
     return <ProverbsKnowledgeGame />;
   }
-
   return <SudokuKnowledgeGame />;
 }
 

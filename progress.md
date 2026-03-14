@@ -2870,5 +2870,40 @@ Pendiente sugerido:
     - `mobile-landscape.json` y `tablet-landscape.json` confirman `orientation: "landscape"` y `stageBeforeSide: true`;
     - `mobile-landscape-viewport.png` y `tablet-landscape-viewport.png` revisadas: el canvas queda antes de los paneles y ocupa el foco visual;
     - `mobile-landscape-drag-shell.png` y `tablet-landscape-drag-shell.png` revisadas: la guia tactil sigue el gesto y no aparecen dots de desktop;
-    - `mobile-landscape.json` reporta `aim.power: 3.289` y `launchSpeed: 1480`, superando el antiguo techo de `1084.4/1160` asociado al gesto capado;
-    - `tablet-landscape.json` reporta `aim.power: 1.543` y `launchSpeed: 1480`, validando el mismo comportamiento en tablet horizontal.
+  - `mobile-landscape.json` reporta `aim.power: 3.289` y `launchSpeed: 1480`, superando el antiguo techo de `1084.4/1160` asociado al gesto capado;
+  - `tablet-landscape.json` reporta `aim.power: 1.543` y `launchSpeed: 1480`, validando el mismo comportamiento en tablet horizontal.
+
+## 2026-03-14 - Flux Basin: expansion a 50 niveles
+- Nueva peticion activa: anadir 30 niveles nuevos en `Flux Basin`, manteniendo el mismo runtime y la progresion del juego.
+- Cambios ya aplicados:
+  - `src/games/arcade/reactor-toss/core/level/world1.js`
+    - campana ampliada de `flux-20` a `flux-50`;
+    - 30 niveles nuevos con nombres/hints ES/EN y mezcla de layouts `direct`, `controlled-drop`, `timing`, `precision`, `two-bounce`, `puzzle-physics`, `speed-clear`, `anti-habit` y `wow`;
+    - progresion nueva desde dificultad media-alta hasta boss, reutilizando de forma original las mecanicas ya soportadas (fans, gates, gravity wells, portals, sticky pads, moving bars, bumpers, ramps y hazards).
+  - `src/games/arcade/reactor-toss/copy.js`
+    - `worldSummary` actualizado para reflejar el salto a 50 niveles.
+  - `src/games/arcade/reactor-toss/index.jsx`
+    - `DEFAULT_SNAPSHOT.levelTotal` actualizado a `50`.
+  - `src/styles.css`
+    - selector de niveles compactado y con scroll para que la rejilla de 50 niveles siga entrando dentro del overlay del canvas.
+- Ajuste adicional durante QA:
+  - `src/games/arcade/reactor-toss/core/physics/simulation.js`
+    - corregido bug real del runtime: faltaba importar `PORTAL_COOLDOWN_MS`, lo que podia romper niveles con portales al activar ese obstaculo.
+  - `src/games/arcade/reactor-toss/core/level/world1.js`
+    - `flux-35` recalibrado para que su ruta de fan+rampa sea mas legible y entre en la malla gruesa del solver;
+    - `flux-38` rehecho como layout de precision (gel + gravedad) al detectarse que la primera version quedaba demasiado fina para el motor actual.
+- Verificacion:
+  - `npm run build` OK tras la expansion y de nuevo tras el fix de portales.
+  - Solver bruto local sobre la fisica real del juego:
+    - los 30 niveles nuevos (`flux-21` .. `flux-50`) tienen solucion en una busqueda gruesa de angulo/potencia/retardo;
+    - nota: la misma busqueda gruesa no encuentra algunos niveles legacy (`flux-03`, `flux-05`, `flux-09`, `flux-16`, `flux-18`), pero no se tocaron en esta tarea y ya tenian QA manual previa.
+  - Playwright OK en `output/flux-basin-level-select-50/`:
+    - `state-0.json` confirma `screen: "levelSelect"` y `level.total: 50`;
+    - la rejilla del selector contiene `50` botones y scroll funcional (`clientHeight: 276`, `scrollHeight: 900`, `overflowY: "auto"`), con primer nivel `Calibracion` y ultimo `Nucleo Flux`.
+  - Playwright OK en `output/flux-basin-regression-50-levels/`:
+    - `state-0.json` termina en `flux-02` con `totalStars: 3`, confirmando que el clear del nivel 1 y la progresion siguen funcionando con 50 niveles totales;
+    - sin `errors-*.json` en la carpeta.
+  - Carga directa de nivel nuevo validada con Playwright desbloqueando niveles en `localStorage`:
+    - `flux-50` arranca en `screen: "playing"` con `levelCurrent: 50`, `levelTotal: 50`, `name: "Nucleo Flux"` y sin errores de consola.
+- Artefactos utiles:
+  - anadido `playwright-actions-arcade-reactor-toss-level-select.json` para auditar el selector grande de Flux Basin.

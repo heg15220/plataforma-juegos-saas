@@ -13,7 +13,7 @@ const DEFAULT_SNAPSHOT = {
   worldSubtitle: "",
   levelId: "flux-01",
   levelIndex: 0,
-  levelTotal: 20,
+  levelTotal: 50,
   levelName: "Calibration",
   taxonomy: "direct",
   score: 0,

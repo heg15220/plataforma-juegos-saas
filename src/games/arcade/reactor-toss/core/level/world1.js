@@ -431,4 +431,701 @@ export const WORLD1_LEVELS = [
       ]
     ),
   }),
+  level(20, {
+    id: "flux-21",
+    name: { es: "Ventana de Cobre", en: "Copper Window" },
+    taxonomy: "direct",
+    difficultyBand: "reinforce",
+    backgroundId: "alloy-dawn",
+    ballSpawn: { x: 140, y: 432, aimDeg: -44, power: 0.68 },
+    target: { x: 814, y: 176 },
+    obstacles: [
+      { type: "wall", x: 474, y: 252, w: 172, h: 18 },
+      { type: "wall", x: 652, y: 334, w: 126, h: 18 },
+    ],
+    starRules: { parTimeMs: 8200, parBounces: 2 },
+    tutorialHints: hints(
+      "Dos planos cierran el tiro recto. Busca una parabola media que pase limpia entre ambos.",
+      "Two planes shut down the straight line. Find a medium arc that clears both."
+    ),
+  }),
+  level(21, {
+    id: "flux-22",
+    name: { es: "Ascensor Mudo", en: "Silent Lift" },
+    taxonomy: "controlled-drop",
+    difficultyBand: "combine",
+    backgroundId: "prism-bay",
+    ballSpawn: { x: 132, y: 434, aimDeg: -32, power: 0.46 },
+    target: { x: 826, y: 156 },
+    obstacles: [
+      { type: "ramp", x1: 330, y1: 404, x2: 492, y2: 292, thickness: 18 },
+      { type: "fan", x: 566, y: 280, w: 148, h: 178, forceX: 34, forceY: -980 },
+      { type: "wall", x: 734, y: 344, w: 120, h: 18 },
+    ],
+    starRules: { parTimeMs: 9800, parBounces: 3 },
+    tutorialHints: hints(
+      "La rampa ordena la entrada y el ventilador hace el resto. Piensa el nivel en dos actos.",
+      "The ramp organizes the entry and the fan does the rest. Think of it in two acts."
+    ),
+  }),
+  level(22, {
+    id: "flux-23",
+    name: { es: "Doble Crisol", en: "Double Crucible" },
+    taxonomy: "two-bounce",
+    difficultyBand: "combine",
+    backgroundId: "neon-grid",
+    ballSpawn: { x: 138, y: 430, aimDeg: -18, power: 0.42 },
+    target: { x: 834, y: 164 },
+    obstacles: [
+      { type: "bumper", x: 308, y: 366, radius: 32 },
+      { type: "bumper", x: 566, y: 248, radius: 34 },
+      { type: "wall", x: 706, y: 324, w: 118, h: 18 },
+    ],
+    starRules: { parTimeMs: 9800, parBounces: 3 },
+    tutorialHints: hints(
+      "Primer rebote para ganar altura, segundo para cerrar la linea. No hace falta fuerza maxima.",
+      "Use the first bank for height and the second one to close the line. Full power is not required."
+    ),
+  }),
+  level(23, {
+    id: "flux-24",
+    name: { es: "Pulso Obrero", en: "Foundry Pulse" },
+    taxonomy: "timing",
+    difficultyBand: "combine",
+    backgroundId: "alloy-dawn",
+    ballSpawn: { x: 142, y: 430, aimDeg: -42, power: 0.62 },
+    target: {
+      x: 806,
+      y: 154,
+      moving: { axis: "y", min: 144, max: 210, speed: 60, phase: 0.1 },
+    },
+    obstacles: [
+      { type: "gate", x: 488, y: 252, w: 24, h: 204, periodMs: 2300, openMs: 1020, phaseMs: 200 },
+      {
+        type: "movingBar",
+        x: 654,
+        y: 296,
+        w: 126,
+        h: 18,
+        movement: { axis: "y", min: 204, max: 366, speed: 96, phase: 0.42 },
+      },
+    ],
+    starRules: { parTimeMs: 10800, parBounces: 3 },
+    tutorialHints: hints(
+      "No hay reflejo puro que lo resuelva. Sincroniza compuerta, barra y cubo antes de soltar.",
+      "Pure reflex is not enough here. Sync gate, bar and basin before releasing."
+    ),
+  }),
+  level(24, {
+    id: "flux-25",
+    name: { es: "Canal de Turbina", en: "Turbine Channel" },
+    taxonomy: "controlled-drop",
+    difficultyBand: "combine",
+    backgroundId: "prism-bay",
+    ballSpawn: { x: 132, y: 434, aimDeg: -20, power: 0.39 },
+    target: { x: 822, y: 182 },
+    obstacles: [
+      { type: "fan", x: 402, y: 272, w: 144, h: 184, forceX: 190, forceY: -700 },
+      { type: "wall", x: 566, y: 224, w: 136, h: 18 },
+      { type: "wall", x: 704, y: 382, w: 120, h: 18 },
+      { type: "spikeStrip", x: 574, y: 500, w: 172, h: 24 },
+    ],
+    starRules: { parTimeMs: 9800, parBounces: 2 },
+    tutorialHints: hints(
+      "El ventilador acelera y recoloca. Entra bajo y deja que el flujo limpie el resto.",
+      "The fan accelerates and relocates the line. Enter low and let the stream clean up the rest."
+    ),
+  }),
+  level(25, {
+    id: "flux-26",
+    name: { es: "Gel de Medianoche", en: "Midnight Gel" },
+    taxonomy: "precision",
+    difficultyBand: "challenge",
+    backgroundId: "alloy-dawn",
+    ballSpawn: { x: 146, y: 430, aimDeg: -36, power: 0.54 },
+    target: { x: 810, y: 142, innerW: 52, tolerance: 13 },
+    obstacles: [
+      { type: "wall", x: 414, y: 320, w: 136, h: 18 },
+      { type: "stickyPad", x: 586, y: 262, w: 150, h: 24 },
+      { type: "wall", x: 754, y: 232, w: 116, h: 18 },
+    ],
+    starRules: { parTimeMs: 10400, parBounces: 2 },
+    tutorialHints: hints(
+      "El pad no es castigo: es el freno fino que convierte exceso de velocidad en captura util.",
+      "The pad is not a punishment. It is the fine brake that turns excess speed into a useful catch."
+    ),
+  }),
+  level(26, {
+    id: "flux-27",
+    name: { es: "Curva de Cobalto", en: "Cobalt Curve" },
+    taxonomy: "puzzle-physics",
+    difficultyBand: "challenge",
+    backgroundId: "neon-grid",
+    ballSpawn: { x: 140, y: 432, aimDeg: -31, power: 0.5 },
+    target: { x: 816, y: 176 },
+    obstacles: [
+      { type: "gravityWell", x: 536, y: 248, radius: 96, strength: 88000 },
+      { type: "wall", x: 660, y: 294, w: 148, h: 18 },
+      { type: "spikeStrip", x: 482, y: 500, w: 200, h: 24 },
+    ],
+    physicsProfile: { gravity: 850, drag: 0.012 },
+    starRules: { parTimeMs: 11200, parBounces: 3 },
+    tutorialHints: hints(
+      "Abre el disparo y deja que el campo haga la curva final. Si lo fuerzas, el pozo te roba la linea.",
+      "Open the shot and let the field finish the bend. Force it and the well steals the line."
+    ),
+  }),
+  level(27, {
+    id: "flux-28",
+    name: { es: "Puerta Sesgada", en: "Skew Gate" },
+    taxonomy: "timing",
+    difficultyBand: "challenge",
+    backgroundId: "prism-bay",
+    ballSpawn: { x: 136, y: 430, aimDeg: -46, power: 0.64 },
+    target: { x: 828, y: 150 },
+    obstacles: [
+      { type: "ramp", x1: 386, y1: 382, x2: 556, y2: 272, thickness: 18 },
+      { type: "gate", x: 630, y: 226, w: 24, h: 198, periodMs: 2100, openMs: 920, phaseMs: 360 },
+      { type: "wall", x: 738, y: 314, w: 128, h: 18 },
+    ],
+    starRules: { parTimeMs: 10600, parBounces: 3 },
+    tutorialHints: hints(
+      "La rampa te obliga a llegar ordenado a la compuerta. No corras: prepara el angulo de entrada.",
+      "The ramp forces you to arrive to the gate in control. Do not rush the entry angle."
+    ),
+  }),
+  level(28, {
+    id: "flux-29",
+    name: { es: "Retorno de Bronce", en: "Bronze Return" },
+    taxonomy: "anti-habit",
+    difficultyBand: "challenge",
+    backgroundId: "alloy-dawn",
+    ballSpawn: { x: 824, y: 420, aimDeg: -148, power: 0.52 },
+    target: { x: 176, y: 184 },
+    obstacles: [
+      { type: "fan", x: 610, y: 248, w: 140, h: 160, forceX: -120, forceY: -860 },
+      { type: "wall", x: 494, y: 332, w: 132, h: 18 },
+      { type: "bumper", x: 322, y: 258, radius: 34 },
+    ],
+    starRules: { parTimeMs: 10800, parBounces: 3 },
+    tutorialHints: hints(
+      "Nivel espejo: sales desde la derecha y el ventilador te recoloca hacia el bumper bueno.",
+      "Mirror stage: you launch from the right and the fan repositions the orb toward the good bumper."
+    ),
+  }),
+  level(29, {
+    id: "flux-30",
+    name: { es: "Domo Resonante", en: "Resonant Dome" },
+    taxonomy: "one-bounce",
+    difficultyBand: "challenge",
+    backgroundId: "neon-grid",
+    ballSpawn: { x: 140, y: 432, aimDeg: -58, power: 0.72 },
+    target: { x: 808, y: 188 },
+    obstacles: [
+      { type: "wall", x: 506, y: 138, w: 204, h: 18 },
+      { type: "bumper", x: 506, y: 284, radius: 42 },
+      { type: "wall", x: 710, y: 338, w: 128, h: 18 },
+    ],
+    starRules: { parTimeMs: 9800, parBounces: 2 },
+    tutorialHints: hints(
+      "El techo descarta el tiro alto. Busca el bumper central y usa su energia para entrar al cubo.",
+      "The ceiling removes the high line. Use the central bumper and cash in its energy at the basin."
+    ),
+  }),
+  level(30, {
+    id: "flux-31",
+    name: { es: "Linea de Servicio", en: "Service Line" },
+    taxonomy: "speed-clear",
+    difficultyBand: "challenge",
+    backgroundId: "alloy-dawn",
+    ballSpawn: { x: 132, y: 436, aimDeg: -24, power: 0.43 },
+    target: { x: 834, y: 170 },
+    obstacles: [
+      {
+        type: "movingBar",
+        x: 496,
+        y: 316,
+        w: 128,
+        h: 18,
+        movement: { axis: "x", min: 430, max: 612, speed: 124, phase: 0.15 },
+      },
+      { type: "fan", x: 278, y: 284, w: 126, h: 176, forceX: 220, forceY: -540 },
+      { type: "spikeStrip", x: 472, y: 500, w: 220, h: 24 },
+    ],
+    starRules: { parTimeMs: 8400, parBounces: 2 },
+    tutorialHints: hints(
+      "Nivel de ritmo corto: usa el empuje temprano del fan para llegar antes de que la barra vuelva.",
+      "Short rhythm stage: use the early fan push to arrive before the bar swings back."
+    ),
+  }),
+  level(31, {
+    id: "flux-32",
+    name: { es: "Bisel Magnetico", en: "Magnetic Bevel" },
+    taxonomy: "precision",
+    difficultyBand: "challenge",
+    backgroundId: "prism-bay",
+    ballSpawn: { x: 148, y: 432, aimDeg: -28, power: 0.48 },
+    target: { x: 826, y: 146, innerW: 48, tolerance: 10 },
+    obstacles: [
+      { type: "gravityWell", x: 680, y: 208, radius: 78, strength: 68000 },
+      { type: "wall", x: 420, y: 204, w: 142, h: 18 },
+      { type: "wall", x: 438, y: 392, w: 142, h: 18 },
+      { type: "stickyPad", x: 594, y: 282, w: 132, h: 24 },
+    ],
+    physicsProfile: { gravity: 890, drag: 0.013 },
+    starRules: { parTimeMs: 11800, parBounces: 3 },
+    tutorialHints: hints(
+      "El objetivo es estrecho, pero el campo ayuda si llegas lento. El gel prepara esa velocidad.",
+      "The basin is narrow, but the field helps if you arrive slow. The gel sets that speed."
+    ),
+  }),
+  level(32, {
+    id: "flux-33",
+    name: { es: "Taller Fantasma", en: "Ghost Workshop" },
+    taxonomy: "puzzle-physics",
+    difficultyBand: "challenge",
+    backgroundId: "neon-grid",
+    ballSpawn: { x: 144, y: 430, aimDeg: -33, power: 0.53 },
+    target: { x: 812, y: 152 },
+    obstacles: [
+      { type: "portal", x: 360, y: 366, radius: 28, pairId: "D" },
+      { type: "portal", x: 696, y: 202, radius: 28, pairId: "D" },
+      { type: "wall", x: 530, y: 286, w: 152, h: 18 },
+      { type: "spikeStrip", x: 506, y: 500, w: 184, h: 24 },
+    ],
+    starRules: { parTimeMs: 10600, parBounces: 2 },
+    tutorialHints: hints(
+      "El portal evita el muro, pero solo si entras con la inclinacion que te deja salir hacia arriba.",
+      "The portal bypasses the wall, but only if you enter on the angle that sends you upward."
+    ),
+  }),
+  level(33, {
+    id: "flux-34",
+    name: { es: "Cisterna Tensa", en: "Tense Cistern" },
+    taxonomy: "risk-reward",
+    difficultyBand: "wow",
+    backgroundId: "alloy-dawn",
+    ballSpawn: { x: 136, y: 434, aimDeg: -30, power: 0.47 },
+    target: {
+      x: 796,
+      y: 164,
+      moving: { axis: "x", min: 730, max: 840, speed: 72, phase: 0.33 },
+    },
+    obstacles: [
+      { type: "wall", x: 450, y: 290, w: 148, h: 18 },
+      { type: "wall", x: 660, y: 250, w: 118, h: 18 },
+      { type: "spikeStrip", x: 416, y: 500, w: 300, h: 24 },
+      { type: "bumper", x: 594, y: 360, radius: 34 },
+    ],
+    starRules: { parTimeMs: 11200, parBounces: 3 },
+    tutorialHints: hints(
+      "El suelo perdona cero. Usa el bumper como seguro y apunta al espacio que va a ocupar el cubo.",
+      "The floor forgives nothing. Use the bumper as insurance and aim for where the basin will be."
+    ),
+  }),
+  level(34, {
+    id: "flux-35",
+    name: { es: "Cascada de Niebla", en: "Mist Cascade" },
+    taxonomy: "controlled-drop",
+    difficultyBand: "wow",
+    backgroundId: "prism-bay",
+    ballSpawn: { x: 134, y: 424, aimDeg: -46, power: 0.72 },
+    target: { x: 820, y: 184 },
+    obstacles: [
+      { type: "fan", x: 506, y: 252, w: 156, h: 180, forceX: 50, forceY: -980 },
+      { type: "ramp", x1: 676, y1: 338, x2: 822, y2: 252, thickness: 18 },
+      { type: "wall", x: 404, y: 320, w: 124, h: 18 },
+    ],
+    starRules: { parTimeMs: 11800, parBounces: 3 },
+    tutorialHints: hints(
+      "La bruma te levanta y la rampa remata la curva. Deja que el fan haga altura antes del ultimo apoyo.",
+      "The mist lifts and the ramp finishes the curve. Let the fan create height before the final touch."
+    ),
+  }),
+  level(35, {
+    id: "flux-36",
+    name: { es: "Hexagono de Pulso", en: "Pulse Hex" },
+    taxonomy: "timing",
+    difficultyBand: "wow",
+    backgroundId: "neon-grid",
+    ballSpawn: { x: 140, y: 430, aimDeg: -39, power: 0.58 },
+    target: { x: 812, y: 146 },
+    obstacles: [
+      { type: "gate", x: 384, y: 248, w: 24, h: 204, periodMs: 1800, openMs: 780, phaseMs: 0 },
+      { type: "gate", x: 634, y: 248, w: 24, h: 204, periodMs: 1800, openMs: 780, phaseMs: 900 },
+      { type: "wall", x: 510, y: 340, w: 140, h: 18 },
+    ],
+    starRules: { parTimeMs: 12200, parBounces: 3 },
+    tutorialHints: hints(
+      "Las compuertas laten a contratiempo. No tires cuando una abre: tira para que la segunda tambien lo haga.",
+      "The gates pulse out of phase. Do not shoot when one opens, shoot so the second opens too."
+    ),
+  }),
+  level(36, {
+    id: "flux-37",
+    name: { es: "Rizo Industrial", en: "Industrial Curl" },
+    taxonomy: "two-bounce",
+    difficultyBand: "wow",
+    backgroundId: "alloy-dawn",
+    ballSpawn: { x: 136, y: 432, aimDeg: -26, power: 0.46 },
+    target: { x: 830, y: 156 },
+    obstacles: [
+      { type: "bumper", x: 336, y: 318, radius: 34 },
+      { type: "ramp", x1: 466, y1: 356, x2: 620, y2: 260, thickness: 18 },
+      { type: "bumper", x: 676, y: 224, radius: 34 },
+      { type: "spikeStrip", x: 522, y: 500, w: 184, h: 24 },
+    ],
+    starRules: { parTimeMs: 11600, parBounces: 4 },
+    tutorialHints: hints(
+      "El nivel no pide potencia sino secuencia: bumper, rampa, bumper, captura.",
+      "This stage is about sequence, not brute force: bumper, ramp, bumper, catch."
+    ),
+  }),
+  level(37, {
+    id: "flux-38",
+    name: { es: "Sutura de Neon", en: "Neon Stitch" },
+    taxonomy: "precision",
+    difficultyBand: "wow",
+    backgroundId: "prism-bay",
+    ballSpawn: { x: 146, y: 430, aimDeg: -34, power: 0.54 },
+    target: { x: 812, y: 156, innerW: 50, tolerance: 11 },
+    obstacles: [
+      { type: "stickyPad", x: 394, y: 286, w: 148, h: 24 },
+      { type: "wall", x: 598, y: 316, w: 132, h: 18 },
+      { type: "gravityWell", x: 714, y: 214, radius: 76, strength: 62000 },
+      { type: "spikeStrip", x: 554, y: 500, w: 208, h: 24 },
+    ],
+    physicsProfile: { gravity: 890, drag: 0.013 },
+    starRules: { parTimeMs: 12600, parBounces: 3 },
+    tutorialHints: hints(
+      "La costura buena no es recta: el gel quita impulso y el campo curva la ultima entrada.",
+      "The good stitch is not straight: the gel removes excess impulse and the field bends the final entry."
+    ),
+  }),
+  level(38, {
+    id: "flux-39",
+    name: { es: "Linea Muerta", en: "Dead Line" },
+    taxonomy: "speed-clear",
+    difficultyBand: "wow",
+    backgroundId: "neon-grid",
+    ballSpawn: { x: 134, y: 434, aimDeg: -22, power: 0.44 },
+    target: { x: 838, y: 172 },
+    obstacles: [
+      {
+        type: "movingBar",
+        x: 590,
+        y: 248,
+        w: 132,
+        h: 18,
+        movement: { axis: "y", min: 170, max: 388, speed: 148, phase: 0.1 },
+      },
+      { type: "wall", x: 404, y: 322, w: 122, h: 18 },
+      { type: "spikeStrip", x: 602, y: 500, w: 158, h: 24 },
+    ],
+    starRules: { parTimeMs: 7800, parBounces: 2 },
+    tutorialHints: hints(
+      "Una sola ventana buena por ciclo. Lee el movimiento antes de tocar la pantalla.",
+      "There is only one good window per cycle. Read the motion before you touch the screen."
+    ),
+  }),
+  level(39, {
+    id: "flux-40",
+    name: { es: "Ancla de Vacio", en: "Void Anchor" },
+    taxonomy: "puzzle-physics",
+    difficultyBand: "wow",
+    backgroundId: "alloy-dawn",
+    ballSpawn: { x: 140, y: 430, aimDeg: -36, power: 0.57 },
+    target: { x: 812, y: 164 },
+    obstacles: [
+      { type: "gravityWell", x: 468, y: 268, radius: 88, strength: 72000 },
+      { type: "fan", x: 666, y: 260, w: 148, h: 178, forceX: 48, forceY: -1060 },
+      { type: "wall", x: 610, y: 356, w: 136, h: 18 },
+    ],
+    physicsProfile: { gravity: 900, drag: 0.012 },
+    starRules: { parTimeMs: 12400, parBounces: 3 },
+    tutorialHints: hints(
+      "El pozo atrae y el fan libera. La solucion nace de dejar que cada campo haga solo su parte.",
+      "The well attracts and the fan releases. The solution comes from letting each field do only its job."
+    ),
+  }),
+  level(40, {
+    id: "flux-41",
+    name: { es: "Boveda Espectral", en: "Spectral Vault" },
+    taxonomy: "puzzle-physics",
+    difficultyBand: "boss",
+    backgroundId: "prism-bay",
+    ballSpawn: { x: 148, y: 432, aimDeg: -34, power: 0.5 },
+    target: {
+      x: 818,
+      y: 140,
+      moving: { axis: "y", min: 132, max: 200, speed: 58, phase: 0.2 },
+    },
+    obstacles: [
+      { type: "gate", x: 454, y: 228, w: 24, h: 204, periodMs: 2100, openMs: 900, phaseMs: 150 },
+      { type: "portal", x: 544, y: 374, radius: 28, pairId: "F" },
+      { type: "portal", x: 748, y: 194, radius: 28, pairId: "F" },
+      { type: "wall", x: 644, y: 286, w: 144, h: 18 },
+    ],
+    starRules: { parTimeMs: 13000, parBounces: 3 },
+    tutorialHints: hints(
+      "Compuerta, portal y objetivo vivo. El tiro bueno llega tarde a la primera mitad y puntual a la segunda.",
+      "Gate, portal and a living target. The good shot arrives late to the first half and on time to the second."
+    ),
+  }),
+  level(41, {
+    id: "flux-42",
+    name: { es: "Costura Orbital", en: "Orbital Stitch" },
+    taxonomy: "precision",
+    difficultyBand: "boss",
+    backgroundId: "neon-grid",
+    ballSpawn: { x: 150, y: 432, aimDeg: -27, power: 0.48 },
+    target: { x: 826, y: 184, innerW: 44, tolerance: 9 },
+    obstacles: [
+      { type: "wall", x: 374, y: 176, w: 122, h: 18 },
+      { type: "wall", x: 374, y: 394, w: 122, h: 18 },
+      { type: "wall", x: 588, y: 176, w: 122, h: 18 },
+      { type: "wall", x: 588, y: 394, w: 122, h: 18 },
+      { type: "bumper", x: 484, y: 286, radius: 30 },
+      { type: "stickyPad", x: 724, y: 278, w: 128, h: 24 },
+      { type: "spikeStrip", x: 492, y: 500, w: 232, h: 24 },
+    ],
+    starRules: { parTimeMs: 13400, parBounces: 3 },
+    tutorialHints: hints(
+      "El pasillo central no esta quieto en tu cabeza: piensa en una costura curva, no en una recta.",
+      "The center lane only looks straight. Think of a curved stitch, not a straight stitch."
+    ),
+  }),
+  level(42, {
+    id: "flux-43",
+    name: { es: "Doble Fundente", en: "Twin Melt" },
+    taxonomy: "wow",
+    difficultyBand: "boss",
+    backgroundId: "alloy-dawn",
+    ballSpawn: { x: 136, y: 432, aimDeg: -34, power: 0.52 },
+    target: { x: 818, y: 148 },
+    obstacles: [
+      { type: "gravityWell", x: 392, y: 248, radius: 74, strength: 56000 },
+      { type: "gravityWell", x: 690, y: 230, radius: 82, strength: 76000 },
+      { type: "wall", x: 530, y: 338, w: 122, h: 18 },
+      { type: "ramp", x1: 742, y1: 318, x2: 846, y2: 236, thickness: 18 },
+    ],
+    physicsProfile: { gravity: 860, drag: 0.011 },
+    starRules: { parTimeMs: 13600, parBounces: 3 },
+    tutorialHints: hints(
+      "Dos pozos, dos intenciones: el primero te afina la ruta y el segundo la remata cerca del cubo.",
+      "Two wells, two intentions: the first trims the path and the second finishes it near the basin."
+    ),
+  }),
+  level(43, {
+    id: "flux-44",
+    name: { es: "Cadena de Montaje", en: "Assembly Chain" },
+    taxonomy: "timing",
+    difficultyBand: "boss",
+    backgroundId: "prism-bay",
+    ballSpawn: { x: 138, y: 432, aimDeg: -38, power: 0.6 },
+    target: {
+      x: 812,
+      y: 148,
+      moving: { axis: "x", min: 744, max: 848, speed: 84, phase: 0.1 },
+    },
+    obstacles: [
+      {
+        type: "movingBar",
+        x: 332,
+        y: 360,
+        w: 114,
+        h: 18,
+        movement: { axis: "y", min: 224, max: 406, speed: 130, phase: 0.18 },
+      },
+      {
+        type: "movingBar",
+        x: 570,
+        y: 220,
+        w: 124,
+        h: 18,
+        movement: { axis: "x", min: 500, max: 690, speed: 112, phase: 0.46 },
+      },
+      { type: "gate", x: 700, y: 218, w: 24, h: 210, periodMs: 2200, openMs: 980, phaseMs: 420 },
+      { type: "spikeStrip", x: 548, y: 500, w: 222, h: 24 },
+    ],
+    starRules: { parTimeMs: 13800, parBounces: 4 },
+    tutorialHints: hints(
+      "Tres ritmos en cadena. Mira el patron completo y suelta una vez, no tres medias decisiones.",
+      "Three rhythms in a chain. Read the whole pattern and release once, not in three half-decisions."
+    ),
+  }),
+  level(44, {
+    id: "flux-45",
+    name: { es: "Retorno de Mercurio", en: "Mercury Return" },
+    taxonomy: "anti-habit",
+    difficultyBand: "boss",
+    backgroundId: "alloy-dawn",
+    ballSpawn: { x: 814, y: 412, aimDeg: -154, power: 0.6 },
+    target: { x: 178, y: 154 },
+    obstacles: [
+      { type: "portal", x: 668, y: 330, radius: 28, pairId: "G" },
+      { type: "portal", x: 356, y: 216, radius: 28, pairId: "G" },
+      { type: "fan", x: 504, y: 228, w: 150, h: 168, forceX: -140, forceY: -820 },
+      { type: "wall", x: 510, y: 420, w: 158, h: 18 },
+      { type: "bumper", x: 230, y: 274, radius: 36 },
+    ],
+    starRules: { parTimeMs: 13400, parBounces: 4 },
+    tutorialHints: hints(
+      "Todo va al reves salvo la logica. Si lees el mapa de derecha a izquierda, la solucion aparece.",
+      "Everything is reversed except the logic. Read the map from right to left and the route appears."
+    ),
+  }),
+  level(45, {
+    id: "flux-46",
+    name: { es: "Camara Helicoidal", en: "Helical Chamber" },
+    taxonomy: "puzzle-physics",
+    difficultyBand: "boss",
+    backgroundId: "neon-grid",
+    ballSpawn: { x: 142, y: 432, aimDeg: -41, power: 0.62 },
+    target: { x: 824, y: 146 },
+    obstacles: [
+      { type: "ramp", x1: 312, y1: 390, x2: 470, y2: 284, thickness: 18 },
+      { type: "gravityWell", x: 560, y: 244, radius: 86, strength: 82000 },
+      { type: "gate", x: 684, y: 214, w: 24, h: 212, periodMs: 2000, openMs: 840, phaseMs: 500 },
+      { type: "stickyPad", x: 782, y: 286, w: 120, h: 24 },
+      { type: "spikeStrip", x: 512, y: 500, w: 252, h: 24 },
+    ],
+    physicsProfile: { gravity: 900, drag: 0.012 },
+    starRules: { parTimeMs: 14200, parBounces: 4 },
+    tutorialHints: hints(
+      "La rampa pone giro, el pozo curva y el gel frena. Es un nivel de montaje fino, no de reflejos.",
+      "The ramp adds shape, the well bends and the gel brakes. This is a fine assembly stage, not a reflex stage."
+    ),
+  }),
+  level(46, {
+    id: "flux-47",
+    name: { es: "Trama de Titanio", en: "Titanium Weave" },
+    taxonomy: "two-bounce",
+    difficultyBand: "boss",
+    backgroundId: "prism-bay",
+    ballSpawn: { x: 136, y: 432, aimDeg: -24, power: 0.45 },
+    target: {
+      x: 826,
+      y: 154,
+      moving: { axis: "y", min: 140, max: 216, speed: 74, phase: 0.3 },
+    },
+    obstacles: [
+      { type: "bumper", x: 298, y: 354, radius: 34 },
+      { type: "bumper", x: 530, y: 252, radius: 36 },
+      { type: "bumper", x: 722, y: 220, radius: 32 },
+      { type: "wall", x: 656, y: 350, w: 122, h: 18 },
+    ],
+    starRules: { parTimeMs: 12800, parBounces: 4 },
+    tutorialHints: hints(
+      "No memorices un golpe aislado. Memoriza la cadencia de los tres bumpers y el objetivo movil.",
+      "Do not memorize one impact. Memorize the cadence of the three bumpers and the moving basin."
+    ),
+  }),
+  level(47, {
+    id: "flux-48",
+    name: { es: "Fuelle Carmesi", en: "Crimson Bellows" },
+    taxonomy: "speed-clear",
+    difficultyBand: "boss",
+    backgroundId: "alloy-dawn",
+    ballSpawn: { x: 134, y: 434, aimDeg: -18, power: 0.41 },
+    target: { x: 840, y: 176 },
+    obstacles: [
+      { type: "fan", x: 286, y: 286, w: 132, h: 184, forceX: 230, forceY: -640 },
+      { type: "fan", x: 600, y: 226, w: 132, h: 164, forceX: 180, forceY: -860 },
+      {
+        type: "movingBar",
+        x: 478,
+        y: 348,
+        w: 124,
+        h: 18,
+        movement: { axis: "x", min: 410, max: 610, speed: 130, phase: 0.2 },
+      },
+      { type: "spikeStrip", x: 430, y: 500, w: 336, h: 24 },
+    ],
+    starRules: { parTimeMs: 9600, parBounces: 3 },
+    tutorialHints: hints(
+      "Dos soplos y una sola carrera. Si esperas demasiado, el nivel pierde su unica ventana limpia.",
+      "Two gusts and one clean run. Wait too long and the level loses its only clean window."
+    ),
+  }),
+  level(48, {
+    id: "flux-49",
+    name: { es: "Corona Bisagra", en: "Hinge Crown" },
+    taxonomy: "wow",
+    difficultyBand: "boss",
+    backgroundId: "neon-grid",
+    ballSpawn: { x: 142, y: 432, aimDeg: -36, power: 0.58 },
+    target: {
+      x: 820,
+      y: 136,
+      innerW: 46,
+      tolerance: 10,
+      moving: { axis: "x", min: 776, max: 844, speed: 60, phase: 0.25 },
+    },
+    obstacles: [
+      {
+        type: "movingBar",
+        x: 298,
+        y: 384,
+        w: 112,
+        h: 18,
+        movement: { axis: "y", min: 240, max: 420, speed: 140, phase: 0.08 },
+      },
+      { type: "bumper", x: 432, y: 240, radius: 34 },
+      { type: "gate", x: 574, y: 214, w: 24, h: 214, periodMs: 2300, openMs: 980, phaseMs: 610 },
+      { type: "gravityWell", x: 688, y: 256, radius: 84, strength: 78000 },
+      { type: "stickyPad", x: 794, y: 280, w: 118, h: 24 },
+      { type: "spikeStrip", x: 520, y: 500, w: 246, h: 24 },
+    ],
+    physicsProfile: { gravity: 910, restitution: 0.8, drag: 0.012 },
+    starRules: { parTimeMs: 14600, parBounces: 4 },
+    tutorialHints: hints(
+      "Cada pieza corrige un error distinto: la barra la altura, el bumper el rumbo, el gel la velocidad.",
+      "Each piece fixes a different mistake: the bar corrects height, the bumper course, the gel speed."
+    ),
+  }),
+  level(49, {
+    id: "flux-50",
+    name: { es: "Nucleo Flux", en: "Flux Core" },
+    taxonomy: "puzzle-physics",
+    difficultyBand: "boss",
+    backgroundId: "prism-bay",
+    ballSpawn: { x: 132, y: 432, aimDeg: -40, power: 0.62 },
+    target: {
+      x: 818,
+      y: 128,
+      innerW: 44,
+      tolerance: 9,
+      moving: { axis: "y", min: 126, max: 198, speed: 64, phase: 0.14 },
+    },
+    obstacles: [
+      {
+        type: "movingBar",
+        x: 280,
+        y: 390,
+        w: 112,
+        h: 18,
+        movement: { axis: "y", min: 226, max: 420, speed: 142, phase: 0.18 },
+      },
+      { type: "portal", x: 398, y: 214, radius: 28, pairId: "H" },
+      { type: "portal", x: 676, y: 362, radius: 28, pairId: "H" },
+      { type: "bumper", x: 520, y: 254, radius: 36 },
+      { type: "gate", x: 590, y: 214, w: 24, h: 214, periodMs: 2100, openMs: 880, phaseMs: 460 },
+      { type: "gravityWell", x: 700, y: 224, radius: 82, strength: 76000 },
+      { type: "fan", x: 806, y: 262, w: 126, h: 168, forceX: -40, forceY: -760 },
+      { type: "spikeStrip", x: 500, y: 500, w: 274, h: 24 },
+    ],
+    physicsProfile: { gravity: 920, restitution: 0.8, drag: 0.012 },
+    starRules: { parTimeMs: 15200, parBounces: 5 },
+    tutorialHints: hints(
+      [
+        "Final extendido: cada mecanica aparece una vez y con un papel claro.",
+        "No busques una salida caotica. La ruta ganadora sigue siendo legible de principio a fin.",
+      ],
+      [
+        "Extended finale: every mechanic appears once and with a clear purpose.",
+        "Do not hunt for chaos. The winning route is still readable from start to finish.",
+      ]
+    ),
+  }),
 ];
