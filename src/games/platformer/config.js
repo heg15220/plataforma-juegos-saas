@@ -1,6 +1,7 @@
 export const VIEWPORT_WIDTH = 768;
 export const VIEWPORT_HEIGHT = 432;
 export const TILE_SIZE = 32;
+export const PLATFORMER_ROUTE_LENGTH = 8;
 
 export const FIXED_STEP_SECONDS = 1 / 60;
 export const FIXED_STEP_MS = 1000 / 60;
@@ -35,6 +36,8 @@ export const PLAYER_SETTINGS = {
   jumpHoldGravityMultiplier: 0.48,
   jumpCutMultiplier: 0.56,
   stompBounceVelocity: -360,
+  springBoostVelocity: -760,
+  superSpringBoostVelocity: -900,
   invulnerableSeconds: 1.1,
   fireCooldownSeconds: 0.28
 };

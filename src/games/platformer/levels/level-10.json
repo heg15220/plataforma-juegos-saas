@@ -8,6 +8,7 @@
   "goalRequiresAllCoins": false,
   "boss": {
     "name": "Molten Overseer",
+    "variant": "forge",
     "maxHealth": 12,
     "projectileDamage": 2,
     "stompDamage": 2,

@@ -1,5 +1,5 @@
 import { SCREENS, VIEWPORT_HEIGHT, VIEWPORT_WIDTH } from "../config";
-import { TILE_TYPES, tileKey } from "../levels/levelLoader";
+import { TILE_TYPES, checkpointToWorldRect, tileKey, zoneToWorldRect } from "../levels/levelLoader";
 
 const round = (value) => Math.round(value);
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -223,6 +223,171 @@ const STYLE_OVERRIDES = {
     hudAccentBar: "rgba(255,80,80,0.22)",
     text: "#fff0ee",
     textDim: "rgba(255,200,195,0.65)"
+  },
+  forest: {
+    skyTop: "#133b2d",
+    skyMid: "#2f7650",
+    skyBottom: "#d3f0a4",
+    haze: "rgba(180, 235, 170, 0.22)",
+    cloud: "#eff9e9",
+    cloudShadow: "rgba(50,90,62,0.35)",
+    farMount: "#244d38",
+    nearMount: "#183828",
+    midGround: "#22553d",
+    midGroundDark: "#153726",
+    ridge: "#143625",
+    groundTop: "#5fc764",
+    groundMain: "#5b4120",
+    groundStone: "#7f6942",
+    brickMain: "#a6683a",
+    brickDark: "#6b4020",
+    pipeMain: "#3ca95d",
+    pipeDark: "#256f3d",
+    pipeHighlight: "rgba(255,255,255,0.18)",
+    platformMain: "#8d6d39",
+    platformDark: "#5a431f",
+    platformHighlight: "rgba(255,255,255,0.22)",
+    questionMain: "#ffcb58",
+    questionDark: "#7b5712",
+    questionUsed: "#6b6757",
+    questionGlow: "rgba(255,220,120,0.38)",
+    hudBg: "rgba(6, 18, 14, 0.76)",
+    hudBorder: "rgba(130, 215, 160, 0.38)",
+    hudAccentBar: "rgba(128, 220, 156, 0.18)",
+    text: "#eefcf2",
+    textDim: "rgba(205,240,215,0.68)"
+  },
+  sunset: {
+    skyTop: "#2c365c",
+    skyMid: "#f07e51",
+    skyBottom: "#ffd892",
+    haze: "rgba(255, 197, 130, 0.26)",
+    cloud: "#fff0d2",
+    cloudShadow: "rgba(140,100,80,0.32)",
+    farMount: "#7d5f6c",
+    nearMount: "#5b4052",
+    midGround: "#7e5d34",
+    midGroundDark: "#5f431e",
+    ridge: "#4f3823",
+    groundTop: "#e0ad4f",
+    groundMain: "#71431d",
+    groundStone: "#9b7240",
+    brickMain: "#d27c42",
+    brickDark: "#8c4e20",
+    pipeMain: "#5b8d66",
+    pipeDark: "#356146",
+    pipeHighlight: "rgba(255,255,255,0.18)",
+    platformMain: "#d7a15c",
+    platformDark: "#7e5a2f",
+    platformHighlight: "rgba(255,255,255,0.25)",
+    questionMain: "#ffe08a",
+    questionDark: "#8d6115",
+    questionUsed: "#7c6a55",
+    questionGlow: "rgba(255,215,120,0.38)",
+    hudBg: "rgba(20, 11, 8, 0.78)",
+    hudBorder: "rgba(255, 186, 120, 0.38)",
+    hudAccentBar: "rgba(255, 180, 112, 0.18)",
+    text: "#fff5e8",
+    textDim: "rgba(255,225,190,0.68)"
+  },
+  storm: {
+    skyTop: "#0c162a",
+    skyMid: "#324667",
+    skyBottom: "#8aa7c8",
+    haze: "rgba(150, 175, 220, 0.18)",
+    cloud: "#d8e2f0",
+    cloudShadow: "rgba(70,90,120,0.4)",
+    farMount: "#26354c",
+    nearMount: "#18263a",
+    midGround: "#22354b",
+    midGroundDark: "#142131",
+    ridge: "#101c28",
+    groundTop: "#7cb0c8",
+    groundMain: "#41586a",
+    groundStone: "#6d8798",
+    brickMain: "#73889e",
+    brickDark: "#48596c",
+    pipeMain: "#5f86a5",
+    pipeDark: "#35546e",
+    pipeHighlight: "rgba(255,255,255,0.22)",
+    platformMain: "#9ab4c8",
+    platformDark: "#5f7486",
+    platformHighlight: "rgba(255,255,255,0.28)",
+    questionMain: "#d6ebff",
+    questionDark: "#64839d",
+    questionUsed: "#5c6774",
+    questionGlow: "rgba(190,225,255,0.35)",
+    hudBg: "rgba(5, 11, 20, 0.80)",
+    hudBorder: "rgba(140, 190, 255, 0.40)",
+    hudAccentBar: "rgba(140, 200, 255, 0.18)",
+    text: "#f2f7ff",
+    textDim: "rgba(205,220,245,0.68)"
+  },
+  toxic: {
+    skyTop: "#142808",
+    skyMid: "#3d6112",
+    skyBottom: "#b0d84f",
+    haze: "rgba(190, 255, 80, 0.16)",
+    cloud: "#eef7d8",
+    cloudShadow: "rgba(90,120,35,0.35)",
+    farMount: "#355016",
+    nearMount: "#23380f",
+    midGround: "#365a18",
+    midGroundDark: "#1f360b",
+    ridge: "#1c2e09",
+    groundTop: "#9ad443",
+    groundMain: "#4d4f1c",
+    groundStone: "#6f7540",
+    brickMain: "#6d8b2c",
+    brickDark: "#46581a",
+    pipeMain: "#3dbb68",
+    pipeDark: "#1f7340",
+    pipeHighlight: "rgba(255,255,255,0.18)",
+    platformMain: "#a5cb5b",
+    platformDark: "#668035",
+    platformHighlight: "rgba(255,255,255,0.24)",
+    questionMain: "#e6f96e",
+    questionDark: "#72881a",
+    questionUsed: "#687044",
+    questionGlow: "rgba(200,255,90,0.40)",
+    hudBg: "rgba(8, 16, 4, 0.82)",
+    hudBorder: "rgba(185, 255, 112, 0.36)",
+    hudAccentBar: "rgba(175, 255, 96, 0.18)",
+    text: "#f4ffe6",
+    textDim: "rgba(225,245,180,0.68)"
+  },
+  celestial: {
+    skyTop: "#08132d",
+    skyMid: "#3d4fa0",
+    skyBottom: "#90b9ff",
+    haze: "rgba(190, 215, 255, 0.18)",
+    cloud: "#f6f8ff",
+    cloudShadow: "rgba(100,110,190,0.26)",
+    farMount: "#273c72",
+    nearMount: "#1a2a56",
+    midGround: "#314f95",
+    midGroundDark: "#1d3262",
+    ridge: "#162547",
+    groundTop: "#b5d1ff",
+    groundMain: "#4c4f8f",
+    groundStone: "#7073a8",
+    brickMain: "#7885d6",
+    brickDark: "#4a5597",
+    pipeMain: "#62a8ff",
+    pipeDark: "#336ac4",
+    pipeHighlight: "rgba(255,255,255,0.28)",
+    platformMain: "#d5e5ff",
+    platformDark: "#7b90c8",
+    platformHighlight: "rgba(255,255,255,0.34)",
+    questionMain: "#eef4ff",
+    questionDark: "#7f92c3",
+    questionUsed: "#747f98",
+    questionGlow: "rgba(195,220,255,0.44)",
+    hudBg: "rgba(8, 12, 26, 0.80)",
+    hudBorder: "rgba(170, 205, 255, 0.42)",
+    hudAccentBar: "rgba(160, 205, 255, 0.20)",
+    text: "#f5f8ff",
+    textDim: "rgba(210,225,255,0.72)"
   }
 };
 
@@ -368,6 +533,79 @@ const drawMidGroundLayer = (ctx, cameraX, timeSeconds, palette, visualStyle) => 
     return;
   }
 
+  if (visualStyle === "forest") {
+    for (let i = -1; i < 8; i += 1) {
+      const bx = i * 120 - offset;
+      const trunkH = 92 + (i % 3) * 18;
+      ctx.fillStyle = palette.midGroundDark || "#153726";
+      ctx.fillRect(bx + 20, VIEWPORT_HEIGHT - 170 - trunkH, 16, trunkH);
+      ctx.fillRect(bx + 56, VIEWPORT_HEIGHT - 150 - trunkH * 0.76, 12, trunkH * 0.76);
+      ctx.fillStyle = palette.midGround || "#22553d";
+      ctx.fillRect(bx, VIEWPORT_HEIGHT - 206 - trunkH, 78, 22);
+      ctx.fillRect(bx + 14, VIEWPORT_HEIGHT - 224 - trunkH, 58, 18);
+      ctx.fillRect(bx + 28, VIEWPORT_HEIGHT - 238 - trunkH, 32, 14);
+    }
+    return;
+  }
+
+  if (visualStyle === "storm") {
+    ctx.fillStyle = palette.midGround || "#22354b";
+    for (let i = -1; i < 8; i += 1) {
+      const bx = i * 134 - offset;
+      const bh = 58 + (i % 4) * 16;
+      ctx.fillRect(bx, VIEWPORT_HEIGHT - 144 - bh, 88, bh);
+      ctx.fillRect(bx + 18, VIEWPORT_HEIGHT - 160 - bh, 30, 12);
+      ctx.fillStyle = palette.midGroundDark || "#142131";
+      ctx.fillRect(bx + 52, VIEWPORT_HEIGHT - 152 - bh, 18, bh + 8);
+      ctx.fillStyle = palette.midGround || "#22354b";
+    }
+    return;
+  }
+
+  if (visualStyle === "toxic") {
+    ctx.fillStyle = palette.midGround || "#365a18";
+    for (let i = -1; i < 8; i += 1) {
+      const bx = i * 118 - offset;
+      const bh = 46 + (i % 4) * 12;
+      ctx.fillRect(bx, VIEWPORT_HEIGHT - 146 - bh, 76, bh);
+      ctx.fillStyle = "rgba(220,255,140,0.18)";
+      ctx.fillRect(bx + 6, VIEWPORT_HEIGHT - 144 - bh, 64, 6);
+      ctx.fillStyle = palette.midGroundDark || "#1f360b";
+      ctx.fillRect(bx + 20, VIEWPORT_HEIGHT - 160 - bh, 12, 14);
+      ctx.fillRect(bx + 44, VIEWPORT_HEIGHT - 166 - bh, 10, 20);
+      ctx.fillStyle = palette.midGround || "#365a18";
+    }
+    return;
+  }
+
+  if (visualStyle === "celestial") {
+    ctx.fillStyle = palette.midGround || "#314f95";
+    for (let i = -1; i < 7; i += 1) {
+      const bx = i * 138 - offset;
+      const bh = 30 + (i % 4) * 9;
+      ctx.fillRect(bx, VIEWPORT_HEIGHT - 154 - bh, 92, bh);
+      ctx.fillStyle = "rgba(255,255,255,0.30)";
+      ctx.fillRect(bx + 8, VIEWPORT_HEIGHT - 154 - bh, 34, 4);
+      ctx.fillStyle = palette.midGroundDark || "#1d3262";
+      ctx.fillRect(bx + 18, VIEWPORT_HEIGHT - 166 - bh, 44, 12);
+      ctx.fillStyle = palette.midGround || "#314f95";
+    }
+    return;
+  }
+
+  if (visualStyle === "sunset") {
+    ctx.fillStyle = palette.midGround || "#7e5d34";
+    for (let i = -1; i < 8; i += 1) {
+      const bx = i * 120 - offset;
+      const bh = 24 + (i % 5) * 10;
+      ctx.fillRect(bx, VIEWPORT_HEIGHT - 150 - bh, 78, bh);
+      ctx.fillStyle = palette.midGroundDark || "#5f431e";
+      ctx.fillRect(bx, VIEWPORT_HEIGHT - 152 - bh, 78, 5);
+      ctx.fillStyle = palette.midGround || "#7e5d34";
+    }
+    return;
+  }
+
   ctx.fillStyle = palette.midGround || "#3a7a50";
   for (let i = -1; i < 8; i += 1) {
     const bx = i * 110 - offset;
@@ -421,6 +659,39 @@ const drawEmbers = (ctx, timeSeconds) => {
     ctx.fillStyle = `hsla(${hue},100%,60%,${alpha.toFixed(2)})`;
     const size = i % 7 === 0 ? 2 : 1;
     ctx.fillRect(x, y, size, size);
+  }
+};
+
+const drawRain = (ctx, timeSeconds) => {
+  for (let i = 0; i < 120; i += 1) {
+    const x = (i * 47.7 + timeSeconds * 180) % (VIEWPORT_WIDTH + 40) - 20;
+    const y = (i * 29.3 + timeSeconds * 260) % (VIEWPORT_HEIGHT + 60) - 30;
+    ctx.fillStyle = "rgba(190,220,255,0.22)";
+    ctx.fillRect(round(x), round(y), 1, 10);
+  }
+};
+
+const drawAurora = (ctx, timeSeconds) => {
+  const ribbons = [
+    ["rgba(120,255,220,0.20)", 36, 0.9],
+    ["rgba(180,190,255,0.18)", 52, 1.2],
+    ["rgba(255,180,255,0.12)", 68, 1.5]
+  ];
+  ribbons.forEach(([color, baseY, speed], index) => {
+    ctx.fillStyle = color;
+    for (let x = 0; x < VIEWPORT_WIDTH; x += 6) {
+      const y = baseY + Math.sin(x * 0.022 + timeSeconds * speed + index) * 12;
+      ctx.fillRect(x, round(y), 8, 3);
+    }
+  });
+};
+
+const drawToxicFumes = (ctx, timeSeconds) => {
+  for (let i = 0; i < 24; i += 1) {
+    const x = (i * 53 + Math.sin(timeSeconds * 0.7 + i) * 20 + VIEWPORT_WIDTH) % VIEWPORT_WIDTH;
+    const y = 270 + Math.sin(timeSeconds * 1.1 + i * 0.6) * 18 + (i % 4) * 10;
+    ctx.fillStyle = `rgba(200,255,90,${(0.08 + (i % 3) * 0.03).toFixed(2)})`;
+    ctx.fillRect(round(x), round(y), 42, 16);
   }
 };
 
@@ -597,6 +868,25 @@ const drawTile = (ctx, tileType, screenX, screenY, size, options) => {
     return;
   }
 
+  if (tileType === TILE_TYPES.SPRING) {
+    ctx.fillStyle = palette.platformMain;
+    ctx.fillRect(screenX, screenY + 18, size, 8);
+    ctx.fillStyle = accent;
+    ctx.fillRect(screenX + 2, screenY + 10, size - 4, 8);
+    ctx.fillStyle = palette.platformDark;
+    ctx.fillRect(screenX + 4, screenY + 20, size - 8, 4);
+    ctx.fillStyle = "rgba(255,255,255,0.28)";
+    ctx.fillRect(screenX + 3, screenY + 11, size - 6, 2);
+    for (let index = 0; index < 4; index += 1) {
+      const coilX = screenX + 5 + index * 6;
+      ctx.fillStyle = "#2d3840";
+      ctx.fillRect(coilX, screenY + 16, 3, 8);
+      ctx.fillStyle = "rgba(255,255,255,0.18)";
+      ctx.fillRect(coilX, screenY + 16, 1, 6);
+    }
+    return;
+  }
+
   if (tileType === TILE_TYPES.QUESTION) {
     const shimmer = usedQuestionBlock ? 0 : 0.72 + Math.sin(pulse + tx * 0.6) * 0.18;
 
@@ -711,6 +1001,11 @@ const drawEnemy = (ctx, enemy, cameraX, cameraY) => {
   const x = round(enemy.x - cameraX);
   const y = round(enemy.y - cameraY);
   const step = enemy.animationFrame === 0 ? 0 : 1;
+  const jumper = enemy.type === "jumper";
+  const bodyColor = jumper ? "#4f7df5" : "#a02020";
+  const hatColor = jumper ? "#79b8ff" : "#c03030";
+  const trimColor = jumper ? "#3155a8" : "#801818";
+  const eyeColor = jumper ? "#7ff6ff" : "#ee5533";
 
   ctx.fillStyle = "rgba(0,0,0,0.22)";
   ctx.fillRect(x + 3, y + enemy.h - 2, enemy.w - 6, 3);
@@ -722,13 +1017,13 @@ const drawEnemy = (ctx, enemy, cameraX, cameraY) => {
     ctx.translate(-x, 0);
   }
 
-  ctx.fillStyle = "#c03030";
+  ctx.fillStyle = hatColor;
   ctx.fillRect(x + 4, y, enemy.w - 8, 4);
   ctx.fillStyle = "#f0b880";
   ctx.fillRect(x + 7, y + 4, 10, 7);
-  ctx.fillStyle = "#a02020";
+  ctx.fillStyle = bodyColor;
   ctx.fillRect(x + 4, y + 11, 16, 8);
-  ctx.fillStyle = "#801818";
+  ctx.fillStyle = trimColor;
   ctx.fillRect(x + 5, y + 11, 16, 3);
   ctx.fillStyle = "rgba(255,255,255,0.18)";
   ctx.fillRect(x + 5, y + 12, 6, 5);
@@ -742,7 +1037,7 @@ const drawEnemy = (ctx, enemy, cameraX, cameraY) => {
   ctx.fillStyle = "#111820";
   ctx.fillRect(x + 9, y + 6, 2, 2);
   ctx.fillRect(x + 13, y + 6, 2, 2);
-  ctx.fillStyle = "#ee5533";
+  ctx.fillStyle = eyeColor;
   ctx.fillRect(x + 9, y + 9, 6, 1);
 
   ctx.restore();
@@ -758,20 +1053,27 @@ const drawBoss = (ctx, enemy, cameraX, cameraY, timeSeconds) => {
   const flash = enemy.flashTimer > 0 && Math.floor(enemy.flashTimer * 22) % 2 === 0;
   const pulse = 0.16 + (Math.sin(timeSeconds * 7.2) * 0.5 + 0.5) * 0.24;
   const eyeGlow = 0.6 + Math.sin(timeSeconds * 4.8) * 0.3;
+  const bossPalette = {
+    juggernaut: { aura: [255, 80, 70], body: "#aa2c30", trim: "#7a1c22", crown: "#f0e068", eye: [255, 230, 80] },
+    sentinel: { aura: [120, 200, 255], body: "#2c4f86", trim: "#1f355c", crown: "#d2e8ff", eye: [140, 250, 255] },
+    tempest: { aura: [170, 220, 255], body: "#35648f", trim: "#1f3f64", crown: "#d3e8ff", eye: [190, 245, 255] },
+    forge: { aura: [255, 120, 60], body: "#9d4827", trim: "#6f2d13", crown: "#ffc16b", eye: [255, 210, 120] },
+    phantom: { aura: [200, 120, 255], body: "#6d3d8c", trim: "#40205a", crown: "#f0d2ff", eye: [220, 200, 255] }
+  }[enemy.variant || "juggernaut"];
 
   ctx.fillStyle = "rgba(0,0,0,0.26)";
   ctx.fillRect(x + 4, y + enemy.h - 2, enemy.w - 8, 5);
 
   if (!flash) {
-    ctx.fillStyle = `rgba(255,80,70,${(pulse * 0.7).toFixed(3)})`;
+    ctx.fillStyle = `rgba(${bossPalette.aura[0]},${bossPalette.aura[1]},${bossPalette.aura[2]},${(pulse * 0.7).toFixed(3)})`;
     ctx.fillRect(x - 4, y - 4, enemy.w + 8, enemy.h + 8);
-    ctx.fillStyle = `rgba(255,60,50,${(pulse * 0.4).toFixed(3)})`;
+    ctx.fillStyle = `rgba(${bossPalette.aura[0]},${Math.max(0, bossPalette.aura[1] - 25)},${Math.max(0, bossPalette.aura[2] - 30)},${(pulse * 0.4).toFixed(3)})`;
     ctx.fillRect(x - 8, y - 8, enemy.w + 16, enemy.h + 16);
   }
 
-  ctx.fillStyle = flash ? "#ffe0d4" : "#aa2c30";
+  ctx.fillStyle = flash ? "#ffe0d4" : bossPalette.body;
   ctx.fillRect(x + 2, y + 10, enemy.w - 4, enemy.h - 12);
-  ctx.fillStyle = "#7a1c22";
+  ctx.fillStyle = bossPalette.trim;
   ctx.fillRect(x + 4, y + 12, enemy.w - 8, 5);
   ctx.fillStyle = "rgba(255,255,255,0.16)";
   ctx.fillRect(x + 4, y + 11, 10, enemy.h - 18);
@@ -781,7 +1083,7 @@ const drawBoss = (ctx, enemy, cameraX, cameraY, timeSeconds) => {
   ctx.fillStyle = "rgba(0,0,0,0.2)";
   ctx.fillRect(x + 10, y + 10, enemy.w - 20, 3);
 
-  ctx.fillStyle = `rgba(255,230,80,${eyeGlow.toFixed(2)})`;
+  ctx.fillStyle = `rgba(${bossPalette.eye[0]},${bossPalette.eye[1]},${bossPalette.eye[2]},${eyeGlow.toFixed(2)})`;
   ctx.fillRect(x + 14, y + 4, 5, 5);
   ctx.fillRect(x + enemy.w - 19, y + 4, 5, 5);
   ctx.fillStyle = "#111018";
@@ -791,7 +1093,7 @@ const drawBoss = (ctx, enemy, cameraX, cameraY, timeSeconds) => {
   ctx.fillRect(x + 16, y + 5, 1, 1);
   ctx.fillRect(x + enemy.w - 17, y + 5, 1, 1);
 
-  ctx.fillStyle = "#f0e068";
+  ctx.fillStyle = bossPalette.crown;
   ctx.fillRect(x + 12, y - 3, enemy.w - 24, 4);
   ctx.fillRect(x + 7, y - 1, 4, 5);
   ctx.fillRect(x + enemy.w - 11, y - 1, 4, 5);
@@ -877,6 +1179,7 @@ const drawGoal = (ctx, goalRect, cameraX, cameraY, accent, timeSeconds) => {
   const y = round(goalRect.y - cameraY);
   const wave = Math.sin(timeSeconds * 6.5) * 3;
   const waveB = Math.sin(timeSeconds * 6.5 + 0.3) * 2;
+  const cubePulse = 0.22 + (Math.sin(timeSeconds * 8.5) * 0.5 + 0.5) * 0.28;
 
   ctx.fillStyle = "rgba(0,0,0,0.3)";
   ctx.fillRect(x + 11, y, 4, goalRect.h);
@@ -896,12 +1199,82 @@ const drawGoal = (ctx, goalRect, cameraX, cameraY, accent, timeSeconds) => {
   ctx.fillStyle = "rgba(255,255,255,0.15)";
   ctx.fillRect(x + 7, y + goalRect.h - 8, 10, 4);
 
-  const starGlow = 0.5 + Math.sin(timeSeconds * 5) * 0.4;
-  ctx.fillStyle = `rgba(255,255,180,${starGlow.toFixed(2)})`;
-  ctx.fillRect(x + 9, y - 4, 5, 5);
-  ctx.fillStyle = "rgba(255,255,255,0.9)";
-  ctx.fillRect(x + 11, y - 3, 2, 3);
-  ctx.fillRect(x + 10, y - 2, 4, 1);
+  ctx.fillStyle = `rgba(255,255,255,${cubePulse.toFixed(2)})`;
+  ctx.fillRect(x + 18, y - 10, 18, 18);
+  ctx.fillStyle = accent;
+  ctx.fillRect(x + 21, y - 7, 12, 12);
+  ctx.fillStyle = "rgba(255,255,255,0.35)";
+  ctx.fillRect(x + 22, y - 6, 5, 3);
+  ctx.fillRect(x + 31, y - 4, 3, 6);
+  ctx.fillStyle = "rgba(255,255,255,0.15)";
+  ctx.fillRect(x + 24, y - 13, 8, 2);
+};
+
+const drawWindZones = (ctx, level, cameraX, cameraY, timeSeconds) => {
+  if (!Array.isArray(level?.windZones)) {
+    return;
+  }
+  for (const zone of level.windZones) {
+    const rect = zoneToWorldRect(level, zone);
+    const x = round(rect.x - cameraX);
+    const y = round(rect.y - cameraY);
+    const alpha = 0.08 + (Math.sin(timeSeconds * 3 + zone.x) * 0.5 + 0.5) * 0.08;
+    ctx.fillStyle = `rgba(160,220,255,${alpha.toFixed(2)})`;
+    ctx.fillRect(x, y, rect.w, rect.h);
+    ctx.strokeStyle = "rgba(170,225,255,0.18)";
+    ctx.strokeRect(x + 0.5, y + 0.5, rect.w - 1, rect.h - 1);
+    for (let line = 0; line < 3; line += 1) {
+      const ly = y + 10 + line * 10;
+      const wave = Math.sin(timeSeconds * 8 + line + zone.y * 0.4) * 5;
+      ctx.fillStyle = "rgba(220,245,255,0.35)";
+      ctx.fillRect(x + 6 + wave, ly, rect.w - 12, 2);
+    }
+  }
+};
+
+const drawHazardZones = (ctx, level, cameraX, cameraY, timeSeconds) => {
+  if (!Array.isArray(level?.hazardZones)) {
+    return;
+  }
+  for (const zone of level.hazardZones) {
+    const rect = zoneToWorldRect(level, zone);
+    const x = round(rect.x - cameraX);
+    const y = round(rect.y - cameraY);
+    const pulse = 0.15 + (Math.sin(timeSeconds * 5 + zone.x) * 0.5 + 0.5) * 0.12;
+    const fillColor = /acid|toxic/i.test(zone.type)
+      ? `rgba(180,255,90,${pulse.toFixed(2)})`
+      : `rgba(255,110,90,${pulse.toFixed(2)})`;
+    ctx.fillStyle = fillColor;
+    ctx.fillRect(x, y, rect.w, rect.h);
+    ctx.strokeStyle = /acid|toxic/i.test(zone.type)
+      ? "rgba(210,255,150,0.32)"
+      : "rgba(255,180,130,0.30)";
+    ctx.strokeRect(x + 0.5, y + 0.5, rect.w - 1, rect.h - 1);
+  }
+};
+
+const drawCheckpoints = (ctx, level, cameraX, cameraY, timeSeconds) => {
+  if (!Array.isArray(level?.checkpoints)) {
+    return;
+  }
+  for (const checkpoint of level.checkpoints) {
+    const rect = checkpointToWorldRect(level, checkpoint);
+    const x = round(rect.x - cameraX);
+    const y = round(rect.y - cameraY);
+    const bannerWave = Math.sin(timeSeconds * 7 + checkpoint.x * 0.3) * 3;
+    ctx.fillStyle = "rgba(0,0,0,0.22)";
+    ctx.fillRect(x + 8, y + 8, 3, rect.h - 8);
+    ctx.fillStyle = checkpoint.active ? "#9df7e8" : "#8ea9d6";
+    ctx.fillRect(x + 7, y + 8, 3, rect.h - 8);
+    ctx.fillStyle = checkpoint.active ? "#5cffd1" : "#e8f2ff";
+    ctx.fillRect(x + 10, y + 6, 12 + bannerWave, 9);
+    ctx.fillStyle = checkpoint.active ? "rgba(255,255,255,0.24)" : "rgba(255,255,255,0.14)";
+    ctx.fillRect(x + 10, y + 6, 8, 2);
+    if (checkpoint.active) {
+      ctx.fillStyle = "rgba(150,255,225,0.16)";
+      ctx.fillRect(x - 4, y + 2, 28, 16);
+    }
+  }
 };
 
 const drawEffects = (ctx, effects, cameraX, cameraY) => {
@@ -1013,7 +1386,7 @@ export default class Renderer {
     ctx.fillStyle = palette.haze;
     ctx.fillRect(0, VIEWPORT_HEIGHT * 0.52, VIEWPORT_WIDTH, VIEWPORT_HEIGHT * 0.48);
 
-    if (themeKey === "dusk" || visualStyle === "boss_arena") {
+    if (themeKey === "dusk" || visualStyle === "boss_arena" || visualStyle === "celestial") {
       drawStars(ctx, timeSeconds);
       ctx.fillStyle = "rgba(255,245,215,0.86)";
       ctx.fillRect(596, 50, 22, 22);
@@ -1060,8 +1433,17 @@ export default class Renderer {
     if (visualStyle === "ice") {
       drawSnowDrift(ctx, timeSeconds);
     }
+    if (visualStyle === "storm") {
+      drawRain(ctx, timeSeconds);
+    }
     if (visualStyle === "lava" || visualStyle === "boss_arena") {
       drawEmbers(ctx, timeSeconds);
+    }
+    if (visualStyle === "celestial") {
+      drawAurora(ctx, timeSeconds);
+    }
+    if (visualStyle === "toxic") {
+      drawToxicFumes(ctx, timeSeconds);
     }
     if (visualStyle === "boss_arena") {
       drawLightning(ctx, timeSeconds);
@@ -1074,6 +1456,8 @@ export default class Renderer {
       drawLavaSea(ctx, timeSeconds, 380, "rgba(145, 42, 16, 0.94)", "rgba(255, 190, 100, 0.75)");
     } else if (visualStyle === "boss_arena") {
       drawLavaSea(ctx, timeSeconds, 372, "rgba(115, 30, 25, 0.97)", "rgba(255, 130, 80, 0.82)");
+    } else if (visualStyle === "toxic") {
+      drawLavaSea(ctx, timeSeconds, 382, "rgba(60, 92, 12, 0.92)", "rgba(205, 255, 120, 0.50)");
     }
   }
 
@@ -1117,6 +1501,9 @@ export default class Renderer {
   drawWorldObjects(state, paletteData, timeSeconds) {
     const cameraX = state.camera.x || 0;
     const cameraY = state.camera.y || 0;
+    drawWindZones(this.ctx, state.level, cameraX, cameraY, timeSeconds);
+    drawHazardZones(this.ctx, state.level, cameraX, cameraY, timeSeconds);
+    drawCheckpoints(this.ctx, state.level, cameraX, cameraY, timeSeconds);
     drawGoal(this.ctx, state.goalRect, cameraX, cameraY, paletteData.accent, timeSeconds);
     for (const item of state.items) {
       drawItem(this.ctx, item, cameraX, cameraY, timeSeconds);
@@ -1145,81 +1532,75 @@ export default class Renderer {
     const powerLabel = state.player.powerLevel > 0 ? "FIRE" : "BASE";
     const powerColor = state.player.powerLevel > 0 ? "#ff9940" : palette.textDim;
     const stageShort = (state.level?.name || `Stage ${state.levelIndex + 1}`).substring(0, 22);
+    const biomeShort = (state.level?.biome || "Frontier").substring(0, 16);
+    const windLabel = state.activeWind?.label || "Calm";
+    const checkpointLabel = state.activeCheckpointId ? state.activeCheckpointId.toUpperCase() : "SPAWN";
+    const difficulty = Math.max(1, Math.min(5, Number(state.level?.difficulty) || 1));
 
-    drawPanel(ctx, 8, 6, VIEWPORT_WIDTH - 16, 58, palette.hudBg, palette.hudBorder, 4);
-
+    drawPanel(ctx, 8, 6, VIEWPORT_WIDTH - 16, 76, palette.hudBg, palette.hudBorder, 4);
     ctx.fillStyle = palette.hudAccentBar || "rgba(120,200,255,0.12)";
     ctx.fillRect(11, 9, VIEWPORT_WIDTH - 22, 2);
-    ctx.fillRect(11, 62, VIEWPORT_WIDTH - 22, 1);
+    ctx.fillRect(11, 80, VIEWPORT_WIDTH - 22, 1);
 
-    drawText(ctx, `${state.score}`, 24, 28, {
+    drawText(ctx, `${state.score}`, 24, 27, {
       font: "bold 14px monospace",
       color: accent,
       shadowColor: accent,
       shadowBlur: 4
     });
-    drawText(ctx, "SCORE", 24, 38, {
+    drawText(ctx, "SCORE", 24, 37, {
       font: "10px monospace",
       color: palette.textDim
     });
 
-    ctx.save();
-    const livesX = 148;
-    drawHearts(ctx, Math.max(0, state.lives), livesX, 18, palette);
-    drawText(ctx, "LIVES", livesX, 38, {
+    drawHearts(ctx, Math.max(0, state.lives), 124, 16, palette);
+    drawText(ctx, "LIVES", 124, 37, {
       font: "10px monospace",
       color: palette.textDim
     });
-    ctx.restore();
 
-    const lvW = 100;
-    const lvX = 244;
-    drawText(ctx, `${state.levelIndex + 1} / ${state.levelCount}`, lvX + lvW * 0.5, 27, {
+    drawText(ctx, `${state.levelIndex + 1}/${state.levelCount}`, 248, 26, {
       font: "bold 13px monospace",
       color: palette.text,
       align: "center"
     });
-    drawText(ctx, "STAGE", lvX + lvW * 0.5, 38, {
+    drawText(ctx, "ROUTE", 248, 37, {
       font: "10px monospace",
       color: palette.textDim,
       align: "center"
     });
 
-    const coinBarX = 358;
-    const coinBarW = 148;
-    drawText(ctx, `${state.coinsCollected}/${state.coinsTotal}`, coinBarX, 24, {
+    drawText(ctx, `${state.coinsCollected}/${state.coinsTotal}`, 332, 24, {
       font: "bold 12px monospace",
       color: "#ffe060"
     });
-    drawText(ctx, "COINS", coinBarX, 35, {
+    drawText(ctx, "COINS", 332, 35, {
       font: "10px monospace",
       color: palette.textDim
     });
     ctx.fillStyle = "rgba(255,255,255,0.10)";
-    ctx.fillRect(coinBarX, 41, coinBarW, 6);
+    ctx.fillRect(332, 41, 124, 6);
     ctx.fillStyle = "#ffe040";
-    ctx.fillRect(coinBarX, 41, round(coinBarW * clamp(coinProgress, 0, 1)), 6);
+    ctx.fillRect(332, 41, round(124 * clamp(coinProgress, 0, 1)), 6);
     ctx.fillStyle = "rgba(255,255,255,0.4)";
-    ctx.fillRect(coinBarX, 41, round(coinBarW * clamp(coinProgress, 0, 1) * 0.5), 2);
+    ctx.fillRect(332, 41, round(124 * clamp(coinProgress, 0, 1) * 0.5), 2);
 
-    const timeBarX = 530;
-    const timeBarW = 148;
-    const timeFlash = timeUrgent && Math.floor(timeSeconds * 4) % 2 === 0;
     const timeVal = Math.max(0, Math.ceil(state.timeLeft));
-    drawText(ctx, `${timeVal}s`, timeBarX, 24, {
+    const timeFlash = timeUrgent && Math.floor(timeSeconds * 4) % 2 === 0;
+    drawText(ctx, `${timeVal}s`, 482, 24, {
       font: "bold 12px monospace",
       color: timeFlash ? "#ffffff" : timeColor,
       shadowColor: timeUrgent ? timeColor : null,
       shadowBlur: timeUrgent ? 6 : 0
     });
-    drawText(ctx, "TIME", timeBarX, 35, {
+    drawText(ctx, "TIME", 482, 35, {
       font: "10px monospace",
       color: palette.textDim
     });
     ctx.fillStyle = "rgba(255,255,255,0.10)";
-    ctx.fillRect(timeBarX, 41, timeBarW, 6);
+    ctx.fillRect(482, 41, 126, 6);
     ctx.fillStyle = timeColor;
-    ctx.fillRect(timeBarX, 41, round(timeBarW * clamp(timeProgress, 0, 1)), 6);
+    ctx.fillRect(482, 41, round(126 * clamp(timeProgress, 0, 1)), 6);
 
     drawText(ctx, powerLabel, VIEWPORT_WIDTH - 14, 24, {
       font: "bold 11px monospace",
@@ -1232,10 +1613,31 @@ export default class Renderer {
       align: "right"
     });
 
-    drawText(ctx, stageShort, 8 + 16, 54, {
+    drawText(ctx, `${stageShort}  ::  ${biomeShort}`, 18, 55, {
       font: "11px monospace",
-      color: "rgba(200,225,255,0.78)"
+      color: "rgba(220,240,255,0.88)"
     });
+
+    drawText(ctx, `WIND ${windLabel.toUpperCase()}`, 18, 72, {
+      font: "10px monospace",
+      color: state.activeWind ? "#aeeeff" : palette.textDim
+    });
+    drawText(ctx, `CHECKPOINT ${checkpointLabel}`, 222, 72, {
+      font: "10px monospace",
+      color: state.activeCheckpointId ? "#9ff0d6" : palette.textDim
+    });
+    drawText(ctx, `HAZARDS ${Array.isArray(state.level?.hazardZones) ? state.level.hazardZones.length : 0}`, 410, 72, {
+      font: "10px monospace",
+      color: (state.level?.hazardZones?.length || 0) > 0 ? "#ffba86" : palette.textDim
+    });
+    drawText(ctx, "DIFF", 570, 72, {
+      font: "10px monospace",
+      color: palette.textDim
+    });
+    for (let index = 0; index < 5; index += 1) {
+      ctx.fillStyle = index < difficulty ? accent : "rgba(255,255,255,0.12)";
+      ctx.fillRect(602 + index * 10, 65, 6, 9);
+    }
 
     if (state.activeBoss) {
       const bossRatio = state.activeBoss.maxHealth > 0
@@ -1244,7 +1646,8 @@ export default class Renderer {
       const bossBarX = 160;
       const bossBarW = VIEWPORT_WIDTH - 320;
       drawPanel(ctx, bossBarX - 6, 68, bossBarW + 12, 22, "rgba(28, 6, 8, 0.80)", "rgba(255, 110, 110, 0.50)", 3);
-      const bossLabel = `BOSS: ${state.activeBoss.name.toUpperCase()}  ${state.activeBoss.health}/${state.activeBoss.maxHealth}`;
+      const bossVariant = (state.activeBoss.variant || "juggernaut").toUpperCase();
+      const bossLabel = `BOSS: ${state.activeBoss.name.toUpperCase()}  ${bossVariant}  ${state.activeBoss.health}/${state.activeBoss.maxHealth}`;
       drawText(ctx, bossLabel, VIEWPORT_WIDTH * 0.5, 82, {
         align: "center",
         font: "bold 11px monospace",
@@ -1279,6 +1682,9 @@ export default class Renderer {
     } else if (/power.up|fire|mushroom/i.test(msg)) {
       msgColor = "#9aefb8";
       panelColor = "rgba(4, 20, 10, 0.60)";
+    } else if (/checkpoint|spring|wind/i.test(msg)) {
+      msgColor = "#9fe8ff";
+      panelColor = "rgba(6, 18, 28, 0.62)";
     } else if (/fell|time|void|lives|no lives/i.test(msg)) {
       msgColor = "#ff8888";
       panelColor = "rgba(30, 6, 6, 0.68)";
@@ -1339,7 +1745,7 @@ export default class Renderer {
 
     const subtitle =
       state.screen === SCREENS.START
-        ? "Random 5-map route · horizontal, hybrid & vertical stages"
+        ? `${state.levelCount}-sector route · 32 handcrafted stages · bosses, wind, checkpoints and springs`
         : state.screen === SCREENS.LEVEL_COMPLETE
           ? `Loading next stage... (${state.levelIndex + 2}/${state.levelCount})`
           : state.screen === SCREENS.GAME_COMPLETE
@@ -1357,10 +1763,11 @@ export default class Renderer {
         { key: "A / D  or  ← →", label: "Move" },
         { key: "W / ↑ / Space",  label: "Jump  (hold = higher)" },
         { key: "F / B",          label: "Fire  (needs power-up)" },
-        { key: "R",              label: "Restart current level" }
+        { key: "Springs / Wind", label: "Use stage mechanics to recover routes" },
+        { key: "R",              label: "Restart current sector" }
       ];
       controls.forEach((ctrl, i) => {
-        const cy = 192 + i * 24;
+        const cy = 186 + i * 22;
         drawPanel(ctx, 150, cy - 14, 468, 20, "rgba(255,255,255,0.04)", null, 3);
         drawText(ctx, ctrl.key, 246, cy, {
           font: "bold 12px monospace",
@@ -1373,7 +1780,7 @@ export default class Renderer {
         });
       });
 
-      drawText(ctx, "Objective: defeat all bosses and capture the flag!", VIEWPORT_WIDTH / 2, 300, {
+      drawText(ctx, "Objective: clear every sector, touch checkpoints and capture the cube beacon.", VIEWPORT_WIDTH / 2, 306, {
         align: "center",
         font: "12px monospace",
         color: "#ffe89a"

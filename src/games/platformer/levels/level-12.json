@@ -8,10 +8,11 @@
   "goalRequiresAllCoins": false,
   "boss": {
     "name": "Titan Core",
+    "variant": "sentinel",
     "maxHealth": 16,
     "projectileDamage": 2,
     "stompDamage": 2,
-    "finalBoss": true
+    "finalBoss": false
   },
   "map": [
     "............................................................",

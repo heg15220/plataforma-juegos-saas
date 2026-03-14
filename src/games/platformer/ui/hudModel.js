@@ -8,19 +8,32 @@ export const createInitialSnapshot = () => ({
   screen: SCREENS.START,
   score: 0,
   lives: DEFAULT_LIVES,
+  catalogLevelCount: 1,
   levelIndex: 0,
   levelCount: 1,
   levelId: "platformer-level-0",
   levelName: "Arcade Stage",
   levelLayout: "horizontal",
   levelVisualStyle: "classic",
+  levelBiome: "Frontier Plains",
+  levelSubtitle: "",
+  levelDifficulty: 1,
+  levelMechanics: [],
   isBossLevel: false,
   runLevelIds: [],
+  runStages: [],
   runBossLevelCount: 0,
   timeLeft: 0,
   timeLimit: 0,
   coinsCollected: 0,
   coinsTotal: 0,
+  checkpoints: {
+    total: 0,
+    activated: 0,
+    activeId: null
+  },
+  activeWind: null,
+  hazardCount: 0,
   message: DEFAULT_MESSAGE,
   activeBoss: null,
   player: {
@@ -42,30 +55,59 @@ export const createInitialSnapshot = () => ({
 
 export const buildHudSnapshot = (state) => {
   const player = state.player || {};
+  const checkpoints = Array.isArray(state.level?.checkpoints) ? state.level.checkpoints : [];
   return {
     mode: "platformer_arcade",
     coordinates: "origin_top_left_x_right_y_down_pixels",
     screen: state.screen,
     score: state.score,
     lives: state.lives,
+    catalogLevelCount: Number(state.catalogLevelCount) || 1,
     levelIndex: state.levelIndex,
     levelCount: state.levelCount,
     levelId: state.level?.id || `level-${state.levelIndex + 1}`,
     levelName: state.level?.name || `Level ${state.levelIndex + 1}`,
     levelLayout: state.level?.layoutType || "horizontal",
     levelVisualStyle: state.level?.visualStyle || "classic",
+    levelBiome: state.level?.biome || "Frontier Plains",
+    levelSubtitle: state.level?.subtitle || "",
+    levelDifficulty: Number(state.level?.difficulty) || 1,
+    levelMechanics: Array.isArray(state.level?.mechanics) ? [...state.level.mechanics] : [],
     isBossLevel: Boolean(state.level?.isBossLevel),
     runLevelIds: Array.isArray(state.runLevelIds) ? [...state.runLevelIds] : [],
+    runStages: Array.isArray(state.runStages)
+      ? state.runStages.map((stage) => ({
+        id: stage.id,
+        name: stage.name,
+        biome: stage.biome,
+        difficulty: stage.difficulty,
+        isBossLevel: Boolean(stage.isBossLevel)
+      }))
+      : [],
     runBossLevelCount: Number(state.runBossLevelCount) || 0,
     timeLeft: round2(state.timeLeft),
     timeLimit: round2(state.level?.timeLimit || 0),
     coinsCollected: state.coinsCollected,
     coinsTotal: state.coinsTotal,
+    checkpoints: {
+      total: checkpoints.length,
+      activated: checkpoints.filter((checkpoint) => checkpoint.active).length,
+      activeId: state.activeCheckpointId || null
+    },
+    activeWind: state.activeWind
+      ? {
+        label: state.activeWind.label,
+        forceX: round2(state.activeWind.forceX),
+        forceY: round2(state.activeWind.forceY)
+      }
+      : null,
+    hazardCount: Array.isArray(state.level?.hazardZones) ? state.level.hazardZones.length : 0,
     message: state.message,
     activeBoss: state.activeBoss
       ? {
         id: state.activeBoss.id,
         name: state.activeBoss.name,
+        variant: state.activeBoss.variant || "juggernaut",
         health: state.activeBoss.health,
         maxHealth: state.activeBoss.maxHealth
       }
@@ -85,6 +127,7 @@ export const buildHudSnapshot = (state) => {
       .map((enemy) => ({
         id: enemy.id,
         type: enemy.type,
+        variant: enemy.variant || null,
         x: round2(enemy.x),
         y: round2(enemy.y),
         vx: round2(enemy.vx),

@@ -10,6 +10,7 @@ import level9 from "./level-9.json";
 import level10 from "./level-10.json";
 import level11 from "./level-11.json";
 import level12 from "./level-12.json";
+import expansionLevels from "./expansionPack";
 
 export const LEVELS = [
   level1,
@@ -23,5 +24,6 @@ export const LEVELS = [
   level9,
   level10,
   level11,
-  level12
+  level12,
+  ...expansionLevels
 ];

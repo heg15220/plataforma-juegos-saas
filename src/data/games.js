@@ -14,7 +14,6 @@ import arcadeBillarPoolClubImage from "../assets/games/arcade-billar-pool-club.s
 import arcadeBowlingProTourImage from "../assets/games/arcade-bowling-pro-tour.svg";
 import arcadeOrchardMatchBlastImage from "../assets/games/arcade-orchard-match-blast.svg";
 import arcadeReactorTossImage from "../assets/games/arcade-reactor-toss.svg";
-import arcadePrismStackProtocolImage from "../assets/games/arcade-prism-stack-protocol.svg";
 import knowledgeSudokuImage from "../assets/games/knowledge-sudoku.svg";
 import knowledgeDominoImage from "../assets/games/knowledge-domino.svg";
 import knowledgeAhorcadoImage from "../assets/games/knowledge-ahorcado.svg";
@@ -161,46 +160,48 @@ export const games = [
 
     title: "Sky Runner DX",
     category: "Aventura",
-    tagline: "Plataformas 2D arcade con rutas aleatorias, mapas verticales y jefes con barra de vida.",
+    tagline: "Plataformas 2D arcade con 32 sectores artesanales, biomas avanzados y jefes con variantes.",
     description:
-      "Run arcade inspirado en plataformas retro: cada partida mezcla 5 mapas aleatorios (horizontales, verticales e híbridos), incluye al menos dos encuentros contra jefe y cierra siempre con un jefe final.",
-    objective_es: "Completa una campaña de 5 mapas aleatorios superando enemigos y jefes para llegar al jefe final.",
-    howToPlay_es: "A/D o flechas para moverte, W/arriba/espacio para saltar, F activa el power-up de fuego. Cada run mezcla 5 mapas en orden aleatorio.",
+      "Run arcade inspirado en plataformas retro: ahora hay 32 sectores artesanales con biomas propios, zonas de viento, springs, checkpoints, hazards y varios bosses de comportamiento diferenciado. Cada partida compone una ruta de 8 sectores y siempre remata con un nuevo jefe final.",
+    objective_es: "Completa una ruta de 8 sectores, asegura checkpoints, domina los hazards y derrota a los bosses hasta capturar el cubo final.",
+    howToPlay_es: "A/D o flechas para moverte, W/arriba/espacio para saltar, F activa el power-up de fuego. Springs, corrientes de viento y checkpoints forman parte de la ruta.",
     highlights: [
-      "Campaña procedural corta: 5 mapas por run con orden aleatorio.",
-      "Mapas de escalada vertical y rutas híbridas además de side-scroll clásico.",
-      "Dos encuentros de jefe por partida con barra de vida y fases de daño.",
+      "Pool de 32 sectores artesanales con biomas forestales, tormenta, tóxicos, crepusculares y celestiales.",
+      "Ruta de 8 sectores por run con layouts side-scroll, verticales e híbridos.",
+      "Varios encuentros de jefe por partida con barra de vida, variantes y jefe final nuevo.",
       "Física arcade consistente con coyote time y jump buffer.",
-      "IA enemiga de patrulla + jefe con comportamiento ofensivo.",
+      "IA enemiga de patrulla, jumper y jefes con perfiles ofensivos distintos.",
+      "Checkpoints, springs, viento y hazards visualmente telegrafiados.",
       "Power-up de fuego para derrotar enemigos a distancia.",
       "Estado QA exportado para automatización de pruebas.",
     ],
     difficulty: "Media-Alta",
     multiplayer: "Solo",
     viability: "Alta: motor modular Canvas con game loop fijo y colisiones por tiles.",
-    visualStyle: "Pixel-art retro con dirección scratch-like, parallax multicapa y HUD de jefe en combate.",
-    techFocus: "Arquitectura modular con campaña aleatoria de 5 mapas, layouts mixtos y sistema de boss fight.",
+    visualStyle: "Pixel-art retro con parallax multicapa, biomas nuevos, overlays ambientales y HUD táctico integrado.",
+    techFocus: "Arquitectura modular con 32 sectores, reachability reforzada, bosses por variante y telemetría de entorno.",
 
     category_en: "Adventure",
-    tagline_en: "2D arcade platformer with random routes, vertical maps and bosses with health bars.",
+    tagline_en: "2D arcade platformer with 32 handcrafted sectors, advanced biomes and variant bosses.",
     description_en:
-      "A retro platformer run: each session mixes 5 random maps (horizontal, vertical and hybrid), includes at least two boss encounters and always ends with a final boss.",
-    objective_en: "Complete a 5-map random campaign, defeating enemies and bosses to reach the final boss.",
-    howToPlay_en: "A/D or arrows to move, W/up/space for variable jump, F to activate the fire power-up. Each run mixes 5 maps in random order.",
+      "A retro platformer run rebuilt around 32 handcrafted sectors with distinct biomes, wind zones, springs, checkpoints, hazards and several differentiated bosses. Each session assembles an 8-sector route and always ends with a new final boss.",
+    objective_en: "Complete an 8-sector route, secure checkpoints, master hazards and defeat the bosses to capture the final cube.",
+    howToPlay_en: "A/D or arrows to move, W/up/space for variable jump, F to activate the fire power-up. Springs, wind lanes and checkpoints are part of the route.",
     highlights_en: [
-      "Short procedural campaign: 5 maps per run in random order.",
-      "Vertical climbing maps and hybrid routes alongside classic side-scroll.",
-      "Two boss encounters per run with health bar and damage phases.",
+      "Pool of 32 handcrafted sectors across forest, storm, toxic, sunset and celestial biomes.",
+      "8-sector routes with side-scroll, vertical and hybrid layouts.",
+      "Multiple boss encounters per run with health bars, variants and a new final boss.",
       "Consistent arcade physics with coyote time and jump buffer.",
-      "Patrol enemy AI and boss with offensive behavior.",
+      "Patrol AI, jumper enemies and bosses with differentiated offensive profiles.",
+      "Checkpoints, springs, wind lanes and telegraphed hazards.",
       "Fire power-up to defeat distant enemies.",
       "Exported QA state for test automation.",
     ],
     difficulty_en: "Medium-High",
     multiplayer_en: "Solo",
     viability_en: "High: modular Canvas engine with fixed game loop and tile collisions.",
-    visualStyle_en: "Retro pixel-art with scratch-like direction, multi-layer parallax and boss HUD.",
-    techFocus_en: "Modular architecture with 5-map random campaign, mixed layouts and boss fight system.",
+    visualStyle_en: "Retro pixel-art with multi-layer parallax, new biomes, environmental overlays and integrated tactical HUD.",
+    techFocus_en: "Modular architecture with 32 sectors, reinforced reachability, boss variants and environment telemetry.",
   },
 
   // ── Action (fighter) ───────────────────────────────────────────────────────
@@ -378,54 +379,7 @@ export const games = [
     techFocus_en: "Modular architecture across physics/level/entities/systems/services, parameterized prefabs, and a React HUD separated from simulation.",
   },
 
-  {
-    id: "arcade-prism-stack-protocol",
-    image: arcadePrismStackProtocolImage,
-    sessionTime: "4-10 min",
 
-    title: "Prism Stack Protocol",
-    category: "Arcade",
-    tagline: "Falling blocks original con matriz 9x18, piezas pentomino y Pulse tactico.",
-    description:
-      "Arcade de bloques descendentes inspirado en el genero pero construido con identidad propia: matriz 9x18, prismas de 5 celdas, forja cromatica sci-fi y una mecanica de Pulse que libera la columna dominante en momentos criticos.",
-    objective_es:
-      "Completa bandas horizontales para ventilar la forja, manten la presion bajo control y encadena limpiezas suficientes para subir de fase sin que la pila alcance el marco superior.",
-    howToPlay_es:
-      "A/D o flechas laterales desplazan, abajo acelera, W/X o flecha arriba rota horario, Z rota antihorario, Espacio hace hard drop, C activa Pulse, P pausa, R reinicia, M audio y F pantalla completa.",
-    highlights: [
-      "Identidad legalmente diferenciada: matriz 9x18, piezas pentomino propias, sin ghost piece y direccion visual original.",
-      "Pulse tactico desde el arranque: elimina la celda superior de la columna mas alta y congela la gravedad un instante.",
-      "Motor modular con colisiones, rotaciones con kicks, scoring por bandas y serializacion QA legible.",
-      "HUD profesional con presion, combo, cola tactica, mejores marcas persistentes y soporte touch/desktop.",
-      "Audio sintetizado propio para movimientos, rotaciones, limpiezas, Pulse y game over.",
-    ],
-    difficulty: "Media-Alta",
-    multiplayer: "Solo",
-    viability: "Alta: grid discreto, runtime Canvas desacoplado, logica pura testeable y `advanceTime` determinista.",
-    visualStyle: "Forja cromatica de vidrio y metal cepillado con glow teal-ambar, HUD de laboratorio y bloques prismáticos.",
-    techFocus: "Arquitectura modular React + Canvas con runtime fijo, piezas pentomino, Pulse, persistencia local y puente QA.",
-
-    category_en: "Arcade",
-    tagline_en: "Original falling blocks with a 9x18 matrix, pentomino pieces, and tactical Pulse.",
-    description_en:
-      "A falling-block arcade inspired by the genre but built with its own identity: 9x18 matrix, five-cell prisms, a chromatic sci-fi forge, and a Pulse mechanic that vents the dominant column in critical moments.",
-    objective_en:
-      "Complete horizontal bands to vent the forge, keep pressure under control, and chain enough clears to climb phases before the stack reaches the top frame.",
-    howToPlay_en:
-      "A/D or left/right shifts, Down soft drops, W/X or Up rotates clockwise, Z rotates counter-clockwise, Space hard drops, C triggers Pulse, P pauses, R restarts, M toggles audio, and F fullscreen.",
-    highlights_en: [
-      "Legally differentiated identity: 9x18 matrix, custom pentomino pieces, no ghost piece, and original art direction.",
-      "Tactical Pulse from the start: removes the top cell from the tallest column and briefly freezes gravity.",
-      "Modular engine with collisions, kick-based rotations, band scoring, and QA-friendly serialization.",
-      "Professional HUD with pressure, combo, tactical queue, persistent best records, and touch/desktop support.",
-      "Original synthesized audio for movement, rotation, clears, Pulse, and game over.",
-    ],
-    difficulty_en: "Medium-High",
-    multiplayer_en: "Solo",
-    viability_en: "High: discrete grid, decoupled Canvas runtime, testable pure logic, and deterministic `advanceTime`.",
-    visualStyle_en: "Chromatic forge of glass and brushed metal with teal-amber glow, lab-grade HUD, and faceted prism blocks.",
-    techFocus_en: "Modular React + Canvas architecture with fixed runtime, pentomino pieces, Pulse, local persistence, and QA bridge.",
-  },
 
   {
     id: "arcade-orchard-match-blast",
