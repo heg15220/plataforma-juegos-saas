@@ -45,6 +45,8 @@ const PlatformerGame = lazy(() => import("./PlatformerGame"));
 const FighterGame = lazy(() => import("./FighterGame"));
 const BilliardsGame = lazy(() => import("./arcade/billiards-club"));
 const BowlingGame = lazy(() => import("./arcade/bowling-pro"));
+const PenaltyNeuralKeeperGame = lazy(() => import("./arcade/penalty-neural-keeper"));
+const CosmicVanguardGame = lazy(() => import("./arcade/cosmic-vanguard"));
 const OrchardMatchBlastGame = lazy(() => import("./arcade/orchard-match-blast"));
 const ReactorTossGame = lazy(() => import("./arcade/reactor-toss"));
 
@@ -101,6 +103,8 @@ export const GAME_REGISTRY = {
   "arcade-orchard-match-blast": OrchardMatchBlastGame,
   "arcade-billar-pool-club":     BilliardsGame,
   "arcade-bowling-pro-tour":     BowlingGame,
+  "arcade-penalty-neural-keeper": PenaltyNeuralKeeperGame,
+  "arcade-cosmic-vanguard":      CosmicVanguardGame,
   "arcade-pong-neon-arena":      PongGame,
   "arcade-buscaminas-classic":   MinesweeperGame,
   "racing-race2dpro":            RaceGame2DPro,
@@ -148,6 +152,8 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "arcade-orchard-match-blast": "Match-3 original: intercambia dos bloques de color adyacentes. Flechas mueven cursor, Enter/Espacio confirma, H pista, S mezcla, B Bloom, R reinicia y F pantalla completa.",
     "arcade-billar-pool-club":     "Raton opcional para apuntar, A/D afinan angulo, W/S potencia, Space tira, O push out, V safety, 1/2 decisiones, flechas/WASD mueven la blanca en mano, Enter/Space confirma, P autocoloca y F pantalla completa.",
     "arcade-bowling-pro-tour":     "A/D ajustan linea, W/S potencia, Q/E efecto y Enter/Espacio lanza. R reinicia serie y F pantalla completa.",
+    "arcade-penalty-neural-keeper": "Tanda de 10 penaltis: elige zona con 1-5 (abajo izq/der, arriba izq/der, centro). R reinicia y F pantalla completa.",
+    "arcade-cosmic-vanguard":      "A/D o izq/der rotan, W impulsa, S frena, Shift boost, Espacio dispara, E/X pulso EMP, P pausa, R reinicia y F pantalla completa. Las pasadas al limite cargan Vanguard Drive.",
     "arcade-pacman-maze-protocol": "WASD/flechas mover, Enter/Espacio empezar, P/Esc pausa, R reinicia, M sonido.",
     "arcade-pong-neon-arena":      "W/S o flechas arriba/abajo para mover vertical. A/D o flechas izq/der para avanzar o retroceder (sin cruzar el centro). Ratón también controla vertical. Enter/Espacio empezar, P pausa, R reinicia, M sonido, F pantalla completa.",
     "arcade-buscaminas-classic":   "Click izq abre, click der o pulsación larga marca bandera. Flechas mueven cursor, Enter/Espacio abre, F marca, H sugiere IA, A ejecuta IA y R reinicia. En competitivo puntúan celdas y tiempo.",
@@ -189,6 +195,8 @@ export const CONTROL_HINTS_BY_LOCALE = {
     "arcade-orchard-match-blast": "Original match-3: swap two adjacent cells. Arrows move cursor, Enter/Space confirms, H hint, S shuffle, R restart, and F toggles fullscreen.",
     "arcade-billar-pool-club":     "Mouse aiming is optional: A/D fine tune angle, W/S power, Space shoots, O push out, V safety, 1/2 decisions, arrows/WASD move cue ball in hand, Enter/Space confirms, P auto-places, and F toggles fullscreen.",
     "arcade-bowling-pro-tour":     "A/D adjust line, W/S power, Q/E spin, Enter/Space throw. R restarts the series and F toggles fullscreen.",
+    "arcade-penalty-neural-keeper": "10-penalty shootout: pick zones with 1-5 (bottom left/right, top left/right, center). R restarts and F toggles fullscreen.",
+    "arcade-cosmic-vanguard":      "A/D or left/right rotate, W thrusts, S brakes, Shift boosts, Space fires, E/X triggers EMP pulse, P pauses, R restarts, and F toggles fullscreen. Close passes charge Vanguard Drive.",
     "arcade-pacman-maze-protocol": "WASD/arrows move, Enter/Space start, P/Esc pause, R restart, M sound.",
     "arcade-pong-neon-arena":      "W/S or up/down arrows for vertical. A/D or left/right arrows to advance or retreat (cannot cross centre line). Mouse also controls vertical. Enter/Space start, P pause, R restart, M sound, F fullscreen.",
     "arcade-buscaminas-classic":   "Left click reveals, right click or long press marks. Arrows move cursor, Enter/Space reveals, F marks, H asks AI hint, A runs AI move, R restarts. Competitive mode scores cells and time.",

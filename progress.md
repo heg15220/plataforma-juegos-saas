@@ -2907,3 +2907,63 @@ Pendiente sugerido:
     - `flux-50` arranca en `screen: "playing"` con `levelCurrent: 50`, `levelTotal: 50`, `name: "Nucleo Flux"` y sin errores de consola.
 - Artefactos utiles:
   - anadido `playwright-actions-arcade-reactor-toss-level-select.json` para auditar el selector grande de Flux Basin.
+
+## 2026-03-15 - Arcade: Penalty Neural Keeper (nueva implementacion)
+- Nueva peticion activa: anadir un juego de penaltis en la seccion Arcade con 10 tiros por partida, cinco zonas de disparo y portero IA que aprenda dinamicamente de las ultimas decisiones del usuario.
+- Cambios aplicados:
+  - `src/games/arcade/penalty-neural-keeper/index.jsx`
+    - creado runtime completo del minijuego con pipeline `menu -> ready -> shot -> intermission -> finished`;
+    - motor de tiro con trayectorias quadraticas, curva, potencia variable, estirada del portero y rebote visual cuando hay parada;
+    - IA adaptativa del portero basada en:
+      - frecuencias recientes con decaimiento;
+      - transiciones entre zonas consecutivas;
+      - deteccion de repeticion y patrones laterales/altura;
+      - ajuste de reaccion, alcance y confianza por intento;
+    - tanda fija de `10` penaltis y telemetria de IA en vivo (adaptacion, confianza, learning index y probabilidad estimada de parada);
+    - bridge QA con `render_game_to_text` y `advanceTime(ms)` determinista.
+  - `src/assets/games/arcade-penalty-neural-keeper.svg`
+    - nuevo arte de portada para el juego en el grid/catalogo.
+  - `src/data/games.js`
+    - import de nueva portada y alta del juego `arcade-penalty-neural-keeper` con metadata ES/EN.
+  - `src/games/registry.jsx`
+    - registro del nuevo componente lazy;
+    - nuevos hints de controles ES/EN.
+  - `src/components/GamePlayground.jsx`
+    - mapeo del nuevo juego en el playground y hints ES/EN.
+  - `src/styles.css`
+    - bloque de estilos dedicado (`.penalty-*`) con layout responsive desktop/mobile, paneles de telemetria y controles de zona.
+- Pendiente inmediato:
+  - ejecutar `npm run build`;
+  - ejecutar QA Playwright del nuevo juego (captura + `state-*.json` + revisado visual);
+  - revisar posibles ajustes de balance si la IA queda demasiado fuerte o demasiado debil en los ultimos tiros.
+
+## 2026-03-15 - Verificacion Penalty Neural Keeper
+- Build:
+  - `npm run build` OK (tras ejecutar fuera del sandbox por `spawn EPERM` del entorno sandbox al invocar esbuild/chromium).
+- QA Playwright (nuevo juego):
+  - Artefactos principales:
+    - `output/arcade-penalty-neural-keeper-audit/`
+    - `output/arcade-penalty-neural-keeper-audit-v2/`
+  - Cliente:
+    - el script de skill `~/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js` falla en este entorno por carga ESM (`SyntaxError: Cannot use import statement outside a module`);
+    - fallback operativo usado: `web_game_playwright_client.mjs` del repo.
+  - Validacion de estado (`render_game_to_text`):
+    - tanda completa de 10 tiros validada (`phase: "finished"` en `state-0..2.json`);
+    - telemetria IA exportada correctamente (`adaptation`, `confidence`, `learningIndex`, `saveProbability`, `predictedZone`, `tendencyZone`);
+    - historial reciente de tiros y lecturas del portero presente en JSON.
+  - Validacion dinamica de aprendizaje:
+    - en `output/arcade-penalty-neural-keeper-audit-v2/state-0..3.json`, repitiendo la misma zona (`down-left`), la IA sube progresivamente:
+      - `saveProbability`: `0.276 -> 0.489 -> 0.708 -> 0.802`;
+      - `confidence`: `0.508 -> 0.706 -> 0.760 -> 0.796`;
+      - `adaptation`: `0.254 -> 0.328 -> 0.402 -> 0.476`.
+  - Consola:
+    - no se generaron `errors-*.json` en los artefactos de auditoria.
+  - Revision visual:
+    - `shot-*.png` revisadas: campo, porteria, red, portero y punto de penalti se renderizan correctamente.
+
+## 2026-03-15 - Auditoria Space-Wars-Game (referencia GPL)
+- Clonado `tmp-space-wars-reference` para auditar la referencia externa pedida por el usuario.
+- Confirmado: repo en C++/SFML con licencia GPL-3.0, menu propio, `Game.cpp` central, entidades `Ship`, `EnemyShip`, `Bullet`, `Asteroid`, recursos de imagen/sonido y score persistido en archivo.
+- Mecanicas extraidas solo como referencia de diseño: nave con inercia + wrap-around, enemigos que persiguen y disparan, asteroides, pickups, pausa y game over con score.
+- Decision legal/tecnica: no copiar codigo ni assets GPL; reimplementar una variante original integrada en React/Vite/Canvas y anadir backend Node ligero para leaderboard/configuracion/runs.
+- Siguiente bloque: implementar `arcade-cosmic-vanguard` con runtime determinista, bridge QA y fallback local si el backend no esta levantado.

@@ -1,0 +1,79 @@
+<svg width="1200" height="700" viewBox="0 0 1200 700" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="700" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B2232"/>
+      <stop offset="1" stop-color="#06131F"/>
+    </linearGradient>
+    <linearGradient id="field" x1="0" y1="160" x2="0" y2="700" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2E9F47"/>
+      <stop offset="1" stop-color="#1B6F34"/>
+    </linearGradient>
+    <linearGradient id="keeper" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#F97316"/>
+      <stop offset="1" stop-color="#DC2626"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="700" fill="url(#sky)"/>
+  <rect y="160" width="1200" height="540" fill="url(#field)"/>
+  <g opacity="0.22" stroke="#FFFFFF">
+    <line x1="0" y1="198" x2="1200" y2="198"/>
+    <line x1="0" y1="256" x2="1200" y2="256"/>
+    <line x1="0" y1="314" x2="1200" y2="314"/>
+    <line x1="0" y1="372" x2="1200" y2="372"/>
+    <line x1="0" y1="430" x2="1200" y2="430"/>
+    <line x1="0" y1="488" x2="1200" y2="488"/>
+    <line x1="0" y1="546" x2="1200" y2="546"/>
+    <line x1="0" y1="604" x2="1200" y2="604"/>
+  </g>
+  <rect x="310" y="110" width="580" height="230" rx="10" fill="#E8EEF7"/>
+  <rect x="300" y="100" width="600" height="18" fill="#F8FAFC"/>
+  <rect x="300" y="100" width="14" height="250" fill="#F8FAFC"/>
+  <rect x="886" y="100" width="14" height="250" fill="#F8FAFC"/>
+  <g opacity="0.34" stroke="#3F5574" stroke-width="2">
+    <line x1="340" y1="120" x2="340" y2="330"/>
+    <line x1="380" y1="120" x2="380" y2="330"/>
+    <line x1="420" y1="120" x2="420" y2="330"/>
+    <line x1="460" y1="120" x2="460" y2="330"/>
+    <line x1="500" y1="120" x2="500" y2="330"/>
+    <line x1="540" y1="120" x2="540" y2="330"/>
+    <line x1="580" y1="120" x2="580" y2="330"/>
+    <line x1="620" y1="120" x2="620" y2="330"/>
+    <line x1="660" y1="120" x2="660" y2="330"/>
+    <line x1="700" y1="120" x2="700" y2="330"/>
+    <line x1="740" y1="120" x2="740" y2="330"/>
+    <line x1="780" y1="120" x2="780" y2="330"/>
+    <line x1="820" y1="120" x2="820" y2="330"/>
+  </g>
+  <g stroke="#FFFFFF" stroke-width="5" opacity="0.8">
+    <rect x="200" y="250" width="800" height="380"/>
+    <rect x="340" y="180" width="520" height="220"/>
+    <circle cx="600" cy="580" r="11"/>
+  </g>
+  <g transform="translate(600 300)">
+    <ellipse cx="0" cy="36" rx="74" ry="18" fill="rgba(0,0,0,0.24)"/>
+    <rect x="-64" y="-86" width="128" height="94" rx="14" fill="url(#keeper)"/>
+    <rect x="-74" y="0" width="148" height="34" rx="14" fill="#0F172A"/>
+    <path d="M-40 -64L-112 -34" stroke="#F8FAFC" stroke-width="10" stroke-linecap="round"/>
+    <path d="M40 -64L112 -34" stroke="#F8FAFC" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="0" cy="-116" r="24" fill="#F6D6B6"/>
+    <rect x="-20" y="-138" width="40" height="8" fill="#111827"/>
+  </g>
+  <g transform="translate(600 548)">
+    <circle r="20" fill="#F8FAFC"/>
+    <path d="M-12 -5L-3 -13L8 -10L12 0L3 11L-8 10Z" stroke="#111827" stroke-width="3"/>
+    <circle r="15" stroke="#111827" stroke-width="2"/>
+  </g>
+  <g fill="#38BDF8" fill-opacity="0.28" stroke="#E0F2FE" stroke-width="3">
+    <circle cx="384" cy="304" r="26"/>
+    <circle cx="816" cy="304" r="26"/>
+    <circle cx="390" cy="146" r="26"/>
+    <circle cx="810" cy="146" r="26"/>
+    <circle cx="600" cy="212" r="26"/>
+  </g>
+  <text x="48" y="84" fill="#E2E8F0" font-family="Trebuchet MS, sans-serif" font-size="42" font-weight="700">
+    Penalty Neural Keeper
+  </text>
+  <text x="48" y="126" fill="#94A3B8" font-family="Trebuchet MS, sans-serif" font-size="24">
+    10-penalty adaptive goalkeeper showdown
+  </text>
+</svg>

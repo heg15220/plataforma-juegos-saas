@@ -15825,3 +15825,619 @@ button.brisca-card.playable:disabled {
     justify-content: flex-start;
   }
 }
+
+/* === Penalty Neural Keeper === */
+.penalty-shootout-game {
+  color: #e2e8f0;
+  background:
+    radial-gradient(circle at 18% -12%, rgba(56, 189, 248, 0.24), transparent 42%),
+    radial-gradient(circle at 80% -16%, rgba(249, 115, 22, 0.16), transparent 40%),
+    linear-gradient(170deg, #06111d, #0d1f2f 44%, #102c3f);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 22px;
+  padding: clamp(0.9rem, 1.7vw, 1.45rem);
+}
+
+.penalty-shootout-game .mini-head h4 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: clamp(1.05rem, 2.2vw, 1.42rem);
+}
+
+.penalty-shootout-game .mini-head p {
+  margin-top: 0.32rem;
+  color: rgba(203, 213, 225, 0.9);
+  max-width: 66ch;
+}
+
+.penalty-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.penalty-head-actions button {
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.64));
+  color: #e2e8f0;
+  border-radius: 999px;
+  padding: 0.48rem 0.9rem;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+.penalty-head-actions button:hover {
+  border-color: rgba(56, 189, 248, 0.62);
+  color: #f8fafc;
+}
+
+.penalty-shootout-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.56fr) minmax(320px, 1fr);
+  gap: clamp(0.84rem, 2vw, 1.2rem);
+  margin-top: 0.8rem;
+}
+
+.penalty-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: #050d17;
+}
+
+.penalty-canvas-host {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.penalty-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.penalty-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 0.65rem;
+  padding: 1.25rem;
+  text-align: center;
+  background: linear-gradient(170deg, rgba(2, 6, 23, 0.78), rgba(2, 6, 23, 0.88));
+  backdrop-filter: blur(3px);
+}
+
+.penalty-overlay h5 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: clamp(1.15rem, 2vw, 1.4rem);
+}
+
+.penalty-overlay p {
+  margin: 0;
+  color: rgba(203, 213, 225, 0.88);
+  max-width: 56ch;
+}
+
+.penalty-overlay button {
+  justify-self: center;
+  border: 1px solid rgba(56, 189, 248, 0.58);
+  background: linear-gradient(150deg, #0284c7, #0ea5e9);
+  color: #f8fafc;
+  border-radius: 999px;
+  padding: 0.55rem 1.2rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.penalty-sidepanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.72rem;
+}
+
+.penalty-panel {
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  border-radius: 14px;
+  background: linear-gradient(160deg, rgba(15, 23, 42, 0.86), rgba(15, 23, 42, 0.6));
+  padding: 0.78rem 0.82rem;
+}
+
+.penalty-panel > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.58rem;
+  margin-bottom: 0.64rem;
+}
+
+.penalty-panel > header span {
+  color: rgba(148, 163, 184, 0.92);
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+
+.penalty-panel > header strong {
+  color: #f8fafc;
+  font-size: 0.86rem;
+}
+
+.penalty-panel p {
+  margin: 0.35rem 0 0;
+  color: rgba(203, 213, 225, 0.86);
+  font-size: 0.82rem;
+}
+
+.penalty-score-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.penalty-score-grid article {
+  border-radius: 12px;
+  padding: 0.54rem 0.6rem;
+  background: rgba(8, 47, 73, 0.48);
+}
+
+.penalty-score-grid h6 {
+  margin: 0;
+  color: rgba(203, 213, 225, 0.9);
+  font-size: 0.71rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.penalty-score-grid p {
+  margin: 0.26rem 0 0;
+  color: #f8fafc;
+  font-size: 1.26rem;
+  font-weight: 700;
+}
+
+.penalty-ai-metric {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(88px, 1.45fr) auto;
+  gap: 0.45rem;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.penalty-ai-metric span {
+  color: rgba(203, 213, 225, 0.9);
+  font-size: 0.78rem;
+}
+
+.penalty-ai-metric strong {
+  color: #f8fafc;
+  font-size: 0.79rem;
+  min-width: 42px;
+  text-align: right;
+}
+
+.penalty-meter {
+  position: relative;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.26);
+  overflow: hidden;
+}
+
+.penalty-meter-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22d3ee, #38bdf8);
+}
+
+.penalty-meter-fill.confidence {
+  background: linear-gradient(90deg, #f59e0b, #f97316);
+}
+
+.penalty-meter-fill.learning {
+  background: linear-gradient(90deg, #14b8a6, #22c55e);
+}
+
+.penalty-zone-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.penalty-zone-grid button {
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  background: rgba(15, 23, 42, 0.75);
+  color: #e2e8f0;
+  min-height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.penalty-zone-grid button span {
+  color: #38bdf8;
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+
+.penalty-zone-grid button:hover:not(:disabled) {
+  border-color: rgba(56, 189, 248, 0.66);
+  background: rgba(15, 23, 42, 0.94);
+}
+
+.penalty-zone-grid button:disabled {
+  opacity: 0.48;
+  cursor: default;
+}
+
+.penalty-zone-grid .center-zone {
+  grid-column: 1 / -1;
+}
+
+.penalty-controls-hint {
+  margin-top: 0.62rem;
+  color: rgba(148, 163, 184, 0.9);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.penalty-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.32rem;
+}
+
+.penalty-history-list li {
+  display: grid;
+  grid-template-columns: 48px 1fr auto auto;
+  gap: 0.5rem;
+  align-items: center;
+  border-radius: 9px;
+  padding: 0.38rem 0.45rem;
+  background: rgba(15, 23, 42, 0.58);
+  color: rgba(226, 232, 240, 0.92);
+  font-size: 0.77rem;
+}
+
+.penalty-history-list li span:last-child {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.penalty-history-empty {
+  color: rgba(148, 163, 184, 0.9);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 1120px) {
+  .penalty-shootout-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .penalty-sidepanel {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .penalty-shootout-game {
+    padding: 0.78rem;
+  }
+
+  .penalty-head-actions {
+    width: 100%;
+  }
+
+  .penalty-head-actions button {
+    flex: 1;
+  }
+
+  .penalty-sidepanel {
+    grid-template-columns: 1fr;
+  }
+
+  .penalty-history-list li {
+    grid-template-columns: 44px 1fr auto;
+  }
+
+  .penalty-history-list li span:nth-child(3) {
+    display: none;
+  }
+}
+
+/* === Cosmic Vanguard === */
+.cosmic-vanguard-game {
+  color: #e2e8f0;
+  background:
+    radial-gradient(circle at 16% -12%, rgba(34, 211, 238, 0.22), transparent 40%),
+    radial-gradient(circle at 84% -18%, rgba(249, 115, 22, 0.14), transparent 36%),
+    linear-gradient(170deg, #040714, #0b1226 42%, #111f39);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 24px;
+  padding: clamp(0.9rem, 1.8vw, 1.4rem);
+}
+
+.cosmic-vanguard-head h4 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: clamp(1.08rem, 2.1vw, 1.46rem);
+}
+
+.cosmic-vanguard-head p {
+  margin-top: 0.35rem;
+  color: rgba(203, 213, 225, 0.9);
+  max-width: 66ch;
+}
+
+.cosmic-vanguard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.cosmic-vanguard-actions button,
+.cosmic-vanguard-touch-grid button {
+  border: 1px solid rgba(125, 211, 252, 0.28);
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.62));
+  color: #e2e8f0;
+  border-radius: 999px;
+  padding: 0.5rem 0.92rem;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+.cosmic-vanguard-actions button:hover,
+.cosmic-vanguard-touch-grid button:hover {
+  border-color: rgba(34, 211, 238, 0.62);
+  color: #f8fafc;
+}
+
+.cosmic-vanguard-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.56fr) minmax(320px, 1fr);
+  gap: clamp(0.84rem, 2vw, 1.2rem);
+  margin-top: 0.84rem;
+}
+
+.cosmic-vanguard-stage-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.72rem;
+}
+
+.cosmic-vanguard-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: #020617;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.cosmic-vanguard-canvas {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  display: block;
+}
+
+.cosmic-vanguard-touch-panel,
+.cosmic-vanguard-panel {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 16px;
+  background: linear-gradient(160deg, rgba(15, 23, 42, 0.86), rgba(15, 23, 42, 0.6));
+  padding: 0.8rem 0.84rem;
+}
+
+.cosmic-vanguard-touch-panel h5 {
+  margin: 0 0 0.58rem;
+  color: #f8fafc;
+  font-size: 0.86rem;
+}
+
+.cosmic-vanguard-touch-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.cosmic-vanguard-sidepanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.72rem;
+}
+
+.cosmic-vanguard-panel > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.64rem;
+}
+
+.cosmic-vanguard-panel > header span {
+  color: rgba(148, 163, 184, 0.92);
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+
+.cosmic-vanguard-panel > header strong {
+  color: #f8fafc;
+  font-size: 0.83rem;
+}
+
+.cosmic-vanguard-panel p {
+  margin: 0.34rem 0 0;
+  color: rgba(203, 213, 225, 0.88);
+  font-size: 0.82rem;
+}
+
+.cosmic-vanguard-pilot-field {
+  display: grid;
+  gap: 0.32rem;
+  margin-bottom: 0.3rem;
+}
+
+.cosmic-vanguard-pilot-field span {
+  color: rgba(148, 163, 184, 0.92);
+  font-size: 0.76rem;
+}
+
+.cosmic-vanguard-pilot-field input {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 10px;
+  background: rgba(2, 6, 23, 0.72);
+  color: #f8fafc;
+  padding: 0.58rem 0.68rem;
+  font: inherit;
+}
+
+.cosmic-vanguard-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.cosmic-vanguard-stat-grid article {
+  border-radius: 12px;
+  padding: 0.54rem 0.62rem;
+  background: rgba(8, 47, 73, 0.42);
+}
+
+.cosmic-vanguard-stat-grid h6 {
+  margin: 0;
+  color: rgba(203, 213, 225, 0.92);
+  font-size: 0.71rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.cosmic-vanguard-stat-grid p {
+  margin: 0.26rem 0 0;
+  color: #f8fafc;
+  font-size: 1.18rem;
+  font-weight: 700;
+}
+
+.cosmic-vanguard-meter-list {
+  display: grid;
+  gap: 0.44rem;
+  margin-top: 0.68rem;
+}
+
+.cosmic-vanguard-meter-list span {
+  display: inline-block;
+  margin-bottom: 0.2rem;
+  color: rgba(203, 213, 225, 0.9);
+  font-size: 0.76rem;
+}
+
+.cosmic-vanguard-meter {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.22);
+  overflow: hidden;
+}
+
+.cosmic-vanguard-meter .fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  border-radius: inherit;
+}
+
+.cosmic-vanguard-meter .fill.hull {
+  background: linear-gradient(90deg, #ef4444, #fb7185);
+}
+
+.cosmic-vanguard-meter .fill.shield {
+  background: linear-gradient(90deg, #38bdf8, #22d3ee);
+}
+
+.cosmic-vanguard-meter .fill.energy {
+  background: linear-gradient(90deg, #22c55e, #34d399);
+}
+
+.cosmic-vanguard-meter .fill.heat {
+  background: linear-gradient(90deg, #f59e0b, #f97316);
+}
+
+.cosmic-vanguard-meter .fill.focus {
+  background: linear-gradient(90deg, #8b5cf6, #c084fc);
+}
+
+.cosmic-vanguard-leaderboard,
+.cosmic-vanguard-events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.34rem;
+}
+
+.cosmic-vanguard-leaderboard li,
+.cosmic-vanguard-events li {
+  border-radius: 10px;
+  padding: 0.42rem 0.48rem;
+  background: rgba(15, 23, 42, 0.56);
+  color: rgba(226, 232, 240, 0.92);
+  font-size: 0.77rem;
+}
+
+.cosmic-vanguard-leaderboard li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.cosmic-vanguard-leaderboard li span:last-child {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+@media (max-width: 1120px) {
+  .cosmic-vanguard-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .cosmic-vanguard-sidepanel {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .cosmic-vanguard-game {
+    padding: 0.8rem;
+  }
+
+  .cosmic-vanguard-actions {
+    width: 100%;
+  }
+
+  .cosmic-vanguard-actions button {
+    flex: 1;
+  }
+
+  .cosmic-vanguard-sidepanel {
+    grid-template-columns: 1fr;
+  }
+
+  .cosmic-vanguard-touch-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

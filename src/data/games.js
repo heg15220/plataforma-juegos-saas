@@ -12,6 +12,8 @@ import pongNeonArenaImage from "../assets/games/pong-neon-arena.svg";
 import arcadeBuscaminasClassicImage from "../assets/games/arcade-buscaminas-classic.svg";
 import arcadeBillarPoolClubImage from "../assets/games/arcade-billar-pool-club.svg";
 import arcadeBowlingProTourImage from "../assets/games/arcade-bowling-pro-tour.svg";
+import arcadePenaltyNeuralKeeperImage from "../assets/games/arcade-penalty-neural-keeper.svg";
+import arcadeCosmicVanguardImage from "../assets/games/arcade-cosmic-vanguard.svg";
 import arcadeOrchardMatchBlastImage from "../assets/games/arcade-orchard-match-blast.svg";
 import arcadeReactorTossImage from "../assets/games/arcade-reactor-toss.svg";
 import knowledgeSudokuImage from "../assets/games/knowledge-sudoku.svg";
@@ -517,6 +519,110 @@ export const games = [
     viability_en: "High: deterministic frame engine, discrete scoring, and configurable heuristic AI.",
     visualStyle_en: "Broadcast-inspired lane canvas with readable pins and competitive panel.",
     techFocus_en: "Bowling rules engine + pinfall simulation + profile-driven AI.",
+  },
+
+  {
+    id: "arcade-penalty-neural-keeper",
+    image: arcadePenaltyNeuralKeeperImage,
+    sessionTime: "2-5 min",
+
+    title: "Penalty Neural Keeper",
+    category: "Arcade",
+    tagline: "Tanda de 10 penaltis con fisica de tiro y portero IA que aprende tus ultimos patrones.",
+    description:
+      "Arcade de penaltis en vista de campo completo: el usuario selecciona cinco zonas de tiro (abajo izq/der, arriba izq/der y centro), el balon sigue una trayectoria con curvatura y potencia, y un portero con IA adaptativa analiza frecuencia, repeticion y transiciones recientes para mejorar su lectura en tiempo real.",
+    objective_es:
+      "Marca mas goles que paradas en una tanda de 10 penaltis evitando caer en patrones repetitivos que la IA pueda anticipar.",
+    howToPlay_es:
+      "Selecciona la zona con botones o teclado: 1 abajo izq, 2 abajo der, 3 arriba izq, 4 arriba der, 5 centro. R reinicia tanda, F pantalla completa.",
+    highlights: [
+      "10 tiros por partida con progresion clara de aprendizaje del portero durante la serie.",
+      "Fisica de disparo con potencia, curva, trayectorias altas/bajas y rebote visual en caso de parada.",
+      "IA dinamica con analisis de frecuencia, transiciones entre zonas y deteccion de repeticion.",
+      "Telemetria visible de adaptacion, confianza, indice de aprendizaje y probabilidad de parada.",
+      "Render Canvas con cesped por franjas, porteria con red reactiva, animacion de estirada y trazas del balon.",
+      "Bridge QA con render_game_to_text y avance temporal determinista via advanceTime.",
+    ],
+    difficulty: "Media-Alta",
+    multiplayer: "Solo vs IA",
+    viability: "Alta: simulacion 2D ligera, estado serializable y heuristicas de IA calibrables.",
+    visualStyle: "Estadio nocturno de alto contraste con campo detallado, red dinamica y HUD tactico.",
+    techFocus: "Modelado de tiro por curvas quadraticas + IA adaptativa de corto plazo + telemetria QA completa.",
+
+    category_en: "Arcade",
+    tagline_en: "10-penalty shootout with detailed shot physics and an AI goalkeeper that learns your latest patterns.",
+    description_en:
+      "Full-pitch penalty arcade where players choose between five target zones (bottom left/right, top left/right, center). The ball follows curved trajectories with variable power, while an adaptive goalkeeper AI analyzes recent frequency, repetition, and transition patterns to improve decisions in real time.",
+    objective_en:
+      "Score more goals than saves over a 10-penalty shootout while avoiding repetitive patterns the AI can exploit.",
+    howToPlay_en:
+      "Choose target zone with buttons or keyboard: 1 bottom left, 2 bottom right, 3 top left, 4 top right, 5 center. R restarts, F toggles fullscreen.",
+    highlights_en: [
+      "10-shot match format with clear in-run goalkeeper learning progression.",
+      "Shot physics with power, curve, high/low trajectories, and visual rebound on saves.",
+      "Dynamic AI combining zone frequency, transition reads, and repetition detection.",
+      "Live telemetry for adaptation, confidence, learning index, and estimated save chance.",
+      "Canvas render with striped grass, reactive net, dive animation, and ball trails.",
+      "QA bridge exposing render_game_to_text plus deterministic advanceTime stepping.",
+    ],
+    difficulty_en: "Medium-High",
+    multiplayer_en: "Solo vs AI",
+    viability_en: "High: lightweight 2D simulation, serializable state, and tunable AI heuristics.",
+    visualStyle_en: "High-contrast night stadium with detailed pitch, dynamic net, and tactical HUD.",
+    techFocus_en: "Quadratic shot trajectory model + short-horizon adaptive AI + full QA telemetry.",
+  },
+
+  {
+    id: "arcade-cosmic-vanguard",
+    image: arcadeCosmicVanguardImage,
+    sessionTime: "4-8 min",
+
+    title: "Cosmic Vanguard",
+    category: "Arcade",
+    tagline: "Shooter espacial tactico con wrap-around, pasadas de riesgo/recompensa, bosses por fases y backend de leaderboard.",
+    description:
+      "Arcade espacial original construido para la plataforma: pilotas una nave con inercia refinada en orbitas cerradas, limpias oleadas de cazas y drones, rozas fuego y asteroides para activar Vanguard Drive, rompes cinturones de asteroides, gestionas calor/energia/escudo y sobrevives hasta llegar a dreadnoughts con fases y refuerzos por sector. Incluye backend Node ligero para clasificacion y configuracion diaria, con fallback local cuando no esta disponible.",
+    objective_es:
+      "Mantente con vida el maximo tiempo posible, limpia las flotillas enemigas de cada oleada, explota las pasadas al limite para sostener Vanguard Drive y escala la clasificacion alcanzando mas score, precision y control tactico que el resto.",
+    howToPlay_es:
+      "A/D o flechas izq/der rotan la nave, W/arriba impulsa, S/abajo frena, Shift activa boost, Espacio dispara, E/X lanza pulso EMP, P pausa, R reinicia y F alterna pantalla completa. Las pasadas al limite cargan Vanguard Drive.",
+    highlights: [
+      "Nave con inercia refinada, control de drift y wrap-around completo con lectura por telemetria QA.",
+      "Sistema de pasadas al limite que recompensa precision agresiva con energia, escudo y Vanguard Drive.",
+      "Tres arquetipos de enemigos mas dreadnought con fases y refuerzos cada 3 oleadas.",
+      "Asteroides destructibles con fragmentacion parcial y pickups de casco, coolant y energia.",
+      "Sistemas de calor, escudo, energia, combo y amenaza por sector para sostener profundidad arcade.",
+      "Backend Node con endpoints para config diaria, health y leaderboard persistente; fallback local si no esta levantado.",
+      "Bridge QA con render_game_to_text y avance temporal determinista via advanceTime.",
+    ],
+    difficulty: "Media-Alta",
+    multiplayer: "Solo / Competitivo asincrono",
+    viability: "Alta: motor Canvas puro, estado serializable y backend ligero sin dependencias.",
+    visualStyle: "Opera espacial neon con nebulosas, HUD tactico, bosses geométricos y portada editorial propia.",
+    techFocus: "Motor 2D deterministic-step + IA de persecucion/disparo + persistencia remota/local de runs.",
+
+    category_en: "Arcade",
+    tagline_en: "Tactical space shooter with wrap-around movement, risk-reward close passes, phased bosses, and leaderboard backend.",
+    description_en:
+      "Original space arcade built for the platform: pilot a refined-inertia ship across wrapped orbits, skim bullets and asteroids to activate Vanguard Drive, clear waves of fighters and drones, break asteroid belts, manage heat/energy/shields, and survive long enough to reach phased dreadnoughts with reinforcement bursts. It includes a lightweight Node backend for daily configuration and leaderboard sync, plus a local fallback when the server is unavailable.",
+    objective_en:
+      "Stay alive as long as possible, clear every hostile wave, exploit close passes to sustain Vanguard Drive, and climb the leaderboard through high score, strong accuracy, and disciplined tactical control.",
+    howToPlay_en:
+      "A/D or left/right arrows rotate, W/up thrusts, S/down brakes, Shift boosts, Space fires, E/X launches an EMP pulse, P pauses, R restarts, and F toggles fullscreen. Close passes charge Vanguard Drive.",
+    highlights_en: [
+      "Refined inertia handling with drift control, full wrap-around space, and QA-readable coordinates.",
+      "Close-pass system that rewards aggressive precision with energy, shielding, and Vanguard Drive.",
+      "Three enemy archetypes plus phased dreadnought bosses with support wings every 3 waves.",
+      "Breakable asteroids with partial fragmentation and hull/coolant/energy pickups.",
+      "Heat, shield, energy, combo, and sector-threat systems for deeper arcade decision-making.",
+      "Node backend exposing daily config, health, and persistent leaderboard endpoints, with local fallback.",
+      "QA bridge exposing render_game_to_text plus deterministic advanceTime stepping.",
+    ],
+    difficulty_en: "Medium-High",
+    multiplayer_en: "Solo / Async competitive",
+    viability_en: "High: pure Canvas runtime, serializable state, and lightweight backend with no extra dependencies.",
+    visualStyle_en: "Neon space opera with layered nebulas, tactical HUD, geometric bosses, and bespoke editorial cover art.",
+    techFocus_en: "Deterministic 2D engine + layered dogfight AI + risk/reward combat systems + remote/local run persistence.",
   },
 
   {
