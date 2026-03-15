@@ -2967,3 +2967,8 @@ Pendiente sugerido:
 - Mecanicas extraidas solo como referencia de diseño: nave con inercia + wrap-around, enemigos que persiguen y disparan, asteroides, pickups, pausa y game over con score.
 - Decision legal/tecnica: no copiar codigo ni assets GPL; reimplementar una variante original integrada en React/Vite/Canvas y anadir backend Node ligero para leaderboard/configuracion/runs.
 - Siguiente bloque: implementar `arcade-cosmic-vanguard` con runtime determinista, bridge QA y fallback local si el backend no esta levantado.
+
+## 2026-03-15 - Cosmic Vanguard UI cleanup
+- Removed the Cosmic Vanguard side panels that rendered leaderboard and event log entries in the game UI.
+- Kept the backend snapshot and event generation logic intact; only the visible component blocks were removed from the React view.
+- Validation note: no build or Playwright pass was completed in this iteration because sandbox-escalated checks were interrupted.

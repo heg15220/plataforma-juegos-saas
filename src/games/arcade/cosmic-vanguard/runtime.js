@@ -2,13 +2,15 @@ export const STAGE_WIDTH = 960;
 export const STAGE_HEIGHT = 540;
 const FIXED_STEP_MS = 1000 / 60;
 const MAX_PARTICLES = 180;
-const PLAYER_TURN_SPEED = 3.4;
-const PLAYER_THRUST = 260;
-const PLAYER_BOOST = 390;
-const PLAYER_MAX_SPEED = 360;
-const PLAYER_BOOST_MAX_SPEED = 510;
-const PLAYER_DRAG = 0.94;
+const PLAYER_TURN_SPEED = 3.75;
+const PLAYER_THRUST = 285;
+const PLAYER_BOOST = 430;
+const PLAYER_MAX_SPEED = 400;
+const PLAYER_BOOST_MAX_SPEED = 565;
+const PLAYER_DRAG = 0.942;
 const PLAYER_BRAKE = 0.88;
+const PLAYER_BRAKE_TURN_MULTIPLIER = 1.32;
+const PLAYER_RETRO_THRUST = 205;
 const PLAYER_FIRE_INTERVAL_MS = 120;
 const PLAYER_PULSE_INTERVAL_MS = 4200;
 const PLAYER_PULSE_COST = 34;
@@ -16,11 +18,15 @@ const PLAYER_MAX_HEAT = 100;
 const PLAYER_MAX_ENERGY = 100;
 const PLAYER_MAX_HULL = 100;
 const PLAYER_MAX_SHIELD = 80;
+const WAVE_TRANSITION_MS = 2200;
+const WAVE_RECOVERY_HULL = 9;
+const WAVE_RECOVERY_SHIELD = 20;
+const WAVE_RECOVERY_ENERGY = 14;
 const PLAYER_BULLET_SPEED = 760;
 const ENEMY_BULLET_SPEED = 340;
 const PICKUP_LIFETIME_MS = 11000;
 const INVULNERABLE_AFTER_HIT_MS = 520;
-const RECENT_DAMAGE_COOLDOWN_MS = 2200;
+const RECENT_DAMAGE_COOLDOWN_MS = 1800;
 const COMBO_CHAIN_MS = 2600;
 const VANGUARD_MODE_THRESHOLD = 62;
 const NEAR_MISS_CLEARANCE = 60;
@@ -600,7 +606,6 @@ export default class CosmicVanguardRuntime {
     this.state.enemies = [];
     this.state.asteroids = [];
     this.state.bullets = [];
-    this.state.pickups = [];
     this.state.shockwaves = [];
     const bossWave = this.state.wave % 3 === 0;
     const asteroidCount = bossWave ? 4 : Math.min(7, 3 + this.state.sector);
@@ -712,6 +717,53 @@ export default class CosmicVanguardRuntime {
       radius: 11,
       lifeMs: PICKUP_LIFETIME_MS,
     });
+  }
+
+  maybeSpawnEnemyPickup(enemy) {
+    const player = this.state.player;
+    const lowHull = player.hull <= 58;
+    const lowShield = player.shield <= 24;
+    const pressureWave = this.state.wave >= 4 || this.state.sector >= 3;
+    const dropChance = Math.min(
+      0.66,
+      0.28 + (pressureWave ? 0.05 : 0) + (lowHull ? 0.18 : 0) + (lowShield ? 0.09 : 0)
+    );
+    if (this.rng() > dropChance) {
+      return;
+    }
+    const pickupPool = lowHull
+      ? ["repair", "repair", "repair", "energy", "coolant"]
+      : lowShield
+        ? ["energy", "energy", "repair", "coolant"]
+        : pressureWave
+          ? ["repair", "energy", "energy", "coolant"]
+          : ["repair", "coolant", "energy"];
+    this.spawnPickup(enemy.x, enemy.y, choose(this.rng, pickupPool));
+  }
+
+  grantWaveRecovery() {
+    const player = this.state.player;
+    const hullRecovery = WAVE_RECOVERY_HULL + this.state.sector * 2;
+    const shieldRecovery = WAVE_RECOVERY_SHIELD + this.state.sector * 3;
+    const energyRecovery = WAVE_RECOVERY_ENERGY + this.state.sector * 2;
+    const recoveredHull = Math.min(PLAYER_MAX_HULL, player.hull + hullRecovery);
+    const recoveredShield = Math.min(PLAYER_MAX_SHIELD, player.shield + shieldRecovery);
+    const recoveredEnergy = Math.min(PLAYER_MAX_ENERGY, player.energy + energyRecovery);
+    const recovered =
+      recoveredHull > player.hull ||
+      recoveredShield > player.shield ||
+      recoveredEnergy > player.energy;
+    player.hull = recoveredHull;
+    player.shield = recoveredShield;
+    player.energy = recoveredEnergy;
+    player.recentDamageMs = Math.min(player.recentDamageMs, 650);
+    if (recovered) {
+      this.pushEvent(
+        this.locale === "es"
+          ? "Ventana de soporte: casco, escudos y energia estabilizados."
+          : "Support window: hull, shields, and energy stabilized."
+      );
+    }
   }
 
   spawnExplosion(x, y, color, count = 14, scale = 1) {
@@ -938,9 +990,15 @@ export default class CosmicVanguardRuntime {
     player.recentDamageMs = Math.max(0, player.recentDamageMs - dt * 1000);
 
     const turnIntent = (this.input.right ? 1 : 0) - (this.input.left ? 1 : 0);
-    const turnTarget = PLAYER_TURN_SPEED * turnIntent * (this.state.vanguardMode ? 1.18 : 1);
-    player.turnVelocity += (turnTarget - player.turnVelocity) * Math.min(1, dt * 10);
-    player.turnVelocity *= 0.88;
+    const turnMultiplier = this.input.brake ? PLAYER_BRAKE_TURN_MULTIPLIER : 1;
+    const turnTarget =
+      PLAYER_TURN_SPEED *
+      turnIntent *
+      (this.state.vanguardMode ? 1.18 : 1) *
+      turnMultiplier;
+    player.turnVelocity +=
+      (turnTarget - player.turnVelocity) * Math.min(1, dt * (this.input.brake ? 13 : 10));
+    player.turnVelocity *= this.input.brake ? 0.91 : 0.88;
     player.angle += player.turnVelocity * dt;
 
     let thrust = 0;
@@ -965,9 +1023,15 @@ export default class CosmicVanguardRuntime {
       this.emitEngineTrail(player, player.boosting ? "#f97316" : "#67e8f9", player.boosting ? 1.15 : 0.82);
     }
 
+    const velocitySpeed = Math.hypot(player.vx, player.vy);
     if (this.input.brake) {
       player.vx *= PLAYER_BRAKE;
       player.vy *= PLAYER_BRAKE;
+      if (velocitySpeed > 70) {
+        const retroScale = 0.6 + Math.min(0.5, velocitySpeed / PLAYER_BOOST_MAX_SPEED);
+        player.vx -= Math.cos(player.angle) * PLAYER_RETRO_THRUST * retroScale * dt;
+        player.vy -= Math.sin(player.angle) * PLAYER_RETRO_THRUST * retroScale * dt;
+      }
     }
 
     const forwardSpeed = player.vx * Math.cos(player.angle) + player.vy * Math.sin(player.angle);
@@ -1000,7 +1064,8 @@ export default class CosmicVanguardRuntime {
     }
 
     if (player.recentDamageMs <= 0) {
-      player.shield = Math.min(PLAYER_MAX_SHIELD, player.shield + 5 * dt);
+      const shieldRegen = 6 + this.state.sector * 0.45 + (this.state.enemies.length <= 2 ? 0.8 : 0);
+      player.shield = Math.min(PLAYER_MAX_SHIELD, player.shield + shieldRegen * dt);
     }
 
     if (this.input.fire) {
@@ -1282,7 +1347,8 @@ export default class CosmicVanguardRuntime {
   collectPickup(pickup) {
     const player = this.state.player;
     if (pickup.kind === "repair") {
-      player.hull = Math.min(PLAYER_MAX_HULL, player.hull + 22);
+      player.hull = Math.min(PLAYER_MAX_HULL, player.hull + 30);
+      player.shield = Math.min(PLAYER_MAX_SHIELD, player.shield + 10);
       this.state.message = this.locale === "es" ? "Kit de casco recuperado." : "Hull kit recovered.";
     } else if (pickup.kind === "coolant") {
       player.heat = Math.max(0, player.heat - 36);
@@ -1290,7 +1356,7 @@ export default class CosmicVanguardRuntime {
       this.state.message = this.locale === "es" ? "Coolant inyectado." : "Coolant injected.";
     } else {
       player.energy = Math.min(PLAYER_MAX_ENERGY, player.energy + 32);
-      player.shield = Math.min(PLAYER_MAX_SHIELD, player.shield + 14);
+      player.shield = Math.min(PLAYER_MAX_SHIELD, player.shield + 20);
       this.state.message = this.locale === "es" ? "Celda tactica recargada." : "Tactical cell recharged.";
     }
     this.pushEvent(this.state.message);
@@ -1365,9 +1431,7 @@ export default class CosmicVanguardRuntime {
         lineWidth: enemy.kind === "boss" ? 5 : 3,
       });
       this.addScreenShake(enemy.kind === "boss" ? 10 : 4.5);
-      if (this.rng() > 0.72) {
-        this.spawnPickup(enemy.x, enemy.y, choose(this.rng, ["repair", "coolant", "energy"]));
-      }
+      this.maybeSpawnEnemyPickup(enemy);
     });
     this.state.enemies = this.state.enemies.filter((enemy) => enemy.hull > 0);
 
@@ -1387,7 +1451,8 @@ export default class CosmicVanguardRuntime {
   checkWaveState(stepMs) {
     if (this.state.enemies.length === 0) {
       if (this.state.transitionMs <= 0) {
-        this.state.transitionMs = 1500;
+        this.state.transitionMs = WAVE_TRANSITION_MS;
+        this.grantWaveRecovery();
         this.state.score += 120 + this.state.wave * 20;
         this.state.message =
           this.locale === "es"

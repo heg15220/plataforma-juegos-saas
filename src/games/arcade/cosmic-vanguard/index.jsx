@@ -328,8 +328,6 @@ export default function CosmicVanguardGame() {
     },
   });
 
-  const leaderboard = snapshot.backendStatus === "loading" ? [] : snapshot.leaderboard;
-
   return (
     <section className="cosmic-vanguard-game" ref={shellRef}>
       <div className="mini-head cosmic-vanguard-head">
@@ -452,36 +450,6 @@ export default function CosmicVanguardGame() {
             <p>{snapshot.backendMessage}</p>
             <p>Seed: <strong>{snapshot.backendConfig.dailySeed}</strong></p>
             <p>{snapshot.backendConfig.motd}</p>
-          </section>
-
-          <section className="cosmic-vanguard-panel">
-            <header>
-              <span>{copy.leaderboard}</span>
-              <strong>Top {leaderboard.length || 0}</strong>
-            </header>
-            {snapshot.backendStatus === "loading" ? <p>{copy.loading}</p> : null}
-            {!leaderboard.length && snapshot.backendStatus !== "loading" ? <p>{copy.noScores}</p> : null}
-            <ol className="cosmic-vanguard-leaderboard">
-              {leaderboard.map((entry) => (
-                <li key={entry.id}>
-                  <span>{entry.pilot}</span>
-                  <span>{entry.score}</span>
-                  <span>W{entry.wave}</span>
-                </li>
-              ))}
-            </ol>
-          </section>
-
-          <section className="cosmic-vanguard-panel">
-            <header>
-              <span>{copy.events}</span>
-              <strong>{snapshot.events.length}</strong>
-            </header>
-            <ul className="cosmic-vanguard-events">
-              {snapshot.events.map((entry) => (
-                <li key={entry.id}>{entry.text}</li>
-              ))}
-            </ul>
           </section>
         </aside>
       </div>
