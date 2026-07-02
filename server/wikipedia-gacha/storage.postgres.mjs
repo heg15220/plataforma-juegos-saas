@@ -1521,7 +1521,16 @@ export function createPostgresStore({ db }) {
     };
   }
 
-  async function openPackIncremental(browserToken, {
+  // Serialize pack opens through the SAME per-token queue as forToken().update
+  // (getSessionMe, getPackStatus, …). Without this, those cached/deferred-write
+  // endpoints run concurrently with the direct-to-DB open: they can read the
+  // stale pre-open state and even flush a deferred write that clobbers the open,
+  // so the frontend's packs counter and trophies never update.
+  function openPackIncremental(browserToken, options = {}) {
+    return enqueue(browserToken, () => openPackIncrementalImpl(browserToken, options));
+  }
+
+  async function openPackIncrementalImpl(browserToken, {
     preferredLanguage = null,
     nowIso,
     statDate,
@@ -1533,12 +1542,17 @@ export function createPostgresStore({ db }) {
     // openPackIncremental writes straight to the DB, bypassing the in-memory
     // state cache and the deferred-write buffer. Flush any pending deferred
     // write for this token FIRST so the open builds on the latest state and a
-    // late flush cannot revert the just-opened pack.
+    // late flush cannot revert the just-opened pack. Non-fatal: a failed flush
+    // must never abort the pack open itself.
     for (const token of new Set([browserToken, resolvedToken])) {
       const pending = dirtyStates.get(token);
       if (pending) {
         dirtyStates.delete(token);
-        await writeRaw(token, pending.nextState, pending.previousState);
+        try {
+          await writeRaw(token, pending.nextState, pending.previousState);
+        } catch (error) {
+          console.error(`[storage.postgres] pre-open flush failed for ${token}:`, error);
+        }
       }
     }
     const result = await db.transaction(async (tx) => {
