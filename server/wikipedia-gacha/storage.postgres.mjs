@@ -274,12 +274,23 @@ export function createPostgresStore({ db }) {
         if (!dirtyStates.size) return;
         const batch = Array.from(dirtyStates.entries());
         dirtyStates.clear();
-        await Promise.all(
-          batch.map(([browserToken, payload]) =>
-            writeRaw(browserToken, payload.nextState, payload.previousState)
-          )
-        );
-      }).catch(() => {});
+        // Sequential: one transaction (one pooled connection) at a time.
+        // Firing the whole batch with Promise.all opened as many concurrent
+        // transactions as there were dirty tokens, exhausting the connection
+        // pool under load and surfacing as backend 502s.
+        for (const [browserToken, payload] of batch) {
+          try {
+            await writeRaw(browserToken, payload.nextState, payload.previousState);
+          } catch (error) {
+            // One bad write must not drop the rest of the batch — but a
+            // dropped deferred flush is invisible data loss, so surface it
+            // instead of swallowing silently.
+            console.error(`[storage.postgres] deferred flush failed for ${browserToken}:`, error);
+          }
+        }
+      }).catch((error) => {
+        console.error("[storage.postgres] deferred flush batch error:", error);
+      });
     }, FLUSH_DEBOUNCE_MS);
     if (typeof flushTimer.unref === "function") {
       flushTimer.unref();
@@ -298,11 +309,14 @@ export function createPostgresStore({ db }) {
       if (!dirtyStates.size) return;
       const batch = Array.from(dirtyStates.entries());
       dirtyStates.clear();
-      await Promise.all(
-        batch.map(([browserToken, payload]) =>
-          writeRaw(browserToken, payload.nextState, payload.previousState)
-        )
-      );
+      // Sequential to avoid connection-pool exhaustion (see scheduleFlush).
+      for (const [browserToken, payload] of batch) {
+        try {
+          await writeRaw(browserToken, payload.nextState, payload.previousState);
+        } catch (error) {
+          console.error(`[storage.postgres] flush failed for ${browserToken}:`, error);
+        }
+      }
     });
     await flushPromise;
   }
@@ -656,6 +670,14 @@ export function createPostgresStore({ db }) {
     );
 
     await db.transaction(async (tx) => {
+      // Serialize against openPackIncremental (which also takes FOR UPDATE on
+      // this row) so the two id allocators never run concurrently for the same
+      // profile. No-op on first write when the profile does not exist yet — the
+      // UPSERT below creates it.
+      await tx.run(
+        "SELECT id FROM browser_profiles WHERE browser_token = ? FOR UPDATE",
+        [storageToken]
+      );
       await tx.run(
         `INSERT INTO browser_profiles (
            id, browser_token, display_name, preferred_language, packs_available,
@@ -744,7 +766,7 @@ export function createPostgresStore({ db }) {
           "topic_group",
         ],
         changedCollectionRows,
-        `ON CONFLICT(id) DO UPDATE SET
+        `ON CONFLICT(browser_profile_id, article_id) DO UPDATE SET
           browser_profile_id = excluded.browser_profile_id,
           article_id = excluded.article_id,
           copies = excluded.copies,
@@ -945,7 +967,7 @@ export function createPostgresStore({ db }) {
           "updated_at",
         ],
         changedMissionRows,
-        `ON CONFLICT(id) DO UPDATE SET
+        `ON CONFLICT(browser_profile_id, mission_id, reset_date) DO UPDATE SET
           browser_profile_id = excluded.browser_profile_id,
           mission_id = excluded.mission_id,
           progress_value = excluded.progress_value,
@@ -986,7 +1008,7 @@ export function createPostgresStore({ db }) {
         "browser_trophies",
         ["id", "browser_profile_id", "trophy_id", "unlocked_at"],
         changedTrophyRows,
-        `ON CONFLICT(id) DO UPDATE SET
+        `ON CONFLICT(browser_profile_id, trophy_id) DO UPDATE SET
           browser_profile_id = excluded.browser_profile_id,
           trophy_id = excluded.trophy_id,
           unlocked_at = excluded.unlocked_at`
@@ -1095,7 +1117,7 @@ export function createPostgresStore({ db }) {
           "topic_counts_json",
         ],
         changedDailyRows,
-        `ON CONFLICT(id) DO UPDATE SET
+        `ON CONFLICT(browser_profile_id, stat_date) DO UPDATE SET
           browser_profile_id = excluded.browser_profile_id,
           stat_date = excluded.stat_date,
           packs_opened = excluded.packs_opened,
