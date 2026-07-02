@@ -1643,23 +1643,14 @@ export function createPostgresStore({ db }) {
         return new Map(ids.map((id) => [id, collectionCache.get(id) ?? null]));
       }
 
-      const nextIdRow = await tx.get(
-        `SELECT GREATEST(
-           ?::bigint,
-           COALESCE((SELECT MAX(id) FROM browser_collection WHERE browser_profile_id = ?), 0),
-           COALESCE((SELECT MAX(id) FROM pack_openings WHERE browser_profile_id = ?), 0),
-           COALESCE((SELECT MAX(id) FROM browser_missions WHERE browser_profile_id = ?), 0),
-           COALESCE((SELECT MAX(id) FROM browser_trophies WHERE browser_profile_id = ?), 0),
-           COALESCE((SELECT MAX(id) FROM reward_events WHERE browser_profile_id = ?), 0),
-           COALESCE((SELECT MAX(id) FROM daily_browser_stats WHERE browser_profile_id = ?), 0)
-         ) + 1 AS "nextId"`,
-        [profile.id, profile.id, profile.id, profile.id, profile.id, profile.id, profile.id]
-      );
-      let nextId = Number(nextIdRow?.nextId) || (profile.id + 1);
-      const allocateId = () => {
-        const id = nextId;
-        nextId += 1;
-        return id;
+      // Allocate ids from the global sequence: atomic and collision-free across
+      // profiles and tables. The previous GREATEST(MAX(id) WHERE
+      // browser_profile_id = ?) computed a PER-PROFILE max over a GLOBAL primary
+      // key, so it handed out ids already used by other profiles → the
+      // "duplicate key ... browser_collection_pkey" crash on pack open.
+      const allocateId = async () => {
+        const row = await tx.get("SELECT nextval('wgc_entity_id_seq') AS id");
+        return Number(row?.id) || 0;
       };
 
       const mutation = await buildMutation(profile, {
@@ -1757,7 +1748,7 @@ export function createPostgresStore({ db }) {
             ]
           );
         } else {
-          const id = allocateId();
+          const id = await allocateId();
           entry.id = id;
           await tx.run(
             `INSERT INTO browser_collection (
@@ -1779,7 +1770,7 @@ export function createPostgresStore({ db }) {
         }
       }
 
-      const openingId = allocateId();
+      const openingId = await allocateId();
       await tx.run(
         `INSERT INTO pack_openings (
            id, browser_profile_id, opened_at, guaranteed_sr_plus, pack_type, result_summary
@@ -1905,7 +1896,7 @@ export function createPostgresStore({ db }) {
              shards_earned, topic_counts_json
            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
-            allocateId(),
+            await allocateId(),
             profile.id,
             statDate,
             dailyValues.packsOpened,
@@ -1929,7 +1920,7 @@ export function createPostgresStore({ db }) {
              created_at, metadata_json
            ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [
-            allocateId(),
+            await allocateId(),
             profile.id,
             mutation.rewardEvent.rewardSource,
             mutation.rewardEvent.rewardType,
@@ -2025,7 +2016,7 @@ export function createPostgresStore({ db }) {
              id, browser_profile_id, trophy_id, unlocked_at
            ) VALUES (?, ?, ?, ?)
            ON CONFLICT(browser_profile_id, trophy_id) DO NOTHING`,
-          [allocateId(), profile.id, trophy.trophyId, trophy.unlockedAt]
+          [await allocateId(), profile.id, trophy.trophyId, trophy.unlockedAt]
         );
         addedTrophyPoints += Number(trophy.points) || 0;
       }
@@ -2069,7 +2060,7 @@ export function createPostgresStore({ db }) {
                claimed, reset_date, created_at, updated_at
              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-              allocateId(),
+              await allocateId(),
               profile.id,
               mission.missionId,
               mission.progressValue,
