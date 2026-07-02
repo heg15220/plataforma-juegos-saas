@@ -631,42 +631,58 @@ export function createPostgresStore({ db }) {
     }
     const storageToken = profile.browserToken ?? browserToken;
 
-    const profileId = Number(profile.id) || 0;
+    // The in-memory profile id is derived from the browser token hash
+    // (createTokenScopedIdBase). After token rotation, or when a profile is
+    // re-materialized fresh while a row already exists, that id diverges from
+    // the id actually stored in the DB for this token. Writing the diverged id
+    // then violates the browser_token UNIQUE (ON CONFLICT(id) cannot catch a
+    // token collision) and orphans child FKs — this was the "duplicate key ...
+    // browser_profiles_browser_token_key" crash. Reconcile: keep filtering the
+    // in-memory rows by their own (memory) profile id, but write everything
+    // under the id already persisted for this token.
+    const memProfileId = Number(profile.id) || 0;
+    const persistedProfileRow = await db.get(
+      "SELECT id FROM browser_profiles WHERE browser_token = ?",
+      [storageToken]
+    );
+    const profileId = persistedProfileRow
+      ? Number(persistedProfileRow.id) || memProfileId
+      : memProfileId;
     const collectionRows = (clean.browserCollection ?? []).filter(
-      (entry) => Number(entry.browserProfileId) === profileId
+      (entry) => Number(entry.browserProfileId) === memProfileId
     );
     const openingRows = (clean.packOpenings ?? []).filter(
-      (entry) => Number(entry.browserProfileId) === profileId
+      (entry) => Number(entry.browserProfileId) === memProfileId
     );
     const missionRows = (clean.browserMissions ?? []).filter(
-      (entry) => Number(entry.browserProfileId) === profileId
+      (entry) => Number(entry.browserProfileId) === memProfileId
     );
     const trophyRows = (clean.browserTrophies ?? []).filter(
-      (entry) => Number(entry.browserProfileId) === profileId
+      (entry) => Number(entry.browserProfileId) === memProfileId
     );
     const rewardRows = (clean.rewardEvents ?? []).filter(
-      (entry) => Number(entry.browserProfileId) === profileId
+      (entry) => Number(entry.browserProfileId) === memProfileId
     );
     const dailyRows = (clean.dailyBrowserStats ?? []).filter(
-      (entry) => Number(entry.browserProfileId) === profileId
+      (entry) => Number(entry.browserProfileId) === memProfileId
     );
     const previousCollectionRows = (previousClean?.browserCollection ?? []).filter(
-      (entry) => Number(entry.browserProfileId) === profileId
+      (entry) => Number(entry.browserProfileId) === memProfileId
     );
     const previousOpeningRows = (previousClean?.packOpenings ?? []).filter(
-      (entry) => Number(entry.browserProfileId) === profileId
+      (entry) => Number(entry.browserProfileId) === memProfileId
     );
     const previousMissionRows = (previousClean?.browserMissions ?? []).filter(
-      (entry) => Number(entry.browserProfileId) === profileId
+      (entry) => Number(entry.browserProfileId) === memProfileId
     );
     const previousTrophyRows = (previousClean?.browserTrophies ?? []).filter(
-      (entry) => Number(entry.browserProfileId) === profileId
+      (entry) => Number(entry.browserProfileId) === memProfileId
     );
     const previousRewardRows = (previousClean?.rewardEvents ?? []).filter(
-      (entry) => Number(entry.browserProfileId) === profileId
+      (entry) => Number(entry.browserProfileId) === memProfileId
     );
     const previousDailyRows = (previousClean?.dailyBrowserStats ?? []).filter(
-      (entry) => Number(entry.browserProfileId) === profileId
+      (entry) => Number(entry.browserProfileId) === memProfileId
     );
 
     await db.transaction(async (tx) => {
