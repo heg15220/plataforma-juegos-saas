@@ -630,6 +630,9 @@ export function createPostgresStore({ db }) {
       return;
     }
     const storageToken = profile.browserToken ?? browserToken;
+    const previousProfile = (previousClean?.browserProfiles ?? []).find(
+      (entry) => entry.browserToken === storageToken || entry.browserToken === browserToken
+    ) ?? ((previousClean?.browserProfiles ?? []).length === 1 ? previousClean.browserProfiles[0] : null);
 
     // The in-memory profile id is derived from the browser token hash
     // (createTokenScopedIdBase). After token rotation, or when a profile is
@@ -694,48 +697,89 @@ export function createPostgresStore({ db }) {
         "SELECT id FROM browser_profiles WHERE browser_token = ? FOR UPDATE",
         [storageToken]
       );
-      await tx.run(
-        `INSERT INTO browser_profiles (
-           id, browser_token, display_name, preferred_language, packs_available,
-           max_packs, last_pack_regen_at, gems, shards, trophies_points,
-           total_pack_opens, pity_counter, created_at, updated_at, last_seen_at,
-           last_pack_opened_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT(id) DO UPDATE SET
-           browser_token = excluded.browser_token,
-           display_name = excluded.display_name,
-           preferred_language = excluded.preferred_language,
-           packs_available = excluded.packs_available,
-           max_packs = excluded.max_packs,
-           last_pack_regen_at = excluded.last_pack_regen_at,
-           gems = excluded.gems,
-           shards = excluded.shards,
-           trophies_points = excluded.trophies_points,
-           total_pack_opens = excluded.total_pack_opens,
-           pity_counter = excluded.pity_counter,
-           created_at = excluded.created_at,
-           updated_at = excluded.updated_at,
-           last_seen_at = excluded.last_seen_at,
-           last_pack_opened_at = excluded.last_pack_opened_at`,
-        [
-          profileId,
-          storageToken,
-          profile.displayName ?? null,
-          profile.preferredLanguage ?? null,
-          Number(profile.packsAvailable) || 0,
-          Number(profile.maxPacks) || 0,
-          profile.lastPackRegenAt ?? null,
-          Number(profile.gems) || 0,
-          Number(profile.shards) || 0,
-          Number(profile.trophiesPoints) || 0,
-          Number(profile.totalPackOpens) || 0,
-          Number(profile.pityCounter) || 0,
-          profile.createdAt ?? null,
-          profile.updatedAt ?? null,
-          profile.lastSeenAt ?? null,
-          profile.lastPackOpenedAt ?? null,
-        ]
-      );
+      // Update ONLY the profile fields this mutation actually changed (diff vs
+      // previousState). A read-mostly writer (getSessionMe: regen / last_seen)
+      // must not overwrite pack-progress fields (total_pack_opens,
+      // packs_available, gems, shards, pity_counter, …) that openPackIncremental
+      // advanced concurrently — that unconditional clobber was resetting the
+      // frontend counter and missions to zero while the pack openings, cards and
+      // daily stats themselves persisted correctly.
+      const profileFieldDefs = [
+        ["display_name", profile.displayName ?? null, previousProfile?.displayName ?? null],
+        ["preferred_language", profile.preferredLanguage ?? null, previousProfile?.preferredLanguage ?? null],
+        ["packs_available", Number(profile.packsAvailable) || 0, Number(previousProfile?.packsAvailable) || 0],
+        ["max_packs", Number(profile.maxPacks) || 0, Number(previousProfile?.maxPacks) || 0],
+        ["last_pack_regen_at", profile.lastPackRegenAt ?? null, previousProfile?.lastPackRegenAt ?? null],
+        ["gems", Number(profile.gems) || 0, Number(previousProfile?.gems) || 0],
+        ["shards", Number(profile.shards) || 0, Number(previousProfile?.shards) || 0],
+        ["trophies_points", Number(profile.trophiesPoints) || 0, Number(previousProfile?.trophiesPoints) || 0],
+        ["total_pack_opens", Number(profile.totalPackOpens) || 0, Number(previousProfile?.totalPackOpens) || 0],
+        ["pity_counter", Number(profile.pityCounter) || 0, Number(previousProfile?.pityCounter) || 0],
+        ["created_at", profile.createdAt ?? null, previousProfile?.createdAt ?? null],
+        ["updated_at", profile.updatedAt ?? null, previousProfile?.updatedAt ?? null],
+        ["last_seen_at", profile.lastSeenAt ?? null, previousProfile?.lastSeenAt ?? null],
+        ["last_pack_opened_at", profile.lastPackOpenedAt ?? null, previousProfile?.lastPackOpenedAt ?? null],
+      ];
+      if (persistedProfileRow) {
+        // Existing row → UPDATE only changed columns. With no previous snapshot
+        // to diff against (previousProfile == null, e.g. a full write()), write
+        // every field.
+        const setCols = ["browser_token = ?"];
+        const setParams = [storageToken];
+        for (const [col, value, prevValue] of profileFieldDefs) {
+          if (!previousProfile || value !== prevValue) {
+            setCols.push(`${col} = ?`);
+            setParams.push(value);
+          }
+        }
+        await tx.run(
+          `UPDATE browser_profiles SET ${setCols.join(", ")} WHERE id = ?`,
+          [...setParams, profileId]
+        );
+      } else {
+        await tx.run(
+          `INSERT INTO browser_profiles (
+             id, browser_token, display_name, preferred_language, packs_available,
+             max_packs, last_pack_regen_at, gems, shards, trophies_points,
+             total_pack_opens, pity_counter, created_at, updated_at, last_seen_at,
+             last_pack_opened_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             browser_token = excluded.browser_token,
+             display_name = excluded.display_name,
+             preferred_language = excluded.preferred_language,
+             packs_available = excluded.packs_available,
+             max_packs = excluded.max_packs,
+             last_pack_regen_at = excluded.last_pack_regen_at,
+             gems = excluded.gems,
+             shards = excluded.shards,
+             trophies_points = excluded.trophies_points,
+             total_pack_opens = excluded.total_pack_opens,
+             pity_counter = excluded.pity_counter,
+             created_at = excluded.created_at,
+             updated_at = excluded.updated_at,
+             last_seen_at = excluded.last_seen_at,
+             last_pack_opened_at = excluded.last_pack_opened_at`,
+          [
+            profileId,
+            storageToken,
+            profile.displayName ?? null,
+            profile.preferredLanguage ?? null,
+            Number(profile.packsAvailable) || 0,
+            Number(profile.maxPacks) || 0,
+            profile.lastPackRegenAt ?? null,
+            Number(profile.gems) || 0,
+            Number(profile.shards) || 0,
+            Number(profile.trophiesPoints) || 0,
+            Number(profile.totalPackOpens) || 0,
+            Number(profile.pityCounter) || 0,
+            profile.createdAt ?? null,
+            profile.updatedAt ?? null,
+            profile.lastSeenAt ?? null,
+            profile.lastPackOpenedAt ?? null,
+          ]
+        );
+      }
 
       const previousCollectionById = new Map(
         previousCollectionRows.map((entry) => [Number(entry.id) || 0, entry])
