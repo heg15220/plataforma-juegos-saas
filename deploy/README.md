@@ -7,7 +7,7 @@ Infraestructura base para produccion futura de la plataforma. El frontend se con
 - `web`: build de Vite servido por Nginx, con proxy a APIs internas.
 - `wikipedia-gacha-backend`: Node en el puerto interno `8791`, con Postgres y Redis.
 - `penalty-shootout-backend`: Node en el puerto interno `8792`.
-- `cosmic-vanguard-backend`: Node en el puerto interno `8793`.
+- `cosmic-vanguard-backend`: Node en el puerto interno `8793`.  
 - `db`: Postgres 16 para estado persistente.
 - `redis`: cache compartida para backends que lo soporten.
 - `certbot`: renovacion periodica de certificados.
@@ -39,13 +39,56 @@ Esta proteccion no puede mantener la web disponible si el proveedor suspende o a
 
 ## Emitir el certificado real
 
-Con el DNS de `game-lock.com` y `www.game-lock.com` apuntando al servidor y los puertos `80` y `443` abiertos:
+Antes de emitir el certificado real de Let's Encrypt, comprueba que:
+
+- El DNS de `DOMAIN` y `www.DOMAIN` apunta correctamente a la IP del servidor.
+- Los puertos `80` y `443` están abiertos en el firewall del VPS/proveedor.
+- El servicio `web` está levantado, ya que Certbot usará el modo `webroot` sobre `/var/www/certbot`.
+- El fichero `deploy/.env` contiene al menos estas variables:
+
+```env
+DOMAIN=game-lock.com
+SITE_URL=https://www.game-lock.com
+LETSENCRYPT_EMAIL=gamelockweb@gmail.com
+```
+
+> Importante: `deploy/.env` no debe subirse al repositorio si contiene secretos reales.
+
+### 1. Cargar las variables desde `deploy/.env`
+
+Se cargan `DOMAIN` y `LETSENCRYPT_EMAIL` de forma robusta, permitiendo espacios, comillas o saltos de línea tipo Windows:
 
 ```bash
-DOMAIN="$(sed -n 's/^DOMAIN=//p' deploy/.env)"
-LETSENCRYPT_EMAIL="$(sed -n 's/^LETSENCRYPT_EMAIL=//p' deploy/.env)"
+DOMAIN="$(grep -E '^[[:space:]]*DOMAIN[[:space:]]*=' deploy/.env | tail -n1 | sed -E 's/^[[:space:]]*DOMAIN[[:space:]]*=[[:space:]]*//; s/[[:space:]]*$//; s/^"//; s/"$//; s/\r//g')"
 
-docker compose --env-file deploy/.env -f deploy/docker-compose.yml run --rm certbot certonly \
+LETSENCRYPT_EMAIL="$(grep -E '^[[:space:]]*LETSENCRYPT_EMAIL[[:space:]]*=' deploy/.env | tail -n1 | sed -E 's/^[[:space:]]*LETSENCRYPT_EMAIL[[:space:]]*=[[:space:]]*//; s/[[:space:]]*$//; s/^"//; s/"$//; s/\r//g')"
+
+echo "DOMAIN=[$DOMAIN]"
+echo "LETSENCRYPT_EMAIL=[$LETSENCRYPT_EMAIL]"
+```
+
+La salida esperada debe ser similar a:
+
+```bash
+DOMAIN=[game-lock.com]
+LETSENCRYPT_EMAIL=[gamelockweb@gmail.com]
+```
+
+Si `DOMAIN=[]` o `LETSENCRYPT_EMAIL=[]`, revisa el fichero `deploy/.env` antes de continuar.
+
+### 2. Emitir el certificado con Certbot
+
+El servicio `certbot` del `docker-compose.yml` está preparado para ejecutar renovaciones periódicas mediante `/bin/sh`.
+
+Por eso, para emitir el certificado inicial manualmente, se sobrescribe el entrypoint con `--entrypoint certbot`:
+
+```bash
+test -n "$DOMAIN" || { echo "ERROR: DOMAIN está vacío"; exit 1; }
+test -n "$LETSENCRYPT_EMAIL" || { echo "ERROR: LETSENCRYPT_EMAIL está vacío"; exit 1; }
+
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml run --rm \
+  --entrypoint certbot \
+  certbot certonly \
   --webroot \
   -w /var/www/certbot \
   --cert-name "$DOMAIN" \
@@ -53,12 +96,87 @@ docker compose --env-file deploy/.env -f deploy/docker-compose.yml run --rm cert
   -d "www.$DOMAIN" \
   --email "$LETSENCRYPT_EMAIL" \
   --agree-tos \
-  --no-eff-email
+  --no-eff-email \
+&& docker compose --env-file deploy/.env -f deploy/docker-compose.yml restart web
+```
 
+Si todo está correcto, Certbot mostrará una salida parecida a:
+
+```bash
+Successfully received certificate.
+Certificate is saved at: /etc/letsencrypt/live/game-lock.com/fullchain.pem
+Key is saved at:         /etc/letsencrypt/live/game-lock.com/privkey.pem
+```
+
+El certificado se emite con el nombre definido en `$DOMAIN`, por ejemplo `game-lock.com`, y cubre tanto el dominio principal como el subdominio `www` mediante SAN:
+
+- `game-lock.com`
+- `www.game-lock.com`
+
+### 3. Reiniciar el servicio web si es necesario
+
+Si el reinicio no se completa correctamente o quieres forzarlo manualmente:
+
+```bash
 docker compose --env-file deploy/.env -f deploy/docker-compose.yml restart web
 ```
 
-El certificado se emite con el nombre `$DOMAIN` (apex) y cubre tanto `game-lock.com` como `www.game-lock.com` mediante SAN. Nginx sirve ambos hosts (`server_name ${DOMAIN} www.${DOMAIN}`) y el origen canónico para SEO es `SITE_URL` (`https://www.game-lock.com`).
+### 4. Dejar activo el servicio permanente de Certbot
+
+La emisión inicial se hace con un contenedor temporal mediante `run --rm`.
+
+Después, conviene asegurarse de que el servicio permanente de Certbot queda levantado para comprobar renovaciones automáticamente:
+
+```bash
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml up -d certbot
+```
+
+Comprueba el estado de los servicios:
+
+```bash
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml ps
+```
+
+Deberías ver el contenedor `plataforma-juegos-certbot` en ejecución.
+
+### 5. Verificar HTTPS
+
+Comprueba que ambos dominios responden por HTTPS:
+
+```bash
+curl -I https://game-lock.com
+curl -I https://www.game-lock.com
+```
+
+También puedes inspeccionar el certificado servido por Nginx:
+
+```bash
+echo | openssl s_client -connect game-lock.com:443 -servername game-lock.com 2>/dev/null \
+  | openssl x509 -noout -subject -issuer -dates
+```
+
+### 6. Dominio canónico para SEO
+
+Nginx sirve ambos hosts:
+
+```nginx
+server_name ${DOMAIN} www.${DOMAIN};
+```
+
+El origen canónico para SEO lo define `SITE_URL`.
+
+Si el dominio canónico debe ser `www`, en `deploy/.env` debe quedar así:
+
+```env
+SITE_URL=https://www.game-lock.com
+```
+
+Como `SITE_URL` se pasa como argumento de build al contenedor `web`, si cambias esta variable debes reconstruir el servicio:
+
+```bash
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml build web
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml up -d web
+```
 
 ## Notas
 
