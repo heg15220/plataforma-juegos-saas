@@ -1530,7 +1530,18 @@ export function createPostgresStore({ db }) {
     finalizeProgress,
   } = {}) {
     const resolvedToken = await resolvePersistedToken(browserToken);
-    return db.transaction(async (tx) => {
+    // openPackIncremental writes straight to the DB, bypassing the in-memory
+    // state cache and the deferred-write buffer. Flush any pending deferred
+    // write for this token FIRST so the open builds on the latest state and a
+    // late flush cannot revert the just-opened pack.
+    for (const token of new Set([browserToken, resolvedToken])) {
+      const pending = dirtyStates.get(token);
+      if (pending) {
+        dirtyStates.delete(token);
+        await writeRaw(token, pending.nextState, pending.previousState);
+      }
+    }
+    const result = await db.transaction(async (tx) => {
       const profile = normalizeProfileRow(await tx.get(
         `SELECT
            id,
@@ -2052,6 +2063,14 @@ export function createPostgresStore({ db }) {
         packStatus: progress.packStatus,
       };
     });
+    // The commit above never touched the read cache; without this, readRaw /
+    // readProfileOnly keep serving the stale pre-open profile, so the frontend's
+    // packs counter, missions and trophies appear not to update.
+    if (result) {
+      stateCache.delete(browserToken);
+      stateCache.delete(resolvedToken);
+    }
+    return result;
   }
 
   function forToken(browserToken) {
